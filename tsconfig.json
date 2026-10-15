@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -23,9 +19,7 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     }
   },
   "include": [
@@ -40,9 +34,39 @@
     ".next-course-final/types/**/*.ts",
     ".next-course-final/dev/types/**/*.ts",
     ".next-course-white/types/**/*.ts",
-    ".next-course-white/dev/types/**/*.ts"
+    ".next-course-white/dev/types/**/*.ts",
+    ".next-course-refined/types/**/*.ts",
+    ".next-course-refined/dev/types/**/*.ts",
+    ".next-header/types/**/*.ts",
+    ".next-header/dev/types/**/*.ts",
+    ".next-header-shadow/types/**/*.ts",
+    ".next-header-shadow/dev/types/**/*.ts",
+    ".next-hero-mint/types/**/*.ts",
+    ".next-hero-mint/dev/types/**/*.ts",
+    ".next-catalog-type/types/**/*.ts",
+    ".next-catalog-type/dev/types/**/*.ts",
+    ".next-hero-action/types/**/*.ts",
+    ".next-hero-action/dev/types/**/*.ts",
+    ".next-hero-action-size/types/**/*.ts",
+    ".next-hero-action-size/dev/types/**/*.ts",
+    ".next-curriculum-flat/types/**/*.ts",
+    ".next-curriculum-flat/dev/types/**/*.ts",
+    ".next-course-forest/types/**/*.ts",
+    ".next-course-forest/dev/types/**/*.ts",
+    ".next-course-buttons/types/**/*.ts",
+    ".next-course-buttons/dev/types/**/*.ts",
+    ".next-registration-type/types/**/*.ts",
+    ".next-registration-type/dev/types/**/*.ts",
+    ".next-course-panel/types/**/*.ts",
+    ".next-course-panel/dev/types/**/*.ts",
+    ".next-course-breadcrumb/types/**/*.ts",
+    ".next-course-breadcrumb/dev/types/**/*.ts",
+    ".next-course-logo/types/**/*.ts",
+    ".next-course-logo/dev/types/**/*.ts",
+    ".next-course-width/types/**/*.ts",
+    ".next-course-width/dev/types/**/*.ts",
+    ".next-cart-check/types/**/*.ts",
+    ".next-cart-check/dev/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

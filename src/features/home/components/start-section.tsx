@@ -14,6 +14,8 @@ const cards = [
       'Xem lộ trình, lịch học và giảng viên để tìm một khóa học phù hợp với mục tiêu của bạn.',
     action: 'Xem khóa học',
     image: '/mindy/reading-mascot.png',
+    photo: '/mindy/course-christina.jpg',
+    photoAlt: 'Lập trình trên máy tính với màn hình hiển thị mã nguồn',
   },
   {
     href: '#thuc-hanh',
@@ -23,6 +25,8 @@ const cards = [
     detail: 'Bắt đầu với ví dụ đầu tiên, quan sát kết quả và hiểu thêm từng chút qua mỗi lần thử.',
     action: 'Khám phá ngay',
     image: '/mindy/coding-mascot.png',
+    photo: '/mindy/coding-student.jpg',
+    photoAlt: 'Hướng dẫn học viên thực hành lập trình trên máy tính',
   },
   {
     href: '#hanh-trinh',
@@ -32,6 +36,8 @@ const cards = [
     detail: 'Tìm hiểu cách học cùng Mindy và chọn bước đầu tiên cho hành trình bạn muốn theo đuổi.',
     action: 'Cách bắt đầu',
     image: '/mindy/journey-mascot.png',
+    photo: '/mindy/journey-hao.jpg',
+    photoAlt: 'Hào nhận chứng nhận hoàn thành dự án Mindy Coding',
   },
 ] as const;
 
@@ -81,7 +87,7 @@ export function StartSection() {
     <section id="bat-dau" className="page-container py-16 lg:py-24" aria-labelledby="start-title">
       <div className="mb-12 flex flex-col justify-between gap-5 md:flex-row md:items-end">
         <h2 id="start-title" className="section-title">
-          Có nhiều cách
+          Có <span className="text-mint">nhiều cách</span>
           <br />
           để bắt đầu.
         </h2>
@@ -144,11 +150,16 @@ export function StartSection() {
                 <Icon name="arrow" className="size-4" />
               </a>
             </div>
-            <div
-              aria-hidden="true"
-              className="bg-canvas p-4 shadow-xl shadow-forest/10 sm:p-5 lg:self-stretch"
-            >
-              <div className="h-full min-h-64 bg-banner sm:min-h-80 lg:min-h-120" />
+            <div className="bg-mint p-4 shadow-lg shadow-mint/20 sm:p-5 lg:self-stretch">
+              <div className="relative h-full min-h-64 overflow-hidden bg-banner sm:min-h-80 lg:min-h-120">
+                <Image
+                  src={card.photo}
+                  alt={card.photoAlt}
+                  fill
+                  sizes="(max-width: 1023px) 100vw, 50vw"
+                  className="object-cover"
+                />
+              </div>
             </div>
           </article>
         ))}

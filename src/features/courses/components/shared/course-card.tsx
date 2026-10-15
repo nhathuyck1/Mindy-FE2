@@ -4,7 +4,12 @@ import type { Course } from '../../schemas/course-contracts';
 import { formatPrice } from '../../lib/course-format';
 import { CourseImage } from './course-image';
 
-export function CourseCard(props: { course: Course; list?: boolean; headingLevel?: 2 | 3 }) {
+export function CourseCard(props: {
+  course: Course;
+  list?: boolean;
+  headingLevel?: 2 | 3;
+  comfortable?: boolean;
+}) {
   const course = props.course;
   const Heading = props.headingLevel === 3 ? 'h3' : 'h2';
   return (
@@ -19,15 +24,21 @@ export function CourseCard(props: { course: Course; list?: boolean; headingLevel
           title={course.title}
           sizes="(max-width: 639px) 90vw, (max-width: 1023px) 44vw, 310px"
         />
-        <span className="absolute top-3 left-3 rounded-md bg-canvas/95 px-2.5 py-1 text-[10px] font-extrabold text-forest">
+        <span
+          className={`absolute top-3 left-3 rounded-md bg-canvas/95 px-2.5 py-1 font-extrabold text-forest ${props.comfortable ? 'text-xs' : 'text-[10px]'}`}
+        >
           {course.code}
         </span>
       </div>
       <div className="flex min-w-0 flex-1 flex-col p-5">
-        <p className="mb-2 min-h-4 truncate text-[11px] font-bold text-mint">
+        <p
+          className={`mb-2 truncate font-bold text-mint ${props.comfortable ? 'min-h-5 text-sm' : 'min-h-4 text-[11px]'}`}
+        >
           {course.category.name}
         </p>
-        <Heading className="min-h-11 text-base leading-snug font-extrabold group-hover:text-mint">
+        <Heading
+          className={`leading-snug font-extrabold group-hover:text-mint ${props.comfortable ? 'min-h-[50px] text-lg' : 'min-h-11 text-base'}`}
+        >
           <Link
             href={`/courses/${course.id}`}
             className="line-clamp-2 after:absolute after:inset-0"
@@ -35,15 +46,23 @@ export function CourseCard(props: { course: Course; list?: boolean; headingLevel
             {course.title}
           </Link>
         </Heading>
-        <p className="mt-2 mb-5 min-h-10 line-clamp-2 text-xs leading-relaxed text-muted">
+        <p
+          className={`mt-2 mb-5 line-clamp-2 leading-relaxed text-muted ${props.comfortable ? 'min-h-12 text-sm font-semibold' : 'min-h-10 text-xs'}`}
+        >
           {course.description ?? 'Khám phá nội dung và các lớp học của khóa học.'}
         </p>
         <div className="mt-auto flex items-end justify-between gap-3 border-t border-line pt-4">
           <div>
-            <p className="text-[10px] text-muted">Học phí khóa học</p>
+            <p
+              className={
+                props.comfortable ? 'text-xs font-semibold text-muted' : 'text-[10px] text-muted'
+              }
+            >
+              Học phí khóa học
+            </p>
             <p
               data-course-price
-              className="mt-1 whitespace-nowrap text-2xl leading-tight font-extrabold tabular-nums text-mint"
+              className={`mt-1 whitespace-nowrap leading-tight font-extrabold tabular-nums text-mint ${props.comfortable ? 'text-[26px]' : 'text-2xl'}`}
             >
               {formatPrice(course.priceAmount)}
             </p>

@@ -3,6 +3,18 @@ import { z } from 'zod';
 import { getServerEnv } from '@/lib/env.server';
 import { addCartItemSchema, cartSchema } from '@/features/cart/schemas/cart-contracts';
 import {
+  checkoutInputSchema,
+  checkoutResultSchema,
+  orderFiltersSchema,
+  orderPageSchema,
+  orderPaymentSchema,
+} from '@/features/orders/schemas/order-contracts';
+import {
+  emptyPaymentSchema,
+  paymentResultQuerySchema,
+  paymentSchema,
+} from '@/features/payments/schemas/payment-contracts';
+import {
   registerSchema,
   registrationAcceptedSchema,
   verifyEmailSchema,
@@ -43,6 +55,14 @@ const rules = {
   'GET admin/classes': { response: adminClassPageSchema, cookies: ['access_token'] },
   'GET courses': { response: coursePageSchema, cookies: [] },
   'GET course-categories': { response: categoryPageSchema, cookies: [] },
+  'GET me/cart': { response: cartSchema, cookies: ['access_token'] },
+  'GET me/orders': { response: orderPageSchema, cookies: ['access_token'] },
+  'GET me/orders/payment-result': { response: orderPaymentSchema, cookies: ['access_token'] },
+  'POST me/cart/checkout': {
+    response: checkoutResultSchema,
+    body: checkoutInputSchema,
+    cookies: ['access_token'],
+  },
   'POST me/cart/items': {
     response: cartSchema,
     body: addCartItemSchema,
@@ -67,8 +87,30 @@ function resolveRule(method: string, path: string): ApiRule | undefined {
   if (Object.hasOwn(rules, key)) return rules[key as keyof typeof rules];
   const adminRule = resolveAdminCrudRule(method, path);
   if (adminRule) return adminRule;
-  if (method !== 'GET') return undefined;
   const parts = path.split('/');
+  if (parts[0] === 'me') {
+    if (
+      method === 'DELETE' &&
+      parts.length === 4 &&
+      parts[1] === 'cart' &&
+      parts[2] === 'items' &&
+      z.uuid().safeParse(parts[3]).success
+    )
+      return { response: z.null(), cookies: ['access_token'] };
+    if (parts[1] === 'orders' && z.uuid().safeParse(parts[2]).success) {
+      if (method === 'GET' && parts.length === 3)
+        return { response: orderPaymentSchema, cookies: ['access_token'] };
+      if (
+        method === 'POST' &&
+        parts.length === 5 &&
+        parts[3] === 'payments' &&
+        parts[4] === 'payos'
+      )
+        return { response: paymentSchema, body: emptyPaymentSchema, cookies: ['access_token'] };
+    }
+    return undefined;
+  }
+  if (method !== 'GET') return undefined;
   if (
     parts.length === 4 &&
     parts[0] === 'admin' &&
@@ -159,7 +201,7 @@ export async function proxyApi(request: Request, path: string) {
     return error(401, 'AUTHENTICATION_REQUIRED', 'Bạn chưa đăng nhập.');
   if (path.startsWith('admin/') && !requestCookies(request.headers.get('cookie'), ['access_token']))
     return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập bằng tài khoản quản trị.');
-  if (path === 'me/cart/items' && !requestCookies(request.headers.get('cookie'), ['access_token']))
+  if (path.startsWith('me/') && !requestCookies(request.headers.get('cookie'), ['access_token']))
     return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập để đăng ký lớp.');
   if (path === 'auth/refresh' && !requestCookies(request.headers.get('cookie'), ['refresh_token']))
     return error(401, 'AUTHENTICATION_REQUIRED', 'Phiên đăng nhập đã hết hạn.');
@@ -177,6 +219,15 @@ export async function proxyApi(request: Request, path: string) {
         : z.object({}).strict());
     const parsed = schema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
     if (!parsed.success) return error(422, 'INVALID_QUERY', 'Bộ lọc quản trị không hợp lệ.');
+    search = `?${new URLSearchParams(Object.entries(parsed.data).map(([key, value]) => [key, String(value)]))}`;
+  }
+  if (path === 'me/orders' || path === 'me/orders/payment-result') {
+    const input = new URL(request.url).searchParams;
+    if ([...input.keys()].some((key) => input.getAll(key).length !== 1))
+      return error(422, 'INVALID_QUERY', 'Tham số bị lặp.');
+    const schema = path === 'me/orders' ? orderFiltersSchema : paymentResultQuerySchema;
+    const parsed = schema.safeParse(Object.fromEntries(input));
+    if (!parsed.success) return error(422, 'INVALID_QUERY', 'Tham số đơn hàng không hợp lệ.');
     search = `?${new URLSearchParams(Object.entries(parsed.data).map(([key, value]) => [key, String(value)]))}`;
   }
   if (['courses', 'course-categories'].includes(path) || /^courses\/[^/]+\/classes$/.test(path)) {

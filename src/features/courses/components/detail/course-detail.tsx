@@ -5,14 +5,11 @@ import { useState } from 'react';
 import { Icon } from '@/components/ui/icon';
 import { ApiError } from '@/lib/api/client';
 import { useCourseDetail } from '../../api/course-queries';
-import { deliveryLabel } from '../../lib/course-format';
 import { CourseImage } from '../shared/course-image';
 import { QueryState } from '../shared/query-state';
 import { ClassPicker } from '../enrollment/class-picker';
-import { CourseCurriculum } from './course-curriculum';
 import { RelatedCourses } from './related-courses';
 import { CourseOverview } from './course-overview';
-import { CourseMentors } from './course-mentors';
 import { CourseRegistrationCard } from './course-registration-card';
 import { LoadingOverlay } from '@/components/ui/spinner';
 
@@ -22,7 +19,7 @@ export function CourseDetailContent(props: { courseId: string; initialClassId?: 
   if (query.isPending) return <LoadingOverlay scope="page" label="Đang tải chi tiết khóa học…" />;
   if (query.isError)
     return (
-      <div className="page-container py-10">
+      <div className="course-detail-container py-10">
         <QueryState
           title={
             query.error instanceof ApiError && query.error.status === 404
@@ -40,17 +37,13 @@ export function CourseDetailContent(props: { courseId: string; initialClassId?: 
       </div>
     );
   const course = query.data;
-  const mentors = [
-    ...new Map(course.openClasses.map((item) => [item.mentor.id, item.mentor])).values(),
-  ];
-  const modes = [...new Set(course.openClasses.map((item) => item.deliveryMode))];
   const units = [...course.units].sort((a, b) => a.unitNumber - b.unitNumber);
 
   return (
-    <div className="page-container py-7 lg:py-9">
+    <div className="course-detail-container py-7 lg:py-9">
       <nav
         aria-label="Đường dẫn"
-        className="mb-6 flex flex-wrap items-center gap-2 text-xs text-muted"
+        className="mb-6 flex flex-wrap items-center gap-2 text-sm font-semibold text-muted"
       >
         <Link href="/" className="hover:text-mint">
           Trang chủ
@@ -66,12 +59,12 @@ export function CourseDetailContent(props: { courseId: string; initialClassId?: 
           {course.title}
         </span>
       </nav>
-      <div className="mb-7 max-w-3xl">
+      <div className="mb-7 max-w-4xl">
         <div className="mb-3 flex flex-wrap gap-2">
-          <span className="rounded-full border border-line bg-canvas px-3 py-1 text-[11px] font-extrabold text-mint">
+          <span className="rounded-full border border-line bg-canvas px-3 py-1.5 text-sm font-extrabold text-mint">
             {course.category.name}
           </span>
-          <span className="rounded-full border border-line bg-canvas px-3 py-1 text-[11px] font-bold">
+          <span className="rounded-full border border-line bg-canvas px-3 py-1.5 text-sm font-bold">
             {course.code}
           </span>
         </div>
@@ -79,68 +72,49 @@ export function CourseDetailContent(props: { courseId: string; initialClassId?: 
           {course.title}
         </h1>
         {course.description && (
-          <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-muted">
+          <p className="mt-3 whitespace-pre-line text-base leading-relaxed text-muted">
             {course.description}
           </p>
         )}
-        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted">
-          <span className="flex items-center gap-1.5">
-            <Icon name="book" className="size-4 text-mint" />
-            {units.length} học phần
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Icon name="user" className="size-4 text-mint" />
-            {mentors.length} mentor ở các lớp đang mở
-          </span>
-          {modes.map((mode) => (
-            <span key={mode} className="flex items-center gap-1.5">
-              <Icon
-                name={mode === 'ONLINE' ? 'monitor' : 'location'}
-                className="size-4 text-mint"
-              />
-              {deliveryLabel(mode)}
-            </span>
-          ))}
-        </div>
       </div>
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_350px]">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_400px] 2xl:gap-8">
         <div className="min-w-0 space-y-6">
-          <div className="overflow-hidden rounded-xl border border-line bg-canvas">
+          <div className="overflow-hidden rounded-2xl border border-line bg-canvas">
             <div className="relative aspect-video overflow-hidden">
               <CourseImage
                 src={course.imgUrl}
                 title={course.title}
                 preload
-                sizes="(max-width: 1023px) 92vw, 800px"
+                sizes="(max-width: 1023px) 94vw, (max-width: 1599px) 65vw, 1100px"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4 p-4 text-xs sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 p-5 text-sm font-semibold sm:grid-cols-3 sm:p-6">
               <span className="flex items-center gap-2">
                 <Icon name="book" className="size-5 shrink-0 text-mint" />
                 <span>
                   <strong className="block">Giáo trình rõ ràng</strong>
-                  <span className="text-[10px] text-muted">{units.length} học phần</span>
+                  <span className="text-xs text-muted">{units.length} học phần</span>
                 </span>
               </span>
               <span className="flex items-center gap-2">
                 <Icon name="calendar" className="size-5 shrink-0 text-mint" />
                 <span>
                   <strong className="block">Chủ động lịch học</strong>
-                  <span className="text-[10px] text-muted">Xem lịch trước khi chọn lớp</span>
+                  <span className="text-xs text-muted">Xem lịch trước khi chọn lớp</span>
                 </span>
               </span>
               <span className="flex items-center gap-2">
                 <Icon name="user" className="size-5 shrink-0 text-mint" />
                 <span>
                   <strong className="block">Mentor đồng hành</strong>
-                  <span className="text-[10px] text-muted">Theo từng lớp học</span>
+                  <span className="text-xs text-muted">Theo từng lớp học</span>
                 </span>
               </span>
             </div>
           </div>
           <nav
             aria-label="Nội dung khóa học"
-            className="flex flex-wrap gap-1 rounded-lg border border-line bg-canvas p-1 text-xs font-bold"
+            className="flex flex-wrap gap-1 rounded-xl border border-line bg-canvas p-1.5 text-sm font-bold"
           >
             {[
               { id: 'tong-quan', label: 'Tổng quan' },
@@ -150,15 +124,13 @@ export function CourseDetailContent(props: { courseId: string; initialClassId?: 
               <a
                 key={tab.id}
                 href={`#${tab.id}`}
-                className={`flex min-h-11 flex-1 items-center justify-center rounded-md border bg-canvas px-4 hover:border-mint hover:text-mint ${index === 0 ? 'border-mint text-mint' : 'border-transparent'}`}
+                className={`flex min-h-12 flex-1 items-center justify-center rounded-lg border bg-canvas px-4 hover:border-mint hover:text-mint ${index === 0 ? 'border-mint text-mint' : 'border-transparent'}`}
               >
                 {tab.label}
               </a>
             ))}
           </nav>
-          <CourseOverview course={course} />
-          <CourseCurriculum units={course.units} />
-          <CourseMentors course={course} onChooseClass={() => setPickerOpen(true)} />
+          <CourseOverview course={course} onChooseClass={() => setPickerOpen(true)} />
           <RelatedCourses courseId={course.id} categoryId={course.category.id} />
         </div>
         <CourseRegistrationCard course={course} onChooseClass={() => setPickerOpen(true)} />

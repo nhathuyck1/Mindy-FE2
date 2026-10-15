@@ -7,7 +7,7 @@ import { FeaturedCourses } from './featured-courses';
 
 export function HomeContent() {
   return (
-    <>
+    <div className="home-content text-black">
       <HeroSection />
       <StartSection />
       <section
@@ -79,6 +79,6 @@ export function HomeContent() {
           <ActionLink href="#bat-dau">Bắt đầu cùng Mindy</ActionLink>
         </div>
       </section>
-    </>
+    </div>
   );
 }

@@ -18,7 +18,7 @@ const errorSchema = z.object({
 export async function apiRequest<T>(props: {
   path: string;
   schema: z.ZodType<T>;
-  method?: 'GET' | 'POST' | 'PATCH' | 'PUT';
+  method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
   body?: unknown;
   signal?: AbortSignal;
 }) {

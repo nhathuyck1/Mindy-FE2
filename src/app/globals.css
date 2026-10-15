@@ -37,21 +37,26 @@
   --color-ink: #000000;
   --color-ink-soft: color-mix(in srgb, var(--color-ink) 82%, var(--color-canvas));
   --color-ink-gray: color-mix(in srgb, var(--color-ink) 58%, var(--color-canvas));
+  --color-logo-soft: #d8f0fa;
   --color-soft: color-mix(in srgb, var(--color-mint) 7%, var(--color-canvas));
   --color-line: color-mix(in srgb, var(--color-mint) 19%, var(--color-canvas));
   --color-muted: color-mix(in srgb, var(--color-forest) 90%, var(--color-canvas));
   --color-peach: color-mix(in srgb, var(--color-coral) 13%, var(--color-canvas));
   --color-pastel-red: color-mix(in srgb, var(--color-status-red) 60%, var(--color-canvas));
-  --color-hero: hsl(from var(--color-mint) h calc(s * 1.6) 90%);
-  --color-hero-ink: color-mix(in srgb, var(--color-mint) 70%, var(--color-forest));
-  --color-hero-copy: color-mix(in srgb, var(--color-mint) 40%, var(--color-forest));
+  --color-action: color-mix(in srgb, var(--color-coral) 80%, var(--color-canvas));
+  --color-action-hover: color-mix(in srgb, var(--color-coral) 70%, var(--color-canvas));
+  --color-hero: var(--color-mint);
+  --color-hero-ink: var(--color-canvas);
+  --color-hero-copy: var(--color-canvas);
   --color-feature: var(--color-sunshine);
   --color-banner: color-mix(in srgb, var(--color-mint) 26%, var(--color-canvas));
   /* shadcn/ui semantic tokens use the existing Mindy palette. */
   --color-background: var(--color-canvas);
   --color-foreground: var(--color-forest);
-  --color-primary: var(--color-mint);
+  --color-primary: var(--color-forest);
   --color-primary-foreground: var(--color-canvas);
+  --color-card: var(--color-canvas);
+  --color-card-foreground: var(--color-forest);
   --color-secondary: var(--color-soft);
   --color-secondary-foreground: var(--color-forest);
   --color-muted-foreground: var(--color-muted);
@@ -73,6 +78,8 @@
   html:has([data-admin-root]) {
     --font-sans: var(--font-admin);
     --color-foreground: var(--color-ink-soft);
+    --color-card-foreground: var(--color-ink-soft);
+    --color-primary: var(--color-mint);
     --color-muted: var(--color-ink-gray);
     --color-muted-foreground: var(--color-ink-gray);
   }
@@ -196,8 +203,30 @@
   .admin-row-action {
     @apply inline-flex min-h-9 cursor-pointer items-center justify-center gap-4 rounded-lg border border-mint/40 px-3 text-[15px] font-extrabold whitespace-nowrap text-mint hover:bg-soft;
   }
+
+  .home-content {
+    --color-forest: var(--color-black);
+    --color-muted: var(--color-black);
+  }
+
+  .cart-content {
+    --color-card-foreground: var(--color-black);
+    --color-secondary-foreground: var(--color-black);
+    --color-muted-foreground: var(--color-black);
+    --color-accent-foreground: var(--color-black);
+  }
+
   .page-container {
     @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10;
+  }
+  .course-detail-container {
+    @apply mx-auto w-full px-5 sm:px-8;
+
+    @media (width >= 1024px) {
+      width: min(92%, max(76%, 80rem));
+      max-width: 112.5rem;
+      padding-inline: 0;
+    }
   }
   .section-title {
     @apply text-3xl leading-tight font-extrabold tracking-tight sm:text-4xl lg:text-5xl;
