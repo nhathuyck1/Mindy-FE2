@@ -11,16 +11,12 @@ import { ClassPicker } from '../enrollment/class-picker';
 import { RelatedCourses } from './related-courses';
 import { CourseOverview } from './course-overview';
 import { CourseRegistrationCard } from './course-registration-card';
+import { LoadingOverlay } from '@/components/ui/spinner';
 
 export function CourseDetailContent(props: { courseId: string; initialClassId?: string }) {
   const query = useCourseDetail(props.courseId);
   const [pickerOpen, setPickerOpen] = useState(Boolean(props.initialClassId));
-  if (query.isPending)
-    return (
-      <div className="course-detail-container py-10">
-        <QueryState loading title="Đang tải chi tiết khóa học…" />
-      </div>
-    );
+  if (query.isPending) return <LoadingOverlay scope="page" label="Đang tải chi tiết khóa học…" />;
   if (query.isError)
     return (
       <div className="course-detail-container py-10">

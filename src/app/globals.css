@@ -1,4 +1,26 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* Mindy chưa có dark theme: dark: của shadcn chỉ chạy khi có class .dark, không theo hệ điều hành. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@utility scrollbar-hidden {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot='dialog-overlay'],
+  [data-slot='dialog-content'],
+  [data-slot='sheet-overlay'],
+  [data-slot='sheet-content'],
+  [data-slot='popover-content'] {
+    animation: none;
+    transition: none;
+  }
+}
 
 /* Source of truth: docs/pallete.png. Keep brand colors here. */
 @theme {
@@ -7,27 +29,20 @@
   --color-coral: #ff7f50;
   --color-headsup: #ff5400;
   --color-sunshine: #ffddae;
+  --color-status-green: #15803d;
+  --color-status-yellow: #a16207;
+  --color-status-red: #b91c1c;
   --color-canvas: #ffffff;
+  /* Chữ admin màu đen theo yêu cầu người dùng ngày 15/10/2026. */
+  --color-ink: #000000;
+  --color-ink-soft: color-mix(in srgb, var(--color-ink) 82%, var(--color-canvas));
+  --color-ink-gray: color-mix(in srgb, var(--color-ink) 58%, var(--color-canvas));
   --color-logo-soft: #d8f0fa;
-  --color-background: var(--color-canvas);
-  --color-foreground: var(--color-forest);
-  --color-card: var(--color-canvas);
-  --color-card-foreground: var(--color-forest);
-  --color-primary: var(--color-forest);
-  --color-primary-foreground: var(--color-canvas);
-  --color-secondary: var(--color-soft);
-  --color-secondary-foreground: var(--color-forest);
-  --color-muted-foreground: var(--color-muted);
-  --color-accent: var(--color-soft);
-  --color-accent-foreground: var(--color-forest);
-  --color-border: var(--color-line);
-  --color-input: var(--color-line);
-  --color-ring: var(--color-mint);
-  --color-destructive: var(--color-headsup);
   --color-soft: color-mix(in srgb, var(--color-mint) 7%, var(--color-canvas));
   --color-line: color-mix(in srgb, var(--color-mint) 19%, var(--color-canvas));
   --color-muted: color-mix(in srgb, var(--color-forest) 90%, var(--color-canvas));
   --color-peach: color-mix(in srgb, var(--color-coral) 13%, var(--color-canvas));
+  --color-pastel-red: color-mix(in srgb, var(--color-status-red) 60%, var(--color-canvas));
   --color-action: color-mix(in srgb, var(--color-coral) 80%, var(--color-canvas));
   --color-action-hover: color-mix(in srgb, var(--color-coral) 70%, var(--color-canvas));
   --color-hero: var(--color-mint);
@@ -35,10 +50,39 @@
   --color-hero-copy: var(--color-canvas);
   --color-feature: var(--color-sunshine);
   --color-banner: color-mix(in srgb, var(--color-mint) 26%, var(--color-canvas));
+  /* shadcn/ui semantic tokens use the existing Mindy palette. */
+  --color-background: var(--color-canvas);
+  --color-foreground: var(--color-forest);
+  --color-primary: var(--color-forest);
+  --color-primary-foreground: var(--color-canvas);
+  --color-card: var(--color-canvas);
+  --color-card-foreground: var(--color-forest);
+  --color-secondary: var(--color-soft);
+  --color-secondary-foreground: var(--color-forest);
+  --color-muted-foreground: var(--color-muted);
+  --color-accent: var(--color-soft);
+  --color-accent-foreground: var(--color-forest);
+  --color-destructive: var(--color-headsup);
+  --color-border: var(--color-line);
+  --color-input: var(--color-line);
+  --color-ring: var(--color-mint);
+  --color-popover: var(--color-canvas);
+  --color-popover-foreground: var(--color-forest);
   --font-sans: 'Nunito Variable', 'Nunito', Arial, sans-serif;
+  --font-admin: 'Inter Variable', 'Inter', Arial, sans-serif;
 }
 
 @layer base {
+  /* Admin dùng Inter, chữ chính đen dịu và chữ phụ xám, gồm cả portal ra body.
+     Logo, border, button, hover và trạng thái chọn vẫn giữ mint/forest. */
+  html:has([data-admin-root]) {
+    --font-sans: var(--font-admin);
+    --color-foreground: var(--color-ink-soft);
+    --color-card-foreground: var(--color-ink-soft);
+    --color-primary: var(--color-mint);
+    --color-muted: var(--color-ink-gray);
+    --color-muted-foreground: var(--color-ink-gray);
+  }
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 7rem;
@@ -68,6 +112,98 @@
 }
 
 @layer components {
+  .admin-workspace,
+  .admin-typography {
+    font-size: 18px;
+    --text-xs: 0.875rem;
+    --text-sm: 1rem;
+    --text-base: 1.125rem;
+    --text-lg: 1.25rem;
+    --text-xl: 1.375rem;
+    --text-2xl: 1.625rem;
+    --text-3xl: 2rem;
+    --text-4xl: 2.375rem;
+    --text-5xl: 3.125rem;
+    --text-6xl: 3.875rem;
+    --text-7xl: 4.625rem;
+    --text-8xl: 6.125rem;
+    --text-9xl: 8.125rem;
+  }
+  .admin-workspace {
+    @apply min-h-dvh bg-canvas text-foreground lg:grid lg:grid-cols-[228px_minmax(0,1fr)];
+  }
+  .admin-workspace-collapsed {
+    @apply lg:grid-cols-[76px_minmax(0,1fr)];
+  }
+  .admin-sidebar {
+    @apply sticky top-0 hidden h-dvh flex-col border-r border-line bg-canvas lg:flex;
+  }
+  .admin-topbar {
+    @apply flex min-h-23 items-center justify-between gap-3 border-b border-line bg-canvas px-4 sm:px-8;
+  }
+  .admin-main {
+    @apply mx-auto min-h-[calc(100dvh-160px)] w-full max-w-400 px-4 py-7 sm:px-8 sm:py-9;
+  }
+  .admin-nav-link {
+    @apply relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-bold text-muted transition-colors hover:bg-soft hover:text-forest;
+  }
+  .admin-nav-active {
+    @apply bg-soft text-mint before:absolute before:-left-3 before:h-5 before:w-0.5 before:rounded-full before:bg-mint;
+  }
+  .admin-icon-button {
+    @apply inline-flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-canvas text-muted transition-colors hover:bg-soft hover:text-mint disabled:cursor-default disabled:opacity-40;
+  }
+  .admin-button {
+    @apply inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-line bg-canvas px-4 text-sm font-extrabold text-forest transition-colors hover:border-mint hover:bg-soft disabled:cursor-default disabled:opacity-45;
+  }
+  .admin-button-primary {
+    @apply border-mint bg-mint text-canvas hover:border-forest hover:bg-forest;
+  }
+  .admin-page-heading {
+    @apply mb-7 flex flex-wrap items-center justify-between gap-5;
+  }
+  .admin-table-panel {
+    @apply overflow-hidden rounded-2xl border border-line bg-canvas;
+  }
+  .admin-data-table {
+    @apply w-full min-w-230 border-collapse text-left text-sm;
+  }
+  .admin-data-table thead {
+    @apply border-y border-line bg-canvas text-sm font-extrabold text-foreground;
+  }
+  .admin-data-table thead th {
+    @apply h-12 px-4 font-extrabold;
+  }
+  .admin-data-table tbody tr {
+    @apply border-b border-line/65 transition-colors last:border-b-0 hover:bg-soft/40;
+  }
+  .admin-data-table tbody tr[data-selected='true'] {
+    @apply bg-soft;
+  }
+  .admin-data-table tbody td,
+  .admin-data-table tbody th {
+    @apply h-16 px-4 py-2;
+  }
+  .admin-data-table tr > th,
+  .admin-data-table tr > td {
+    @apply border-r border-line/60 last:border-r-0;
+  }
+  .admin-data-table tr > :first-child {
+    @apply pl-6;
+  }
+  .admin-data-table tr > :last-child {
+    @apply pr-6;
+  }
+  .admin-data-table tr > .admin-selection-cell {
+    @apply w-12 min-w-12 p-0 text-center align-middle;
+  }
+  .admin-data-table input[type='checkbox'] {
+    @apply size-3.5 cursor-pointer;
+  }
+  .admin-row-action {
+    @apply inline-flex min-h-9 cursor-pointer items-center justify-center gap-4 rounded-lg border border-mint/40 px-3 text-[15px] font-extrabold whitespace-nowrap text-mint hover:bg-soft;
+  }
+
   .home-content {
     --color-forest: var(--color-black);
     --color-muted: var(--color-black);

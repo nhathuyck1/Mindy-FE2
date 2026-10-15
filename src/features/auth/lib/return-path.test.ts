@@ -28,7 +28,7 @@ describe('Post-login course return path', () => {
       'https://evil.test',
       '//evil.test',
       '/\\evil.test',
-      '/admin/users',
+      '/admin/unknown',
       '/courses/bad',
       'javascript:alert(1)',
     ])
@@ -38,5 +38,19 @@ describe('Post-login course return path', () => {
         '/courses/33333333-3333-4333-8333-333333333333?classId=bad&redirect=https://evil.test',
       ),
     ).toBe('/courses/33333333-3333-4333-8333-333333333333');
+  });
+  it('Allows only implemented admin screens and drops arbitrary query parameters', () => {
+    for (const path of [
+      '/admin',
+      '/admin/users',
+      '/admin/courses',
+      '/admin/classes',
+      '/admin/workflow',
+    ])
+      expect(safeReturnPath(`${path}?redirect=https://evil.test`)).toBe(path);
+    expect(safeReturnPath('/admin/users/anything')).toBe('/');
+    const students = '/admin/classes/44444444-4444-4444-8444-444444444444/students';
+    expect(safeReturnPath(`${students}?redirect=https://evil.test`)).toBe(students);
+    expect(safeReturnPath('/admin/classes/bad/students')).toBe('/');
   });
 });
