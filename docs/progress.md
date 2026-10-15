@@ -257,3 +257,9 @@
 ## Phạm vi sau
 
 Course detail/lớp/lịch public, email registration/verification, cart/checkout/QR payOS đã được mở rộng theo yêu cầu 15/10/2026. Nghiệm thu thanh toán tiền thật, CASH UI, Google, compiler và quản trị là phần tiếp theo.
+
+## 16/10/2026 — Cuộn khi chuyển trang sau đăng nhập
+
+- Khai báo data-scroll-behavior trên html để Next.js tạm tắt cuộn mượt khi chuyển route.
+- Bổ sung kiểm tra scrollY = 0 sau đăng nhập về trang chủ; Playwright desktop/mobile 2/2 pass, production build pass.
+
