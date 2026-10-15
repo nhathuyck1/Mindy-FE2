@@ -68,6 +68,18 @@
 }
 
 @layer components {
+  .home-content {
+    --color-forest: var(--color-black);
+    --color-muted: var(--color-black);
+  }
+
+  .cart-content {
+    --color-card-foreground: var(--color-black);
+    --color-secondary-foreground: var(--color-black);
+    --color-muted-foreground: var(--color-black);
+    --color-accent-foreground: var(--color-black);
+  }
+
   .page-container {
     @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10;
   }

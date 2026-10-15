@@ -1,5 +1,20 @@
 # Quy tắc giao diện Mindy
 
+## Màu chữ trang chủ và header — 15/10/2026
+
+- Trang chủ dùng chữ đen cho tiêu đề và nội dung. Xanh Mindy dành cho một số nhãn, điểm nhấn ngắn, icon và trạng thái đang chọn; không tô xanh cả khối chữ.
+- Hero giữ chữ trắng trên nền mint để đủ tương phản. Giữ CTA và màu thương hiệu đã thống nhất.
+- Header dùng chữ đen cho menu chưa chọn, tên tài khoản và icon giỏ hàng; mục menu đang chọn, avatar và điểm nhấn tương tác giữ xanh.
+
+## Giỏ hàng và thanh toán — 15/10/2026
+
+- Header có Button shadcn dẫn `/cart`: desktop lớn hiện icon + “Giỏ hàng”, mobile giữ icon 44px và accessible label; badge số lớp từ backend.
+- Luồng mới dùng shadcn Button, Card, Badge, Alert, Skeleton, Separator, Sonner với semantic tokens map vào palette hiện có. Component nghiệp vụ ghép các primitive; không thay theme toàn app.
+- Giỏ desktop hai cột danh sách/tổng tiền, mobile một cột. Checkout đi thẳng trang QR; không có form xác nhận thứ hai. Giá từ backend, lớp không thể mua chặn CTA.
+- QR nền trắng, khoảng trắng bốn module, không logo. Dùng payload qrCode; thiếu QR thì mở checkoutUrl payOS. Không dựng QR từ ID/URL rồi gọi đó là QR ngân hàng.
+- Cùng điện thoại có nút mở payOS; hết hạn/đối soát/đã thanh toán ẩn QR và thao tác trả tiền. PAID backend mới hiện thành công; có nút kiểm tra trạng thái và quay lại giỏ.
+- Kiểm tra 320px, mobile và desktop, bàn phím/focus; giữ Nunito, palette và header/footer.
+
 ## Nguồn thiết kế
 
 Palette: [pallete.png](./pallete.png). Logo: [logo.jpg](./logo.jpg). Ảnh sidebar và admin table trong docs dành cho giai đoạn quản trị sau này.
@@ -28,6 +43,11 @@ Palette tại docs FE2 được ưu tiên hơn theme xanh dương của homepage
 Token gốc đặt tại `src/app/globals.css`. Các màu `soft`, `line`, `muted`, `peach` được pha từ palette gốc với trắng. Không đặt mã hex rải rác trong component và không tự thêm palette khác. Màu cam chỉ dùng vừa phải. Theo yêu cầu mới nhất, ActionLink homepage dùng chữ/icon trắng trên `action` (80% coral + trắng), hover dùng `action-hover` (70% coral + trắng), có viền trắng mờ và shadow forest nhẹ.
 
 Chữ chính dùng forest; chữ phụ dùng muted pha 90% forest. Theo ảnh màu người dùng gửi ngày 15/10/2026, `hero` dùng trực tiếp mint `#338A85` (màu phổ biến nhất trích từ ảnh), `hero-ink` và `hero-copy` dùng canvas trắng. Caption trên thẻ trắng giữ chữ forest. Nền khối giới thiệu dùng `feature` (token sunshine), banner trống dùng `banner` (26% mint) với khung trắng giữ nguyên. Tất cả màu pha tham chiếu token gốc, tự đổi khi sửa palette.
+
+## Ảnh trong slider cách bắt đầu — cập nhật 15/10/2026
+
+- Giữ mascot bên trái. Khung bên phải dùng ảnh từ docs: `christina-wocintechchat-com-m-5UHFPbvBBzY-unsplash.jpg` cho tìm khóa học, `anhmih.jpg` cho học bằng cách thử, `hao.jpg` cho khởi đầu của riêng bạn; bản phục vụ web nằm trong `public/mindy`.
+- Khung ảnh chuyển từ trắng sang mint, giữ độ dày 16/20px và thêm bóng mint nhẹ. Ảnh phủ kín khung bằng `object-cover`.
 
 ## Bố cục và typography
 

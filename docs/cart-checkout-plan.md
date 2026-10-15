@@ -1,6 +1,6 @@
 # Kế hoạch giỏ hàng và thanh toán QR
 
-Ngày lập: 15/10/2026. Trạng thái: kế hoạch, chưa triển khai.
+Ngày lập: 15/10/2026. Trạng thái: đã triển khai frontend và kiểm thử mock; chưa nghiệm thu giao dịch tiền thật.
 
 ## 1. Mục tiêu và phạm vi
 
@@ -12,7 +12,7 @@ Triển khai tiếp trên **Mindy-FE2** theo luồng người dùng yêu cầu:
 - Dùng **qrcode.react**, ưu tiên `QRCodeSVG`, để render QR tại frontend.
 - Thanh toán online bằng payOS; checkout toàn bộ giỏ và tạo một order PAYOS.
 - Giữ palette Mindy, font Nunito, header/footer và quy tắc responsive hiện có.
-- Lần này lập kế hoạch Markdown. Các checkbox dưới đây dành cho lượt implement tiếp theo.
+- Kế hoạch đã được triển khai theo yêu cầu tiếp theo; kết quả kiểm tra ghi trong docs/progress.md.
 - CASH, trang quản trị và lịch sử đơn hàng đầy đủ dành cho giai đoạn sau. Có mục đơn chờ thanh toán tối thiểu để khôi phục giao dịch bị gián đoạn.
 
 ## 2. Hiện trạng đã kiểm tra
@@ -191,28 +191,28 @@ Tên file con chốt khi implement, chỉ tạo module/component có trách nhi�
 
 ### Giai đoạn 1 — Nền UI và contract
 
-- [ ] Đọc lại Swagger/DTO, các guide Next.js đang cài và kiểm tra thay đổi hiện có.
-- [ ] Cài/cấu hình shadcn, semantic tokens và qrcode.react; kiểm tra tương thích React/Tailwind đang dùng.
-- [ ] Bổ sung schemas, client DELETE, proxy allowlist/Origin và auth returnTo.
+- [x] Đọc lại Swagger/DTO, các guide Next.js đang cài và kiểm tra thay đổi hiện có.
+- [x] Cài/cấu hình shadcn, semantic tokens và qrcode.react; kiểm tra tương thích React/Tailwind đang dùng.
+- [x] Bổ sung schemas, client DELETE, proxy allowlist/Origin và auth returnTo.
 
 ### Giai đoạn 2 — Giỏ hàng
 
-- [ ] Header cart/badge, thông báo sau add-cart và `/cart` dùng dữ liệu thật.
-- [ ] Xóa lớp, cập nhật tổng tiền, loading/error/empty/unpurchasable.
-- [ ] Mục đơn đang chờ để mở lại checkout đã gián đoạn.
+- [x] Header cart/badge, thông báo sau add-cart và `/cart` dùng dữ liệu thật.
+- [x] Xóa lớp, cập nhật tổng tiền, loading/error/empty/unpurchasable.
+- [x] Mục đơn đang chờ để mở lại checkout đã gián đoạn.
 
 ### Giai đoạn 3 — Checkout và QR
 
-- [ ] Checkout PAYOS, chặn double click và chuyển tới orderId vừa tạo.
-- [ ] Đọc order, create/reuse payment, render QR từ payload và checkoutUrl fallback.
-- [ ] Countdown, polling có giới hạn, trạng thái kết thúc và khôi phục khi reload/lỗi mạng.
-- [ ] `/payment/result`, đăng nhập quay lại và kết quả theo backend.
+- [x] Checkout PAYOS, chặn double click và chuyển tới orderId vừa tạo.
+- [x] Đọc order, create/reuse payment, render QR từ payload và checkoutUrl fallback.
+- [x] Countdown, polling có giới hạn, trạng thái kết thúc và khôi phục khi reload/lỗi mạng.
+- [x] `/payment/result`, đăng nhập quay lại và kết quả theo backend.
 
 ### Giai đoạn 4 — Kiểm chứng và tài liệu
 
-- [ ] Test các hành vi bên dưới; sửa lỗi liên quan.
-- [ ] Cập nhật `docs/api-contracts.md`, `docs/architecture.md`, `docs/ui-rules.md`, `docs/progress.md` theo kết quả thực tế.
-- [ ] Cập nhật mục phạm vi commerce trong `AGENTS.md` đang ghi checkout chưa thuộc lần trước để phản ánh yêu cầu mới; giữ các quy tắc bảo mật khác.
+- [x] Test các hành vi bên dưới; sửa lỗi liên quan.
+- [x] Cập nhật `docs/api-contracts.md`, `docs/architecture.md`, `docs/ui-rules.md`, `docs/progress.md` theo kết quả thực tế.
+- [x] Cập nhật mục phạm vi commerce trong `AGENTS.md` đang ghi checkout chưa thuộc lần trước để phản ánh yêu cầu mới; giữ các quy tắc bảo mật khác.
 
 ## 10. Kiểm thử và tiêu chí hoàn tất
 

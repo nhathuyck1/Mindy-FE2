@@ -66,8 +66,8 @@ export function SessionControls() {
               .toLocaleUpperCase('vi') || 'M'}
           </span>
           <span className="hidden min-w-0 sm:block">
-            <span className="block text-[11px] font-semibold text-muted">Tài khoản của bạn</span>
-            <span className="block max-w-32 truncate text-base font-extrabold text-forest">
+            <span className="block text-[11px] font-semibold text-black">Tài khoản của bạn</span>
+            <span className="block max-w-32 truncate text-base font-extrabold text-black">
               {session.data.displayName}
             </span>
           </span>
@@ -87,7 +87,7 @@ export function SessionControls() {
               <p className="mb-2 text-[11px] font-extrabold tracking-wider text-mint uppercase">
                 Tài khoản Mindy
               </p>
-              <p className="text-base font-extrabold break-words text-forest">
+              <p className="text-base font-extrabold break-words text-black">
                 {session.data.displayName}
               </p>
               <p className="mt-1 text-sm break-all text-muted">{session.data.email}</p>

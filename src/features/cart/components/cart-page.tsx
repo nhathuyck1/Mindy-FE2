@@ -31,7 +31,9 @@ import { PendingOrders } from './pending-orders';
 export function CartPage() {
   return (
     <StudentGate returnTo="/cart">
-      <CartContent />
+      <div className="cart-content text-black">
+        <CartContent />
+      </div>
     </StudentGate>
   );
 }
@@ -58,7 +60,7 @@ function CartContent() {
   };
   return (
     <>
-      <Button asChild variant="link" className="mb-5 min-h-11 px-0">
+      <Button asChild variant="link" className="mb-5 min-h-11 px-0 text-black">
         <Link href="/courses">
           <ArrowLeft aria-hidden="true" />
           Khám phá khóa học
@@ -66,9 +68,13 @@ function CartContent() {
       </Button>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="eyebrow mb-3 text-mint">Hành trình học tập</p>
-          <h1 className="section-title">Giỏ hàng của bạn</h1>
-          <p className="mt-3 text-muted">Những lớp học bạn đã chọn, sẵn sàng cho bước tiếp theo.</p>
+          <p className="eyebrow mb-3 text-black">Hành trình học tập</p>
+          <h1 className="text-3xl leading-tight font-extrabold tracking-tight sm:text-4xl">
+            Giỏ hàng của bạn
+          </h1>
+          <p className="mt-3 text-sm font-normal text-black sm:text-base">
+            Những lớp học bạn đã chọn, sẵn sàng cho bước tiếp theo.
+          </p>
         </div>
         {cart.data && !cart.isError && (
           <Badge variant="secondary" className="px-4 py-2 text-sm">
@@ -79,7 +85,7 @@ function CartContent() {
       {checkout.isError && (
         <div className="mb-6 space-y-3">
           <CommerceError error={checkout.error} returnTo="/cart" />
-          <p className="text-sm text-muted">
+          <p className="text-sm text-black">
             Kiểm tra mục đơn đang chờ bên dưới trước khi thanh toán lại. Nếu đơn đã tạo, hãy tiếp
             tục trên đơn đó.
           </p>
@@ -98,10 +104,10 @@ function CartContent() {
         <Card className="border-line py-12 text-center shadow-none">
           <CardContent className="flex flex-col items-center gap-4">
             <span className="rounded-full bg-soft p-5">
-              <ShoppingBag className="size-9 text-mint" aria-hidden="true" />
+              <ShoppingBag className="size-9 text-black" aria-hidden="true" />
             </span>
             <h2 className="text-2xl font-extrabold">Giỏ hàng đang trống</h2>
-            <p className="max-w-md text-muted">
+            <p className="max-w-md text-black">
               Chọn một lớp học phù hợp để bắt đầu hành trình cùng Mindy.
             </p>
             <Button asChild className="mt-2 min-h-12">
@@ -118,23 +124,25 @@ function CartContent() {
             {cart.data.items.map((item) => (
               <Card key={item.classId} className="border-line shadow-none">
                 <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                  <span className="hidden size-14 shrink-0 items-center justify-center rounded-xl bg-soft text-mint sm:flex">
+                  <span className="hidden size-14 shrink-0 items-center justify-center rounded-xl bg-soft text-black sm:flex">
                     <BookOpen className="size-6" aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <Badge variant="secondary">{deliveryLabel(item.deliveryMode)}</Badge>
-                      <span className="break-all text-xs font-bold text-muted">
+                      <Badge variant="secondary" className="text-xs font-normal">
+                        {deliveryLabel(item.deliveryMode)}
+                      </Badge>
+                      <span className="break-all text-xs font-normal text-black">
                         {item.classCode}
                       </span>
                     </div>
-                    <h2 className="text-lg font-extrabold">
-                      <Link href={`/courses/${item.courseId}`} className="hover:text-mint">
+                    <h2 className="text-base font-bold leading-snug">
+                      <Link href={`/courses/${item.courseId}`} className="hover:text-black">
                         {item.courseTitle}
                       </Link>
                     </h2>
-                    <p className="mt-1 font-semibold">{item.className}</p>
-                    <p className="mt-3 flex items-start gap-2 text-sm text-muted">
+                    <p className="mt-1 text-sm font-normal">{item.className}</p>
+                    <p className="mt-3 flex items-start gap-2 text-sm font-normal text-black">
                       <CalendarDays className="size-4 shrink-0" aria-hidden="true" />
                       {formatDate(item.startDate)} – {formatDate(item.endDate)}
                     </p>
@@ -147,18 +155,18 @@ function CartContent() {
                       </Alert>
                     )}
                     {item.priceSnapshot !== item.currentPriceAmount && (
-                      <p className="mt-3 text-sm font-semibold text-muted">
+                      <p className="mt-3 text-sm font-normal text-black">
                         Học phí đã cập nhật từ {formatPrice(item.priceSnapshot)}.
                       </p>
                     )}
                   </div>
                   <div className="flex shrink-0 items-center justify-between gap-4 sm:flex-col sm:items-end">
-                    <p className="text-xl font-extrabold text-mint">
+                    <p className="text-base font-normal text-black sm:text-lg">
                       {formatPrice(item.currentPriceAmount)}
                     </p>
                     <Button
                       variant="ghost"
-                      className="min-h-11 text-muted hover:text-forest"
+                      className="min-h-11 text-black hover:text-black"
                       disabled={busy}
                       aria-label={`Xóa ${item.className}`}
                       onClick={async () => {
@@ -180,17 +188,19 @@ function CartContent() {
           </section>
           <Card className="border-line shadow-none lg:sticky lg:top-28">
             <CardHeader>
-              <CardTitle className="text-xl">Tổng thanh toán</CardTitle>
+              <CardTitle className="text-lg font-semibold">Tổng thanh toán</CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="flex justify-between gap-4 text-sm">
+              <div className="flex justify-between gap-4 text-sm font-normal">
                 <span>Học phí ({cart.data.items.length} lớp)</span>
                 <span className="font-bold">{formatPrice(cart.data.totalAmount)}</span>
               </div>
               <Separator />
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <span className="font-bold">Tổng cộng</span>
-                <strong className="text-2xl text-mint">{formatPrice(cart.data.totalAmount)}</strong>
+                <strong className="text-xl font-semibold text-black sm:text-2xl">
+                  {formatPrice(cart.data.totalAmount)}
+                </strong>
               </div>
               <Button
                 className="min-h-13 w-full rounded-xl text-base font-extrabold"
@@ -201,12 +211,12 @@ function CartContent() {
                 <ArrowRight aria-hidden="true" />
               </Button>
               {cart.data.totalAmount <= 0 && (
-                <p className="text-sm text-muted">
+                <p className="text-sm text-black">
                   Thanh toán QR yêu cầu tổng tiền lớn hơn 0. Vui lòng kiểm tra lại lớp đã chọn.
                 </p>
               )}
-              <p className="flex gap-2 text-sm leading-relaxed text-muted">
-                <ShieldCheck className="mt-0.5 size-4 shrink-0 text-mint" aria-hidden="true" />
+              <p className="flex gap-2 text-sm leading-relaxed font-normal text-black">
+                <ShieldCheck className="mt-0.5 size-4 shrink-0 text-black" aria-hidden="true" />
                 Quét QR hoặc mở payOS ở bước tiếp theo. Chỗ học được giữ sau khi đơn được tạo.
               </p>
             </CardContent>
