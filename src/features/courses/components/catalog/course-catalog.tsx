@@ -61,7 +61,10 @@ export function CourseCatalog() {
 
   return (
     <div className="page-container py-7 lg:py-9">
-      <nav aria-label="Đường dẫn" className="mb-5 flex items-center gap-2 text-xs text-muted">
+      <nav
+        aria-label="Đường dẫn"
+        className="mb-5 flex items-center gap-2 text-sm font-semibold text-muted"
+      >
         <Link href="/" className="hover:text-mint">
           Trang chủ
         </Link>
@@ -70,10 +73,10 @@ export function CourseCatalog() {
           Khóa học
         </span>
       </nav>
-      <h1 className="text-3xl leading-tight font-extrabold tracking-tight sm:text-4xl">
+      <h1 className="text-4xl leading-tight font-extrabold tracking-tight sm:text-[40px]">
         Khám phá tất cả khóa học
       </h1>
-      <p className="mt-2 text-sm text-muted">
+      <p className="mt-2 text-base font-semibold text-muted">
         Tìm điều bạn muốn học, chọn lớp phù hợp và bắt đầu cùng Mindy.
       </p>
       <div className="my-6 flex flex-col gap-4 rounded-xl border border-line bg-canvas p-3.5 md:flex-row md:items-center md:justify-between">
@@ -94,11 +97,11 @@ export function CourseCatalog() {
               setPage(1);
             }}
             placeholder="Tìm tên khóa học, công nghệ…"
-            className="min-h-11 w-full rounded-lg border border-line bg-soft pr-3 pl-9 text-sm"
+            className="min-h-11 w-full rounded-lg border border-line bg-soft pr-3 pl-9 text-base font-semibold"
           />
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <label htmlFor="course-sort" className="text-xs text-muted">
+          <label htmlFor="course-sort" className="text-sm font-semibold text-muted">
             Sắp xếp:
           </label>
           <select
@@ -108,7 +111,7 @@ export function CourseCatalog() {
               setSort(event.target.value as CourseSort);
               setPage(1);
             }}
-            className="min-h-11 min-w-0 flex-1 cursor-pointer rounded-lg border border-line bg-soft px-3 text-xs font-bold"
+            className="min-h-11 min-w-0 flex-1 cursor-pointer rounded-lg border border-line bg-soft px-3 text-sm font-bold"
           >
             <option value="default">Mặc định</option>
             <option value="title">Tên A – Z</option>
@@ -127,7 +130,7 @@ export function CourseCatalog() {
                 aria-label={item === 'grid' ? 'Chế độ lưới' : 'Chế độ danh sách'}
                 aria-pressed={view === item}
                 onClick={() => setView(item)}
-                className={`grid size-11 cursor-pointer place-items-center rounded-md ${view === item ? 'bg-canvas text-mint shadow-sm' : 'text-muted'}`}
+                className={`grid size-11 cursor-pointer place-items-center rounded-md ${view === item ? 'bg-canvas text-mint shadow-sm' : 'font-semibold text-muted'}`}
               >
                 <Icon name={item} className="size-4" />
               </button>
@@ -136,8 +139,8 @@ export function CourseCatalog() {
         </div>
       </div>
       {chips.length > 0 && (
-        <div className="mb-6 flex flex-wrap items-center gap-2 text-xs">
-          <span className="mr-1 text-muted">Đang lọc:</span>
+        <div className="mb-6 flex flex-wrap items-center gap-2 text-sm">
+          <span className="mr-1 font-semibold text-muted">Đang lọc:</span>
           {chips.map((chip) => (
             <button
               key={chip.key}
@@ -159,10 +162,10 @@ export function CourseCatalog() {
           </button>
         </div>
       )}
-      <div className="grid items-start gap-6 lg:grid-cols-[230px_minmax(0,1fr)]">
+      <div className="grid items-start gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
         <div>
           <details className="mb-4 rounded-xl border border-line bg-canvas p-4 lg:hidden">
-            <summary className="cursor-pointer text-sm font-extrabold">Lọc khóa học</summary>
+            <summary className="cursor-pointer text-base font-extrabold">Lọc khóa học</summary>
             <div className="mt-4">
               <CourseFilters
                 filters={filters}
@@ -196,7 +199,7 @@ export function CourseCatalog() {
             />
           ) : (
             <>
-              <p role="status" className="mb-4 text-xs text-muted">
+              <p role="status" className="mb-4 text-sm font-semibold text-muted">
                 <strong className="text-mint">{filtered.length} khóa học</strong>
                 {filtered.length > 0 &&
                   ` · Hiển thị ${(activePage - 1) * pageSize + 1}–${Math.min(activePage * pageSize, filtered.length)}`}
@@ -208,7 +211,12 @@ export function CourseCatalog() {
                   }
                 >
                   {visible.map((course) => (
-                    <CourseCard key={course.id} course={course} list={view === 'list'} />
+                    <CourseCard
+                      key={course.id}
+                      course={course}
+                      list={view === 'list'}
+                      comfortable
+                    />
                   ))}
                 </div>
               ) : (
@@ -218,6 +226,7 @@ export function CourseCatalog() {
                 />
               )}
               <Pagination
+                comfortable
                 page={activePage}
                 totalPages={totalPages}
                 onChange={(value) => {
@@ -234,8 +243,8 @@ export function CourseCatalog() {
           <Icon name="calendar" />
         </span>
         <div>
-          <h2 className="text-sm font-extrabold">Học theo lịch phù hợp với bạn</h2>
-          <p className="mt-1 text-xs leading-relaxed text-muted">
+          <h2 className="text-base font-extrabold">Học theo lịch phù hợp với bạn</h2>
+          <p className="mt-1 text-sm leading-relaxed font-semibold text-muted">
             Mở chi tiết khóa học để xem giáo trình, mentor và lịch của từng lớp đang mở.
           </p>
         </div>

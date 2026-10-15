@@ -7,6 +7,7 @@ import {
   mockCoursesApi,
   openClass,
   timetable,
+  units,
 } from './course-fixtures';
 import { testUser } from './api-fixtures';
 
@@ -14,17 +15,31 @@ test.beforeEach(async ({ page }) => {
   await mockCoursesApi(page);
 });
 
-test('Opens a real course route from home and expands the curriculum', async ({ page }) => {
+test('Opens a real course route from home and reads the curriculum without expanding units', async ({
+  page,
+}) => {
   await page.goto('/');
   await page.getByRole('link', { name: course.title, exact: true }).click();
   await expect(page).toHaveURL(`/courses/${courseId}`);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(course.title);
   const curriculum = page.locator('#giao-trinh');
-  await expect(curriculum.getByText(/Điểm yêu cầu.*80%/)).toBeVisible();
-  await curriculum.getByRole('button', { name: 'Mở rộng tất cả' }).click();
-  await expect(curriculum.getByText(/Điểm yêu cầu.*75%/)).toBeVisible();
-  await curriculum.getByRole('button', { name: 'Thu gọn tất cả' }).click();
-  await expect(curriculum.getByText(/Điểm yêu cầu.*80%/)).toBeHidden();
+  await expect(curriculum.getByRole('listitem')).toHaveCount(units.length);
+  for (const unit of units) {
+    await expect(curriculum.getByRole('heading', { name: unit.title, exact: true })).toBeVisible();
+    if (unit.description) {
+      await expect(curriculum.getByText(unit.description, { exact: true })).toBeVisible();
+    }
+  }
+  await expect(curriculum.getByText(/Điểm yêu cầu|\d+%/)).toHaveCount(0);
+  await expect(curriculum.getByRole('button')).toHaveCount(0);
+  const mentors = page.locator('#tong-quan #mentor');
+  await expect(
+    mentors.getByRole('heading', { name: 'Mentor hướng dẫn', exact: true }),
+  ).toBeVisible();
+  await mentors.getByRole('button', { name: 'Xem lớp & lịch học', exact: true }).first().click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
 test('Searches without accents, sorts prices, switches view and filters by supported fields', async ({

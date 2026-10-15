@@ -7,7 +7,7 @@ export function HeroSection() {
     <section className="relative isolate overflow-clip bg-hero text-hero-copy">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-[url('/mindy/hero-clouds.webp')] bg-cover bg-bottom opacity-25 mix-blend-luminosity"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[url('/mindy/hero-clouds.webp')] bg-cover bg-bottom opacity-40 mix-blend-screen brightness-50 contrast-[5] grayscale"
       />
       <div className="page-container grid items-center gap-4 pt-12 pb-14 md:grid-cols-[1.1fr_1fr] md:py-16 lg:min-h-170 lg:gap-8">
         <div className="relative z-10">
@@ -26,8 +26,11 @@ export function HeroSection() {
             tiến bộ cùng Mindy.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-3">
-            <ActionLink href="#khoa-hoc">Khám phá khóa học</ActionLink>
-            <a href="#thuc-hanh" className="text-link">
+            <ActionLink href="#khoa-hoc">KHÁM PHÁ KHÓA HỌC</ActionLink>
+            <a
+              href="#thuc-hanh"
+              className="text-link hover:text-canvas hover:underline hover:underline-offset-4"
+            >
               Thử viết mã nguồn <Icon name="code" className="size-4" />
             </a>
           </div>
@@ -46,7 +49,7 @@ export function HeroSection() {
             preload
             className="h-auto w-full drop-shadow-2xl"
           />
-          <p className="absolute bottom-[6%] left-[8%] -rotate-4 rounded-xl border border-line bg-canvas px-4 py-3 text-xs font-bold shadow-lg shadow-forest/5 sm:text-sm">
+          <p className="absolute bottom-[6%] left-[8%] -rotate-4 rounded-xl border border-line bg-canvas px-4 py-3 text-xs font-bold text-forest shadow-lg shadow-forest/5 sm:text-sm">
             Cứ thử. Bạn sẽ làm được.
           </p>
         </div>

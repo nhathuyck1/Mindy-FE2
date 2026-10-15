@@ -63,7 +63,7 @@ Token màu ở `src/app/globals.css`, theo `docs/pallete.png`. Tailwind v4 dùng
 - `/`: homepage theo Mindy-FE dev, palette docs; khóa học thật và bộ lọc danh mục, loading/error/empty.
 - `/login`: email/password, cookie session và logout trong header.
 - `/courses`: mẫu catalog người dùng gửi, tìm kiếm không dấu, lọc danh mục/hình thức/học phí, sắp xếp giá/tên, grid/list và phân trang. Search/price/sort chạy trên toàn bộ các trang API đã tải vì backend chưa có q/sort.
-- `/courses/[courseId]`: mẫu Stitch chi tiết, dùng palette config; giáo trình mở/đóng, mentor thật và lớp liên quan. Không bịa review, video học thử, số học viên hoặc cam kết hoàn tiền.
+- `/courses/[courseId]`: mẫu Stitch chi tiết, dùng palette config; giáo trình là danh sách học phần tĩnh (số thứ tự/tên/mô tả, không hiển thị % điểm yêu cầu), mentor thật và lớp liên quan. Không bịa review, video học thử, số học viên hoặc cam kết hoàn tiền.
 - Nút “Đăng ký học ngay” mở lớp/lịch công khai. Chỉ “Đăng ký lớp này” mới cần tài khoản STUDENT và thêm lớp vào giỏ qua API. Guest đi `/login?returnTo=...`, có link `/register`; login quay lại đúng khóa học/lớp và không tự mutation. Return path chỉ cho phép route courses + UUID đã kiểm tra.
 - Dialog native hỗ trợ Escape, focus trap/restore và scroll lock; mobile có bước quay lại danh sách lớp. Lịch dùng UTC+7, trạng thái hủy và số chỗ theo backend.
 - `/register` gửi email registration; 202 không phải login. `/verify-email` xác thực khi người dùng bấm nút, thiết lập session HttpOnly. Backend cần cấu hình FRONTEND_BASE_URL/EMAIL_VERIFICATION_PATH đúng frontend triển khai.

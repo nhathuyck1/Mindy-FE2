@@ -36,23 +36,23 @@ export function CourseFilters(props: {
       aria-label="Bộ lọc khóa học"
     >
       <div className="mb-5 flex items-center justify-between border-b border-line pb-4">
-        <h2 className="flex items-center gap-2 text-sm font-extrabold">
+        <h2 className="flex items-center gap-2 text-base font-extrabold">
           <Icon name="filter" className="size-4" /> Bộ lọc
         </h2>
         <button
           type="button"
           onClick={props.onReset}
-          className="min-h-11 cursor-pointer text-xs font-bold text-mint"
+          className="min-h-11 cursor-pointer text-sm font-bold text-mint"
         >
           Đặt lại
         </button>
       </div>
       <fieldset>
-        <legend className="mb-2 text-xs font-extrabold uppercase tracking-wide">Danh mục</legend>
+        <legend className="mb-2 text-sm font-extrabold uppercase tracking-wide">Danh mục</legend>
         {[{ id: '', name: 'Tất cả khóa học' }, ...props.categories].map((category) => (
           <label
             key={category.id}
-            className="flex min-h-11 cursor-pointer items-center gap-2.5 text-xs"
+            className="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm font-semibold"
           >
             <input
               type="radio"
@@ -68,7 +68,7 @@ export function CourseFilters(props: {
           <button
             type="button"
             onClick={props.retryCategories}
-            className="min-h-11 cursor-pointer text-xs font-bold text-mint"
+            className="min-h-11 cursor-pointer text-sm font-bold text-mint"
           >
             Tải lại danh mục
           </button>
@@ -76,13 +76,13 @@ export function CourseFilters(props: {
       </fieldset>
       <fieldset className="mt-5 border-t border-line pt-5">
         <legend className="sr-only">Hình thức học</legend>
-        <p className="mb-2 text-xs font-extrabold uppercase tracking-wide" aria-hidden="true">
+        <p className="mb-2 text-sm font-extrabold uppercase tracking-wide" aria-hidden="true">
           Hình thức học
         </p>
         {deliveryOptions.map((option) => (
           <label
             key={option.value}
-            className="flex min-h-11 cursor-pointer items-center gap-2.5 text-xs"
+            className="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm font-semibold"
           >
             <input
               type="radio"
@@ -97,13 +97,13 @@ export function CourseFilters(props: {
       </fieldset>
       <fieldset className="mt-5 border-t border-line pt-5">
         <legend className="sr-only">Mức học phí</legend>
-        <p className="mb-2 text-xs font-extrabold uppercase tracking-wide" aria-hidden="true">
+        <p className="mb-2 text-sm font-extrabold uppercase tracking-wide" aria-hidden="true">
           Mức học phí
         </p>
         {priceOptions.map((option) => (
           <label
             key={option.value}
-            className="flex min-h-11 cursor-pointer items-center gap-2.5 text-xs"
+            className="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm font-semibold"
           >
             <input
               type="radio"
@@ -116,7 +116,7 @@ export function CourseFilters(props: {
           </label>
         ))}
       </fieldset>
-      <p className="mt-5 border-t border-line pt-5 text-[11px] leading-relaxed text-muted">
+      <p className="mt-5 border-t border-line pt-5 text-sm leading-relaxed font-semibold text-muted">
         Chọn hình thức để tìm khóa học có lớp đang mở phù hợp với bạn.
       </p>
     </aside>

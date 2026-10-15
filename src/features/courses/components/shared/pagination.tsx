@@ -2,6 +2,7 @@ export function Pagination(props: {
   page: number;
   totalPages: number;
   onChange: (page: number) => void;
+  comfortable?: boolean;
 }) {
   if (props.totalPages <= 1) return null;
   const pages = [...new Set([1, props.page - 1, props.page, props.page + 1, props.totalPages])]
@@ -10,7 +11,7 @@ export function Pagination(props: {
   return (
     <nav
       aria-label="Phân trang"
-      className="mt-8 flex flex-wrap items-center justify-center gap-2 text-xs font-bold"
+      className={`mt-8 flex flex-wrap items-center justify-center gap-2 font-bold ${props.comfortable ? 'text-sm' : 'text-xs'}`}
     >
       <button
         type="button"

@@ -4,6 +4,9 @@ import { useRouter } from 'next/navigation';
 import { useSession } from '@/features/auth/api/auth-queries';
 import { useAddCartItem } from '@/features/cart/api/cart-queries';
 import { ApiError } from '@/lib/api/client';
+import Link from 'next/link';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import type { ClassDetail } from '../../schemas/course-contracts';
 
 export function ClassRegistration(props: { detail: ClassDetail }) {
@@ -17,12 +20,17 @@ export function ClassRegistration(props: { detail: ClassDetail }) {
   return (
     <div className="mt-5 border-t border-line pt-5">
       {addItem.isSuccess ? (
-        <p role="status" className="rounded-lg bg-soft p-4 text-sm font-bold">
-          Đã thêm lớp vào giỏ hàng. Chỗ học được giữ khi bạn tạo đơn thanh toán.
-        </p>
+        <div className="rounded-lg bg-soft p-4 text-sm font-bold">
+          <p role="status">
+            Đã thêm lớp vào giỏ hàng. Chỗ học được giữ khi bạn tạo đơn thanh toán.
+          </p>
+          <Button asChild className="mt-3 min-h-11">
+            <Link href="/cart">Xem giỏ hàng</Link>
+          </Button>
+        </div>
       ) : (
         <>
-          <button
+          <Button
             type="button"
             disabled={
               session.isPending ||
@@ -41,6 +49,9 @@ export function ClassRegistration(props: { detail: ClassDetail }) {
               }
               try {
                 await addItem.mutateAsync(props.detail.id);
+                toast.success('Đã thêm lớp vào giỏ hàng.', {
+                  action: { label: 'Xem giỏ hàng', onClick: () => router.push('/cart') },
+                });
               } catch (error) {
                 if (error instanceof ApiError && error.status === 401) goToLogin();
               }
@@ -56,7 +67,7 @@ export function ClassRegistration(props: { detail: ClassDetail }) {
                   : session.isError
                     ? 'Kiểm tra lại phiên đăng nhập'
                     : 'Đăng ký lớp này'}
-          </button>
+          </Button>
           {session.data && session.data.role !== 'STUDENT' && (
             <p className="mt-2 text-xs text-muted">Đăng ký lớp dành cho tài khoản học viên.</p>
           )}
