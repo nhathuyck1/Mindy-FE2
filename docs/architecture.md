@@ -88,7 +88,21 @@ Client/route hỗ trợ DELETE. Proxy chỉ allowlist cart/order/payment cho STU
 
 Payment CREATING retry 2/4/8 giây (tối đa 3 lần), đọc lại đơn trước mỗi lần, hủy khi unmount. GET order poll 3–10 giây tối đa 5 phút mỗi chu kỳ, dừng background/kết thúc/review/quyền; nút kiểm tra mở chu kỳ mới. Countdown hết hạn ẩn QR và refetch, không tự đổi trạng thái backend.
 
-## Kiểm tra
+## Mentor — 16/10/2026
+
+`MentorClassStudents` dùng primitives shadcn và các class bảng Admin chung cho roster của Mentor; không phụ thuộc query/actions của module Admin. Server filters orderStatus/paymentType và pagination nằm trong query key; tìm tên/sort chỉ trong trang. Status badge theo palette xanh/vàng/đỏ, skeleton dùng TableSkeleton chung. Không mở thêm endpoint hoặc quyền thu tiền.
+
+Lịch dùng `useMentorWeek` với key theo user ID và thứ Hai của tuần. Loader lấy đủ các trang `mentor/schedule` trong khoảng thứ Hai 00:00 tới thứ Hai kế tiếp 00:00 UTC+7, kiểm total/ID trùng; không đưa lịch một phần vào bảng. `weekly-timetable.ts` nhóm theo ngày Việt Nam và sáu ca cố định 07:30–09:00, 09:30–11:00, 13:00–15:30, 16:00–17:30, 18:00–19:30, 20:00–21:30. Giữ đủ sáu ca; buổi ngoài khung được giữ ở hàng Khác. Ưu tiên ca chứa giờ bắt đầu, nếu bắt đầu trong giờ nghỉ lấy ca giao nhau nhiều nhất; giữ nguyên giờ BE và tách buổi qua nửa đêm theo ngày. Bảng tuần giữ đủ bảy cột, sticky cột ca, mobile cuộn trong panel; không có phân trang UI cho lịch tuần.
+
+`/mentor` có shell riêng và guard MENTOR ACTIVE; lịch thực tế gồm buổi dạy thay. `/mentor/classes` liệt kê lớp; `/mentor/classes/[classId]` xem học viên (chỉ đọc trạng thái thanh toán), unit, học liệu và cấu hình release. `/mentor/sessions/[sessionId]` đọc context và điểm danh. Login MENTOR mặc định về `/mentor`, account menu có liên kết và returnTo chỉ nhận các route Mentor đã triển khai với UUID hợp lệ.
+
+Module `features/mentor` sở hữu Zod contract, TanStack Query theo user ID/path/filter và UI. `mentor-rules.server.ts` mở allowlist riêng theo method/path/UUID/query/body; adapter giữ Origin, cookie access_token và no-store. Attendance gửi expectedVersion + UUID Idempotency-Key, không tự retry mutations; invalidation cả khi lỗi giúp đọc lại trạng thái sau mất response hoặc conflict. UI dùng permissions BE.
+
+Học liệu ARTICLE/FILE/VIDEO sử dụng revision, canEdit và ownership; chỉ sửa/xóa nháp DRAFT/REJECTED chưa từng duyệt. Upload qua intent → PUT MinIO không credentials → complete → polling file status tối đa hai phút, có hủy. Chỉ file READY đúng Course Unit được dùng. Preview lấy signed URL theo yêu cầu, giữ trong memory và bỏ khỏi giao diện khi hết hạn; HTML hiển thị trong iframe sandbox/CSP. Unit release gửi OPEN/LOCKED và unlockAt timezone rõ ràng, COMPLETED không cho thao tác.
+
+Không có cash-orders/confirm trong allowlist hay UI. Đồng bộ roster chỉ nhận học viên do BE xác định đã đủ điều kiện. Không triển khai xin nghỉ/bù, assignment, recovery/audit hoặc tự duyệt nội dung.
+
+## Kiểm tra tự động
 
 `npm run check` chạy lint, format, types, unit tests, production build và E2E. Unit tests kiểm tra cookie boundary, DTO và proxy allowlist/Origin. Playwright chạy production server riêng ở port 3103, có mock API ổn định; kiểm tra giao diện desktop/mobile, filter, login success/error và Web Storage không có token. Live catalog smoke được ghi riêng trong API contracts; không coi mocked login là live login.
 

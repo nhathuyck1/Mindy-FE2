@@ -40,7 +40,13 @@ export function LoginForm() {
           try {
             const response = await login.mutateAsync(result.data);
             router.replace(
-              response.user.role === 'ADMIN' && returnTo === '/' ? '/admin' : returnTo,
+              returnTo === '/'
+                ? response.user.role === 'ADMIN'
+                  ? '/admin'
+                  : response.user.role === 'MENTOR'
+                    ? '/mentor'
+                    : returnTo
+                : returnTo,
             );
           } catch {
             /* Mutation renders its error below. */

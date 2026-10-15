@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -19,7 +23,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     }
   },
   "include": [
@@ -66,7 +72,11 @@
     ".next-course-width/types/**/*.ts",
     ".next-course-width/dev/types/**/*.ts",
     ".next-cart-check/types/**/*.ts",
-    ".next-cart-check/dev/types/**/*.ts"
+    ".next-cart-check/dev/types/**/*.ts",
+    ".next-mentor-review/types/**/*.ts",
+    ".next-mentor-review/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

@@ -1,5 +1,67 @@
 # Tiến độ
 
+- 16/10/2026: Giờ bắt đầu và kết thúc dưới số ca nằm cùng một dòng, ngăn bằng dấu |; cột Ca học rộng 96px để giờ không xuống dòng.
+
+- 16/10/2026: Theo xác nhận mới, thêm khung giờ bắt đầu/kết thúc nhỏ bên dưới số ca 1–6 trong cột Ca học; dùng đúng sáu khung giờ đã chốt, giữ cột gọn và giờ thực tế trong từng buổi.
+
+## 16/10/2026 — Sáu ca học cố định theo giờ người dùng
+
+- Ca 1: 07:30–09:00; ca 2: 09:30–11:00; ca 3: 13:00–15:30; ca 4: 16:00–17:30; ca 5: 18:00–19:30; ca 6: 20:00–21:30. Luôn giữ đủ sáu ca, cột Ca học chỉ hiện số.
+- Xếp buổi theo ca chứa giờ bắt đầu; giờ bắt đầu trong khoảng nghỉ lấy ca có phần giao nhau dài nhất. Giữ giờ BE trong thẻ buổi, không đổi lịch thực tế. Buổi hoàn toàn ngoài ca và qua nửa đêm vẫn hiển thị trong hàng Khác theo ngày UTC+7.
+
+- 16/10/2026: Đổi nhãn Học phần thành Chương trên toàn bộ giao diện Mentor: tab Chương & học liệu, danh sách/tiêu đề chương, các buổi trong chương và quyền mở/khóa chương. Giữ nguyên contract/API unit và cập nhật locator E2E tương ứng.
+
+## 16/10/2026 — Bảng học viên Mentor theo mẫu Admin
+
+- Thay bảng đơn giản bằng panel/table dùng cùng class và shadcn primitives với Admin: hàng 64px, header 48px, đường kẻ cột, hover và nhãn trạng thái màu có chấm.
+- Thêm tab trạng thái thanh toán, lọc hình thức, tìm tên không dấu/sắp xếp trong trang, Làm mới và chọn số dòng/phân trang. Các filter/pagination đi qua API Mentor hiện có; không mở cash-orders/confirm hoặc API quản trị. Loading dùng skeleton chung, giữ state error/retry/empty và bảng cuộn trong panel trên mobile.
+- Kiểm tra TypeScript, production build, ESLint/Prettier file thay đổi và 16 E2E Mentor desktop/mobile đạt. Test mới xác nhận hàng 64px, tìm không dấu, sort, đổi trang/số dòng, lọc trạng thái/hình thức, dữ liệu rỗng và viewport 320px. Đã xem screenshot desktop/mobile; API được mock, không ghi backend thật.
+
+- 16/10/2026: Đảo vị trí theo yêu cầu mới: ô ngày bên trái, nhóm nút chuyển tuần bên phải; giữ căn giữa chiều dọc và thứ tự bàn phím theo bố cục.
+
+- 16/10/2026: Căn giữa nhóm nút chuyển tuần theo chiều dọc trong panel điều khiển lịch, giữ nhóm nút bên trái và ô ngày bên phải.
+
+- 16/10/2026: Thu gọn lịch thêm theo yêu cầu: ô trống cao 80px, thẻ buổi học khoảng 104px, giảm padding/gap/header và dòng khoảng tuần. Giữ cỡ chữ nội dung buổi và bố cục cột hiện tại. Kiểm tra lint/format, build và E2E lịch desktop/mobile.
+
+- 16/10/2026: Thu hẹp cột ngày không có lớp trong cả tuần còn khoảng 80px, dành phần rộng còn lại cho ngày có lịch. Giữ đủ bảy ngày, ô lịch căn thẳng và cuộn ngang trên mobile. Kiểm tra build/TypeScript, lint/format và E2E desktop/mobile, có kiểm chiều rộng cột trống nhỏ hơn cột có lớp.
+
+- 16/10/2026: Bỏ giờ bắt đầu/kết thúc ở cột Ca học theo yêu cầu; cột này chỉ hiện số ca. Giữ giờ trong từng buổi và cách nhóm ca hiện có.
+
+## 16/10/2026 — Nút chuyển tuần bên trái, chọn ngày bên phải, ca 1 lúc 07:30
+
+- Đặt nhóm Tuần trước / Tuần hiện tại / Tuần sau bên trái panel, ô chọn ngày dd/mm/yyyy bên phải. Giữ bố cục wrap trên mobile.
+- Ca đầu hiển thị 07:30; khi chưa có buổi bắt đầu giờ này, giữ hàng trống và không bịa giờ kết thúc. Các buổi có giờ dạy đúng theo BE, không đổi lịch thực tế.
+- Kiểm tra build/TypeScript, ESLint/Prettier và E2E lịch desktop/mobile; xác nhận thứ tự điều khiển, ca đầu và ảnh giao diện.
+
+## 16/10/2026 — Chọn ngày dd/mm/yyyy và lịch gọn, đều cột
+
+- Đưa bộ chọn lịch sang góc phải, thay native week input bằng ô dd/mm/yyyy cố định; hỗ trợ nhập/Enter/blur, icon mở lịch Popover, kiểm ngày thực tế (gồm năm nhuận) trước khi chuyển tuần.
+- Bảng dùng bảy cột ngày bằng nhau, header/padding thấp hơn, nội dung canh trên; tiêu đề hai dòng, giờ/mentor/trạng thái có hàng cố định để căn thẳng. Giữ tooltip tên đầy đủ và liên kết chi tiết. Giảm chiều cao ca và font phụ vừa phải.
+- Kiểm tra unit tests, build/TypeScript, ESLint/Prettier và E2E lịch desktop/mobile, gồm nhập ngày sai, chọn ngày từ popup và viewport 320px. Xem lại screenshot để kiểm bố cục.
+
+## 16/10/2026 — Khung chọn tuần riêng theo ảnh tham khảo
+
+- Thêm panel trắng bo góc phía trên thời khóa biểu: ô chọn tuần/năm, nút Tuần trước, Tuần hiện tại màu mint có icon lịch và Tuần sau. Desktop xếp ngang; mobile tự xuống hàng trong viewport. Bỏ ô chọn ngày và nhóm chuyển tuần trùng ở header bảng.
+- Week picker dùng ISO week (ví dụ 2026-W42), chuyển đúng thứ Hai theo năm tuần, kể cả tuần giáp năm. Giữ lịch và API hiện có. Kiểm tra 64 unit tests, TypeScript/build, ESLint file thay đổi và E2E chọn/chuyển tuần desktop/mobile; xem screenshot panel.
+
+## 16/10/2026 — Lịch Mentor dạng thời khóa biểu tuần
+
+- Thay danh sách lịch bằng bảng theo ảnh người dùng: thứ Hai–Chủ nhật, các ca theo giờ thực tế, ngày hiện tại tô mint, buổi dạy có giờ/mentor/trạng thái/dạy thay và liên kết chi tiết/điểm danh. Giữ palette Mindy; mobile cuộn ngang trong panel, cột ca cố định.
+- Có tuần trước/sau, về tuần này và chọn ngày. Tuần và ngày tính theo UTC+7; sự kiện qua nửa đêm hiện ở cả hai ngày, các buổi chung ca được giữ đầy đủ trong ô. Tuần rỗng vẫn hiển thị bảy cột ngày.
+- Tải toàn bộ trang API của tuần trước khi hiển thị, kiểm ID trùng/total thay đổi để tránh lịch thiếu buổi. Không đổi endpoint BE hoặc mở API thu tiền.
+- Kiểm tra 63 unit tests, TypeScript, ESLint/Prettier file thay đổi, production build và 14 E2E Mentor desktop/mobile; gồm đổi tuần, chọn ngày, ca trùng, lịch rỗng, viewport 320px và các luồng điểm danh/học liệu cũ. Kiểm tra API bằng mock và xem screenshot bảng tuần.
+
+## 16/10/2026 — Không gian Mentor (FE2)
+
+- Đọc BE teaching/roster/attendance/files và các nhánh mentor submission/unit release; xác minh Swagger live `/docs-json` có đủ API đã nối. Chỉ sửa FE2.
+- Thêm `/mentor`, `/mentor/classes`, `/mentor/classes/[classId]`, `/mentor/sessions/[sessionId]`: guard MENTOR ACTIVE, sidebar desktop/mobile, login default/returnTo và menu tài khoản.
+- Lịch dạy thực tế gồm dạy thay; danh sách lớp và học viên kèm trạng thái đăng ký/thanh toán (chỉ xem); unit được phân công và danh sách buổi của unit.
+- Điểm danh theo snapshot/totals/permissions BE: bắt đầu, tick/bỏ tick, đồng bộ roster, xác nhận chốt; expectedVersion và Idempotency-Key, không tự retry writes. Bỏ tick buổi đã chốt gửi ABSENT; buổi mở gửi UNMARKED; lỗi conflict đọc lại trạng thái.
+- Học liệu ARTICLE/FILE/VIDEO: list/detail, tạo/sửa/xóa nháp của mình chưa từng duyệt, gửi Manager duyệt; expectedRevision theo từng thao tác. File chính/đính kèm qua MinIO intent → PUT không cookie → complete → status polling/cancel; chặn file chưa READY/FAILED. Preview signed link có expiry; nội dung HTML trong sandbox/CSP. Mở/khóa/hẹn giờ unit theo UTC+7.
+- Không nối GET/POST cash-orders/confirm, không có UI thu tiền; không có mentor assignment, attendance recovery/audit, duyệt học liệu hoặc xin nghỉ/bù.
+- Kiểm tra: ESLint, TypeScript, production build `.next-mentor-review`, 59 unit tests và toàn bộ E2E 111 pass/3 skip theo cấu hình nền tảng; riêng Mentor 12 E2E desktop/mobile gồm upload PROCESSING→READY/FAILED, preview, permissions/conflict và viewport 320px. Đã xem screenshot lịch desktop và editor mobile; dev preview 3003 trả 200 cho `/mentor`.
+- Prettier các file thay đổi đạt. `prettier --check .` còn báo các file cũ ngoài phạm vi (chủ yếu CRLF từ checkout); không format lan toàn repo. Test dùng API mock, chưa nghiệm thu account Mentor/MinIO thật.
+
 - 15/10/2026: Nút trạng thái người dùng ở bảng mở thẳng hộp xác nhận khóa/mở tài khoản, không qua modal trạng thái; chỉ PATCH sau Xác nhận, Quay lại không ghi dữ liệu. Trigger AlertDialog chuẩn shadcn khôi phục focus. Bỏ nhãn Không gian làm việc ở sidebar.
 
 ## 15/10/2026 — Tổng quan có chart theo ảnh dashboard

@@ -1,5 +1,25 @@
 # Quy tắc giao diện Mindy
 
+## Mentor — 16/10/2026
+
+- Giao diện Mentor dùng thuật ngữ Chương thay cho Học phần, gồm tab Chương & học liệu, danh sách/chỉ số chương, buổi trong chương và mở/khóa chương. Tên unit trong API/code không đổi.
+
+- Bảng học viên trong lớp dùng mẫu Admin: `admin-table-panel`/`admin-data-table`, header 48px, hàng 64px, viền cột mảnh, không avatar hoặc thao tác quản trị. Trạng thái có nhãn/chấm xanh-vàng-đỏ như Admin. Tab trạng thái thanh toán và bộ lọc hình thức dùng server; tìm kiếm/sắp xếp tên giới hạn trong trang. Header có tổng theo bộ lọc/Làm mới; footer chọn 10/20/50 dòng và phân trang. Loading dùng TableSkeleton, có lỗi/retry/empty và cuộn ngang từ 320px.
+
+- Lịch dùng bố cục gọn: ô trống cao khoảng 80px, thẻ buổi học tối thiểu 104px; gap 2px, padding nhỏ, giữ cỡ chữ thông tin buổi hiện có. Ngày có nhiều buổi vẫn tăng chiều cao để hiển thị đầy đủ.
+
+- Panel điều khiển lịch: ô chọn ngày dd/mm/yyyy ở trái (nhập trực tiếp hoặc mở Popover), ba nút Tuần trước / Tuần hiện tại / Tuần sau ở phải; hai nhóm căn giữa theo chiều dọc. Chọn ngày tự mở tuần chứa ngày đó; ngày không hợp lệ hiện lỗi. Nút hiện tại nền mint, nút còn lại outline. Mobile wrap, không tràn ngang.
+- Cố định sáu ca: 1 = 07:30–09:00, 2 = 09:30–11:00, 3 = 13:00–15:30, 4 = 16:00–17:30, 5 = 18:00–19:30, 6 = 20:00–21:30. Luôn giữ sáu hàng kể cả ca trống. Cột Ca học hiện số thứ tự và khung giờ nhỏ bên dưới trên cùng một dòng dạng 07:30 | 09:00; giờ cụ thể trong từng buổi lấy nguyên từ BE. Ưu tiên ca chứa giờ bắt đầu; nếu bắt đầu trong khoảng nghỉ thì lấy ca giao nhau nhiều nhất. Buổi hoàn toàn ngoài khung hiện tại hàng Khác để không mất lịch.
+- Bảng lịch gọn: cột ngày không có lớp trong cả tuần thu hẹp còn khoảng 80px; các ngày có lớp chia phần chiều rộng còn lại. Cột ca 96px, header/padding nhỏ; tên buổi tối đa hai dòng với title đầy đủ, dòng giờ và mentor có vị trí cố định, tên mentor dài rút gọn bằng dấu ba chấm. Nội dung các ô canh trên cùng; nhiều buổi trong một ô xếp dọc.
+
+- Lịch Mentor theo ảnh tham khảo: bảng tuần thứ Hai–Chủ nhật, cột ca cố định bên trái, viền ô mảnh, buổi học hiển thị tên/giờ/mentor/trạng thái và nhãn dạy thay. Tô mint ngày hiện tại; các buổi trùng khung giờ cùng ngày xếp dọc trong ô. Ca nhóm theo giờ thực tế. Chuyển tuần trước/sau/hiện tại và chọn ngày bất kỳ; mobile cuộn ngang trong bảng, không tràn toàn trang.
+
+- Shell Mentor riêng, dùng cùng palette/Inter và primitive shadcn của workspace Admin để giữ nhất quán. Desktop sidebar thu gọn, mobile Sheet, menu tài khoản và skip link. Hai mục chính: Lịch dạy, Lớp của tôi.
+- Lịch thực tế có nhãn Dạy thay, khoảng ngày theo UTC+7, trạng thái, context và điểm danh. Điểm danh chỉ đổi tick sau khi server xác nhận; chốt buổi có Dialog nêu rõ người chưa tick thành vắng. Các nút theo permissions backend.
+- Lớp có tab Học viên và Học phần & học liệu; bảng học viên chỉ xem trạng thái đăng ký/thanh toán. Không có menu hoặc nút thu tiền mặt.
+- Học liệu có loại/trạng thái, xem chi tiết, HTML trong sandbox, file preview theo signed link, form nháp và gửi duyệt. Chỉ bản của chính mình, canEdit, DRAFT/REJECTED và chưa từng duyệt mới hiện sửa/xóa/gửi. Upload hiển thị tiến trình/kiểm tra/hủy; chờ READY mới lưu.
+- Mở/khóa/hẹn giờ học phần bằng Dialog có nhãn UTC+7; không cho thay trạng thái COMPLETED. Loading/error/retry/empty/phân trang đầy đủ, modal giữ Escape/focus và giới hạn viewport.
+
 ## Admin template — 15/10/2026
 
 - Tổng quan theo ảnh dashboard người dùng gửi: bốn thẻ số liệu có sparkline, hàng biểu đồ vùng/cột, bên dưới là bảng lớp + khóa học theo số lớp + donut vai trò tài khoản. Dùng Card/Chart shadcn và Recharts, palette Mindy và typography Admin hiện có. Tooltip, chú giải và số liệu dạng chữ đi cùng chart; tắt animation của chart để hỗ trợ reduced motion. Mobile xếp một cột, bảng cuộn trong panel.
