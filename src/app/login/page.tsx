@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import { Suspense } from 'react';
 import { Brand } from '@/components/ui/brand';
-import { LoadingOverlay } from '@/components/ui/spinner';
 import { LoginForm } from '@/features/auth/components/login-form';
 
 export const metadata: Metadata = { title: 'Đăng nhập — Mindy Coding' };
@@ -13,7 +12,7 @@ export default function LoginPage() {
       <div className="flex flex-col items-start px-6 py-8 sm:px-12 lg:px-16">
         <Brand />
         <div className="flex w-full flex-1 items-center justify-center py-12">
-          <Suspense fallback={<LoadingOverlay scope="page" label="Đang tải trang đăng nhập…" />}>
+          <Suspense fallback={<p role="status">Đang tải trang đăng nhập…</p>}>
             <LoginForm />
           </Suspense>
         </div>

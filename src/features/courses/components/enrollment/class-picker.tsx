@@ -8,7 +8,6 @@ import type { CourseDetail } from '../../schemas/course-contracts';
 import { Pagination } from '../shared/pagination';
 import { QueryState } from '../shared/query-state';
 import { ClassTimetable } from './class-timetable';
-import { LoadingOverlay } from '@/components/ui/spinner';
 
 export function ClassPicker(props: {
   course: CourseDetail;
@@ -98,7 +97,7 @@ export function ClassPicker(props: {
             <option value="OFFLINE">Tại trung tâm</option>
           </select>
           {classes.isPending ? (
-            <LoadingOverlay scope="modal" label="Đang tìm lớp đang mở…" />
+            <QueryState loading title="Đang tìm lớp đang mở…" />
           ) : classes.isError ? (
             <QueryState title="Chưa thể tải danh sách lớp" retry={() => void classes.refetch()} />
           ) : items.length === 0 ? (

@@ -1,22 +1,11 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { ApiError, apiRequest } from '@/lib/api/client';
-import { authResponseSchema, loginSchema, userSchema, type User } from '@/lib/api/contracts';
+import { authResponseSchema, loginSchema, userSchema } from '@/lib/api/contracts';
 
 export const sessionKey = ['auth', 'session'] as const;
-
-export async function replaceSession(queryClient: QueryClient, user: User | null) {
-  await queryClient.cancelQueries();
-  // Preserve the observed session query so every mounted guard receives the change.
-  queryClient.setQueryData(sessionKey, user);
-  queryClient.removeQueries({
-    predicate: (query) =>
-      query.queryKey[0] !== sessionKey[0] || query.queryKey[1] !== sessionKey[1],
-  });
-  queryClient.getMutationCache().clear();
-}
 
 let authQueue: Promise<unknown> = Promise.resolve();
 
@@ -73,7 +62,11 @@ export function useLogin() {
           schema: authResponseSchema,
         }),
       ),
-    onSuccess: (result) => replaceSession(queryClient, result.user),
+    onSuccess: async (result) => {
+      await queryClient.cancelQueries();
+      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'auth' });
+      queryClient.setQueryData(sessionKey, result.user);
+    },
   });
 }
 
@@ -89,6 +82,10 @@ export function useLogout() {
           throw error;
         }
       }),
-    onSuccess: () => replaceSession(queryClient, null),
+    onSuccess: async () => {
+      await queryClient.cancelQueries();
+      queryClient.setQueryData(sessionKey, null);
+      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'auth' });
+    },
   });
 }

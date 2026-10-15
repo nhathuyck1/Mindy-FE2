@@ -1,6 +1,6 @@
 # Kiến trúc Mindy FE2
 
-Stack: Next.js App Router, React, TypeScript strict, Tailwind CSS v4, TanStack Query, Redux Toolkit và shadcn/ui cho Admin. App chạy port 3003; API cấu hình trong `.env.local` theo `.env.example`.
+Stack: Next.js App Router, React, TypeScript strict, Tailwind CSS v4, TanStack Query và Redux Toolkit. App chạy port 3003; API cấu hình trong `.env.local` theo `.env.example`.
 
 Tham khảo convention và cách tổ chức của [ixartz/Next-js-Boilerplate](https://github.com/ixartz/Next-js-Boilerplate); khởi tạo bằng create-next-app. Bộ công cụ frontend gồm ESLint, Prettier, Vitest và Playwright. Backend Mindy sở hữu auth, dữ liệu và giao dịch; không thêm Clerk, Drizzle hoặc database demo.
 
@@ -14,14 +14,12 @@ src/
     register/          # Student registration, verification required
     verify-email/      # Explicit email verification and session establishment
     courses/           # Catalog + [courseId] detail, public
-    admin/             # Admin overview/users/courses/classes/workflow
   components/
     layout/            # Header, footer, navigation
     ui/                # Brand, icon, action link
   features/
     home/              # Các section và catalog homepage
     auth/              # Login/session Query hooks và UI
-    admin/             # Protected admin, DTO/query/resource table and editors
     courses/
       api/             # Public queries; cache keys include filters/page/IDs
       schemas/         # Runtime Zod DTOs, inferred TypeScript types
@@ -58,9 +56,7 @@ Backend dùng cookie HttpOnly: access token Path `/`, refresh token Path `/api/v
 
 ## Styling và assets
 
-Dashboard Admin dùng Card/Chart shadcn và Recharts. `admin-overview-queries.ts` giữ ba Query snapshot users/courses/classes, tải đủ pagination qua adapter hiện có và không công bố tổng hợp nếu dữ liệu thiếu/trùng hoặc total thay đổi giữa các trang. Query key `['admin', resource, 'overview']` nhận invalidation sau CRUD và được xóa khi đổi phiên. `lib/admin-overview.ts` tổng hợp tháng theo Asia/Ho_Chi_Minh, đếm trạng thái/vai trò và xếp khóa học theo số lớp; components chỉ trình bày/chart và state bộ lọc thời gian.
-
-Token màu ở `src/app/globals.css`, theo `docs/pallete.png`. Tailwind v4 dùng `@theme` và loader `@tailwindcss/turbopack` do create-next-app 16.4.1 tạo. Không thêm PostCSS xử lý Tailwind lần hai. Font Nunito Variable local qua Fontsource, có tiếng Việt; build không tải Google Fonts. Admin import Inter Variable (Fontsource) trong `app/admin/layout.tsx`; `html:has([data-admin-root])` đổi `--font-sans` sang `--font-admin` để portal cũng dùng Inter. Ảnh dùng next/image và sizes, ảnh API chỉ từ host allowlist.
+Token màu ở `src/app/globals.css`, theo `docs/pallete.png`. Tailwind v4 dùng `@theme` và loader `@tailwindcss/turbopack` do create-next-app 16.4.1 tạo. Không thêm PostCSS xử lý Tailwind lần hai. Font Nunito Variable local qua Fontsource, có tiếng Việt; build không tải Google Fonts. Ảnh dùng next/image và sizes, ảnh API chỉ từ host allowlist.
 
 ## Phạm vi
 
@@ -69,14 +65,12 @@ Token màu ở `src/app/globals.css`, theo `docs/pallete.png`. Tailwind v4 dùng
 - `/courses`: mẫu catalog người dùng gửi, tìm kiếm không dấu, lọc danh mục/hình thức/học phí, sắp xếp giá/tên, grid/list và phân trang. Search/price/sort chạy trên toàn bộ các trang API đã tải vì backend chưa có q/sort.
 - `/courses/[courseId]`: mẫu Stitch chi tiết, dùng palette config; giáo trình là danh sách học phần tĩnh (số thứ tự/tên/mô tả, không hiển thị % điểm yêu cầu), mentor thật và lớp liên quan. Không bịa review, video học thử, số học viên hoặc cam kết hoàn tiền.
 - Nút “Đăng ký học ngay” mở lớp/lịch công khai. Chỉ “Đăng ký lớp này” mới cần tài khoản STUDENT và thêm lớp vào giỏ qua API. Guest đi `/login?returnTo=...`, có link `/register`; login quay lại đúng khóa học/lớp và không tự mutation. Return path chỉ cho phép route courses + UUID đã kiểm tra.
-- Dialog/Sheet shadcn/ui (Radix) hỗ trợ Escape, focus trap/restore và scroll lock; mobile có bước quay lại danh sách lớp. Lịch dùng UTC+7, trạng thái hủy và số chỗ theo backend.
+- Dialog native hỗ trợ Escape, focus trap/restore và scroll lock; mobile có bước quay lại danh sách lớp. Lịch dùng UTC+7, trạng thái hủy và số chỗ theo backend.
 - `/register` gửi email registration; 202 không phải login. `/verify-email` xác thực khi người dùng bấm nút, thiết lập session HttpOnly. Backend cần cấu hình FRONTEND_BASE_URL/EMAIL_VERIFICATION_PATH đúng frontend triển khai.
-- `/admin`: shell theo ảnh sidebar/admin table; tổng quan, users/courses/classes dùng bảng chung và hướng dẫn workflow. ADMIN ACTIVE, GET list có cookie/Zod, filter server, search/sort trong trang, chọn dòng/CSV/cột/dialog. Chi tiết ở [admin-template.md](admin-template.md).
-- Login ADMIN mặc định đến `/admin`; ưu tiên returnTo hợp lệ. Đổi phiên giữ query session đang được observe và xóa cache khác để guard/header cập nhật đồng thời.
 - `/cart`: giỏ, xóa lớp, badge header, checkout toàn bộ PAYOS và danh sách đơn chờ phân trang để mở lại giao dịch gián đoạn.
 - `/checkout/[orderId]`: đọc đơn thuộc phiên STUDENT, create/reuse payOS, QRCodeSVG từ payload backend, URL fallback, countdown và polling có giới hạn. Không tự checkout lại khi reload; PAID từ backend xác nhận hoàn tất.
 - `/payment/result`: chỉ forward orderCode provider hợp lệ để mapping, bỏ qua status/cancel từ URL. Login returnTo mở rộng bằng allowlist cho cart/checkout/result.
-- Google và compiler chưa triển khai. Admin writes theo allowlist riêng. Thêm vào giỏ không đồng nghĩa enrollment ACTIVE.
+- Google, compiler và quản trị chưa triển khai. Thêm vào giỏ không đồng nghĩa enrollment ACTIVE.
 
 ## Commerce và shadcn — 15/10/2026
 
@@ -84,7 +78,7 @@ UI luồng mới dùng shadcn Button/Card/Badge/Alert/Skeleton/Separator và Son
 
 Module `cart` sở hữu giỏ/add/remove; `orders` sở hữu checkout, danh sách đơn chờ và đọc đơn; `payments` sở hữu chuẩn bị link và QR. Server state có user ID trong query key. Session được giữ nguyên observer khi logout/login, cancel và xóa query riêng tư trước khi hiển thị phiên tiếp theo.
 
-Client/route hỗ trợ DELETE. Proxy chỉ allowlist cart/order/payment cho STUDENT upstream, kiểm UUID/body/query và Origin cho POST/DELETE, cookie HttpOnly và no-store. Không proxy webhook; Admin dùng allowlist riêng. DTO order/payment kiểm cùng orderId và amount. Không tự retry checkout; khi mất response đọc lại giỏ và đơn chờ.
+Client/route hỗ trợ DELETE. Proxy chỉ allowlist cart/order/payment cho STUDENT upstream, kiểm UUID/body/query và Origin cho POST/DELETE, cookie HttpOnly và no-store. Không proxy webhook/admin. DTO order/payment kiểm cùng orderId và amount. Không tự retry checkout; khi mất response đọc lại giỏ và đơn chờ.
 
 Payment CREATING retry 2/4/8 giây (tối đa 3 lần), đọc lại đơn trước mỗi lần, hủy khi unmount. GET order poll 3–10 giây tối đa 5 phút mỗi chu kỳ, dừng background/kết thúc/review/quyền; nút kiểm tra mở chu kỳ mới. Countdown hết hạn ẩn QR và refetch, không tự đổi trạng thái backend.
 
@@ -93,7 +87,3 @@ Payment CREATING retry 2/4/8 giây (tối đa 3 lần), đọc lại đơn trư�
 `npm run check` chạy lint, format, types, unit tests, production build và E2E. Unit tests kiểm tra cookie boundary, DTO và proxy allowlist/Origin. Playwright chạy production server riêng ở port 3103, có mock API ổn định; kiểm tra giao diện desktop/mobile, filter, login success/error và Web Storage không có token. Live catalog smoke được ghi riêng trong API contracts; không coi mocked login là live login.
 
 Next config hỗ trợ `MINDY_DIST_DIR` cho build output riêng trong lúc preview chạy. Dùng cùng env khi build và start/test; mặc định vẫn `.next`. Không ghi đè output của production server đang chạy vì CSS/JS hash có thể mất khớp. `.next-*` gitignored, loại khỏi lint/format.
-
-## Xem học viên theo lớp — 15/10/2026
-
-Nút Học viên trên bảng lớp của `/admin` và `/admin/classes` mở Dialog shadcn/ui, query theo classId và page; GET `/admin/classes/:classId/students?page=1&pageSize=20`. Đối chiếu Swagger live và `AdminClassStudentDto`/flow Phase 4 BE: tên/email/phone, studentStatus, enrollmentId/enrollmentStatus và enrolledAt nullable; response `{items,page,pageSize,total}`. Danh sách theo BE gồm chờ thanh toán/đang học/hoàn thành, không phải roster điểm danh. Chỉ mở đúng GET list có UUID/pagination strict và access_token/private no-store; chưa mở student detail hoặc mutations. Có loading/error/retry/empty/phân trang; query chỉ mount khi bấm nút.

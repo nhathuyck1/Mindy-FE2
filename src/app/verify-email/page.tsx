@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { Brand } from '@/components/ui/brand';
 import { VerifyEmailForm } from '@/features/auth/components/verify-email-form';
-import { LoadingOverlay } from '@/components/ui/spinner';
 
 export const metadata: Metadata = {
   title: 'Xác thực email — Mindy Coding',
@@ -15,7 +14,7 @@ export default function VerifyEmailPage() {
       <div className="mx-auto max-w-md">
         <Brand />
         <div className="mt-10 rounded-2xl border border-line bg-canvas p-6 sm:p-8">
-          <Suspense fallback={<LoadingOverlay scope="page" label="Đang tải xác thực…" />}>
+          <Suspense fallback={<p role="status">Đang tải xác thực…</p>}>
             <VerifyEmailForm />
           </Suspense>
         </div>

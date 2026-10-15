@@ -9,7 +9,7 @@ import {
   registrationAcceptedSchema,
   verifyEmailSchema,
 } from '../schemas/registration-contracts';
-import { replaceSession, withAuthLock } from './auth-queries';
+import { sessionKey, withAuthLock } from './auth-queries';
 
 export function useRegister() {
   return useMutation({
@@ -35,6 +35,9 @@ export function useVerifyEmail() {
           schema: authResponseSchema,
         }),
       ),
-    onSuccess: (result) => replaceSession(queryClient, result.user),
+    onSuccess: (result) => {
+      queryClient.clear();
+      queryClient.setQueryData(sessionKey, result.user);
+    },
   });
 }

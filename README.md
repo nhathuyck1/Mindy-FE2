@@ -26,9 +26,7 @@ Base URL API không chứa `/docs#/`. APP_ORIGIN phải đúng origin mở app; 
 
 Homepage đọc khóa học và danh mục thật. Email login theo backend lưu cookie HttpOnly, đọc `/auth/me`, refresh và logout; TanStack Query giữ dữ liệu API, Redux giữ UI. Không lưu token trong Redux/localStorage/sessionStorage. Google Login tạm hoãn, chưa cấu hình.
 
-Catalog và chi tiết khóa học/lớp/lịch xem công khai. Nút đăng ký lớp mới yêu cầu login/registration và giữ lớp đã chọn khi quay lại. Email registration cần xác thực qua `/verify-email`; tài khoản STUDENT có thể thêm lớp vào giỏ theo API thật. Chưa tạo order/hold/payment/checkout, hoặc compiler. Admin có tạo/sửa/chuyển trạng thái theo docs/admin-template.md. Khu vực code homepage chỉ là ví dụ.
-
-Template [Admin](http://localhost:3003/admin) gồm tổng quan và bảng users/courses/classes theo ảnh trong docs, dùng GET API thật và quyền ADMIN ACTIVE; có lọc, phân trang, CSV, chọn cột và xem thông tin. ADMIN login mặc định đến trang quản trị. Xem [admin-template.md](docs/admin-template.md) cho contract và phạm vi mở rộng.
+Catalog và chi tiết khóa học/lớp/lịch xem công khai. Nút đăng ký lớp mới yêu cầu login/registration và giữ lớp đã chọn khi quay lại. Email registration cần xác thực qua `/verify-email`; tài khoản STUDENT có thể thêm lớp vào giỏ theo API thật. Chưa tạo order/hold/payment/checkout, compiler hoặc quản trị. Khu vực code homepage chỉ là ví dụ.
 
 ## Kiểm tra
 
@@ -51,4 +49,4 @@ Khi cần build/check trong lúc production preview đang mở, đặt `MINDY_DI
 
 ## Dependency audit
 
-Ngày 15/10/2026: 5 mục high ở chuỗi dependency development của ESLint Next.js (`braces` → `micromatch` → `fast-glob`). npm chưa đề xuất bản vá tương thích; `audit fix --force` sẽ hạ eslint-config-next về Next.js 14 nên không áp dụng. Kiểm tra lại khi upstream có bản vá. Production runtime kiểm tra riêng bằng `npm run audit:prod` (`npm audit --omit=dev`); CI nên dùng lệnh này cho bước audit.
+Ngày 15/10/2026: 5 mục high ở chuỗi dependency development của ESLint Next.js (`braces` → `micromatch` → `fast-glob`). npm chưa đề xuất bản vá tương thích; `audit fix --force` sẽ hạ eslint-config-next về Next.js 14 nên không áp dụng. Kiểm tra lại khi upstream có bản vá. Production runtime kiểm tra riêng bằng `npm audit --omit=dev`.

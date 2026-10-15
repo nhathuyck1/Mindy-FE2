@@ -7,7 +7,6 @@ Tham khảo [AGENTS.md của ixartz/Next-js-Boilerplate](https://github.com/ixar
 - `docs/architecture.md`: phạm vi, cấu trúc và ranh giới module.
 - `docs/ui-rules.md`: palette, nguồn homepage và quy tắc giao diện.
 - `docs/progress.md`: tính năng đã triển khai và việc còn lại.
-- Khi làm Admin, đọc `docs/admin-template.md`: mẫu sidebar/table, quyền và ranh giới GET/mutation.
 - `docs/pallete.png`: nguồn màu; `docs/logo.jpg`: logo. Giữ nguyên các tài liệu ảnh này.
 
 ## Nguyên tắc
@@ -34,8 +33,6 @@ Tham khảo [AGENTS.md của ixartz/Next-js-Boilerplate](https://github.com/ixar
 
 ## Styling
 
-- Theo yêu cầu người dùng: ưu tiên component shadcn/ui cho giao diện Admin và UI mới. Nguồn ở `src/components/ui`, cấu hình `components.json`; dùng lại Button/Table/Input/Badge/Checkbox/Dialog/Sheet/NativeSelect/Popover, tùy biến theo palette Mindy và typography hiện có. Không tự tạo lại primitive đã có.
-
 - Tailwind CSS v4. Token màu tập trung trong `src/app/globals.css` bằng `@theme`.
 - Palette bắt buộc: trắng `#FFFFFF`, mint `#338A85`, forest `#1D5B57`, coral `#FF7F50`, headsup `#FF5400`.
 - Không hard-code hex trong JSX, không tự thêm theme. Các màu nhạt pha từ token gốc.
@@ -52,7 +49,6 @@ Tham khảo [AGENTS.md của ixartz/Next-js-Boilerplate](https://github.com/ixar
 - Browser chỉ gọi same-origin `/api/v1`. Upstream `API_BASE_URL=https://api.quanh123.id.vn/api/v1` nằm trong env server, được validate tại `src/lib/env.server.ts`.
 - Phạm vi đã mở rộng theo yêu cầu 15/10/2026: homepage, courses/detail/open classes/timetable public, email login/register/verify, cart và checkout PAYOS/QR/payment result. Proxy phải có method/path allowlist; dynamic IDs validate UUID. Checkout toàn giỏ; chỉ order PAID từ backend xác nhận hoàn tất. CASH UI/quản trị chưa thuộc lần này.
 - Google Login tạm hoãn theo yêu cầu mới nhất. Không thêm Google provider, client ID, callback, route hoặc nút Google lúc này.
-- Phạm vi mở rộng Admin 15/10/2026: ADMIN ACTIVE được xem list/detail users/courses/classes và học viên theo lớp; tạo user/đổi trạng thái, tạo danh mục/khóa học/học phần, sửa/sắp xếp/kích hoạt khóa học, tạo/sửa lớp, lịch buổi và chuyển trạng thái lớp. Theo allowlist `admin-rules.server.ts`, UUID/query/body/response strict, kiểm Origin cho writes, chỉ forward access_token. Backend sở hữu phân quyền; chưa mở DELETE, sửa hồ sơ user, tắt khóa học, mentor assignment, attendance/payment.
 - Đối chiếu Swagger live, `../Mindy-BE/docs/api_flow` và DTO trước khi sửa contract. Tài liệu local không đồng nghĩa đã deploy. Input/output API dùng Zod.
 - Backend lưu `access_token` và `refresh_token` trong cookie HttpOnly. Adapter chỉ chuyển đúng cookie name/path, host-only, SameSite=Lax và Secure khi HTTPS. Không trả token trong JSON hay lưu trong Redux/Query/Web Storage.
 - Backend sở hữu auth, phân quyền và giao dịch. Không lưu raw token trong localStorage/sessionStorage.
