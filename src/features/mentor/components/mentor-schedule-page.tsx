@@ -190,7 +190,7 @@ export function MentorSchedulePage() {
                   sáu khung giờ cố định, giờ từng buổi theo lịch thực tế.
                 </caption>
                 <colgroup>
-                  <col className="w-24" />
+                  <col className="w-16" />
                   {timetable.days.map((day, index) => (
                     <col key={day} className={daysWithLessons[index] ? undefined : 'w-20'} />
                   ))}
@@ -199,7 +199,7 @@ export function MentorSchedulePage() {
                   <TableRow className="hover:bg-transparent">
                     <TableHead
                       scope="col"
-                      className="sticky left-0 z-20 w-24 border-r border-line bg-soft px-2 py-2 text-center text-[13px]"
+                      className="sticky left-0 z-20 w-16 border-r border-line bg-soft px-2 py-2 text-center text-[13px]"
                     >
                       Ca học
                     </TableHead>
@@ -228,9 +228,9 @@ export function MentorSchedulePage() {
                       >
                         <span className="block text-muted">{slot.number ?? 'Khác'}</span>
                         {slot.start !== null && slot.end !== null && (
-                          <span className="mt-1 inline-flex items-center justify-center gap-1 text-[10px] leading-4 font-normal whitespace-nowrap text-muted tabular-nums">
+                          <span className="mt-1 inline-flex flex-col items-center justify-center gap-1 text-[10px] leading-3 font-normal whitespace-nowrap text-muted tabular-nums">
                             <span>{slotTime(slot.start)}</span>
-                            <span>|</span>
+                            <span className="leading-2">|</span>
                             <span>{slotTime(slot.end)}</span>
                           </span>
                         )}

@@ -1,5 +1,9 @@
 # Tiến độ
 
+- 16/10/2026: Tăng khoảng cách dọc 4px giữa giờ bắt đầu, dấu | và giờ kết thúc trong cột Ca học.
+
+- 16/10/2026: Điều chỉnh giờ dưới số ca theo chiều dọc: giờ bắt đầu ở trên, dấu | ở giữa, giờ kết thúc ở dưới; thu cột ca về 64px.
+
 - 16/10/2026: Giờ bắt đầu và kết thúc dưới số ca nằm cùng một dòng, ngăn bằng dấu |; cột Ca học rộng 96px để giờ không xuống dòng.
 
 - 16/10/2026: Theo xác nhận mới, thêm khung giờ bắt đầu/kết thúc nhỏ bên dưới số ca 1–6 trong cột Ca học; dùng đúng sáu khung giờ đã chốt, giữ cột gọn và giờ thực tế trong từng buổi.
