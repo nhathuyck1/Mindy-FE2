@@ -3,6 +3,7 @@ import { useClassDetail } from '../../api/course-queries';
 import { deliveryLabel, formatDate, formatTime, formatWeekday } from '../../lib/course-format';
 import { QueryState } from '../shared/query-state';
 import { ClassRegistration } from './class-registration';
+import { LoadingOverlay } from '@/components/ui/spinner';
 
 const sessionLabels = {
   SCHEDULED: 'Đã lên lịch',
@@ -13,7 +14,7 @@ const sessionLabels = {
 
 export function ClassTimetable(props: { classId: string; courseId: string }) {
   const detail = useClassDetail(props.classId, props.courseId);
-  if (detail.isPending) return <QueryState loading title="Đang tải lịch học…" />;
+  if (detail.isPending) return <LoadingOverlay scope="modal" label="Đang tải lịch học…" />;
   if (detail.isError)
     return (
       <QueryState

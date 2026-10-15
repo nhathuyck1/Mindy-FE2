@@ -75,7 +75,7 @@ export function AdminClassSessions(props: { classroom: AdminClassDetail; editabl
                     </div>
                     {editing === session.id && (
                       <form
-                        className="mt-4 space-y-3 rounded-lg bg-soft p-3"
+                        className="mt-4 space-y-3 rounded-lg border border-line bg-canvas p-3"
                         onSubmit={async (event) => {
                           event.preventDefault();
                           setError('');

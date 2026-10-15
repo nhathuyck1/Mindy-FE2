@@ -63,12 +63,6 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
     setSearch('');
     setSelected(new Set());
   }
-  function resetFilters() {
-    setStatus('');
-    setFilter('');
-    setSearch('');
-    changePage(1);
-  }
   function exportCsv() {
     const url = URL.createObjectURL(
       new Blob([adminCsv(exportRows, props.resource)], { type: 'text/csv;charset=utf-8;' }),
@@ -84,7 +78,7 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
     <>
       <div className="admin-page-heading">
         <div>
-          <p className="eyebrow mb-2 text-mint">Quản lý đào tạo</p>
+          <p className="eyebrow mb-2 text-muted">Quản lý đào tạo</p>
           <h1 className="text-[34px] leading-tight font-extrabold tracking-tight sm:text-[38px]">
             {config.title}
           </h1>
@@ -102,7 +96,7 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
             title="Xuất các dòng đã chọn hoặc kết quả hiển thị trên trang hiện tại"
           >
             <Icon name="download" className="size-4" />
-            Xuất CSV{selected.size ? ` (${selected.size})` : ''}
+            Xuất CSV
           </Button>
         </div>
       </div>
@@ -143,14 +137,17 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
                 setStatus(tab);
                 changePage(1);
               }}
-              className={`min-h-12 shrink-0 cursor-pointer rounded-none border-b-2 px-3 text-sm font-extrabold transition-colors ${status === tab ? 'border-mint text-mint' : 'border-transparent text-muted hover:bg-soft'}`}
+              className={`relative min-h-12 shrink-0 cursor-pointer rounded-none border-b-2 pr-6 pl-3 text-sm font-extrabold transition-colors ${status === tab ? 'border-mint text-mint' : 'border-transparent text-muted hover:bg-soft'}`}
             >
               {tab ? statusLabels[tab] : 'Tất cả'}
               {status === tab &&
                 (query.isPending ? (
-                  <Skeleton aria-hidden="true" className="h-6 w-9 rounded-md" />
+                  <Skeleton
+                    aria-hidden="true"
+                    className="absolute top-1 right-0.5 h-4 w-6 rounded-full"
+                  />
                 ) : (
-                  <span className="rounded-md border border-line bg-soft px-2 py-0.5 text-sm font-extrabold tabular-nums">
+                  <span className="absolute top-1 right-0.5 min-w-4 rounded-full border border-pastel-red/40 bg-canvas px-1 text-[10px] leading-3.5 font-extrabold text-pastel-red tabular-nums">
                     {query.data?.total.toLocaleString('vi-VN') ?? '—'}
                   </span>
                 ))}
@@ -235,23 +232,6 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
           </div>
         </div>
 
-        {(selected.size > 0 || status || filter || search) && (
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-soft/45 px-5 py-2.5 text-[15px] text-muted sm:px-6">
-            {selected.size > 0 && <p aria-live="polite">Đã chọn {selected.size} dòng</p>}
-            {(status || filter || search) && (
-              <Button
-                variant="unstyled"
-                size="unstyled"
-                type="button"
-                className="cursor-pointer font-extrabold text-mint"
-                onClick={resetFilters}
-              >
-                Xóa bộ lọc
-              </Button>
-            )}
-          </div>
-        )}
-
         {query.isPending || query.isError ? (
           <AdminQueryState
             loading={query.isPending}
@@ -273,17 +253,6 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
                   ? 'Thử thay đổi từ khóa hoặc bộ lọc.'
                   : 'Dữ liệu mới sẽ xuất hiện tại đây.'}
               </p>
-              {(search || status || filter || page > 1) && (
-                <Button
-                  variant="unstyled"
-                  size="unstyled"
-                  type="button"
-                  onClick={resetFilters}
-                  className="admin-button mt-5"
-                >
-                  Về danh sách đầu
-                </Button>
-              )}
             </div>
           </div>
         ) : (
@@ -327,11 +296,6 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
                 ))}
               </NativeSelect>
             </label>
-            <span aria-live="polite">
-              {query.isError || query.isPending
-                ? '—'
-                : `${rows.length} dòng hiển thị / ${query.data.total.toLocaleString('vi-VN')} kết quả`}
-            </span>
           </div>
           <nav aria-label="Phân trang bảng quản trị" className="flex items-center gap-2">
             <Button

@@ -347,7 +347,7 @@ export function UserRolesChart(props: { query: AdminOverviewQueries['users'] }) 
                         <tspan
                           x={viewBox.cx}
                           dy="-0.2em"
-                          className="fill-forest text-3xl font-extrabold"
+                          className="fill-foreground text-3xl font-extrabold"
                         >
                           {total.toLocaleString('vi-VN')}
                         </tspan>

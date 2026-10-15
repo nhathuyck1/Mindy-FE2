@@ -7,15 +7,23 @@ import { usePathname } from 'next/navigation';
 import { Icon } from '@/components/ui/icon';
 import { ApiError } from '@/lib/api/client';
 import { TableSkeleton } from '@/components/ui/loading-skeletons';
+import { LoadingOverlay } from '@/components/ui/spinner';
 
 export function AdminQueryState(props: {
   loading?: boolean;
   error?: Error | null;
   onRetry: () => void;
   columns?: number;
+  /** Tables keep the skeleton; content inside a modal uses the blurred spinner overlay. */
+  variant?: 'table' | 'modal';
 }) {
   const pathname = usePathname();
-  if (props.loading) return <TableSkeleton columns={props.columns} />;
+  if (props.loading)
+    return props.variant === 'modal' ? (
+      <LoadingOverlay scope="modal" label="Đang tải dữ liệu…" />
+    ) : (
+      <TableSkeleton columns={props.columns} />
+    );
   const status = props.error instanceof ApiError ? props.error.status : 0;
   return (
     <div className="grid min-h-64 place-items-center p-6 text-center" role="alert">

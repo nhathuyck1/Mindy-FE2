@@ -23,7 +23,7 @@ export function TableSkeleton(props: {
       <span className="sr-only">{label}</span>
       <div aria-hidden="true" className="min-w-160">
         <div
-          className="grid h-12 items-center gap-6 border-y border-line bg-soft/45 px-6"
+          className="grid h-12 items-center gap-6 border-y border-line bg-canvas px-6"
           style={gridStyle}
         >
           {columns.map((column) => (

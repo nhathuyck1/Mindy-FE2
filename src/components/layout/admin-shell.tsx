@@ -18,6 +18,10 @@ const navigation = [
   { href: '/admin/classes', label: 'Lớp học', icon: 'calendar' },
 ] as const;
 
+function isNavActive(pathname: string, href: string) {
+  return pathname === href || (href !== '/admin' && pathname.startsWith(`${href}/`));
+}
+
 function AdminNavigation(props: { collapsed?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
@@ -30,7 +34,7 @@ function AdminNavigation(props: { collapsed?: boolean; onNavigate?: () => void }
           title={props.collapsed ? item.label : undefined}
           aria-label={item.label}
           aria-current={pathname === item.href ? 'page' : undefined}
-          className={`admin-nav-link ${pathname === item.href ? 'admin-nav-active' : ''} ${props.collapsed ? 'justify-center px-0' : ''}`}
+          className={`admin-nav-link ${isNavActive(pathname, item.href) ? 'admin-nav-active' : ''} ${props.collapsed ? 'justify-center px-0' : ''}`}
         >
           <Icon name={item.icon} className="size-[19px] shrink-0" />
           {!props.collapsed && <span>{item.label}</span>}
@@ -70,7 +74,8 @@ export function AdminShell(props: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-  const title = navigation.find((item) => item.href === pathname)?.label ?? 'Quy trình vận hành';
+  const title =
+    navigation.find((item) => isNavActive(pathname, item.href))?.label ?? 'Quy trình vận hành';
   const closeMobile = () => {
     setMobileOpen(false);
   };
@@ -102,7 +107,7 @@ export function AdminShell(props: { children: React.ReactNode }) {
           </div>
           <AdminNavigation collapsed={collapsed} />
           {!collapsed && (
-            <div className="m-4 mt-0 rounded-xl border border-line bg-soft p-4">
+            <div className="m-4 mt-0 rounded-xl border border-line bg-canvas p-4">
               <div className="flex items-center gap-2 text-sm font-extrabold">
                 <Icon name="shield" className="size-4 text-mint" />
                 Mindy Admin

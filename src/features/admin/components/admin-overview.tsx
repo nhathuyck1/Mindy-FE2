@@ -28,7 +28,6 @@ import {
 } from './admin-overview-charts';
 import { AdminQueryState } from './admin-query-state';
 import { AdminStatus } from './admin-status';
-import { AdminRowActions } from './admin-editor';
 import { StatCardSkeleton } from '@/components/ui/loading-skeletons';
 
 function OverviewCard(props: {
@@ -182,7 +181,7 @@ export function AdminOverview() {
     <>
       <div className="admin-page-heading">
         <div>
-          <p className="eyebrow mb-2 text-mint">Mindy Admin</p>
+          <p className="eyebrow mb-2 text-muted">Mindy Admin</p>
           <h1 className="text-[34px] font-extrabold tracking-tight sm:text-[38px]">
             Tổng quan đào tạo
           </h1>
@@ -276,45 +275,36 @@ export function AdminOverview() {
           ) : !classes.data.items.length ? (
             <p className="p-10 text-center text-base text-muted">Chưa có lớp học.</p>
           ) : (
-            <div
-              className="overflow-x-auto"
-              role="region"
-              tabIndex={0}
-              aria-label="Danh sách lớp học, cuộn ngang để xem thêm"
-            >
-              <Table className="admin-data-table min-w-140">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead scope="col">Lớp học</TableHead>
-                    <TableHead scope="col">Trạng thái</TableHead>
-                    <TableHead scope="col">Khai giảng</TableHead>
-                    <TableHead scope="col" className="text-right">
-                      Thao tác
+            <Table className="admin-data-table min-w-0 table-fixed">
+              <TableHeader>
+                <TableRow>
+                  <TableHead scope="col">Lớp học</TableHead>
+                  <TableHead scope="col" className="w-44">
+                    Trạng thái
+                  </TableHead>
+                  <TableHead scope="col" className="hidden w-36 sm:table-cell">
+                    Khai giảng
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {classes.data.items.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableHead scope="row">
+                      <p className="truncate font-extrabold" title={row.name}>
+                        {row.name}
+                      </p>
                     </TableHead>
+                    <TableCell className="overflow-hidden">
+                      <AdminStatus status={row.status} />
+                    </TableCell>
+                    <TableCell className="hidden whitespace-nowrap sm:table-cell">
+                      {formatAdminDate(row.date)}
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {classes.data.items.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableHead scope="row">
-                        <p className="max-w-64 truncate font-extrabold" title={row.name}>
-                          {row.name}
-                        </p>
-                      </TableHead>
-                      <TableCell>
-                        <AdminStatus status={row.status} />
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {formatAdminDate(row.date)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <AdminRowActions resource="classes" row={row} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </section>
         <PopularCourses queries={overview} />

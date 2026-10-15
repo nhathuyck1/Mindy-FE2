@@ -60,7 +60,7 @@ Backend dùng cookie HttpOnly: access token Path `/`, refresh token Path `/api/v
 
 Dashboard Admin dùng Card/Chart shadcn và Recharts. `admin-overview-queries.ts` giữ ba Query snapshot users/courses/classes, tải đủ pagination qua adapter hiện có và không công bố tổng hợp nếu dữ liệu thiếu/trùng hoặc total thay đổi giữa các trang. Query key `['admin', resource, 'overview']` nhận invalidation sau CRUD và được xóa khi đổi phiên. `lib/admin-overview.ts` tổng hợp tháng theo Asia/Ho_Chi_Minh, đếm trạng thái/vai trò và xếp khóa học theo số lớp; components chỉ trình bày/chart và state bộ lọc thời gian.
 
-Token màu ở `src/app/globals.css`, theo `docs/pallete.png`. Tailwind v4 dùng `@theme` và loader `@tailwindcss/turbopack` do create-next-app 16.4.1 tạo. Không thêm PostCSS xử lý Tailwind lần hai. Font Nunito Variable local qua Fontsource, có tiếng Việt; build không tải Google Fonts. Ảnh dùng next/image và sizes, ảnh API chỉ từ host allowlist.
+Token màu ở `src/app/globals.css`, theo `docs/pallete.png`. Tailwind v4 dùng `@theme` và loader `@tailwindcss/turbopack` do create-next-app 16.4.1 tạo. Không thêm PostCSS xử lý Tailwind lần hai. Font Nunito Variable local qua Fontsource, có tiếng Việt; build không tải Google Fonts. Admin import Inter Variable (Fontsource) trong `app/admin/layout.tsx`; `html:has([data-admin-root])` đổi `--font-sans` sang `--font-admin` để portal cũng dùng Inter. Ảnh dùng next/image và sizes, ảnh API chỉ từ host allowlist.
 
 ## Phạm vi
 

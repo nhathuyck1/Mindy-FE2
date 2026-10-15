@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import '@fontsource-variable/inter';
 import { AdminShell } from '@/components/layout/admin-shell';
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function AdminLayout(props: { children: React.ReactNode }) {
-  return <AdminShell>{props.children}</AdminShell>;
+  return (
+    <div data-admin-root className="contents">
+      <AdminShell>{props.children}</AdminShell>
+    </div>
+  );
 }

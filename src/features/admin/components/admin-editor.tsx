@@ -1,12 +1,12 @@
 'use client';
 
 import { useId, useState } from 'react';
+import Link from 'next/link';
 import { Eye, Pencil, Users, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { useAdminDetail } from '../api/admin-edit-queries';
 import { adminResources, type AdminResource, type AdminRow } from '../lib/admin-resources';
-import { AdminClassStudentsDialog } from './admin-class-students';
 import { AdminRecordDetails } from './admin-record-details';
 import { AdminQueryState } from './admin-query-state';
 import { AdminCreateUserForm, AdminUserForm, AdminUserStatusAction } from './admin-user-form';
@@ -40,7 +40,7 @@ function AdminEditorDialog(props: {
           query.isPending || query.isError ? (
             <AdminQueryState
               loading={query.isPending}
-              columns={2}
+              variant="modal"
               error={query.error}
               onRetry={() => query.refetch()}
             />
@@ -82,7 +82,7 @@ export function AdminEditorButton(props: { resource: AdminResource }) {
 }
 
 export function AdminRowActions(props: { resource: AdminResource; row: AdminRow }) {
-  const [action, setAction] = useState<'view' | 'edit' | 'students' | null>(null);
+  const [action, setAction] = useState<'view' | 'edit' | null>(null);
   const [returnFocus, setReturnFocus] = useState<HTMLButtonElement | null>(null);
   const popupId = useId();
   const label = adminResources[props.resource].singular;
@@ -101,19 +101,9 @@ export function AdminRowActions(props: { resource: AdminResource; row: AdminRow 
       color:
         'border-status-yellow/30 bg-status-yellow/8 text-status-yellow hover:bg-status-yellow/15 data-[active=true]:bg-status-yellow data-[active=true]:text-canvas',
     },
-    ...(props.resource === 'classes'
-      ? [
-          {
-            value: 'students' as const,
-            label: 'Danh sách học viên',
-            icon: Users,
-            color:
-              'border-status-green/30 bg-status-green/8 text-status-green hover:bg-status-green/15 data-[active=true]:bg-status-green data-[active=true]:text-canvas',
-          },
-        ]
-      : []),
   ];
   const close = () => setAction(null);
+  const studentsLabel = 'Danh sách học viên';
   return (
     <>
       <div
@@ -146,6 +136,22 @@ export function AdminRowActions(props: { resource: AdminResource; row: AdminRow 
             </Button>
           ),
         )}
+        {props.resource === 'classes' && (
+          <Button
+            asChild
+            variant="outline"
+            size="icon"
+            className="size-11 rounded-lg border-status-green/30 bg-status-green/8 text-status-green hover:bg-status-green/15"
+          >
+            <Link
+              href={`/admin/classes/${props.row.id}/students`}
+              title={studentsLabel}
+              aria-label={`${studentsLabel}: ${props.row.name}`}
+            >
+              <Users className="size-4" />
+            </Link>
+          </Button>
+        )}
       </div>
       {action && (
         <Modal
@@ -153,11 +159,9 @@ export function AdminRowActions(props: { resource: AdminResource; row: AdminRow 
           title={
             action === 'view'
               ? `Thông tin ${label}`
-              : action === 'students'
-                ? 'Danh sách học viên'
-                : props.resource === 'users'
-                  ? 'Trạng thái tài khoản'
-                  : `Quản lý ${label}`
+              : props.resource === 'users'
+                ? 'Trạng thái tài khoản'
+                : `Quản lý ${label}`
           }
           onClose={close}
           returnFocus={returnFocus}
@@ -177,14 +181,6 @@ export function AdminRowActions(props: { resource: AdminResource; row: AdminRow 
                 embedded
                 resource={props.resource}
                 id={props.row.id}
-                onClose={close}
-              />
-            )}
-            {action === 'students' && (
-              <AdminClassStudentsDialog
-                embedded
-                classId={props.row.id}
-                classTitle={props.row.name}
                 onClose={close}
               />
             )}

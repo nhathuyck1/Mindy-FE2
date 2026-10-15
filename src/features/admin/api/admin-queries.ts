@@ -7,6 +7,7 @@ import {
   adminCoursePageSchema,
   adminUserPageSchema,
   adminClassStudentsPageSchema,
+  adminClassStudentDetailSchema,
 } from '../schemas/admin-contracts';
 import {
   formatAdminDate,
@@ -15,16 +16,32 @@ import {
   type AdminResource,
 } from '../lib/admin-resources';
 
-export function useAdminClassStudents(classId: string, page: number) {
+const retryRead = (count: number, error: Error) =>
+  !(error instanceof ApiError && [401, 403, 404].includes(error.status)) && count < 1;
+
+export function useAdminClassStudents(classId: string, page: number, pageSize: number) {
   return useQuery({
-    queryKey: ['admin', 'classes', classId, 'students', { page, pageSize: 20 }],
+    queryKey: ['admin', 'classes', classId, 'students', { page, pageSize }],
     staleTime: 0,
-    retry: (count, error) =>
-      !(error instanceof ApiError && [401, 403, 404].includes(error.status)) && count < 1,
+    retry: retryRead,
     queryFn: ({ signal }) =>
       apiRequest({
-        path: `admin/classes/${classId}/students?page=${page}&pageSize=20`,
+        path: `admin/classes/${classId}/students?page=${page}&pageSize=${pageSize}`,
         schema: adminClassStudentsPageSchema,
+        signal,
+      }),
+  });
+}
+
+export function useAdminClassStudent(classId: string, studentId: string) {
+  return useQuery({
+    queryKey: ['admin', 'classes', classId, 'students', 'detail', studentId],
+    staleTime: 0,
+    retry: retryRead,
+    queryFn: ({ signal }) =>
+      apiRequest({
+        path: `admin/classes/${classId}/students/${studentId}`,
+        schema: adminClassStudentDetailSchema,
         signal,
       }),
   });

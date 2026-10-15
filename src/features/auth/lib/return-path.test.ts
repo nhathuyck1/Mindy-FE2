@@ -34,5 +34,8 @@ describe('Post-login course return path', () => {
     ])
       expect(safeReturnPath(`${path}?redirect=https://evil.test`)).toBe(path);
     expect(safeReturnPath('/admin/users/anything')).toBe('/');
+    const students = '/admin/classes/44444444-4444-4444-8444-444444444444/students';
+    expect(safeReturnPath(`${students}?redirect=https://evil.test`)).toBe(students);
+    expect(safeReturnPath('/admin/classes/bad/students')).toBe('/');
   });
 });

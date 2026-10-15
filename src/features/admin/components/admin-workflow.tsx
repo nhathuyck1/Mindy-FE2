@@ -30,7 +30,7 @@ export function AdminWorkflow() {
     <>
       <div className="admin-page-heading">
         <div>
-          <p className="eyebrow mb-2 text-mint">Hướng dẫn quản trị</p>
+          <p className="eyebrow mb-2 text-muted">Hướng dẫn quản trị</p>
           <h1 className="text-[34px] font-extrabold tracking-tight sm:text-[38px]">
             Quy trình vận hành
           </h1>
@@ -46,7 +46,7 @@ export function AdminWorkflow() {
               <span className="grid size-11 place-items-center rounded-xl bg-soft text-mint">
                 <Icon name={step.icon} />
               </span>
-              <span className="text-sm font-extrabold text-mint">0{index + 1}</span>
+              <span className="text-sm font-extrabold">0{index + 1}</span>
             </div>
             <h2 className="mt-6 text-xl font-extrabold">{step.title}</h2>
             <p className="mt-3 text-base leading-7 text-muted">{step.text}</p>

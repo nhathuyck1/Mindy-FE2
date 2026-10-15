@@ -51,4 +51,4 @@ Khi cần build/check trong lúc production preview đang mở, đặt `MINDY_DI
 
 ## Dependency audit
 
-Ngày 15/10/2026: 5 mục high ở chuỗi dependency development của ESLint Next.js (`braces` → `micromatch` → `fast-glob`). npm chưa đề xuất bản vá tương thích; `audit fix --force` sẽ hạ eslint-config-next về Next.js 14 nên không áp dụng. Kiểm tra lại khi upstream có bản vá. Production runtime kiểm tra riêng bằng `npm audit --omit=dev`.
+Ngày 15/10/2026: 5 mục high ở chuỗi dependency development của ESLint Next.js (`braces` → `micromatch` → `fast-glob`). npm chưa đề xuất bản vá tương thích; `audit fix --force` sẽ hạ eslint-config-next về Next.js 14 nên không áp dụng. Kiểm tra lại khi upstream có bản vá. Production runtime kiểm tra riêng bằng `npm run audit:prod` (`npm audit --omit=dev`); CI nên dùng lệnh này cho bước audit.

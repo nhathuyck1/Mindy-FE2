@@ -69,7 +69,7 @@ export function AdminCreateClassForm(props: { onCreated: (id: string) => void })
     return (
       <AdminQueryState
         loading={courses.isPending || mentors.isPending}
-        columns={2}
+        variant="modal"
         error={courses.error ?? mentors.error}
         onRetry={() => {
           courses.refetch();

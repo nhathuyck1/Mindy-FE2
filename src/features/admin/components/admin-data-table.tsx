@@ -111,7 +111,10 @@ export function AdminDataTable(props: {
               </TableCell>
               <TableHead scope="row">
                 <div className="min-w-0">
-                  <p className="max-w-65 truncate text-sm font-extrabold" title={row.name}>
+                  <p
+                    className="max-w-65 truncate text-sm font-extrabold text-muted"
+                    title={row.name}
+                  >
                     {row.name}
                   </p>
                   {props.resource === 'users' && (

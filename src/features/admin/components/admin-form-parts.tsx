@@ -40,13 +40,17 @@ export function AdminField(props: {
     defaultValue: props.defaultValue,
     required: props.required,
     disabled: props.disabled,
-    className: `w-full rounded-lg border-line bg-canvas text-sm ${props.multiline ? 'min-h-28' : 'h-12'}`,
+    className: `w-full rounded-lg border-line bg-canvas text-[14px] md:text-[14px] ${props.multiline ? 'min-h-28' : 'h-12'}`,
   };
   return (
     <div className="min-w-0 space-y-2 [&>[data-slot=native-select-wrapper]]:w-full">
-      <label htmlFor={id} className="block text-sm font-extrabold">
+      <label htmlFor={id} className="block text-[14px] font-extrabold">
         {props.label}
-        {props.required && <span aria-hidden="true"> *</span>}
+        {props.required && (
+          <span aria-hidden="true" className="text-status-red">
+            {' *'}
+          </span>
+        )}
       </label>
       {props.options ? (
         <NativeSelect {...common}>
@@ -72,7 +76,7 @@ export function AdminField(props: {
           autoComplete={props.type === 'password' ? 'new-password' : undefined}
         />
       )}
-      {props.hint && <p className="text-[15px] leading-6 text-muted">{props.hint}</p>}
+      {props.hint && <p className="text-[13px] leading-5 text-muted">{props.hint}</p>}
     </div>
   );
 }
@@ -105,7 +109,7 @@ export function AdminFormMessage(props: { error?: string; saved?: boolean }) {
     );
   if (props.saved)
     return (
-      <p role="status" className="rounded-lg border border-line bg-soft p-3 text-sm">
+      <p role="status" className="rounded-lg border border-line bg-canvas p-3 text-sm">
         Đã lưu thay đổi.
       </p>
     );
@@ -148,7 +152,7 @@ export function AdminConfirmAction(props: {
           {props.trigger?.icon ?? props.label}
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="admin-typography max-h-[90dvh] overflow-y-auto border-line bg-canvas text-forest">
+      <AlertDialogContent className="admin-typography max-h-[90dvh] overflow-y-auto border-line bg-canvas text-foreground">
         <AlertDialogHeader>
           <AlertDialogTitle>{props.label}</AlertDialogTitle>
           <AlertDialogDescription className="text-sm leading-7 text-muted">
@@ -181,9 +185,11 @@ export function AdminConfirmAction(props: {
 
 export function AdminSubmitButton(props: { pending: boolean; label?: string; disabled?: boolean }) {
   return (
-    <Button type="submit" disabled={props.pending || props.disabled} className="min-h-11">
-      {props.pending ? 'Đang lưu…' : (props.label ?? 'Lưu thay đổi')}
-    </Button>
+    <div className="col-span-full flex justify-end">
+      <Button type="submit" disabled={props.pending || props.disabled} className="min-h-11">
+        {props.pending ? 'Đang lưu…' : (props.label ?? 'Lưu thay đổi')}
+      </Button>
+    </div>
   );
 }
 

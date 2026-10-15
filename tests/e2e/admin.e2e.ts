@@ -33,6 +33,8 @@ test('Shows shared skeletons while overview, table and class students load', asy
   }
   await expect(page.getByLabel('Tổng người dùng: 23', { exact: true })).toBeVisible();
   await expect(page.getByRole('status', { name: 'Đang tải dữ liệu…', exact: true })).toHaveCount(0);
+  await page.goto('/admin/classes');
+  await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(2);
   pending = new Promise<void>((resolve) => {
     release = resolve;
   });
@@ -42,16 +44,16 @@ test('Shows shared skeletons while overview, table and class students load', asy
   });
   try {
     await page
-      .getByRole('button', { name: `Danh sách học viên: ${adminClasses[0].name}`, exact: true })
+      .getByRole('link', { name: `Danh sách học viên: ${adminClasses[0].name}`, exact: true })
       .click();
+    await expect(page).toHaveURL(`/admin/classes/${adminClasses[0].id}/students`);
     await expect(
-      page.getByRole('dialog').getByRole('status', { name: 'Đang tải dữ liệu…', exact: true }),
+      page.getByRole('status', { name: 'Đang tải dữ liệu…', exact: true }),
     ).toBeVisible();
   } finally {
     release();
   }
-  await expect(page.getByRole('dialog')).toContainText('Chưa có học viên trong danh sách này.');
-  await page.keyboard.press('Escape');
+  await expect(page.getByText('Chưa có học viên trong lớp', { exact: true })).toBeVisible();
   pending = new Promise<void>((resolve) => {
     release = resolve;
   });
@@ -69,7 +71,7 @@ test('Shows shared skeletons while overview, table and class students load', asy
   await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(10);
 });
 
-test('Views students of the selected class from overview and class list', async ({
+test('Opens a class student page from the class list and views student details', async ({
   page,
   isMobile,
 }, testInfo) => {
@@ -94,55 +96,80 @@ test('Views students of the selected class from overview and class list', async 
       return route.fulfill({ status: 503, json: { code: 'UNAVAILABLE', message: 'Try again' } });
     const items = url.pathname.includes(adminClasses[0].id) ? students : [];
     const current = Number(url.searchParams.get('page'));
+    const size = Number(url.searchParams.get('pageSize'));
     return route.fulfill({
       json: {
-        items: items.slice((current - 1) * 20, current * 20),
+        items: items.slice((current - 1) * size, current * size),
         page: current,
-        pageSize: 20,
+        pageSize: size,
         total: items.length,
       },
     });
   });
+  await page.route('**/api/v1/admin/classes/*/students/*', (route) =>
+    route.fulfill({
+      json: {
+        ...students[0],
+        classId: adminClasses[0].id,
+        orderDetailId: students[0].enrollmentId,
+        registeredAt: '2026-10-10T00:00:00Z',
+        accountCreatedAt: '2026-10-01T00:00:00Z',
+        lastLoginAt: null,
+      },
+    }),
+  );
   await page.goto('/admin');
-  const firstClass = page.getByRole('button', {
+  await expect(page.getByRole('table')).toContainText(adminClasses[0].name);
+  await expect(page.getByRole('link', { name: /^Danh sách học viên:/ })).toHaveCount(0);
+  await page.goto('/admin/classes');
+  const firstClass = page.getByRole('link', {
     name: `Danh sách học viên: ${adminClasses[0].name}`,
     exact: true,
   });
   await expect(firstClass).toBeVisible();
   expect(requests).toEqual([]);
   await firstClass.click();
-  const dialog = page.getByRole('dialog', { name: 'Danh sách học viên' });
-  await expect(dialog).toContainText(adminClasses[0].name);
-  await expect(dialog.getByRole('table').locator('tbody tr')).toHaveCount(20);
-  await expect(dialog).toContainText('Chờ thanh toán');
-  await expect(dialog).toContainText('Chưa nhập học');
+  await expect(page).toHaveURL(`/admin/classes/${adminClasses[0].id}/students`);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(adminClasses[0].name);
+  const table = page.getByRole('table');
+  await expect(table.locator('tbody tr')).toHaveCount(10);
+  await expect(table).toContainText('Chờ thanh toán');
+  await expect(table).toContainText('Chưa nhập học');
   expect(requests[0]).toBe(`/api/v1/admin/classes/${adminClasses[0].id}/students`);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({
     path: testInfo.outputPath('class-students.png'),
     animations: 'disabled',
   });
-  await dialog.getByRole('button', { name: 'Trang học viên sau' }).click();
-  await expect(dialog.getByRole('table').locator('tbody tr')).toHaveCount(1);
-  await expect(dialog).toContainText('Học viên 21');
+  await page.getByLabel('Số dòng mỗi trang').selectOption('20');
+  await expect(table.locator('tbody tr')).toHaveCount(20);
+  await page.getByRole('button', { name: 'Trang học viên sau' }).click();
+  await expect(table.locator('tbody tr')).toHaveCount(1);
+  await expect(table).toContainText('Học viên 21');
+  await page.getByRole('button', { name: 'Trang học viên trước' }).click();
+  const view = page.getByRole('button', {
+    name: 'Xem thông tin học viên: Học viên 1',
+    exact: true,
+  });
+  await view.click();
+  const dialog = page.getByRole('dialog', { name: 'Thông tin học viên' });
+  await expect(dialog).toContainText('student1@example.test');
+  await expect(dialog).toContainText('Ngày đăng ký');
   await page.keyboard.press('Escape');
   await expect(dialog).not.toBeVisible();
-  await expect(firstClass).toBeFocused();
-  await page.goto('/admin/classes');
-  await page
-    .getByRole('button', { name: `Danh sách học viên: ${adminClasses[1].name}`, exact: true })
-    .click();
-  await expect(dialog).toContainText('Chưa có học viên trong danh sách này.');
-  expect(requests.at(-1)).toBe(`/api/v1/admin/classes/${adminClasses[1].id}/students`);
-  await dialog.getByRole('button', { name: 'Đóng danh sách' }).click();
+  await expect(view).toBeFocused();
   fail = true;
-  await page
-    .getByRole('button', { name: `Danh sách học viên: ${adminClasses[0].name}`, exact: true })
-    .click();
-  await expect(dialog).toContainText('Chưa thể tải dữ liệu');
+  await page.getByRole('button', { name: 'Làm mới', exact: true }).click();
+  await expect(page.getByText('Chưa thể tải dữ liệu', { exact: true })).toBeVisible();
   fail = false;
-  await dialog.getByRole('button', { name: 'Thử lại', exact: true }).click();
-  await expect(dialog.getByRole('table').locator('tbody tr')).toHaveCount(20);
+  await page.getByRole('button', { name: 'Thử lại', exact: true }).click();
+  await expect(table.locator('tbody tr')).toHaveCount(20);
+  await page.getByRole('link', { name: 'Quay lại lớp học' }).click();
+  await page
+    .getByRole('link', { name: `Danh sách học viên: ${adminClasses[1].name}`, exact: true })
+    .click();
+  await expect(page.getByText('Chưa có học viên trong lớp', { exact: true })).toBeVisible();
+  expect(requests.at(-1)).toBe(`/api/v1/admin/classes/${adminClasses[1].id}/students`);
 });
 
 test('Admin entry denies guests and non-admin accounts before requesting private lists', async ({
@@ -197,12 +224,13 @@ test('Reusable admin table supports filters, pagination, CSV, columns and access
   await page.getByRole('combobox', { name: 'Tất cả vai trò' }).selectOption('MENTOR');
   await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(6);
   await expect(page.getByRole('table')).not.toContainText('Học viên');
-  await page.getByRole('button', { name: 'Xóa bộ lọc' }).click();
+  await page.getByRole('combobox', { name: 'Tất cả vai trò' }).selectOption('');
+  await page.getByRole('button', { name: 'Tất cả', exact: true }).click();
   await page.getByRole('textbox', { name: 'Tìm người dùng trong trang' }).fill('nguyen an');
   await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(1);
   await page.getByRole('checkbox', { name: 'Chọn Nguyễn An', exact: true }).check();
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Xuất CSV (1)' }).click();
+  await page.getByRole('button', { name: 'Xuất CSV' }).click();
   const download = await downloadPromise;
   const path = await download.path();
   expect(path).not.toBeNull();
@@ -250,10 +278,15 @@ test('Overview and resource pages use real contract totals and stay within the v
       await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(1);
       await expect(page.getByRole('table')).toContainText('JavaScript — Lớp tháng 11');
     }
+    if (route === '/admin')
+      await expect(page.getByRole('table').getByRole('button')).toHaveCount(0);
     if (route !== '/admin/workflow') {
-      const actions = page.getByRole('table').locator('tbody tr').first().locator('td').last();
-      await expect(actions.getByRole('button')).toHaveCount(route === '/admin/courses' ? 2 : 3);
-      await expect(actions.getByRole('button').first()).toHaveAccessibleName(/^Xem thông tin:/);
+      if (route !== '/admin') {
+        const actions = page.getByRole('table').locator('tbody tr').first().locator('td').last();
+        await expect(actions.getByRole('button')).toHaveCount(route === '/admin/users' ? 3 : 2);
+        await expect(actions.getByRole('link')).toHaveCount(route === '/admin/classes' ? 1 : 0);
+        await expect(actions.getByRole('button').first()).toHaveAccessibleName(/^Xem thông tin:/);
+      }
       const dot = page.getByRole('table').locator('[data-slot="badge"] .animate-pulse').first();
       await expect(dot).toHaveCSS('animation-name', 'pulse');
       await page.emulateMedia({ reducedMotion: 'reduce' });

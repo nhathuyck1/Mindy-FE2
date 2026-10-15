@@ -92,6 +92,13 @@ export const adminClasses = [
 
 export async function mockAdminApi(page: Page) {
   await page.route('**/api/v1/auth/me', (route) => route.fulfill({ json: adminUser }));
+  await page.route('**/api/v1/admin/classes/*', (route) => {
+    const id = new URL(route.request().url()).pathname.split('/').at(-1);
+    const item = adminClasses.find((candidate) => candidate.id === id);
+    return item
+      ? route.fulfill({ json: { ...item, meetingUrl: null, units: [] } })
+      : route.fulfill({ status: 404, json: { code: 'NOT_FOUND', message: 'Not found' } });
+  });
   await page.route('**/api/v1/admin/*?**', (route) => {
     const url = new URL(route.request().url());
     const query = url.searchParams;

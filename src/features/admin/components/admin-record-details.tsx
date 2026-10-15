@@ -25,29 +25,32 @@ export function AdminRecordDetails(props: {
       embedded={props.embedded}
     >
       <div className="p-6">
-        <p className="text-2xl font-extrabold break-words">{props.row.name}</p>
+        <div className="flex items-start justify-between gap-3">
+          <p className="min-w-0 text-2xl font-extrabold break-words">{props.row.name}</p>
+          <AdminStatus status={props.row.status} />
+        </div>
         {props.resource === 'users' && (
           <p className="mt-1 text-base break-all text-muted">{props.row.subtitle}</p>
         )}
-        <div className="mt-4">
-          <AdminStatus status={props.row.status} />
-        </div>
         <dl className="mt-6 divide-y divide-line text-base">
           {[
             ...props.row.fields,
-            { label: config.metric, value: props.row.metric },
-            { label: config.date, value: formatAdminDate(props.row.date) },
-          ]
-            .filter(
-              (field, index, fields) =>
-                fields.findIndex((item) => item.label === field.label) === index,
-            )
-            .map((field) => (
-              <div key={field.label} className="grid gap-1 py-3 sm:grid-cols-[150px_1fr] sm:gap-4">
-                <dt className="text-sm text-muted">{field.label}</dt>
-                <dd className="min-w-0 font-semibold break-words">{field.value}</dd>
-              </div>
-            ))}
+            ...[
+              { label: config.metric, value: props.row.metric },
+              { label: config.date, value: formatAdminDate(props.row.date) },
+            ].filter(
+              // Bỏ cột bảng nếu fields đã có cùng nhãn hoặc cùng giá trị (vd. chỗ còn lại / sĩ số).
+              (extra) =>
+                !props.row.fields.some(
+                  (field) => field.label === extra.label || field.value === extra.value,
+                ),
+            ),
+          ].map((field) => (
+            <div key={field.label} className="grid gap-1 py-3 sm:grid-cols-[150px_1fr] sm:gap-4">
+              <dt className="text-sm text-muted">{field.label}</dt>
+              <dd className="min-w-0 font-semibold break-words">{field.value}</dd>
+            </div>
+          ))}
         </dl>
       </div>
     </Modal>

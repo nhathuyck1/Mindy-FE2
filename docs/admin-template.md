@@ -4,7 +4,7 @@ Cập nhật 15/10/2026. Người dùng mở rộng sang Admin trên FE2; Mindy-
 
 ## Thiết kế và routes
 
-Tham chiếu `docs/sidebar.png` cho sidebar gọn, nhóm điều hướng và trạng thái chọn; `docs/admin table.png` cho tab trạng thái, toolbar, bảng thành viên, badge và thao tác từng dòng. Dùng font Nunito tiếng Việt và palette Mindy hiện có.
+Tham chiếu `docs/sidebar.png` cho sidebar gọn, nhóm điều hướng và trạng thái chọn; `docs/admin table.png` cho tab trạng thái, toolbar, bảng thành viên, badge và thao tác từng dòng. Dùng font Inter Variable (có tiếng Việt), chữ đen trên nền trắng; border, button và hover giữ palette Mindy.
 
 | Route             | Nội dung                                                                                                      |
 | ----------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -74,4 +74,4 @@ Nguồn cài bằng CLI chính thức (new-york, Radix), cấu hình tại `comp
 
 ## Xem học viên theo lớp — 15/10/2026
 
-Nút Học viên trên bảng lớp của `/admin` và `/admin/classes` mở Dialog shadcn/ui, query theo classId và page; GET `/admin/classes/:classId/students?page=1&pageSize=20`. Đối chiếu Swagger live và `AdminClassStudentDto`/flow Phase 4 BE: tên/email/phone, studentStatus, enrollmentId/enrollmentStatus và enrolledAt nullable; response `{items,page,pageSize,total}`. Danh sách theo BE gồm chờ thanh toán/đang học/hoàn thành, không phải roster điểm danh. Chỉ mở đúng GET list có UUID/pagination strict và access_token/private no-store; chưa mở student detail hoặc mutations. Có loading/error/retry/empty/phân trang; query chỉ mount khi bấm nút.
+Nút Học viên (link) trên bảng `/admin/classes` chuyển sang route `/admin/classes/[classId]/students`; page validate UUID (sai → notFound), returnTo đăng nhập lại cho phép đúng pattern này, sidebar giữ mục Lớp học active. Heading lấy GET `/admin/classes/:classId` (tên, mã, trạng thái, giảng viên, khai giảng). Bảng gọi GET `/admin/classes/:classId/students?page&pageSize` (10/20/50), tìm kiếm và sắp xếp tên chỉ trong trang đã tải; nút Xem mở Dialog gọi GET `/admin/classes/:classId/students/:studentId` (`AdminClassStudentDetailDto`: ngày đăng ký, tạo tài khoản, đăng nhập cuối). Đối chiếu Swagger live 16/10/2026: BE chỉ có hai GET này, không có POST/PATCH/DELETE học viên theo lớp, nên chưa có thao tác thêm/sửa/xóa. Danh sách gồm chờ thanh toán/đang học/hoàn thành, không phải roster điểm danh. Proxy chỉ mở đúng hai GET, UUID strict, query rỗng cho detail, access_token/private no-store. Có loading/error/retry/empty/phân trang.

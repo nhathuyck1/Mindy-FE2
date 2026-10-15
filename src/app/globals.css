@@ -1,6 +1,9 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* Mindy chưa có dark theme: dark: của shadcn chỉ chạy khi có class .dark, không theo hệ điều hành. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @utility scrollbar-hidden {
   scrollbar-width: none;
   &::-webkit-scrollbar {
@@ -30,10 +33,15 @@
   --color-status-yellow: #a16207;
   --color-status-red: #b91c1c;
   --color-canvas: #ffffff;
+  /* Chữ admin màu đen theo yêu cầu người dùng ngày 15/10/2026. */
+  --color-ink: #000000;
+  --color-ink-soft: color-mix(in srgb, var(--color-ink) 82%, var(--color-canvas));
+  --color-ink-gray: color-mix(in srgb, var(--color-ink) 58%, var(--color-canvas));
   --color-soft: color-mix(in srgb, var(--color-mint) 7%, var(--color-canvas));
   --color-line: color-mix(in srgb, var(--color-mint) 19%, var(--color-canvas));
   --color-muted: color-mix(in srgb, var(--color-forest) 90%, var(--color-canvas));
   --color-peach: color-mix(in srgb, var(--color-coral) 13%, var(--color-canvas));
+  --color-pastel-red: color-mix(in srgb, var(--color-status-red) 60%, var(--color-canvas));
   --color-hero: hsl(from var(--color-mint) h calc(s * 1.6) 90%);
   --color-hero-ink: color-mix(in srgb, var(--color-mint) 70%, var(--color-forest));
   --color-hero-copy: color-mix(in srgb, var(--color-mint) 40%, var(--color-forest));
@@ -56,9 +64,18 @@
   --color-popover: var(--color-canvas);
   --color-popover-foreground: var(--color-forest);
   --font-sans: 'Nunito Variable', 'Nunito', Arial, sans-serif;
+  --font-admin: 'Inter Variable', 'Inter', Arial, sans-serif;
 }
 
 @layer base {
+  /* Admin dùng Inter, chữ chính đen dịu và chữ phụ xám, gồm cả portal ra body.
+     Logo, border, button, hover và trạng thái chọn vẫn giữ mint/forest. */
+  html:has([data-admin-root]) {
+    --font-sans: var(--font-admin);
+    --color-foreground: var(--color-ink-soft);
+    --color-muted: var(--color-ink-gray);
+    --color-muted-foreground: var(--color-ink-gray);
+  }
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 7rem;
@@ -106,7 +123,7 @@
     --text-9xl: 8.125rem;
   }
   .admin-workspace {
-    @apply min-h-dvh bg-soft/50 text-forest lg:grid lg:grid-cols-[228px_minmax(0,1fr)];
+    @apply min-h-dvh bg-canvas text-foreground lg:grid lg:grid-cols-[228px_minmax(0,1fr)];
   }
   .admin-workspace-collapsed {
     @apply lg:grid-cols-[76px_minmax(0,1fr)];
@@ -145,7 +162,7 @@
     @apply w-full min-w-230 border-collapse text-left text-sm;
   }
   .admin-data-table thead {
-    @apply border-y border-line bg-soft/45 text-sm font-extrabold text-forest;
+    @apply border-y border-line bg-canvas text-sm font-extrabold text-foreground;
   }
   .admin-data-table thead th {
     @apply h-12 px-4 font-extrabold;

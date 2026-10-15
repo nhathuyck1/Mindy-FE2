@@ -134,7 +134,7 @@ export function AdminCourseForm(props: {
             {categories.isPending || categories.isError ? (
               <AdminQueryState
                 loading={categories.isPending}
-                columns={2}
+                variant="modal"
                 error={categories.error}
                 onRetry={() => categories.refetch()}
               />

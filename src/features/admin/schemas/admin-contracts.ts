@@ -73,3 +73,12 @@ export const adminClassStudentsPageSchema = z.object({
   ),
   ...pagination,
 });
+export const adminClassStudentDetailSchema =
+  adminClassStudentsPageSchema.shape.items.element.extend({
+    classId: z.uuid(),
+    orderDetailId: z.uuid(),
+    registeredAt: z.iso.datetime({ offset: true }),
+    accountCreatedAt: z.iso.datetime({ offset: true }),
+    lastLoginAt: z.iso.datetime({ offset: true }).nullable(),
+  });
+export type AdminClassStudent = z.infer<typeof adminClassStudentsPageSchema>['items'][number];

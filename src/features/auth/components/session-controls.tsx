@@ -87,7 +87,7 @@ export function SessionControls() {
               <p className="mb-2 text-[11px] font-extrabold tracking-wider text-mint uppercase">
                 Tài khoản Mindy
               </p>
-              <p className="text-base font-extrabold break-words text-forest">
+              <p className="text-base font-extrabold break-words text-foreground">
                 {session.data.displayName}
               </p>
               <p className="mt-1 text-sm break-all text-muted">{session.data.email}</p>
@@ -114,7 +114,7 @@ export function SessionControls() {
             {logout.isError && (
               <p
                 role="alert"
-                className="mx-2 mt-1 mb-2 rounded-xl bg-peach p-3 text-sm text-forest"
+                className="mx-2 mt-1 mb-2 rounded-xl bg-peach p-3 text-sm text-foreground"
               >
                 Chưa thể đăng xuất. Vui lòng thử lại.
               </p>

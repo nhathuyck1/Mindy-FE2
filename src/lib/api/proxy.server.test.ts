@@ -93,6 +93,39 @@ describe('Homepage and login API adapter', () => {
     expect((await proxyApi(request(), path)).status).toBe(502);
   });
 
+  it('Protects UUID class-student details and strips private fields', async () => {
+    const classId = '44444444-4444-4444-8444-444444444444';
+    const path = `admin/classes/${classId}/students/${user.id}`;
+    const request = (suffix = '', cookie = 'access_token=opaque; refresh_token=hidden') =>
+      new Request(`http://localhost:3003/api/v1/${path}${suffix}`, { headers: { Cookie: cookie } });
+    expect((await proxyApi(request('', ''), path)).status).toBe(401);
+    expect((await proxyApi(request('?page=1'), path)).status).toBe(422);
+    expect((await proxyApi(request(), `admin/classes/${classId}/students/bad`)).status).toBe(404);
+    expect(fetchMock).not.toHaveBeenCalled();
+    const detail = {
+      studentId: user.id,
+      studentName: user.displayName,
+      email: user.email,
+      phone: '0900000000',
+      studentStatus: 'ACTIVE',
+      enrollmentId: classId,
+      enrollmentStatus: 'ACTIVE',
+      enrolledAt: '2026-10-12T01:00:00.000Z',
+      classId,
+      orderDetailId: classId,
+      registeredAt: '2026-10-10T01:00:00.000Z',
+      accountCreatedAt: '2026-10-01T01:00:00.000Z',
+      lastLoginAt: null,
+    };
+    fetchMock.mockResolvedValueOnce(Response.json({ ...detail, passwordHash: 'hidden' }));
+    const response = await proxyApi(request(), path);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(detail);
+    expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get('Cookie')).toBe(
+      'access_token=opaque',
+    );
+  });
+
   it('Rejects requests outside the explicit allowlist', async () => {
     const response = await proxyApi(
       new Request('http://localhost:3003/api/v1/admin/secrets'),

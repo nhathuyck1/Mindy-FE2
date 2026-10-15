@@ -28,6 +28,7 @@ import {
   adminCourseFiltersSchema,
   adminClassFiltersSchema,
   adminClassStudentsPageSchema,
+  adminClassStudentDetailSchema,
 } from '@/features/admin/schemas/admin-contracts';
 
 const privateHeaders = {
@@ -80,6 +81,15 @@ function resolveRule(method: string, path: string): ApiRule | undefined {
       cookies: ['access_token'],
       query: paginationQuerySchema.strict(),
     };
+  if (
+    parts.length === 5 &&
+    parts[0] === 'admin' &&
+    parts[1] === 'classes' &&
+    parts[3] === 'students' &&
+    z.uuid().safeParse(parts[2]).success &&
+    z.uuid().safeParse(parts[4]).success
+  )
+    return { response: adminClassStudentDetailSchema, cookies: ['access_token'] };
   if (!z.uuid().safeParse(parts[1]).success) return undefined;
   if (parts[0] === 'courses' && parts.length === 2)
     return { response: courseDetailSchema, cookies: [] };

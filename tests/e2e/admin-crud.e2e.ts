@@ -54,10 +54,10 @@ test('Table icon actions open centered blurred modals without duplicate action b
   await expect(dialog.getByLabel(/^Tên lớp/)).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
-  await actions.getByRole('button', { name: /^Danh sách học viên:/ }).click();
-  await expect(dialog).toContainText('Chưa có học viên');
-  await page.keyboard.press('Escape');
-  await expect(dialog).toHaveCount(0);
+  await expect(actions.getByRole('link', { name: /^Danh sách học viên:/ })).toHaveAttribute(
+    'href',
+    `/admin/classes/${adminClasses[1].id}/students`,
+  );
   await view.focus();
   await page.keyboard.press('Enter');
   await expect(dialog).toContainText('Thông tin lớp học');

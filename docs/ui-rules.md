@@ -13,6 +13,7 @@
 - Bổ sung semantic tokens status-green/status-yellow/status-red theo yêu cầu người dùng: hoạt động/kích hoạt/đang tuyển/đang học/hoàn thành xanh; chờ xác thực/chưa kích hoạt/nháp/chờ thanh toán vàng; tạm khóa/đã hủy đỏ. Dùng lại AdminStatus cả đăng ký học viên, luôn có nhãn chữ bên cạnh màu. Chấm màu nhấp nháy nhẹ bằng animate-pulse, tắt khi reduced motion. Chọn danh mục và nút Tạo danh mục mới trên cùng một hàng.
 
 - Loading dữ liệu dùng Skeleton shadcn/ui qua `TableSkeleton`/`StatCardSkeleton` dùng chung ở `components/ui/loading-skeletons.tsx`; không chép lại markup skeleton ở từng màn hình. Hiện skeleton khi query chưa có dữ liệu; giữ dữ liệu hiện tại khi background refetch.
+- Loading page và modal (16/10/2026) dùng `LoadingOverlay` ở `components/ui/spinner.tsx`: làm mờ/blur nền rồi hiện spinner giữa. `scope="page"` cho `loading.tsx`, Suspense fallback, kiểm tra phiên admin và trang chi tiết khóa học; `scope="modal"` cho nội dung tải trong modal (editor admin, chi tiết học viên, chọn lớp, lịch học). Bảng giữ skeleton; thẻ số liệu/biểu đồ/nút bấm giữ trạng thái cũ. Reduced motion làm spinner quay chậm.
 
 - Dùng component shadcn/ui theo yêu cầu: Button, Table, Input, Badge, Checkbox, Dialog, Sheet, NativeSelect, Popover. Cấu hình `components.json`, nguồn `src/components/ui`; giữ palette/typography Mindy qua semantic tokens, không áp theme neutral mặc định. `cn` dùng helper tại `src/lib/utils.ts`.
 
@@ -54,7 +55,8 @@ Chữ chính dùng forest; chữ phụ dùng muted pha 90% forest để giữ đ
 ## Bố cục và typography
 
 - Nền trắng, mint làm màu nhận diện; bố cục thoáng, dễ đọc.
-- Font Nunito Variable hỗ trợ đầy đủ dấu tiếng Việt.
+- Font Nunito Variable hỗ trợ đầy đủ dấu tiếng Việt cho website public. Admin (`/admin`) dùng Inter Variable theo yêu cầu ngày 15/10/2026, gồm cả dialog/sheet/popover.
+- Admin: chữ chính đen dịu `--color-ink-soft` (qua `--color-foreground`), chữ phụ (`text-muted`/`text-muted-foreground`: mô tả, email, nav chưa chọn, footer) xám `--color-ink-gray`, trong phạm vi `data-admin-root`; nền trắng `canvas`. Logo, border, button, hover, tab/nav đang chọn và link vẫn giữ mint/forest. Form admin: tiêu đề dialog `text-xl`, label/input 14px, hint 13px, dấu `*` bắt buộc màu `status-red`, input nền trắng viền `line`. Lớp phủ dialog/sheet/alert-dialog là trắng mờ `bg-canvas/60` + `backdrop-blur-md`; nội dung modal giữ viền `line` và `shadow-lg` để tách khỏi nền. Variant `dark:` chỉ chạy với class `.dark` (chưa có dark theme) để input không bị phủ màu theo hệ điều hành. Component dùng chung nên ghi `text-foreground` thay cho `text-forest` để public giữ forest còn admin thành đen.
 - Nội dung rộng tối đa 1280px, gutter mobile 20px, tablet 32px, desktop 40px.
 - Hero hai cột trên desktop, một cột trên mobile; giữ đúng tỷ lệ ảnh ếch.
 - Giữ thứ tự: hero, cách bắt đầu, khóa học, hành trình, thực hành, CTA cuối trang.
