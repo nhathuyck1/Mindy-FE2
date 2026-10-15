@@ -1,0 +1,108 @@
+@reference "../globals.css";
+
+@layer base {
+  /* Admin dùng Inter, chữ chính đen dịu và chữ phụ xám, gồm cả portal ra body.
+     Logo, border, button, hover và trạng thái chọn vẫn giữ mint/forest. */
+  html:has([data-admin-root]) {
+    --font-sans: var(--font-admin);
+    --color-foreground: var(--color-ink-soft);
+    --color-card-foreground: var(--color-ink-soft);
+    --color-primary: var(--color-mint);
+    --color-muted: var(--color-ink-gray);
+    --color-muted-foreground: var(--color-ink-gray);
+  }
+}
+
+@layer components {
+  .admin-workspace,
+  .admin-typography {
+    font-size: 18px;
+    --text-xs: 0.875rem;
+    --text-sm: 1rem;
+    --text-base: 1.125rem;
+    --text-lg: 1.25rem;
+    --text-xl: 1.375rem;
+    --text-2xl: 1.625rem;
+    --text-3xl: 2rem;
+    --text-4xl: 2.375rem;
+    --text-5xl: 3.125rem;
+    --text-6xl: 3.875rem;
+    --text-7xl: 4.625rem;
+    --text-8xl: 6.125rem;
+    --text-9xl: 8.125rem;
+  }
+  .admin-workspace {
+    @apply min-h-dvh bg-canvas text-foreground lg:grid lg:grid-cols-[228px_minmax(0,1fr)];
+  }
+  .admin-workspace-collapsed {
+    @apply lg:grid-cols-[76px_minmax(0,1fr)];
+  }
+  .admin-sidebar {
+    @apply sticky top-0 hidden h-dvh flex-col border-r border-line bg-canvas lg:flex;
+  }
+  .admin-topbar {
+    @apply flex min-h-23 items-center justify-between gap-3 border-b border-line bg-canvas px-4 sm:px-8;
+  }
+  .admin-main {
+    @apply mx-auto min-h-[calc(100dvh-160px)] w-full max-w-400 px-4 py-7 sm:px-8 sm:py-9;
+  }
+  .admin-nav-link {
+    @apply relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-bold text-muted transition-colors hover:bg-soft hover:text-forest;
+  }
+  .admin-nav-active {
+    @apply bg-soft text-mint before:absolute before:-left-3 before:h-5 before:w-0.5 before:rounded-full before:bg-mint;
+  }
+  .admin-icon-button {
+    @apply inline-flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-canvas text-muted transition-colors hover:bg-soft hover:text-mint disabled:cursor-default disabled:opacity-40;
+  }
+  .admin-button {
+    @apply inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-line bg-canvas px-4 text-sm font-extrabold text-forest transition-colors hover:border-mint hover:bg-soft disabled:cursor-default disabled:opacity-45;
+  }
+  .admin-button-primary {
+    @apply border-mint bg-mint text-canvas hover:border-forest hover:bg-forest;
+  }
+  .admin-page-heading {
+    @apply mb-7 flex flex-wrap items-center justify-between gap-5;
+  }
+  .admin-table-panel {
+    @apply overflow-hidden rounded-2xl border border-line bg-canvas;
+  }
+  .admin-data-table {
+    @apply w-full min-w-230 border-collapse text-left text-sm;
+  }
+  .admin-data-table thead {
+    @apply border-y border-line bg-canvas text-sm font-extrabold text-foreground;
+  }
+  .admin-data-table thead th {
+    @apply h-12 px-4 font-extrabold;
+  }
+  .admin-data-table tbody tr {
+    @apply border-b border-line/65 transition-colors last:border-b-0 hover:bg-soft/40;
+  }
+  .admin-data-table tbody tr[data-selected='true'] {
+    @apply bg-soft;
+  }
+  .admin-data-table tbody td,
+  .admin-data-table tbody th {
+    @apply h-16 px-4 py-2;
+  }
+  .admin-data-table tr > th,
+  .admin-data-table tr > td {
+    @apply border-r border-line/60 last:border-r-0;
+  }
+  .admin-data-table tr > :first-child {
+    @apply pl-6;
+  }
+  .admin-data-table tr > :last-child {
+    @apply pr-6;
+  }
+  .admin-data-table tr > .admin-selection-cell {
+    @apply w-12 min-w-12 p-0 text-center align-middle;
+  }
+  .admin-data-table input[type='checkbox'] {
+    @apply size-3.5 cursor-pointer;
+  }
+  .admin-row-action {
+    @apply inline-flex min-h-9 cursor-pointer items-center justify-center gap-4 rounded-lg border border-mint/40 px-3 text-[15px] font-extrabold whitespace-nowrap text-mint hover:bg-soft;
+  }
+}

@@ -39,8 +39,8 @@ describe('Homepage and login API adapter', () => {
 
   it('Rejects requests outside the homepage and login allowlist', async () => {
     const response = await proxyApi(
-      new Request('http://localhost:3003/api/v1/admin/users'),
-      'admin/users',
+      new Request('http://localhost:3003/api/v1/admin/unsupported'),
+      'admin/unsupported',
     );
     expect(response.status).toBe(404);
     expect(fetchMock).not.toHaveBeenCalled();

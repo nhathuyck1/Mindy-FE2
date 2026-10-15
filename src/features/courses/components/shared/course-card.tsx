@@ -32,12 +32,12 @@ export function CourseCard(props: {
       </div>
       <div className="flex min-w-0 flex-1 flex-col p-5">
         <p
-          className={`mb-2 truncate font-bold text-mint ${props.comfortable ? 'min-h-5 text-sm' : 'min-h-4 text-[11px]'}`}
+          className={`mb-2 truncate font-bold text-mint ${props.comfortable ? 'min-h-5 text-xs' : 'min-h-4 text-[11px]'}`}
         >
           {course.category.name}
         </p>
         <Heading
-          className={`leading-snug font-extrabold group-hover:text-mint ${props.comfortable ? 'min-h-[50px] text-lg' : 'min-h-11 text-base'}`}
+          className={`leading-snug font-extrabold group-hover:text-mint ${props.comfortable ? 'min-h-[50px] text-base' : 'min-h-11 text-base'}`}
         >
           <Link
             href={`/courses/${course.id}`}

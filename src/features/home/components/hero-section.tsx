@@ -7,7 +7,7 @@ export function HeroSection() {
     <section className="relative isolate overflow-clip bg-hero text-hero-copy">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-[url('/mindy/hero-clouds.webp')] bg-cover bg-bottom opacity-40 mix-blend-screen brightness-50 contrast-[5] grayscale"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[url('/mindy/hero-clouds.webp')] bg-cover bg-bottom opacity-55 mix-blend-screen brightness-50 contrast-[5] grayscale"
       />
       <div className="page-container grid items-center gap-4 pt-12 pb-14 md:grid-cols-[1.1fr_1fr] md:py-16 lg:min-h-170 lg:gap-8">
         <div className="relative z-10">
@@ -27,12 +27,6 @@ export function HeroSection() {
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-3">
             <ActionLink href="#khoa-hoc">KHÁM PHÁ KHÓA HỌC</ActionLink>
-            <a
-              href="#thuc-hanh"
-              className="text-link hover:text-canvas hover:underline hover:underline-offset-4"
-            >
-              Thử viết mã nguồn <Icon name="code" className="size-4" />
-            </a>
           </div>
           <p className="mt-7 flex items-center gap-2.5 text-xs font-semibold">
             <Icon name="book" className="size-4 shrink-0" />

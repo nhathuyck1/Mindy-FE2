@@ -84,7 +84,7 @@ test('Shows available and full classes, real timetable in UTC+7 and restores dia
   page,
 }, testInfo) => {
   await page.goto(`/courses/${courseId}`);
-  const trigger = page.getByRole('button', { name: 'Đăng ký học ngay', exact: true });
+  const trigger = page.getByRole('button', { name: 'Xem lớp & lịch học', exact: true }).first();
   await trigger.click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByRole('button', { name: 'Đóng chọn lớp' })).toBeFocused();
@@ -130,7 +130,7 @@ test('Handles unavailable courses, no open classes and timetable failures with r
   await page.route(`**/api/v1/courses/${courseId}/classes?**`, (route) =>
     route.fulfill({ json: { items: [], page: 1, pageSize: 10, total: 0 } }),
   );
-  await page.getByRole('button', { name: 'Đăng ký học ngay', exact: true }).click();
+  await page.getByRole('button', { name: 'Xem lớp & lịch học', exact: true }).first().click();
   await expect(page.getByText('Chưa có lớp đang mở', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Đóng chọn lớp' }).click();
   await page.route(`**/api/v1/courses/${courseId}/classes?**`, (route) =>
@@ -139,7 +139,7 @@ test('Handles unavailable courses, no open classes and timetable failures with r
   await page.route(`**/api/v1/classes/${openClass.id}`, (route) =>
     route.fulfill({ status: 404, json: { code: 'CLASS_NOT_FOUND', message: 'Class closed' } }),
   );
-  await page.getByRole('button', { name: 'Đăng ký học ngay', exact: true }).click();
+  await page.getByRole('button', { name: 'Xem lớp & lịch học', exact: true }).first().click();
   await page.getByRole('button', { name: `Xem lịch ${openClass.name}`, exact: true }).click();
   await expect(page.getByText('Chưa thể xem lịch lớp này', { exact: true })).toBeVisible();
   await page.route(`**/api/v1/classes/${openClass.id}`, (route) =>
@@ -196,7 +196,7 @@ test('Keeps catalog, detail and class picker within 320px and reports no script 
     );
   }
   await page.screenshot({ path: testInfo.outputPath('course-detail-320.png'), fullPage: true });
-  await page.getByRole('button', { name: 'Đăng ký học ngay', exact: true }).click();
+  await page.getByRole('button', { name: 'Xem lớp & lịch học', exact: true }).first().click();
   await page.getByRole('button', { name: `Xem lịch ${openClass.name}`, exact: true }).click();
   await expect(page.getByText('19:00 – 21:00').first()).toBeVisible();
   expect(
@@ -242,7 +242,7 @@ test('Allows anonymous browsing and requires login only to register a selected c
     route.fulfill({ json: { user: testUser, accessTokenExpiresAt: '2026-10-15T23:59:59Z' } }),
   );
   await page.goto(`/courses/${courseId}`);
-  await page.getByRole('button', { name: 'Đăng ký học ngay', exact: true }).click();
+  await page.getByRole('button', { name: 'Xem lớp & lịch học', exact: true }).first().click();
   await page.getByRole('button', { name: `Xem lịch ${openClass.name}`, exact: true }).click();
   await expect(page.getByText('19:00 – 21:00').first()).toBeVisible();
   expect(cartRequests).toBe(0);
@@ -292,4 +292,86 @@ test('Aligns card headings, descriptions and larger prices without a login promp
   }
   expect(cards.every((card) => card.size >= 24)).toBe(true);
   await expect(page.getByText('Đăng nhập để bắt đầu', { exact: true })).toHaveCount(0);
+});
+
+test('Registration CTA prompts guests immediately and returns to the course after login', async ({
+  page,
+}, testInfo) => {
+  let loggedIn = false;
+  let cartRequests = 0;
+  let classRequests = 0;
+  await page.route('**/api/v1/auth/me', (route) =>
+    route.fulfill(
+      loggedIn
+        ? { json: testUser }
+        : {
+            status: 401,
+            json: { code: 'AUTHENTICATION_REQUIRED', message: 'Bạn chưa đăng nhập.' },
+          },
+    ),
+  );
+  await page.route('**/api/v1/auth/login', (route) => {
+    loggedIn = true;
+    return route.fulfill({
+      json: { user: testUser, accessTokenExpiresAt: '2026-10-15T23:59:59Z' },
+    });
+  });
+  page.on('request', (request) => {
+    if (request.url().includes('/me/cart/items')) cartRequests++;
+    if (request.url().includes('/classes?')) classRequests++;
+  });
+  if (testInfo.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 780 });
+  await page.goto('/courses/' + courseId);
+  const trigger = page.getByRole('button', { name: 'Đăng ký học ngay', exact: true });
+  await trigger.click();
+  const dialog = page.getByRole('dialog', { name: 'Bạn chưa đăng nhập', exact: true });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText('Hãy đăng nhập để có thể đăng ký học ngay bây giờ.')).toBeVisible();
+  expect(classRequests).toBe(0);
+  expect(cartRequests).toBe(0);
+  expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('login-required.png') });
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  await trigger.click();
+  await dialog.getByRole('button', { name: 'Để sau', exact: true }).click();
+  await expect(trigger).toBeFocused();
+  await trigger.click();
+  await dialog.getByRole('link', { name: 'Đăng nhập ngay', exact: true }).click();
+  await expect(page).toHaveURL('/login?returnTo=' + encodeURIComponent('/courses/' + courseId));
+  await page.getByLabel('Email', { exact: true }).fill(testUser.email);
+  await page.getByLabel('Mật khẩu', { exact: true }).fill('sample-password');
+  await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
+  await expect(page).toHaveURL('/courses/' + courseId);
+  await trigger.click();
+  await expect(page.getByRole('dialog', { name: 'Chọn lớp phù hợp với bạn' })).toBeVisible();
+  expect(cartRequests).toBe(0);
+});
+
+test('Registration CTA rechecks expired sessions and allows retry after a session error', async ({
+  page,
+}) => {
+  let status = 200;
+  await page.route('**/api/v1/auth/me', (route) =>
+    route.fulfill(
+      status === 200
+        ? { json: testUser }
+        : { status, json: { code: 'SESSION_ERROR', message: 'Không thể đọc phiên.' } },
+    ),
+  );
+  await page.goto('/courses/' + courseId);
+  await expect(
+    page.getByRole('button', { name: 'Tài khoản của ' + testUser.displayName }),
+  ).toBeVisible();
+  status = 503;
+  const trigger = page.getByRole('button', { name: 'Đăng ký học ngay', exact: true });
+  await trigger.click();
+  await expect(
+    page.getByText('Chưa thể kiểm tra phiên đăng nhập. Vui lòng thử lại.'),
+  ).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  status = 401;
+  await trigger.click();
+  await expect(page.getByRole('dialog', { name: 'Bạn chưa đăng nhập', exact: true })).toBeVisible();
 });

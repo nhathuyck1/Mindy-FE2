@@ -1,5 +1,24 @@
 # API catalog, lớp học và tài khoản
 
+## Student learning — 16/10/2026
+
+Đối chiếu Swagger live `https://api.quanh123.id.vn/docs-json` trong lượt này: hợp đồng server mới hơn source/plan BE local 3.3/3.4, đã có ARTICLE và file access. Mục này mở rộng phạm vi allowlist cũ ghi bên dưới.
+
+| Method/path                                                            | Dữ liệu và consumer                                                                                                            |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| GET `/me/classes/:classId`                                             | StudentClassDto, FULL; units/sessions/private meeting URLs                                                                     |
+| GET `/me/classes/:classId/preview`                                     | StudentClassPreviewDto, CASH_PREVIEW; không tài liệu hoặc meeting URL                                                          |
+| GET `/me/classes/:classId/units/:classUnitId/materials`                | StudentMaterialPageDto; page/pageSize, lấy đủ trang, sort sortOrder/id                                                         |
+| GET `/me/classes/:classId/materials/:materialId`                       | StudentMaterialDetailDto; ARTICLE contentHtml/contentSchemaVersion, inlineImages, attachments; file nullable                   |
+| GET `/me/classes/:classId/materials/:materialId/download`              | StudentMaterialDownloadDto; primary signed URL, allowlist tương thích API                                                      |
+| POST `/me/classes/:classId/materials/:materialId/files/:fileId/access` | Không body; MaterialFileAccessDto với materialId/fileId/role/revision/url/expiresAt; viewer dùng cho primary/inline/attachment |
+
+ID validate UUID, chỉ session access cookie/private no-store. POST kiểm Origin và cấm body; chỉ list cho page/pageSize, detail/sign cấm query lạ/lặp. Không mở staff authoring/release. Signed URLs chỉ HTTP(S), không username/password, lưu trong state component; không đưa Query cache/Web Storage/HTML đã lưu. UI kiểm identity/revision/expiry; URL hết hạn được xin lại qua backend, video giữ currentTime/play state khi thay URL. PDF có tab mới dự phòng.
+
+ARTICLE render bằng DOM allowlist, bỏ script/style/event và external image src; img data-file-id chỉ resolve nếu nằm trong inlineImages. Preview strip meeting URL và không mount material queries. `/user/materials` lấy đủ trang lớp, lọc canViewClass và accessMode khác NONE trước phân trang; quyền thật vẫn được backend kiểm lại trên từng endpoint. Live ClassUnitDto chỉ position/title/sessions, nhận optional courseUnitId/status/unlockAt khi server bổ sung; không suy quyền từ order, lịch hoặc tiêu đề.
+
+Swagger chưa có progress/completion endpoint nên không tự lưu % hoàn thành. Kiểm tra cá nhân/assets dùng mock contract, chưa xác minh credentials, storage CORS/Range hay playback thực tế.
+
 ## Commerce/QR — triển khai 15/10/2026
 
 Đối chiếu controller/DTO commerce/payments và Swagger live đã kiểm tra khi lập plan. Lượt xác minh live lại trong lúc implement gặp timeout; kiểm thử mới dùng mock theo contract, chưa nghiệm thu tiền thật.
@@ -21,6 +40,8 @@ Order status PENDING/PAID/EXPIRED/CANCELLED; payment status CREATING/PENDING/SUC
 Origin kiểm cho POST và DELETE; proxy cookie access_token, UUID allowlist và private/no-store. ReturnTo chỉ cart, UUID checkout, result với mã số hoặc courses cũ. Không dùng query status/cancel để settle/hủy đơn. Backend cấu hình PAYOS_RETURN_URL và PAYOS_CANCEL_URL trỏ `/payment/result` ở frontend triển khai; frontend không gửi return URL tùy ý.
 
 Checkout không tự retry khi timeout. Giỏ/đơn chờ refetch để mở lại đơn đã tạo. Payment retry cùng ID, dừng khi PAID/hết hạn/hủy/review. Thử ngân hàng/payOS tiền thật cần môi trường được cấu hình; test QR decode chỉ chứng minh đúng payload render.
+
+Các trang cart/checkout/payment result dùng AuthGuard: chờ kiểm tra/refresh phiên, chỉ mount nội dung cho STUDENT có status ACTIVE. Guest hoặc thiếu quyền chuyển thẳng về `/`; lỗi 401/403 từ API commerce cũng chuyển về `/`. Lỗi mạng/5xx cho thử lại, 404 giữ thông báo không tìm thấy. Không đổi endpoint hay phân quyền backend; login returnTo vẫn áp dụng khi người dùng chủ động mở link đăng nhập.
 
 Cập nhật 15/10/2026. Swagger: https://api.quanh123.id.vn/docs#/. OpenAPI đọc từ `/docs-json`, lưu tại [openapi.snapshot.json](openapi.snapshot.json). Base URL đã xác minh bằng GET: `https://api.quanh123.id.vn/api/v1`. `/docs#/` là trang tài liệu, không phải base URL request.
 
@@ -93,3 +114,16 @@ Browser gọi `/api/v1` cùng origin Next.js. Adapter chỉ cho phép method/pat
 Live GET `/courses?page=1&pageSize=4` và `/course-categories` đều trả 200 cùng dữ liệu thật. Không dùng hoặc dò tài khoản backend. Login thành công/sai mật khẩu, cookie boundary và CSRF được kiểm tra bằng mock đúng contract. Login bằng tài khoản thật cần credentials của người dùng và chưa được coi là xác minh live.
 
 Mở rộng 15/10: live qua adapter `/courses/:id`, `/courses/:id/classes`, `/classes/:id` đều 200; kiểm tra lịch thật, các trạng thái UI và responsive 320–1440px. Vitest 22 pass; Playwright production 37 pass/3 skip theo nền tảng, gồm anonymous viewing → login returnTo → explicit add-cart, registration/verify bằng mock. Không tạo đăng ký email/cart/order thật trong các kiểm tra.
+
+## API khu vực user — 15/10/2026
+
+Đã đọc Swagger live `/docs-json` từ https://api.quanh123.id.vn/docs, đối chiếu `Mindy-BE/docs/api_flow/PHASE_2_3_FLOW.md`, `PHASE_2_3_flow-api-breakdown.md` §2/§5 và `PHASE_4_API_SUMMARY.md`. Endpoint và DTO có trên Swagger đang triển khai; kiểm thử dữ liệu cá nhân dùng mock, không dùng tài khoản thật.
+
+| Method/path        | Consumer và boundary                                                                                                                                             |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET `/auth/me`     | Profile đọc displayName/email/phone/createdAt, guard STUDENT ACTIVE; không thêm mutation hồ sơ vì Swagger chưa có.                                               |
+| GET `/me/orders`   | User orders: page/pageSize/status; tái sử dụng orderPageSchema.                                                                                                  |
+| GET `/me/classes`  | User courses: current/history/all, page/pageSize; một dòng/enrollmentId, accessMode/accessReason và canViewSchedule từ API.                                      |
+| GET `/me/schedule` | User schedule: from/to ISO có timezone, from < to ≤31 ngày, pageSize≤100, includeCancelled chuỗi true/false. Lấy đủ trang; UI tuần 7 ngày theo Asia/Ho_Chi_Minh. |
+
+Proxy chỉ mở hai GET list mới, cookie access_token/private no-store; thiếu cookie trả 401 trước upstream. Strict query không cho chèn studentId, không proxy admin/private class detail/materials trong lần này. Schedule DTO strip field dư, calendar không có meeting URL và không suy ra attendance hoặc effective mentor theo Session. Buổi qua đêm hiện trên các ngày giao nhau theo startsAt < dayEnd && endsAt > dayStart; session CANCELLED có nhãn hủy. ReturnTo thêm đúng 5 path `/user`, `/user/profile`, `/user/orders`, `/user/schedule`, `/user/courses`; bỏ query/path lạ.

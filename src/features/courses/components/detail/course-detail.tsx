@@ -97,7 +97,7 @@ export function CourseDetailContent(props: { courseId: string; initialClassId?: 
                 <Icon name="book" className="size-5 shrink-0 text-mint" />
                 <span>
                   <strong className="block">Giáo trình rõ ràng</strong>
-                  <span className="text-xs text-muted">{units.length} học phần</span>
+                  <span className="text-xs text-muted">{units.length} chương</span>
                 </span>
               </span>
               <span className="flex items-center gap-2">

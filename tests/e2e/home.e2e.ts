@@ -17,6 +17,8 @@ test('Renders the homepage with loaded assets and valid navigation', async ({ pa
     .poll(() => mascot.evaluate((img) => (img as HTMLImageElement).naturalWidth))
     .toBeGreaterThan(0);
   await expect(page.locator('html')).toHaveAttribute('lang', 'vi');
+  await expect(page.getByRole('link', { name: 'Thử viết mã nguồn' })).toHaveCount(0);
+  await expect(page.locator('#closing-title')).toHaveCount(0);
   await page.evaluate(() => document.fonts.ready);
   await expect(page.getByRole('heading', { name: 'Khóa học kiểm thử' })).toBeVisible();
 

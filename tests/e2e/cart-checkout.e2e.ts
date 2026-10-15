@@ -4,10 +4,10 @@ import { PNG } from 'pngjs';
 import { mockCommerce, orderId, qrPayload } from './commerce-fixtures';
 import { testUser } from './api-fixtures';
 
-test('Guest logs in and returns to cart without submitting checkout', async ({ page }) => {
+test('Explicit login returns to cart without submitting checkout', async ({ page }) => {
   const state = await mockCommerce(page);
   state.loggedIn = false;
-  await page.goto('/cart');
+  await page.goto('/login?returnTo=%2Fcart');
   await expect(page).toHaveURL(/\/login\?returnTo=%2Fcart/);
   await page.getByLabel('Email', { exact: true }).fill(testUser.email);
   await page.getByLabel('Mật khẩu', { exact: true }).fill('sample-password');
@@ -174,12 +174,12 @@ test('Session logout clears private QR; denied orders do not prepare a payment',
     .getByRole('button', { name: `Tài khoản của ${testUser.displayName}`, exact: true })
     .click();
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
-  await expect(page).toHaveURL(/\/login\?returnTo=/);
+  await expect(page).toHaveURL('/');
   await expect(page.locator('svg title')).toHaveCount(0);
   state.loggedIn = true;
   state.orderReadStatus = 403;
   await page.goto(`/checkout/${orderId}`);
-  await expect(page.locator('main').getByRole('alert')).toContainText('Bạn không có quyền');
+  await expect(page).toHaveURL('/');
   expect(state.creates).toBe(0);
 });
 

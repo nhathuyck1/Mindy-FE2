@@ -1,5 +1,6 @@
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
+import { AuthGuard } from '@/features/auth/components/auth-guard';
 
 export function CommerceShell(props: { children: React.ReactNode }) {
   return (
@@ -12,7 +13,9 @@ export function CommerceShell(props: { children: React.ReactNode }) {
       </a>
       <SiteHeader />
       <main id="main-content" tabIndex={-1} className="min-h-[65vh] bg-soft/50 py-10 sm:py-14">
-        <div className="page-container">{props.children}</div>
+        <div className="page-container">
+          <AuthGuard role="STUDENT">{props.children}</AuthGuard>
+        </div>
       </main>
       <SiteFooter />
     </>

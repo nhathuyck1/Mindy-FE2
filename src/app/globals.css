@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './admin/tokens.css';
 
 /* Source of truth: docs/pallete.png. Keep brand colors here. */
 @theme {
@@ -9,6 +10,7 @@
   --color-sunshine: #ffddae;
   --color-canvas: #ffffff;
   --color-logo-soft: #d8f0fa;
+  --color-catalog-ink: color-mix(in srgb, var(--color-black) 85%, var(--color-canvas));
   --color-background: var(--color-canvas);
   --color-foreground: var(--color-forest);
   --color-card: var(--color-canvas);
@@ -84,6 +86,7 @@
     @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10;
   }
   .course-detail-container {
+    color: var(--color-black);
     @apply mx-auto w-full px-5 sm:px-8;
 
     @media (width >= 1024px) {
@@ -100,5 +103,74 @@
   }
   .text-link {
     @apply inline-flex min-h-11 items-center gap-2 text-sm font-extrabold transition-colors hover:text-mint;
+  }
+}
+
+@layer utilities {
+  .course-catalog
+    :is(.text-forest, .text-muted, .text-mint):not(svg):not(
+      [data-course-filters],
+      [data-course-filters] *
+    ) {
+    color: var(--color-catalog-ink);
+  }
+
+  /* Keep course copy black without changing brand backgrounds or SVG accents. */
+  .course-detail-container :is(.text-forest, .text-muted, .text-mint):not(svg) {
+    color: var(--color-black);
+  }
+}
+
+@layer components {
+  .user-workspace {
+    @apply min-h-dvh bg-soft/50 text-black lg:grid lg:grid-cols-[228px_minmax(0,1fr)];
+  }
+  .user-workspace-collapsed {
+    @apply lg:grid-cols-[76px_minmax(0,1fr)];
+  }
+  .user-sidebar {
+    @apply sticky top-0 hidden h-dvh flex-col border-r border-line bg-canvas lg:flex;
+  }
+  .user-topbar {
+    @apply flex min-h-23 items-center justify-between gap-3 border-b border-line bg-canvas px-4 sm:px-8;
+  }
+  .user-main {
+    @apply mx-auto min-h-[calc(100dvh-160px)] w-full max-w-400 px-4 py-7 sm:px-8 sm:py-9;
+  }
+  .user-nav-link {
+    @apply relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-bold text-black transition-colors hover:bg-soft hover:text-forest;
+  }
+  .user-nav-active {
+    @apply bg-soft text-mint before:absolute before:-left-3 before:h-5 before:w-0.5 before:rounded-full before:bg-mint;
+  }
+  .learning-article {
+    @apply space-y-4 leading-8 break-words;
+  }
+  .learning-article :is(h1, h2, h3, h4, h5, h6) {
+    @apply mt-7 text-xl font-bold;
+  }
+  .learning-article ul {
+    @apply list-disc space-y-2 pl-6;
+  }
+  .learning-article ol {
+    @apply list-decimal space-y-2 pl-6;
+  }
+  .learning-article a {
+    @apply text-mint underline underline-offset-4;
+  }
+  .learning-article pre {
+    @apply max-w-full overflow-x-auto rounded-lg bg-soft p-4 text-sm;
+  }
+  .learning-article blockquote {
+    @apply border-l-4 border-mint pl-5 text-muted;
+  }
+  .learning-article img {
+    @apply mx-auto h-auto max-w-full rounded-lg;
+  }
+  .learning-article table {
+    @apply block max-w-full overflow-x-auto border-collapse;
+  }
+  .learning-article :is(th, td) {
+    @apply border border-line px-4 py-2;
   }
 }

@@ -1,5 +1,91 @@
 # Tiến độ
 
+## 16/10/2026 — Tích hợp admin có chọn lọc trên Booking
+
+- Nền giữ nguyên main/Feat/Booking tại 86780a8; thực hiện trên nhánh main-admin. Chỉ lấy module, routes, shell, primitive mới và test admin từ origin/admin (90499af); không merge toàn bộ nhánh.
+- Giữ nguyên homepage, courses, cart, orders/payments, user/learning, root layout, login UI, auth queries và các primitive đã có. Button chỉ thêm unstyled, Icon chỉ thêm tên mới. Header chỉ bổ sung link quản trị cho ADMIN ACTIVE; returnTo thêm allowlist admin.
+- CSS admin ở src/app/admin/admin.css, chỉ đổi font/token khi có data-admin-root; globals.css chỉ import token/animation bổ sung. Thêm Inter, Recharts và tw-animate-css để phục vụ module admin.
+- API adapter thêm policy admin riêng, GET/POST/PATCH/PUT allowlist, UUID/schema/query validation, cookie access_token và Origin cho mutations. Quyền ADMIN do backend kiểm tra; không nới quyền API student.
+- Production build pass; 68 unit tests pass. Toàn bộ E2E: 157 pass, 3 skip đúng nền tảng; thêm 2 test desktop/mobile kiểm font/màu/header của website không đổi sau client navigation qua admin. Test dùng API mock theo contract, chưa nghiệm thu tài khoản admin/VPS thật.
+- Không thay đổi các file khác chỉ để sửa format: format:check toàn repo còn cảnh báo sẵn có trên nhiều file Booking (chủ yếu CRLF); kiểm format riêng các file tích hợp.
+
+## 16/10/2026 — Đổi tên học phần thành chương
+
+- Thống nhất chữ Chương/chương trong khu vực học tập, giáo trình public, nút xem trước và chi tiết lịch học; cập nhật nhãn accessibility và test liên quan. Giữ nguyên tên field và contract API.
+
+## 16/10/2026 — Cân lại độ đậm chữ khu vực học tập
+
+- Điều chỉnh về mức giữa hai bản theo yêu cầu: tiêu đề/tên học phần 700, tên buổi học/link/metadata nhấn 600; nội dung bài đọc giữ regular. Áp dụng cho danh sách tài liệu, workspace và viewer.
+- Kiểm tra Prettier, ESLint và production build/TypeScript pass.
+
+## 16/10/2026 — Tài liệu học tập và không gian học theo unit
+
+- Thêm `/user/materials`, lấy đủ trang `/me/classes?view=all`, chỉ hiện `canViewClass && accessMode !== NONE`; lọc trước khi phân trang 10 lớp/trang. Ẩn thẻ chưa có quyền theo yêu cầu mới nhất. Cash preview chỉ xem giáo trình/buổi học, không gọi Material/asset API.
+- `/user/materials/[classId]`: bố cục theo Coursera với sidebar học phần, vùng đọc bài, bài trước/tiếp theo, buổi học và meeting URL từ private detail. Giữ palette Mindy; giảm chữ xuống medium/semibold theo phản hồi. Responsive 320px.
+- Swagger live ngày 16/10 đã có ARTICLE/detail/inlineImages/attachments và POST file access, mới hơn tài liệu/source BE local. Nối class/full/preview, unit materials đủ trang, detail, signed assets; allowlist GET primary download. Không sửa BE hoặc Mindy-FE.
+- Bài đọc dựng DOM bằng allowlist, loại script/event/style và URL nguy hiểm; ảnh chỉ resolve fileId được DTO cho phép. PDF/video/audio/image dùng signed URL; tải attachment, làm mới URL và giữ vị trí media. URL chỉ ở memory, không optimizer/Web Storage; kiểm materialId/fileId/revision/expiry, hủy request khi unmount.
+- Swagger chưa có API progress/completion: không bịa phần trăm hoặc tự đánh dấu hoàn thành. Unit status/unlockAt optional để tương thích live DTO; backend kiểm tra release/access mỗi lần list/detail/sign.
+- Kiểm tra cuối: lint, Prettier, TypeScript và production build pass; 52/52 unit tests; toàn bộ E2E desktop/mobile 127 pass, 3 skip đúng nền tảng. Đã xem screenshot chữ mới và bài đọc desktop/mobile 320px, không tràn trang. Dữ liệu cá nhân/tệp E2E dùng mock theo contract; chưa nghiệm thu tài khoản thật hoặc playback/Range/storage VPS.
+
+## 16/10/2026 — Tên khóa học trong bảng đơn hàng
+
+- Thêm cột Khóa học từ order.details[].courseTitle, gộp tên trùng và hiển thị tối đa hai dòng; tooltip giữ tên đầy đủ. Bỏ dòng mô tả Theo dõi đơn hàng và trạng thái thanh toán.
+
+## 16/10/2026 — Nền trắng cho cụm chuyển tuần
+
+- Đổi nền cụm ‹ Tuần này › từ soft/60 sang canvas trắng, cùng nền lịch.
+
+## 16/10/2026 — Cụm chuyển tuần và icon hình thức học
+
+- Gộp hai mũi tên/Tuần này thành nhóm liền, bỏ viền nút và shadow, tăng chữ Tuần này lên 16px; viền input ngày giảm nhẹ. Online/Offline chuyển sang icon kèm chữ, bỏ khung badge. Build/TypeScript pass.
+
+## 16/10/2026 — Hình thức học và mentor trong ô lịch
+
+- Thêm Online/Offline theo deliveryMode và icon người kèm mentor.displayName vào ô lịch. Bỏ Sắp diễn ra; giữ trạng thái hủy/đang học/hoàn thành và modal chi tiết. Tên mentor dài được rút gọn trong ô.
+- Build/TypeScript và 4 test lịch desktop/mobile pass; đã xem screenshot ô lịch mới.
+
+## 16/10/2026 — Danh sách dạng bảng và lịch gọn mở modal
+
+- Đơn hàng/Khóa học của tôi chuyển sang bảng: mỗi mục một hàng ngắn, thông tin tổng quan và nút Xem chi tiết. Popup hiển thị đầy đủ lớp/giá/trạng thái hoặc metadata khóa học. Đơn CASH cũng xem được chi tiết; payOS chỉ đi trang thanh toán khi người dùng bấm link riêng.
+- Ô lịch chỉ giữ giờ, tên khóa học và trạng thái. Bấm ô mở modal Chi tiết lớp học, hiển thị tên/mã lớp, nội dung buổi, học phần, mentor, thời gian đầy đủ, hình thức/phòng và cảnh báo CASH_PREVIEW. Dùng DTO lịch đã tải, không thêm endpoint/meeting URL hoặc tự thay quyền học.
+- Dialog chung có focus trap native, Escape/nút đóng, scroll lock và trả focus; bảng cuộn trong vùng riêng trên 320px. Bộ lọc/phân trang giữ nguyên.
+- Lint, Prettier, TypeScript/production build và 45 unit tests pass; E2E khu vực user desktop/mobile 14/14 pass. Đã xem screenshot bảng/lịch/modal và kiểm tra hàng gọn, CASH/PAYOS, cancelled, focus, mobile không tràn trang.
+
+## 15/10/2026 — Khu vực user và thời khóa biểu ngang
+
+- Dropdown tài khoản thêm Thông tin cá nhân/Lịch học. Tạo `/user` → profile và bốn trang profile/orders/schedule/courses. Sidebar lấy cấu trúc và kích thước từ nhánh `origin/admin` tại `de14eb0`: 228px, thu gọn 76px, topbar và menu mobile dialog/Escape/focus/scroll lock.
+- Profile đọc dữ liệu session thật; orders phân trang/lọc trạng thái qua API có sẵn; courses dùng enrollmentId/current/history/all và access hints. Không tự thêm API chỉnh hồ sơ hoặc dữ liệu demo.
+- Lịch 7 cột ngang Thứ 2–Chủ nhật, tuần trước/sau/tuần này/chọn ngày, UTC+7; mobile 320px cuộn trong bảng. Lấy đủ page API, giữ CANCELLED và xử lý buổi qua đêm theo overlap.
+- Đã đọc Swagger live docs-json, PHASE_2_3_FLOW, PHASE_2_3_flow-api-breakdown và PHASE_4_API_SUMMARY trong BE/docs/api_flow. Proxy chỉ bổ sung hai GET `/me/classes` và `/me/schedule`, validate range/DTO/query, cookie/private-no-store; AuthGuard chặn guest trước dữ liệu riêng tư.
+- ESLint, Prettier, production build/TypeScript pass. Vitest 45/45; Playwright toàn bộ desktop/mobile 113 pass, 3 skip theo nền tảng; gồm 8 lượt user mới. Đã xem ảnh lịch desktop/320px và profile; preview localhost:3003 được khởi động lại với CSS mới, đã xác nhận sidebar grid 228px. Auth/data E2E dùng mock theo contract, chưa đăng nhập tài khoản backend thật.
+
+## 15/10/2026 — Vân mây hero trắng rõ hơn
+
+- Tăng opacity lớp mây từ 40% lên 55%, giữ brightness 50% và screen/grayscale/contrast để mây nổi trắng nhẹ trên nền mint.
+
+## 15/10/2026 — Khôi phục màu mint ban đầu
+
+- Khôi phục mint `#338A85`, forest `#1D5B57` và chữ trắng ở hero/nút mint theo yêu cầu. Giữ chữ đen trong trang chi tiết khóa học.
+
+## 15/10/2026 — Thử palette xanh mới và chữ đen ở chi tiết khóa học
+
+- Đổi token mint sang `#9CD5FF` và forest sang `#355872`, lấy từ hai ảnh tham chiếu người dùng; các nền/viền/màu pha cập nhật qua globals.css. Hero và nút nền xanh nhạt dùng chữ đậm để dễ đọc.
+- Chữ nội dung, học phí, nhãn và mô tả trong course detail/popup chuyển đen; giữ nền thương hiệu, SVG và chữ trắng trên nút đậm/coral.
+- Production build (kèm TypeScript) và Prettier pass; E2E homepage/courses desktop/mobile 31 pass, 3 skip theo nền tảng. Đã xem ảnh homepage và popup course detail; mobile 320px không tràn ngang.
+
+## 15/10/2026 — Auth guard chuyển về homepage
+
+- Thêm AuthGuard dùng chung ở CommerceShell cho cart, checkout và payment result: kiểm tra/refresh phiên trước khi mount nội dung; chỉ cho STUDENT ACTIVE truy cập. Guest, sai vai trò, tài khoản chưa xác thực/bị khóa chuyển thẳng `/` bằng replace.
+- API commerce trả 401/403 cũng chuyển về `/`, không giữ màn hình báo thiếu quyền. Lỗi kết nối cho thử lại, 404 vẫn báo không tìm thấy; login chủ động giữ returnTo hợp lệ. Đăng xuất khỏi checkout ẩn QR và về homepage.
+- ESLint, Prettier, type check, production build `.next-auth-guard` và 34 unit tests pass. Playwright desktop/mobile: 105 pass, 3 skip theo nền tảng; gồm 32 lượt kiểm tra auth guard mới, chặn private requests trước khi xác thực, refresh phục hồi phiên, API denial và retry lỗi phiên.
+
+## 15/10/2026 — Kiểm tra phiên ngay khi đăng ký và bỏ CTA thừa
+
+- “Đăng ký học ngay” kiểm tra lại phiên khi bấm: guest thấy popup “Bạn chưa đăng nhập” và “Hãy đăng nhập để có thể đăng ký học ngay bây giờ.”; có Đăng nhập ngay, Để sau, đóng và Escape. Login quay lại khóa học; có phiên mở chọn lớp, không tự thêm giỏ.
+- Lỗi đọc phiên có thông báo và cho thử lại; phiên hết hạn được phát hiện ngay cả khi Query từng có user. Dialog khóa cuộn, giữ focus và trả về nút đăng ký khi đóng; responsive 320px.
+- Bỏ khối cuối homepage “Sẵn sàng học một điều mới?” và link hero “Thử viết mã nguồn” theo ảnh người dùng. Giữ khu vực thực hành và các luồng còn lại.
+- Lint, Prettier, TypeScript qua production build và 34 unit tests pass. E2E courses/home desktop/mobile: 31 pass, 3 skip theo nền tảng; gồm guest → popup → login → quay lại → chọn lớp, phiên lỗi/hết hạn, Escape/focus và 320px. Đã xem screenshot popup desktop/mobile.
+
 ## 15/10/2026 — Ảnh slider cách bắt đầu
 
 - Đặt ba ảnh `ảnh1`, `anhmih`, `hao` vào khung bên phải đúng slide; giữ mascot bên trái. Đổi khung trắng thành mint và thêm bóng nhẹ.
@@ -180,3 +266,8 @@
 ## Phạm vi sau
 
 Course detail/lớp/lịch public, email registration/verification, cart/checkout/QR payOS đã được mở rộng theo yêu cầu 15/10/2026. Nghiệm thu thanh toán tiền thật, CASH UI, Google, compiler và quản trị là phần tiếp theo.
+
+## 16/10/2026 — Cuộn khi chuyển trang sau đăng nhập
+
+- Khai báo data-scroll-behavior trên html để Next.js tạm tắt cuộn mượt khi chuyển route.
+- Bổ sung kiểm tra scrollY = 0 sau đăng nhập về trang chủ; Playwright desktop/mobile 2/2 pass, production build pass.

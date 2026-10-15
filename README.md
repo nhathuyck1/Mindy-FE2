@@ -26,7 +26,7 @@ Base URL API không chứa `/docs#/`. APP_ORIGIN phải đúng origin mở app; 
 
 Homepage đọc khóa học và danh mục thật. Email login theo backend lưu cookie HttpOnly, đọc `/auth/me`, refresh và logout; TanStack Query giữ dữ liệu API, Redux giữ UI. Không lưu token trong Redux/localStorage/sessionStorage. Google Login tạm hoãn, chưa cấu hình.
 
-Catalog và chi tiết khóa học/lớp/lịch xem công khai. Nút đăng ký lớp mới yêu cầu login/registration và giữ lớp đã chọn khi quay lại. Email registration cần xác thực qua `/verify-email`; tài khoản STUDENT có thể thêm lớp vào giỏ theo API thật. Chưa tạo order/hold/payment/checkout, compiler hoặc quản trị. Khu vực code homepage chỉ là ví dụ.
+Catalog và chi tiết khóa học/lớp/lịch xem công khai. Nút “Đăng ký học ngay” kiểm tra phiên và hiện popup yêu cầu login cho guest; link xem lịch của mentor vẫn công khai. Đăng ký lớp yêu cầu login/registration và giữ lớp đã chọn khi quay lại. Email registration cần xác thực qua `/verify-email`; tài khoản STUDENT có thể thêm lớp vào giỏ theo API thật. Chưa tạo order/hold/payment/checkout, compiler hoặc quản trị. Khu vực code homepage chỉ là ví dụ.
 
 ## Kiểm tra
 
