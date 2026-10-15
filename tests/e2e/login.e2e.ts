@@ -22,6 +22,7 @@ test('Logs in through the cookie-backed API and returns home', async ({ page }, 
   await page.getByLabel('Mật khẩu', { exact: true }).fill('sample-password');
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
   await expect(page).toHaveURL('/');
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   await expect(
     page.getByRole('button', { name: `Tài khoản của ${testUser.displayName}`, exact: true }),
   ).toBeVisible();
@@ -79,7 +80,9 @@ test('Opens the account dropdown and handles dismissal and logout retry', async 
   await expect(dropdown).toContainText(testUser.email);
   await expect(trigger).toHaveAttribute('aria-expanded', 'true');
   await page.keyboard.press('Tab');
-  await expect(dropdown.getByRole('button', { name: 'Đăng xuất', exact: true })).toBeFocused();
+  await expect(
+    dropdown.getByRole('link', { name: 'Thông tin cá nhân', exact: true }),
+  ).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(dropdown).not.toBeVisible();
   await expect(trigger).toBeFocused();

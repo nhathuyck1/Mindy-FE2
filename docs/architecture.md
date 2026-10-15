@@ -1,5 +1,11 @@
 # Kiến trúc Mindy FE2
 
+## Học tập — mở rộng 16/10/2026
+
+`features/learning` sở hữu schemas, Query hooks, proxy policy và UI `/user/materials`, `/user/materials/[classId]`. UserShell bảo vệ STUDENT; sidebar active cho cả route con. Danh sách lấy đủ trang lớp rồi lọc quyền trước phân trang; courses dialog có link Vào học/Xem trước. Server route validate UUID và đọc async params/searchParams của Next 16.
+
+Class detail phân biệt FULL và CASH_PREVIEW. Workspace chia sidebar unit và panel tài liệu/buổi học; Query cache theo user/class/unit/material, hủy bằng signal và không tự retry quyền bị từ chối. Nội dung ARTICLE dùng DOM allowlist; file access POST chỉ khi mở tệp/ảnh bài đọc, signed URL trong component memory và hủy request khi unmount. Không thêm dependency hoặc gọi API progress chưa có.
+
 Stack: Next.js App Router, React, TypeScript strict, Tailwind CSS v4, TanStack Query và Redux Toolkit. App chạy port 3003; API cấu hình trong `.env.local` theo `.env.example`.
 
 Tham khảo convention và cách tổ chức của [ixartz/Next-js-Boilerplate](https://github.com/ixartz/Next-js-Boilerplate); khởi tạo bằng create-next-app. Bộ công cụ frontend gồm ESLint, Prettier, Vitest và Playwright. Backend Mindy sở hữu auth, dữ liệu và giao dịch; không thêm Clerk, Drizzle hoặc database demo.
@@ -64,7 +70,7 @@ Token màu ở `src/app/globals.css`, theo `docs/pallete.png`. Tailwind v4 dùng
 - `/login`: email/password, cookie session và logout trong header.
 - `/courses`: mẫu catalog người dùng gửi, tìm kiếm không dấu, lọc danh mục/hình thức/học phí, sắp xếp giá/tên, grid/list và phân trang. Search/price/sort chạy trên toàn bộ các trang API đã tải vì backend chưa có q/sort.
 - `/courses/[courseId]`: mẫu Stitch chi tiết, dùng palette config; giáo trình là danh sách học phần tĩnh (số thứ tự/tên/mô tả, không hiển thị % điểm yêu cầu), mentor thật và lớp liên quan. Không bịa review, video học thử, số học viên hoặc cam kết hoàn tiền.
-- Nút “Đăng ký học ngay” mở lớp/lịch công khai. Chỉ “Đăng ký lớp này” mới cần tài khoản STUDENT và thêm lớp vào giỏ qua API. Guest đi `/login?returnTo=...`, có link `/register`; login quay lại đúng khóa học/lớp và không tự mutation. Return path chỉ cho phép route courses + UUID đã kiểm tra.
+- Nút “Đăng ký học ngay” kiểm tra lại phiên qua Query: guest thấy popup “Bạn chưa đăng nhập” với link login giữ returnTo về khóa học; có phiên mới mở chọn lớp. Lỗi kiểm tra phiên có thông báo và cho thử lại. Mentor “Xem lớp & lịch học” vẫn mở lịch công khai. “Đăng ký lớp này” cần STUDENT và thêm lớp vào giỏ qua API; login không tự mutation. Return path dùng allowlist và UUID đã kiểm tra.
 - Dialog native hỗ trợ Escape, focus trap/restore và scroll lock; mobile có bước quay lại danh sách lớp. Lịch dùng UTC+7, trạng thái hủy và số chỗ theo backend.
 - `/register` gửi email registration; 202 không phải login. `/verify-email` xác thực khi người dùng bấm nút, thiết lập session HttpOnly. Backend cần cấu hình FRONTEND_BASE_URL/EMAIL_VERIFICATION_PATH đúng frontend triển khai.
 - `/cart`: giỏ, xóa lớp, badge header, checkout toàn bộ PAYOS và danh sách đơn chờ phân trang để mở lại giao dịch gián đoạn.
@@ -78,6 +84,8 @@ UI luồng mới dùng shadcn Button/Card/Badge/Alert/Skeleton/Separator và Son
 
 Module `cart` sở hữu giỏ/add/remove; `orders` sở hữu checkout, danh sách đơn chờ và đọc đơn; `payments` sở hữu chuẩn bị link và QR. Server state có user ID trong query key. Session được giữ nguyên observer khi logout/login, cancel và xóa query riêng tư trước khi hiển thị phiên tiếp theo.
 
+`CommerceShell` dùng `features/auth/components/auth-guard.tsx` để kiểm tra phiên ACTIVE và quyền STUDENT trước khi mount nội dung `/cart`, `/checkout/[orderId]`, `/payment/result`. Guest, tài khoản thiếu quyền hoặc API trả 401/403 được `router.replace('/')`; lỗi kết nối giữ trạng thái thử lại. Guard chờ refresh phiên hiện có; không tự chuyển sang login. Link login chủ động vẫn hỗ trợ returnTo đã validate.
+
 Client/route hỗ trợ DELETE. Proxy chỉ allowlist cart/order/payment cho STUDENT upstream, kiểm UUID/body/query và Origin cho POST/DELETE, cookie HttpOnly và no-store. Không proxy webhook/admin. DTO order/payment kiểm cùng orderId và amount. Không tự retry checkout; khi mất response đọc lại giỏ và đơn chờ.
 
 Payment CREATING retry 2/4/8 giây (tối đa 3 lần), đọc lại đơn trước mỗi lần, hủy khi unmount. GET order poll 3–10 giây tối đa 5 phút mỗi chu kỳ, dừng background/kết thúc/review/quyền; nút kiểm tra mở chu kỳ mới. Countdown hết hạn ẩn QR và refetch, không tự đổi trạng thái backend.
@@ -87,3 +95,13 @@ Payment CREATING retry 2/4/8 giây (tối đa 3 lần), đọc lại đơn trư�
 `npm run check` chạy lint, format, types, unit tests, production build và E2E. Unit tests kiểm tra cookie boundary, DTO và proxy allowlist/Origin. Playwright chạy production server riêng ở port 3103, có mock API ổn định; kiểm tra giao diện desktop/mobile, filter, login success/error và Web Storage không có token. Live catalog smoke được ghi riêng trong API contracts; không coi mocked login là live login.
 
 Next config hỗ trợ `MINDY_DIST_DIR` cho build output riêng trong lúc preview chạy. Dùng cùng env khi build và start/test; mặc định vẫn `.next`. Không ghi đè output của production server đang chạy vì CSS/JS hash có thể mất khớp. `.next-*` gitignored, loại khỏi lint/format.
+
+## Khu vực tài khoản học viên — 15/10/2026
+
+- Các route `/user/profile`, `/user/orders`, `/user/schedule`, `/user/courses` dùng UserShell và AuthGuard STUDENT ACTIVE. `/user` chuyển profile. Sidebar theo `origin/admin:src/components/layout/admin-shell.tsx`: desktop 228px/thu gọn 76px, active indicator, topbar và mobile dialog focus trap/Escape/scroll lock. Không nhập các module quản trị.
+- Profile đọc session `/auth/me`, chưa có endpoint sửa hồ sơ nên không thêm form lưu giả. Đơn hàng dùng `/me/orders` + filter status/page; link order payOS tái sử dụng checkout để đọc trạng thái, không tự tạo đơn mới.
+- Khóa học dùng `/me/classes` với current/history/all và enrollmentId làm key. Không tự cấp quyền theo order PAID; accessReason/canViewSchedule từ backend quyết định trạng thái UI.
+- Lịch 7 cột ngang Thứ 2–Chủ nhật, tuần theo UTC+7, mobile cuộn bảng trong vùng riêng. GET `/me/schedule` lấy đủ các trang, giữ CANCELLED và buổi qua đêm theo overlap. Không hiển thị attendance/mentor theo buổi đang nằm ở roadmap Phase 4.4c.
+- Browser vẫn same-origin `/api/v1`; proxy bổ sung đúng hai GET list, strict query, validate DTO và cookie access_token/no-store. Session/user ID nằm trong query key; dữ liệu riêng tư được xóa bởi luồng đổi phiên hiện có.
+
+Cập nhật 16/10: user orders/courses hiển thị dạng bảng, dữ liệu chi tiết từ list DTO mở qua `UserDetailsDialog`. Calendar dùng cùng dialog với ScheduleEvent đã tải; không phát sinh API hay quyền mới. Link payOS/schedule/public course nằm trong dialog và chỉ điều hướng khi bấm.

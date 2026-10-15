@@ -1,4 +1,8 @@
 import 'server-only';
+import {
+  learningPaginationSchema,
+  learningProxyRule,
+} from '@/features/learning/api/learning-proxy-policy';
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env.server';
 import { addCartItemSchema, cartSchema } from '@/features/cart/schemas/cart-contracts';
@@ -31,6 +35,12 @@ import {
 } from '@/features/courses/schemas/course-contracts';
 import { authResponseSchema, loginSchema, userSchema } from './contracts';
 import { requestCookies, responseCookies } from './cookie-policy';
+import {
+  myClassesFiltersSchema,
+  myClassesPageSchema,
+  myScheduleFiltersSchema,
+  mySchedulePageSchema,
+} from '@/features/user/schemas/user-contracts';
 
 const privateHeaders = {
   'Cache-Control': 'private, no-store',
@@ -42,6 +52,8 @@ const rules = {
   'GET courses': { response: coursePageSchema, cookies: [] },
   'GET course-categories': { response: categoryPageSchema, cookies: [] },
   'GET me/cart': { response: cartSchema, cookies: ['access_token'] },
+  'GET me/classes': { response: myClassesPageSchema, cookies: ['access_token'] },
+  'GET me/schedule': { response: mySchedulePageSchema, cookies: ['access_token'] },
   'GET me/orders': { response: orderPageSchema, cookies: ['access_token'] },
   'GET me/orders/payment-result': { response: orderPaymentSchema, cookies: ['access_token'] },
   'POST me/cart/checkout': {
@@ -66,6 +78,8 @@ type ApiRule = { response: z.ZodType; body?: z.ZodType; cookies: string[] };
 function resolveRule(method: string, path: string): ApiRule | undefined {
   const key = `${method} ${path}`;
   if (Object.hasOwn(rules, key)) return rules[key as keyof typeof rules];
+  const learningRule = learningProxyRule(method, path);
+  if (learningRule) return learningRule;
   const parts = path.split('/');
   if (parts[0] === 'me') {
     if (
@@ -160,6 +174,35 @@ export async function proxyApi(request: Request, path: string) {
   if (path === 'auth/refresh' && !requestCookies(request.headers.get('cookie'), ['refresh_token']))
     return error(401, 'AUTHENTICATION_REQUIRED', 'Phiên đăng nhập đã hết hạn.');
   let search = '';
+  if (learningProxyRule(request.method, path)) {
+    const input = new URL(request.url).searchParams;
+    if ([...input.keys()].some((key) => input.getAll(key).length !== 1))
+      return error(422, 'INVALID_QUERY', 'Tham số bị lặp.');
+    const list = /^me\/classes\/[^/]+\/units\/[^/]+\/materials$/.test(path);
+    const parsed = (list ? learningPaginationSchema : z.object({}).strict()).safeParse(
+      Object.fromEntries(input),
+    );
+    if (!parsed.success) return error(422, 'INVALID_QUERY', 'Tham số học tập không hợp lệ.');
+    if (list)
+      search =
+        '?' +
+        new URLSearchParams(
+          Object.entries(parsed.data).map(([key, value]) => [key, String(value)]),
+        );
+    if (request.method === 'POST' && (await request.text()).length > 0)
+      return error(422, 'INVALID_INPUT', 'Yêu cầu truy cập tệp không có body.');
+  }
+  if (path === 'me/classes' || path === 'me/schedule') {
+    const input = new URL(request.url).searchParams;
+    if ([...input.keys()].some((key) => input.getAll(key).length !== 1))
+      return error(422, 'INVALID_QUERY', 'Tham số bị lặp.');
+    const schema = path === 'me/classes' ? myClassesFiltersSchema : myScheduleFiltersSchema;
+    const parsed = schema.safeParse(Object.fromEntries(input));
+    if (!parsed.success) return error(422, 'INVALID_QUERY', 'Bộ lọc học tập không hợp lệ.');
+    search =
+      '?' +
+      new URLSearchParams(Object.entries(parsed.data).map(([key, value]) => [key, String(value)]));
+  }
   if (path === 'me/orders' || path === 'me/orders/payment-result') {
     const input = new URL(request.url).searchParams;
     if ([...input.keys()].some((key) => input.getAll(key).length !== 1))

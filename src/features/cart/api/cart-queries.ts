@@ -12,7 +12,8 @@ export function useCart() {
   const session = useSession();
   return useQuery({
     queryKey: cartKey(session.data?.id),
-    enabled: session.isSuccess && session.data?.role === 'STUDENT',
+    enabled:
+      session.isSuccess && session.data?.role === 'STUDENT' && session.data.status === 'ACTIVE',
     queryFn: ({ signal }) => apiRequest({ path: 'me/cart', schema: cartSchema, signal }),
     staleTime: 0,
     retry: false,

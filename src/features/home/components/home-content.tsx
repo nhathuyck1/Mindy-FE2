@@ -1,4 +1,3 @@
-import { ActionLink } from '@/components/ui/action-link';
 import { Icon } from '@/components/ui/icon';
 import { HeroSection } from './hero-section';
 import { JourneySection } from './journey-section';
@@ -64,19 +63,6 @@ export function HomeContent() {
               <Icon name="check" className="absolute right-4 bottom-4 size-4 text-mint" />
             </div>
           </div>
-        </div>
-      </section>
-      <section className="page-container pb-16 lg:pb-20" aria-labelledby="closing-title">
-        <div className="flex flex-col items-start justify-between gap-8 rounded-4xl bg-peach p-8 md:flex-row md:items-center lg:p-14">
-          <div>
-            <p className="eyebrow mb-5">Hẹn gặp bạn ở dòng mã nguồn đầu tiên</p>
-            <h2 id="closing-title" className="section-title">
-              Sẵn sàng học
-              <br />
-              một điều mới?
-            </h2>
-          </div>
-          <ActionLink href="#bat-dau">Bắt đầu cùng Mindy</ActionLink>
         </div>
       </section>
     </div>

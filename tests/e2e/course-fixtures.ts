@@ -11,7 +11,7 @@ export const course = {
   id: courseId,
   code: 'HTML-101',
   title: 'HTML, CSS và JavaScript từ cơ bản',
-  description: 'Xây dựng nền tảng lập trình web và thực hành qua từng học phần.',
+  description: 'Xây dựng nền tảng lập trình web và thực hành qua từng chương.',
   imgUrl: null,
   priceAmount: 1500000,
   category,

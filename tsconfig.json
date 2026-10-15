@@ -66,7 +66,15 @@
     ".next-course-width/types/**/*.ts",
     ".next-course-width/dev/types/**/*.ts",
     ".next-cart-check/types/**/*.ts",
-    ".next-cart-check/dev/types/**/*.ts"
+    ".next-cart-check/dev/types/**/*.ts",
+    ".next-auth-check/types/**/*.ts",
+    ".next-auth-check/dev/types/**/*.ts",
+    ".next-auth-guard/types/**/*.ts",
+    ".next-auth-guard/dev/types/**/*.ts",
+    ".next-blue-dev/types/**/*.ts",
+    ".next-blue-dev/dev/types/**/*.ts",
+    ".next-learning/types/**/*.ts",
+    ".next-learning/dev/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

@@ -69,12 +69,8 @@ function PaymentContent(props: { orderId: string }) {
       void queryClient.invalidateQueries({ queryKey: ['catalog'] });
     }
   }, [order.data?.status, queryClient]);
-  const returnTo = `/checkout/${props.orderId}`;
   if (order.isPending) return <CommerceLoading />;
-  if (order.isError)
-    return (
-      <CommerceError error={order.error} retry={() => void order.check()} returnTo={returnTo} />
-    );
+  if (order.isError) return <CommerceError error={order.error} retry={() => void order.check()} />;
   const data = order.data;
   const payable = now !== null && isPayable(data, now);
   const ready = payable && data.payment?.status === 'PENDING';
@@ -165,7 +161,6 @@ function PaymentContent(props: { orderId: string }) {
                   <CommerceError
                     error={prepare.error}
                     retry={payable ? () => prepare.mutate() : undefined}
-                    returnTo={returnTo}
                   />
                 )}
                 {ready && data.payment?.qrCode ? (

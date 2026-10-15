@@ -15,9 +15,7 @@ export function PendingOrders() {
   const orders = usePendingOrders(page);
   if (orders.isPending) return <CommerceLoading />;
   if (orders.isError)
-    return (
-      <CommerceError error={orders.error} retry={() => void orders.refetch()} returnTo="/cart" />
-    );
+    return <CommerceError error={orders.error} retry={() => void orders.refetch()} />;
   if (!orders.data.total) return null;
   return (
     <section aria-labelledby="pending-orders-heading" className="mt-10">

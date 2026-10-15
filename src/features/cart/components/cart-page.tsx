@@ -18,11 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import {
-  CommerceError,
-  CommerceLoading,
-  StudentGate,
-} from '@/features/orders/components/commerce-state';
+import { CommerceError, CommerceLoading } from '@/features/orders/components/commerce-state';
 import { useCheckout } from '@/features/orders/api/order-queries';
 import { formatPrice, formatDate, deliveryLabel } from '@/features/courses/lib/course-format';
 import { useCart, useRemoveCartItem } from '../api/cart-queries';
@@ -30,11 +26,9 @@ import { PendingOrders } from './pending-orders';
 
 export function CartPage() {
   return (
-    <StudentGate returnTo="/cart">
-      <div className="cart-content text-black">
-        <CartContent />
-      </div>
-    </StudentGate>
+    <div className="cart-content text-black">
+      <CartContent />
+    </div>
   );
 }
 
@@ -84,7 +78,7 @@ function CartContent() {
       </div>
       {checkout.isError && (
         <div className="mb-6 space-y-3">
-          <CommerceError error={checkout.error} returnTo="/cart" />
+          <CommerceError error={checkout.error} />
           <p className="text-sm text-black">
             Kiểm tra mục đơn đang chờ bên dưới trước khi thanh toán lại. Nếu đơn đã tạo, hãy tiếp
             tục trên đơn đó.
@@ -93,13 +87,13 @@ function CartContent() {
       )}
       {remove.isError && (
         <div className="mb-6">
-          <CommerceError error={remove.error} returnTo="/cart" />
+          <CommerceError error={remove.error} />
         </div>
       )}
       {cart.isPending ? (
         <CommerceLoading />
       ) : cart.isError ? (
-        <CommerceError error={cart.error} retry={() => void cart.refetch()} returnTo="/cart" />
+        <CommerceError error={cart.error} retry={() => void cart.refetch()} />
       ) : !cart.data.items.length ? (
         <Card className="border-line py-12 text-center shadow-none">
           <CardContent className="flex flex-col items-center gap-4">

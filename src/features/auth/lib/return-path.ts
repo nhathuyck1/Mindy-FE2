@@ -8,6 +8,17 @@ export function safeReturnPath(value: string | null | undefined): string {
   try {
     const url = new URL(value, 'https://mindy.invalid');
     if (url.origin !== 'https://mindy.invalid') return '/';
+    if (
+      [
+        '/user',
+        '/user/profile',
+        '/user/orders',
+        '/user/schedule',
+        '/user/courses',
+        '/user/materials',
+      ].includes(url.pathname)
+    )
+      return url.pathname;
     if (url.pathname === '/courses') return '/courses';
     if (url.pathname === '/cart') return '/cart';
     if (url.pathname === '/payment/result') {
@@ -17,6 +28,13 @@ export function safeReturnPath(value: string | null | undefined): string {
         : '/';
     }
     const parts = url.pathname.split('/');
+    if (
+      parts.length === 4 &&
+      parts[1] === 'user' &&
+      parts[2] === 'materials' &&
+      z.uuid().safeParse(parts[3]).success
+    )
+      return url.pathname + (url.searchParams.get('preview') === 'true' ? '?preview=true' : '');
     if (parts.length === 3 && parts[1] === 'checkout' && z.uuid().safeParse(parts[2]).success)
       return url.pathname;
     if (parts.length !== 3 || parts[1] !== 'courses' || !z.uuid().safeParse(parts[2]).success)

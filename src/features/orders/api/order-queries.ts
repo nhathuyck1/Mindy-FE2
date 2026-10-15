@@ -21,7 +21,8 @@ export function usePendingOrders(page: number) {
   const session = useSession();
   return useQuery({
     queryKey: [...ordersKey(session.data?.id), 'PENDING', page],
-    enabled: session.isSuccess && session.data?.role === 'STUDENT',
+    enabled:
+      session.isSuccess && session.data?.role === 'STUDENT' && session.data.status === 'ACTIVE',
     queryFn: ({ signal }) =>
       apiRequest({
         path: `me/orders?status=PENDING&page=${page}&pageSize=10`,
@@ -59,7 +60,8 @@ export function useOrder(orderId: string) {
   const cycleStarted = useRef(0);
   const query = useQuery({
     queryKey: orderKey(session.data?.id, orderId),
-    enabled: session.isSuccess && session.data?.role === 'STUDENT',
+    enabled:
+      session.isSuccess && session.data?.role === 'STUDENT' && session.data.status === 'ACTIVE',
     queryFn: ({ signal }) => {
       if (!cycleStarted.current) cycleStarted.current = Date.now();
       return apiRequest({ path: `me/orders/${orderId}`, schema: orderPaymentSchema, signal });
@@ -88,7 +90,8 @@ export function usePaymentResult(orderCode: string) {
   const queryClient = useQueryClient();
   return useQuery({
     queryKey: ['payment-result', session.data?.id, orderCode],
-    enabled: session.isSuccess && session.data?.role === 'STUDENT',
+    enabled:
+      session.isSuccess && session.data?.role === 'STUDENT' && session.data.status === 'ACTIVE',
     staleTime: 0,
     retry: false,
     queryFn: async ({ signal }) => {

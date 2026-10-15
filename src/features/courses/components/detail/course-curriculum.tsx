@@ -12,7 +12,7 @@ export function CourseCurriculum(props: { units: CourseDetail['units'] }) {
         <h3 id="curriculum-title" className="text-xl font-extrabold sm:text-2xl">
           Giáo trình khóa học
         </h3>
-        <p className="mt-2 text-sm font-semibold text-muted">{units.length} học phần</p>
+        <p className="mt-2 text-sm font-semibold text-muted">{units.length} chương</p>
       </div>
       {units.length === 0 ? (
         <p className="text-base text-muted">Giáo trình đang được cập nhật.</p>

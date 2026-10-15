@@ -60,7 +60,7 @@ export function CourseCatalog() {
   ].filter((chip) => chip.active);
 
   return (
-    <div className="page-container py-7 lg:py-9">
+    <div className="course-catalog page-container py-7 text-catalog-ink lg:py-9">
       <nav
         aria-label="Đường dẫn"
         className="mb-5 flex items-center gap-2 text-sm font-semibold text-muted"
@@ -76,9 +76,6 @@ export function CourseCatalog() {
       <h1 className="text-4xl leading-tight font-extrabold tracking-tight sm:text-[40px]">
         Khám phá tất cả khóa học
       </h1>
-      <p className="mt-2 text-base font-semibold text-muted">
-        Tìm điều bạn muốn học, chọn lớp phù hợp và bắt đầu cùng Mindy.
-      </p>
       <div className="my-6 flex flex-col gap-4 rounded-xl border border-line bg-canvas p-3.5 md:flex-row md:items-center md:justify-between">
         <div className="relative w-full md:max-w-md">
           <Icon
@@ -163,7 +160,7 @@ export function CourseCatalog() {
         </div>
       )}
       <div className="grid items-start gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
-        <div>
+        <div data-course-filters className="text-forest">
           <details className="mb-4 rounded-xl border border-line bg-canvas p-4 lg:hidden">
             <summary className="cursor-pointer text-base font-extrabold">Lọc khóa học</summary>
             <div className="mt-4">
@@ -236,17 +233,6 @@ export function CourseCatalog() {
               />
             </>
           )}
-        </div>
-      </div>
-      <div className="mt-10 flex flex-col items-start gap-4 rounded-xl border border-line bg-canvas p-6 sm:flex-row sm:items-center">
-        <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-soft text-mint">
-          <Icon name="calendar" />
-        </span>
-        <div>
-          <h2 className="text-base font-extrabold">Học theo lịch phù hợp với bạn</h2>
-          <p className="mt-1 text-sm leading-relaxed font-semibold text-muted">
-            Mở chi tiết khóa học để xem giáo trình, mentor và lịch của từng lớp đang mở.
-          </p>
         </div>
       </div>
     </div>
