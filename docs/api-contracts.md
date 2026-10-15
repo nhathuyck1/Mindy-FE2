@@ -43,7 +43,7 @@ Card khóa học dẫn thẳng `/courses/:courseId`, không yêu cầu đăng nh
 
 Class có `id, courseId, code, name, startDate, endDate, deliveryMode, maxStudents, availableSeats, mentor: {id, displayName|null}`. OPEN được backend xác định và có thể gồm lớp đã bắt đầu nhưng chưa hết ngày kết thúc; frontend không tự lọc theo ngày hiện tại. Lớp hết chỗ vẫn xem lịch được, nút đăng ký bị disable. Class detail xác minh courseId trước khi hiển thị lịch; lịch sort theo startsAt và hiển thị cố định Asia/Ho_Chi_Minh (UTC+7), phân biệt CANCELLED.
 
-Catalog API nhận thêm deliveryMode/startsFrom/startsTo; không có q/sort/level/rating. Tìm kiếm tên/code/description không dấu, học phí và sắp xếp chạy local **sau khi tải mọi trang** bằng pageSize=100. Danh mục/hình thức là server filters và nằm trong query key. Class list được refetch khi mở dialog/focus; không dùng openClasses summary để giả định còn chỗ. Các path dynamic chỉ GET, UUID hợp lệ, đúng số segment; không proxy admin/private meeting route.
+Catalog API nhận thêm deliveryMode/startsFrom/startsTo; không có q/sort/level/rating. Tìm kiếm tên/code/description không dấu, học phí và sắp xếp chạy local **sau khi tải mọi trang** bằng pageSize=100. Danh mục/hình thức là server filters và nằm trong query key. Class list được refetch khi mở dialog/focus; không dùng openClasses summary để giả định còn chỗ. Các path dynamic chỉ GET, UUID hợp lệ, đúng số segment; không proxy private meeting route. Admin GET list được mở rộng riêng theo mục dưới.
 
 Guest xem toàn bộ public UI. Bấm đăng ký lớp mới tới login và có thể chuyển register, giữ `returnTo=/courses/:courseId?classId=:classId`; destination validate allowlist để chặn open redirect. Login thành công quay về đúng dialog/lớp kể cả lớp ngoài trang đầu; không tự thêm giỏ. Tài khoản STUDENT bấm tiếp mới gọi add-cart; 401 quay login, lỗi full/closed/already-enrolled theo backend hiển thị và refetch catalog. Chưa tạo order/hold/payment hoặc triển khai checkout trong phạm vi này.
 
@@ -71,3 +71,15 @@ Browser gọi `/api/v1` cùng origin Next.js. Adapter chỉ cho phép method/pat
 Live GET `/courses?page=1&pageSize=4` và `/course-categories` đều trả 200 cùng dữ liệu thật. Không dùng hoặc dò tài khoản backend. Login thành công/sai mật khẩu, cookie boundary và CSRF được kiểm tra bằng mock đúng contract. Login bằng tài khoản thật cần credentials của người dùng và chưa được coi là xác minh live.
 
 Mở rộng 15/10: live qua adapter `/courses/:id`, `/courses/:id/classes`, `/classes/:id` đều 200; kiểm tra lịch thật, các trạng thái UI và responsive 320–1440px. Vitest 22 pass; Playwright production 37 pass/3 skip theo nền tảng, gồm anonymous viewing → login returnTo → explicit add-cart, registration/verify bằng mock. Không tạo đăng ký email/cart/order thật trong các kiểm tra.
+
+## Admin template — 15/10/2026
+
+Admin CRUD theo yêu cầu bổ sung: `src/lib/api/admin-rules.server.ts` là method/path allowlist cho GET details, POST create/commands, PATCH edits/status/session hours và PUT course-unit order. Zod schemas tại `features/admin/schemas/admin-write-contracts.ts`; policy và các giới hạn BE tại [admin-template.md](admin-template.md). Mọi write kiểm Origin, body tối đa 64KiB; chỉ cookie access_token. Không có DELETE hoặc profile edit user, deactivate course, mentor reassignment hay payment/attendance trong allowlist.
+
+Ba GET list `/admin/users`, `/admin/courses`, `/admin/classes` đã đối chiếu Swagger live, controller và DTO BE. Browser dùng same-origin, adapter chỉ forward access_token, strict query và validate Zod response, private no-store. Backend kiểm quyền ADMIN. Đã mở GET detail và mutations theo allowlist ở admin-rules.server.ts, mô tả bên dưới. Filter role/status/isActive/deliveryMode chạy server; search/sort và CSV trong trang hiện tại. Chi tiết contract, nguồn và giới hạn tại [admin-template.md](admin-template.md).
+
+Guest đi login giữ admin returnTo allowlist; ADMIN ACTIVE dùng shell, role khác bị chặn UI trước khi query. Đổi phiên giữ query session đang observe, xóa các cache khác; logout ẩn nội dung admin. Chưa dùng tài khoản ADMIN backend thật để xác minh list; browser tests dùng mock contract.
+
+## Xem học viên theo lớp — 15/10/2026
+
+Nút Học viên trên bảng lớp của `/admin` và `/admin/classes` mở Dialog shadcn/ui, query theo classId và page; GET `/admin/classes/:classId/students?page=1&pageSize=20`. Đối chiếu Swagger live và `AdminClassStudentDto`/flow Phase 4 BE: tên/email/phone, studentStatus, enrollmentId/enrollmentStatus và enrolledAt nullable; response `{items,page,pageSize,total}`. Danh sách theo BE gồm chờ thanh toán/đang học/hoàn thành, không phải roster điểm danh. Chỉ mở đúng GET list có UUID/pagination strict và access_token/private no-store; chưa mở student detail hoặc mutations. Có loading/error/retry/empty/phân trang; query chỉ mount khi bấm nút.

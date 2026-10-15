@@ -1,5 +1,27 @@
 # Quy tắc giao diện Mindy
 
+## Admin template — 15/10/2026
+
+- Tổng quan theo ảnh dashboard người dùng gửi: bốn thẻ số liệu có sparkline, hàng biểu đồ vùng/cột, bên dưới là bảng lớp + khóa học theo số lớp + donut vai trò tài khoản. Dùng Card/Chart shadcn và Recharts, palette Mindy và typography Admin hiện có. Tooltip, chú giải và số liệu dạng chữ đi cùng chart; tắt animation của chart để hỗ trợ reduced motion. Mobile xếp một cột, bảng cuộn trong panel.
+- Số liệu lấy từ danh sách Admin thật đã tải đủ trang: tạo mới theo `createdAt`/tháng UTC+7, trạng thái lớp và vai trò tài khoản theo snapshot hiện tại. Có 3/6/12 tháng và Làm mới. Không suy diễn doanh thu/lợi nhuận, tỷ lệ chuyển đổi, lịch sử thay đổi trạng thái hay enrollment từ availableSeats. Loading/error/empty không biến thành số liệu giả.
+
+- Yêu cầu tăng toàn bộ chữ Admin một nấc: +2px cho thang chữ hiện có (13→15, 14→16, 16→18, tiêu đề 32→34/36→38). Token text-size giới hạn trong admin-workspace/admin-typography; portal popup/Dialog/Sheet/confirmation cũng nhận cùng scope. Typography marketing giữ nguyên.
+
+- Popup và Dialog ẩn thanh cuộn bằng utility scrollbar-hidden (kể cả vùng bảng bên trong); giữ overflow-auto để tiếp tục cuộn chuột, cảm ứng và bàn phím.
+
+- Theo ảnh mẫu và yêu cầu mới: users/courses/classes dùng cùng Table gọn, hàng 64px, đường kẻ cột mảnh, avatar tròn, Theo yêu cầu tiếp theo, thao tác từng dòng dùng các Button icon: Eye màu mint, Pencil/ShieldCheck màu vàng, Users màu xanh lá. Theo yêu cầu mới nhất, mỗi nút mở Dialog shadcn nằm giữa màn hình, backdrop phủ tối và blur nền. Các nút chuyển mục có icon/màu được đặt trong modal, đổi nội dung trực tiếp không cần đóng. Áp dụng cả bảng tổng quan. Có title/aria-label, aria-expanded, trạng thái active, Escape và trả focus; modal giới hạn 90dvh, cuộn nội dung và giữ focus trong modal. Input/select Admin cao 48px; textarea cao tối thiểu 112px. Không giảm cỡ chữ đã yêu cầu.
+- Bổ sung semantic tokens status-green/status-yellow/status-red theo yêu cầu người dùng: hoạt động/kích hoạt/đang tuyển/đang học/hoàn thành xanh; chờ xác thực/chưa kích hoạt/nháp/chờ thanh toán vàng; tạm khóa/đã hủy đỏ. Dùng lại AdminStatus cả đăng ký học viên, luôn có nhãn chữ bên cạnh màu. Chấm màu nhấp nháy nhẹ bằng animate-pulse, tắt khi reduced motion. Chọn danh mục và nút Tạo danh mục mới trên cùng một hàng.
+
+- Loading dữ liệu dùng Skeleton shadcn/ui qua `TableSkeleton`/`StatCardSkeleton` dùng chung ở `components/ui/loading-skeletons.tsx`; không chép lại markup skeleton ở từng màn hình. Hiện skeleton khi query chưa có dữ liệu; giữ dữ liệu hiện tại khi background refetch.
+
+- Dùng component shadcn/ui theo yêu cầu: Button, Table, Input, Badge, Checkbox, Dialog, Sheet, NativeSelect, Popover. Cấu hình `components.json`, nguồn `src/components/ui`; giữ palette/typography Mindy qua semantic tokens, không áp theme neutral mặc định. `cn` dùng helper tại `src/lib/utils.ts`.
+
+- Cập nhật typography theo yêu cầu: tiêu đề cột 14px/800 và màu forest; nội dung bảng/nút/menu 14px, thông tin phụ 13px; mô tả chính 16px, tiêu đề trang 32–36px. Áp dụng đồng bộ tổng quan, users/courses/classes, workflow và dialog Admin.
+
+- Theo `docs/sidebar.png` và `docs/admin table.png`: sidebar thu gọn, header breadcrumb/account, tab trạng thái, toolbar, bảng gọn và badge. Dùng nguyên palette Mindy; canvas soft pha mint, panel trắng, viền mảnh, điểm nhấn mint/coral.
+- `/admin` có shell riêng, không gắn header/footer marketing. Bảng chung cho users/courses/classes; desktop sidebar 228px/76px, mobile dialog, cuộn bảng trong panel từ 320px. Escape/focus restore và reduced motion được hỗ trợ.
+- Không bịa số liệu/trend/dữ liệu thành viên. Search/sort và CSV ghi đúng phạm vi trang hiện tại. Chi tiết thiết kế và API ở [admin-template.md](admin-template.md).
+
 ## Nguồn thiết kế
 
 Palette: [pallete.png](./pallete.png). Logo: [logo.jpg](./logo.jpg). Ảnh sidebar và admin table trong docs dành cho giai đoạn quản trị sau này.

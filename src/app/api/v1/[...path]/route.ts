@@ -5,3 +5,5 @@ export async function GET(request: Request, context: { params: Promise<{ path: s
 }
 
 export const POST = GET;
+export const PATCH = GET;
+export const PUT = GET;

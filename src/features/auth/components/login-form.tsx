@@ -38,8 +38,10 @@ export function LoginForm() {
           }
           setValidationError('');
           try {
-            await login.mutateAsync(result.data);
-            router.replace(returnTo);
+            const response = await login.mutateAsync(result.data);
+            router.replace(
+              response.user.role === 'ADMIN' && returnTo === '/' ? '/admin' : returnTo,
+            );
           } catch {
             /* Mutation renders its error below. */
           }

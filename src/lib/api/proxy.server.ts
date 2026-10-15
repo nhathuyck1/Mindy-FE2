@@ -19,6 +19,16 @@ import {
 } from '@/features/courses/schemas/course-contracts';
 import { authResponseSchema, loginSchema, userSchema } from './contracts';
 import { requestCookies, responseCookies } from './cookie-policy';
+import { resolveAdminCrudRule } from './admin-rules.server';
+import {
+  adminUserPageSchema,
+  adminCoursePageSchema,
+  adminClassPageSchema,
+  adminUserFiltersSchema,
+  adminCourseFiltersSchema,
+  adminClassFiltersSchema,
+  adminClassStudentsPageSchema,
+} from '@/features/admin/schemas/admin-contracts';
 
 const privateHeaders = {
   'Cache-Control': 'private, no-store',
@@ -27,6 +37,9 @@ const privateHeaders = {
 };
 const sessionCookies = ['access_token', 'refresh_token'] as const;
 const rules = {
+  'GET admin/users': { response: adminUserPageSchema, cookies: ['access_token'] },
+  'GET admin/courses': { response: adminCoursePageSchema, cookies: ['access_token'] },
+  'GET admin/classes': { response: adminClassPageSchema, cookies: ['access_token'] },
   'GET courses': { response: coursePageSchema, cookies: [] },
   'GET course-categories': { response: categoryPageSchema, cookies: [] },
   'POST me/cart/items': {
@@ -42,12 +55,31 @@ const rules = {
   'POST auth/logout': { response: z.null(), cookies: ['access_token'] },
 } satisfies Record<string, { response: z.ZodType; body?: z.ZodType; cookies: string[] }>;
 
-type ApiRule = { response: z.ZodType; body?: z.ZodType; cookies: string[] };
+type ApiRule = {
+  response: z.ZodType;
+  body?: z.ZodType;
+  cookies: string[];
+  query?: z.ZodType<Record<string, string | number>>;
+};
 function resolveRule(method: string, path: string): ApiRule | undefined {
   const key = `${method} ${path}`;
   if (Object.hasOwn(rules, key)) return rules[key as keyof typeof rules];
+  const adminRule = resolveAdminCrudRule(method, path);
+  if (adminRule) return adminRule;
   if (method !== 'GET') return undefined;
   const parts = path.split('/');
+  if (
+    parts.length === 4 &&
+    parts[0] === 'admin' &&
+    parts[1] === 'classes' &&
+    parts[3] === 'students' &&
+    z.uuid().safeParse(parts[2]).success
+  )
+    return {
+      response: adminClassStudentsPageSchema,
+      cookies: ['access_token'],
+      query: paginationQuerySchema.strict(),
+    };
   if (!z.uuid().safeParse(parts[1]).success) return undefined;
   if (parts[0] === 'courses' && parts.length === 2)
     return { response: courseDetailSchema, cookies: [] };
@@ -90,18 +122,20 @@ export async function proxyApi(request: Request, path: string) {
   const env = getServerEnv();
   const rule = resolveRule(request.method, path);
   if (!rule) return error(404, 'ENDPOINT_NOT_ALLOWED', 'API không thuộc phạm vi được hỗ trợ.');
-  if (request.method === 'POST') {
+  if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(request.method)) {
     if (request.headers.get('origin') !== env.appOrigin)
       return error(403, 'ORIGIN_NOT_ALLOWED', 'Yêu cầu không hợp lệ.');
   }
   let body: unknown;
   if (rule.body) {
+    const bodyLimit = path.startsWith('admin/') ? 65_536 : 16_384;
     if (!request.headers.get('content-type')?.startsWith('application/json'))
       return error(415, 'JSON_REQUIRED', 'Yêu cầu JSON.');
-    if (Number(request.headers.get('content-length') ?? 0) > 16_384)
+    if (Number(request.headers.get('content-length') ?? 0) > bodyLimit)
       return error(413, 'PAYLOAD_TOO_LARGE', 'Dữ liệu quá lớn.');
     const raw = await request.text();
-    if (raw.length > 16_384) return error(413, 'PAYLOAD_TOO_LARGE', 'Dữ liệu quá lớn.');
+    if (new TextEncoder().encode(raw).byteLength > bodyLimit)
+      return error(413, 'PAYLOAD_TOO_LARGE', 'Dữ liệu quá lớn.');
     try {
       const parsed = rule.body.safeParse(JSON.parse(raw));
       if (!parsed.success)
@@ -113,11 +147,28 @@ export async function proxyApi(request: Request, path: string) {
   }
   if (path === 'auth/me' && !requestCookies(request.headers.get('cookie'), ['access_token']))
     return error(401, 'AUTHENTICATION_REQUIRED', 'Bạn chưa đăng nhập.');
+  if (path.startsWith('admin/') && !requestCookies(request.headers.get('cookie'), ['access_token']))
+    return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập bằng tài khoản quản trị.');
   if (path === 'me/cart/items' && !requestCookies(request.headers.get('cookie'), ['access_token']))
     return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập để đăng ký lớp.');
   if (path === 'auth/refresh' && !requestCookies(request.headers.get('cookie'), ['refresh_token']))
     return error(401, 'AUTHENTICATION_REQUIRED', 'Phiên đăng nhập đã hết hạn.');
   let search = '';
+  if (path.startsWith('admin/') && request.method === 'GET') {
+    const schemas = {
+      'admin/users': adminUserFiltersSchema,
+      'admin/courses': adminCourseFiltersSchema,
+      'admin/classes': adminClassFiltersSchema,
+    };
+    const schema =
+      rule.query ??
+      (Object.hasOwn(schemas, path)
+        ? schemas[path as keyof typeof schemas]
+        : z.object({}).strict());
+    const parsed = schema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+    if (!parsed.success) return error(422, 'INVALID_QUERY', 'Bộ lọc quản trị không hợp lệ.');
+    search = `?${new URLSearchParams(Object.entries(parsed.data).map(([key, value]) => [key, String(value)]))}`;
+  }
   if (['courses', 'course-categories'].includes(path) || /^courses\/[^/]+\/classes$/.test(path)) {
     const input = new URL(request.url).searchParams;
     const schema =

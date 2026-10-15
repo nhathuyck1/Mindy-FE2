@@ -93,6 +93,15 @@ export function SessionControls() {
               <p className="mt-1 text-sm break-all text-muted">{session.data.email}</p>
             </div>
             <div className="mx-2 my-2 border-t border-line" />
+            {session.data.role === 'ADMIN' && session.data.status === 'ACTIVE' && (
+              <Link
+                href="/admin"
+                onClick={() => setOpen(false)}
+                className="flex min-h-12 items-center gap-3 rounded-xl px-4 text-sm font-extrabold hover:bg-soft"
+              >
+                <Icon name="shield" className="size-5 text-mint" /> Trang quản trị
+              </Link>
+            )}
             <button
               type="button"
               className="flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-xl px-4 text-sm font-extrabold text-forest transition-colors hover:bg-peach disabled:cursor-wait disabled:opacity-50"

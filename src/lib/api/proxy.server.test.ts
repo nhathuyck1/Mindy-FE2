@@ -37,13 +37,143 @@ describe('Homepage and login API adapter', () => {
     fetchMock.mockReset();
   });
 
-  it('Rejects requests outside the homepage and login allowlist', async () => {
+  it('Protects UUID class-student lists and validates pagination and response', async () => {
+    const id = '44444444-4444-4444-8444-444444444444';
+    const path = `admin/classes/${id}/students`;
+    const request = (suffix = '', cookie = 'access_token=opaque; refresh_token=hidden') =>
+      new Request(`http://localhost:3003/api/v1/${path}${suffix}`, { headers: { Cookie: cookie } });
+    expect((await proxyApi(request('', ''), path)).status).toBe(401);
+    for (const query of ['?page=0', '?pageSize=101', '?role=ADMIN'])
+      expect((await proxyApi(request(query), path)).status).toBe(422);
+    for (const invalid of ['admin/classes/bad/students', `${path}/extra`])
+      expect((await proxyApi(request(), invalid)).status).toBe(404);
+    expect(
+      (
+        await proxyApi(
+          new Request(`http://localhost:3003/api/v1/${path}`, { method: 'POST' }),
+          path,
+        )
+      ).status,
+    ).toBe(404);
+    expect(fetchMock).not.toHaveBeenCalled();
+    const student = {
+      studentId: user.id,
+      studentName: user.displayName,
+      email: user.email,
+      phone: null,
+      studentStatus: 'ACTIVE',
+      enrollmentId: id,
+      enrollmentStatus: 'PENDING_PAYMENT',
+      enrolledAt: null,
+    };
+    fetchMock.mockResolvedValueOnce(
+      Response.json({
+        items: [{ ...student, passwordHash: 'hidden' }],
+        page: 2,
+        pageSize: 20,
+        total: 21,
+      }),
+    );
+    const response = await proxyApi(request('?page=2&pageSize=20'), path);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ items: [student], page: 2, pageSize: 20, total: 21 });
+    expect(String(fetchMock.mock.calls[0][0])).toContain(`${path}?page=2&pageSize=20`);
+    expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get('Cookie')).toBe(
+      'access_token=opaque',
+    );
+    expect(response.headers.get('cache-control')).toContain('no-store');
+    fetchMock.mockResolvedValueOnce(
+      Response.json({
+        items: [{ ...student, enrolledAt: 'bad' }],
+        page: 1,
+        pageSize: 20,
+        total: 1,
+      }),
+    );
+    expect((await proxyApi(request(), path)).status).toBe(502);
+  });
+
+  it('Rejects requests outside the explicit allowlist', async () => {
     const response = await proxyApi(
-      new Request('http://localhost:3003/api/v1/admin/users'),
-      'admin/users',
+      new Request('http://localhost:3003/api/v1/admin/secrets'),
+      'admin/secrets',
     );
     expect(response.status).toBe(404);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('Requires admin cookies, validates filters and leaves role enforcement to the backend', async () => {
+    const request = (
+      query = '',
+      cookie = 'access_token=opaque; refresh_token=private; unrelated=secret',
+    ) =>
+      new Request(`http://localhost:3003/api/v1/admin/users${query}`, {
+        headers: { Cookie: cookie },
+      });
+    expect((await proxyApi(request('', ''), 'admin/users')).status).toBe(401);
+    for (const query of ['?role=ROOT', '?status=BAD', '?pageSize=101', '?q=unsupported'])
+      expect((await proxyApi(request(query), 'admin/users')).status).toBe(422);
+    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockResolvedValueOnce(
+      Response.json({ items: [user], page: 2, pageSize: 10, total: 12 }),
+    );
+    const response = await proxyApi(
+      request('?page=2&pageSize=10&role=STUDENT&status=ACTIVE'),
+      'admin/users',
+    );
+    expect(response.status).toBe(200);
+    expect(String(fetchMock.mock.calls[0][0])).toContain(
+      'admin/users?page=2&pageSize=10&role=STUDENT&status=ACTIVE',
+    );
+    expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get('Cookie')).toBe(
+      'access_token=opaque',
+    );
+    expect(response.headers.get('cache-control')).toContain('no-store');
+    fetchMock.mockResolvedValueOnce(
+      Response.json({ code: 'FORBIDDEN', message: 'Admin only' }, { status: 403 }),
+    );
+    expect((await proxyApi(request(), 'admin/users')).status).toBe(403);
+  });
+
+  it('Does not open unsupported profile edits, deletes or unimplemented dynamic routes', async () => {
+    for (const [method, path] of [
+      ['DELETE', 'admin/users/11111111-1111-4111-8111-111111111111'],
+      ['PATCH', 'admin/users/11111111-1111-4111-8111-111111111111'],
+      ['GET', 'admin/classes/not-a-uuid'],
+      ['POST', 'admin/courses/11111111-1111-4111-8111-111111111111/deactivate'],
+    ]) {
+      expect(
+        (await proxyApi(new Request(`http://localhost:3003/api/v1/${path}`, { method }), path))
+          .status,
+      ).toBe(404);
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('Validates course and class filters independently', async () => {
+    const request = (path: string) =>
+      new Request(`http://localhost:3003/api/v1/${path}`, {
+        headers: { Cookie: 'access_token=opaque' },
+      });
+    for (const path of [
+      'admin/courses?isActive=yes',
+      'admin/classes?status=ACTIVE',
+      'admin/classes?mentorId=bad',
+    ])
+      expect((await proxyApi(request(path), path.split('?')[0])).status).toBe(422);
+    for (const path of [
+      'admin/courses?isActive=false',
+      'admin/classes?status=DRAFT&deliveryMode=ONLINE',
+    ]) {
+      fetchMock.mockResolvedValueOnce(
+        Response.json({ items: [], page: 1, pageSize: 20, total: 0 }),
+      );
+      expect((await proxyApi(request(path), path.split('?')[0])).status).toBe(200);
+    }
+    fetchMock.mockResolvedValueOnce(
+      Response.json({ items: [{ id: 'bad' }], page: 1, pageSize: 20, total: 1 }),
+    );
+    expect((await proxyApi(request('admin/classes'), 'admin/classes')).status).toBe(502);
   });
 
   it('Rejects foreign-origin login before contacting the backend', async () => {
