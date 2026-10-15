@@ -62,8 +62,9 @@ export function useLogin() {
           schema: authResponseSchema,
         }),
       ),
-    onSuccess: (result) => {
-      queryClient.clear();
+    onSuccess: async (result) => {
+      await queryClient.cancelQueries();
+      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'auth' });
       queryClient.setQueryData(sessionKey, result.user);
     },
   });
@@ -81,9 +82,10 @@ export function useLogout() {
           throw error;
         }
       }),
-    onSuccess: () => {
-      queryClient.clear();
+    onSuccess: async () => {
+      await queryClient.cancelQueries();
       queryClient.setQueryData(sessionKey, null);
+      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'auth' });
     },
   });
 }

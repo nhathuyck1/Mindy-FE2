@@ -1,5 +1,27 @@
 # API catalog, lớp học và tài khoản
 
+## Commerce/QR — triển khai 15/10/2026
+
+Đối chiếu controller/DTO commerce/payments và Swagger live đã kiểm tra khi lập plan. Lượt xác minh live lại trong lúc implement gặp timeout; kiểm thử mới dùng mock theo contract, chưa nghiệm thu tiền thật.
+
+Browser chỉ gọi `/api/v1` cùng origin. Các route bổ sung:
+
+| Method/path (sau prefix)                  | Contract                                                   |
+| ----------------------------------------- | ---------------------------------------------------------- |
+| GET `/me/cart`                            | CartDto, currentPriceAmount/totalAmount backend            |
+| DELETE `/me/cart/items/:classId`          | UUID, cookie + Origin, 204                                 |
+| POST `/me/cart/checkout`                  | Strict `{paymentType:"PAYOS"}` → 201 `{orders:[OrderDto]}` |
+| GET `/me/orders`                          | Strict page/pageSize/status, phân trang đơn chờ            |
+| GET `/me/orders/:orderId`                 | OrderPaymentDto, payment nullable                          |
+| POST `/me/orders/:orderId/payments/payos` | Strict `{}` → PaymentDto create/reuse cùng đơn             |
+| GET `/me/orders/payment-result`           | Chỉ orderCode chuỗi số; mapping → OrderPaymentDto          |
+
+Order status PENDING/PAID/EXPIRED/CANCELLED; payment status CREATING/PENDING/SUCCEEDED/REQUIRES_REVIEW. Payment qrCode/checkoutUrl nullable; URL chỉ HTTPS pay.payos.vn, không credentials/port. Kiểm payment.orderId và amount khớp order; QRCodeSVG render qrCode nguyên dạng. Không trả token ra JSON/cache/Web Storage.
+
+Origin kiểm cho POST và DELETE; proxy cookie access_token, UUID allowlist và private/no-store. ReturnTo chỉ cart, UUID checkout, result với mã số hoặc courses cũ. Không dùng query status/cancel để settle/hủy đơn. Backend cấu hình PAYOS_RETURN_URL và PAYOS_CANCEL_URL trỏ `/payment/result` ở frontend triển khai; frontend không gửi return URL tùy ý.
+
+Checkout không tự retry khi timeout. Giỏ/đơn chờ refetch để mở lại đơn đã tạo. Payment retry cùng ID, dừng khi PAID/hết hạn/hủy/review. Thử ngân hàng/payOS tiền thật cần môi trường được cấu hình; test QR decode chỉ chứng minh đúng payload render.
+
 Cập nhật 15/10/2026. Swagger: https://api.quanh123.id.vn/docs#/. OpenAPI đọc từ `/docs-json`, lưu tại [openapi.snapshot.json](openapi.snapshot.json). Base URL đã xác minh bằng GET: `https://api.quanh123.id.vn/api/v1`. `/docs#/` là trang tài liệu, không phải base URL request.
 
 Đã đối chiếu `../Mindy-BE/docs/api_flow/PHASE_1_FLOW.md`, `PHASE_1_flow-api-breakdown.md`, ghi chú session recovery ở `PHASE_3_4_flow-api-breakdown.md`, cùng auth controller, LoginDto, UserDto và public course DTO/controller. Phase 1 sửa policy tạo tài khoản; **login vẫn nhận password 1–128 ký tự**, không áp minimum 6 của registration vào login.

@@ -39,7 +39,7 @@ export function MobileNavigation() {
             key={item.href}
             href={item.href}
             onClick={() => dispatch(closeMobileNavigation())}
-            className="flex min-h-12 items-center rounded-xl px-4 font-bold hover:bg-soft"
+            className="flex min-h-12 items-center rounded-xl px-4 font-bold text-black hover:bg-soft"
           >
             {item.label}
           </a>

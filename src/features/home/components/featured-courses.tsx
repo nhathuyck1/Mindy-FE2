@@ -6,6 +6,7 @@ import { Icon } from '@/components/ui/icon';
 import { useCourseCategories, useCoursePage } from '@/features/courses/api/course-queries';
 import { CourseCard } from '@/features/courses/components/shared/course-card';
 import { QueryState } from '@/features/courses/components/shared/query-state';
+import { Button } from '@/components/ui/button';
 
 export function FeaturedCourses() {
   const [categoryId, setCategoryId] = useState('');
@@ -49,9 +50,14 @@ export function FeaturedCourses() {
         </div>
       )}
       <div className="mt-7 text-center">
-        <Link href="/courses" className="text-link text-mint">
-          Khám phá tất cả khóa học <Icon name="arrow" className="size-4" />
-        </Link>
+        <Button
+          asChild
+          className="min-h-12 rounded-xl bg-mint px-6 text-base font-extrabold text-canvas shadow-lg shadow-forest/20 hover:bg-forest sm:text-lg"
+        >
+          <Link href="/courses">
+            Khám phá tất cả khóa học <Icon name="arrow" className="size-4" />
+          </Link>
+        </Button>
       </div>
     </div>
   );

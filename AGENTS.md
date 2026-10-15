@@ -47,7 +47,7 @@ Tham khảo [AGENTS.md của ixartz/Next-js-Boilerplate](https://github.com/ixar
 - TanStack Query sở hữu server state: khóa học, danh mục, phiên đăng nhập và mutations. Không sao chép các dữ liệu này vào Redux.
 - Redux Toolkit sở hữu client state dùng chung; hiện là mobile navigation. Store và QueryClient tạo theo instance provider, không dùng singleton server. Dùng typed hooks, query key có filter; không tự retry auth mutation.
 - Browser chỉ gọi same-origin `/api/v1`. Upstream `API_BASE_URL=https://api.quanh123.id.vn/api/v1` nằm trong env server, được validate tại `src/lib/env.server.ts`.
-- Phạm vi đã mở rộng theo yêu cầu 15/10/2026: homepage, courses/detail/open classes/timetable public, email login/register/verify và thêm lớp đã chọn vào cart. Proxy phải có method/path allowlist; dynamic IDs validate UUID. Checkout/order/payment chưa thuộc lần này.
+- Phạm vi đã mở rộng theo yêu cầu 15/10/2026: homepage, courses/detail/open classes/timetable public, email login/register/verify, cart và checkout PAYOS/QR/payment result. Proxy phải có method/path allowlist; dynamic IDs validate UUID. Checkout toàn giỏ; chỉ order PAID từ backend xác nhận hoàn tất. CASH UI/quản trị chưa thuộc lần này.
 - Google Login tạm hoãn theo yêu cầu mới nhất. Không thêm Google provider, client ID, callback, route hoặc nút Google lúc này.
 - Đối chiếu Swagger live, `../Mindy-BE/docs/api_flow` và DTO trước khi sửa contract. Tài liệu local không đồng nghĩa đã deploy. Input/output API dùng Zod.
 - Backend lưu `access_token` và `refresh_token` trong cookie HttpOnly. Adapter chỉ chuyển đúng cookie name/path, host-only, SameSite=Lax và Secure khi HTTPS. Không trả token trong JSON hay lưu trong Redux/Query/Web Storage.

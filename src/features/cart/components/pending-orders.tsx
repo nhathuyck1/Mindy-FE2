@@ -23,7 +23,7 @@ export function PendingOrders() {
     <section aria-labelledby="pending-orders-heading" className="mt-10">
       <Card className="border-line shadow-none">
         <CardHeader>
-          <CardTitle id="pending-orders-heading" className="text-xl">
+          <CardTitle id="pending-orders-heading" className="text-lg font-semibold">
             Đơn đang chờ thanh toán
           </CardTitle>
           <CardDescription>
@@ -37,11 +37,13 @@ export function PendingOrders() {
               className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-line p-4"
             >
               <div className="min-w-0">
-                <p className="break-all font-extrabold">{order.orderCode}</p>
-                <p className="mt-1 text-sm text-muted">
+                <p className="break-all text-sm font-bold">{order.orderCode}</p>
+                <p className="mt-1 text-sm font-normal text-black">
                   {order.details.length} lớp · {formatDate(order.createdAt)}
                 </p>
-                <p className="mt-1 font-bold text-mint">{formatPrice(order.totalAmount)}</p>
+                <p className="mt-1 text-sm font-normal text-black">
+                  {formatPrice(order.totalAmount)}
+                </p>
               </div>
               {order.paymentType === 'PAYOS' ? (
                 <Button asChild variant="outline" className="min-h-11">

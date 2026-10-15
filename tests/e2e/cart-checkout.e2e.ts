@@ -73,7 +73,9 @@ test('Unavailable provider retries the same order; CREATING then recovers', asyn
   state.hasOrder = true;
   state.paymentFailures = 1;
   await page.goto(`/checkout/${orderId}`);
-  await expect(page.getByRole('alert')).toContainText('Thanh toán đang tạm gián đoạn');
+  await expect(page.locator('main').getByRole('alert')).toContainText(
+    'Thanh toán đang tạm gián đoạn',
+  );
   state.creatingResponses = 1;
   await page.getByRole('button', { name: 'Thử lại', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Mở trang thanh toán payOS' })).toBeVisible({
@@ -177,7 +179,7 @@ test('Session logout clears private QR; denied orders do not prepare a payment',
   state.loggedIn = true;
   state.orderReadStatus = 403;
   await page.goto(`/checkout/${orderId}`);
-  await expect(page.getByRole('alert')).toContainText('Bạn không có quyền');
+  await expect(page.locator('main').getByRole('alert')).toContainText('Bạn không có quyền');
   expect(state.creates).toBe(0);
 });
 

@@ -18,7 +18,7 @@ export function DesktopNavigation() {
             key={item.href}
             href={item.href}
             aria-current={active ? 'page' : undefined}
-            className={`inline-flex items-center justify-center px-3 text-[15px] font-black whitespace-nowrap transition-colors hover:bg-soft hover:text-mint focus-visible:-outline-offset-4 xl:px-5 xl:text-base ${active ? 'bg-soft text-mint' : 'text-forest'}`}
+            className={`inline-flex items-center justify-center px-3 text-[15px] font-black whitespace-nowrap transition-colors hover:bg-soft hover:text-mint focus-visible:-outline-offset-4 xl:px-5 xl:text-base ${active ? 'bg-soft text-mint' : 'text-black'}`}
           >
             {item.label}
           </Link>
