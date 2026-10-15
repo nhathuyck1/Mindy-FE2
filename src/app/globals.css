@@ -1,0 +1,65 @@
+@import 'tailwindcss';
+
+/* Source of truth: docs/pallete.png. Keep brand colors here. */
+@theme {
+  --color-mint: #338a85;
+  --color-forest: #1d5b57;
+  --color-coral: #ff7f50;
+  --color-headsup: #ff5400;
+  --color-sunshine: #ffddae;
+  --color-canvas: #ffffff;
+  --color-soft: color-mix(in srgb, var(--color-mint) 7%, var(--color-canvas));
+  --color-line: color-mix(in srgb, var(--color-mint) 19%, var(--color-canvas));
+  --color-muted: color-mix(in srgb, var(--color-forest) 90%, var(--color-canvas));
+  --color-peach: color-mix(in srgb, var(--color-coral) 13%, var(--color-canvas));
+  --color-hero: hsl(from var(--color-mint) h calc(s * 1.6) 90%);
+  --color-hero-ink: color-mix(in srgb, var(--color-mint) 70%, var(--color-forest));
+  --color-hero-copy: color-mix(in srgb, var(--color-mint) 40%, var(--color-forest));
+  --color-feature: var(--color-sunshine);
+  --color-banner: color-mix(in srgb, var(--color-mint) 26%, var(--color-canvas));
+  --font-sans: 'Nunito Variable', 'Nunito', Arial, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 7rem;
+  }
+  body {
+    background: var(--color-canvas);
+    color: var(--color-forest);
+  }
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-mint);
+    outline-offset: 5px;
+  }
+  ::selection {
+    background: var(--color-mint);
+    color: var(--color-canvas);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+@layer components {
+  .page-container {
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10;
+  }
+  .section-title {
+    @apply text-3xl leading-tight font-extrabold tracking-tight sm:text-4xl lg:text-5xl;
+  }
+  .eyebrow {
+    @apply text-xs leading-relaxed font-extrabold tracking-[0.14em] uppercase;
+  }
+  .text-link {
+    @apply inline-flex min-h-11 items-center gap-2 text-sm font-extrabold transition-colors hover:text-mint;
+  }
+}
