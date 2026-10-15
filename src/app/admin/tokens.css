@@ -1,0 +1,21 @@
+@import 'tw-animate-css';
+
+@theme {
+  --color-status-green: #15803d;
+  --color-status-yellow: #a16207;
+  --color-status-red: #b91c1c;
+  --color-ink: #000000;
+  --color-ink-soft: color-mix(in srgb, var(--color-ink) 82%, var(--color-canvas));
+  --color-ink-gray: color-mix(in srgb, var(--color-ink) 58%, var(--color-canvas));
+  --color-pastel-red: color-mix(in srgb, var(--color-status-red) 60%, var(--color-canvas));
+  --color-popover: var(--color-canvas);
+  --color-popover-foreground: var(--color-forest);
+  --font-admin: 'Inter Variable', 'Inter', Arial, sans-serif;
+}
+
+@utility scrollbar-hidden {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

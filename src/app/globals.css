@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './admin/tokens.css';
 
 /* Source of truth: docs/pallete.png. Keep brand colors here. */
 @theme {

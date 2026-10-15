@@ -28,7 +28,7 @@ describe('Post-login course return path', () => {
       'https://evil.test',
       '//evil.test',
       '/\\evil.test',
-      '/admin/users',
+      '/admin/unsupported',
       '/courses/bad',
       'javascript:alert(1)',
     ])
@@ -38,5 +38,12 @@ describe('Post-login course return path', () => {
         '/courses/33333333-3333-4333-8333-333333333333?classId=bad&redirect=https://evil.test',
       ),
     ).toBe('/courses/33333333-3333-4333-8333-333333333333');
+  });
+  it('Keeps supported admin destinations without accepting arbitrary admin routes', () => {
+    expect(safeReturnPath('/admin/users?redirect=https://evil.test')).toBe('/admin/users');
+    const path = '/admin/classes/11111111-1111-4111-8111-111111111111/students';
+    expect(safeReturnPath(path)).toBe(path);
+    expect(safeReturnPath('/admin/classes/bad/students')).toBe('/');
+    expect(safeReturnPath('/user/materials')).toBe('/user/materials');
   });
 });

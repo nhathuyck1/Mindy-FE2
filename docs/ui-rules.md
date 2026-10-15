@@ -1,5 +1,10 @@
 # Quy tắc giao diện Mindy
 
+## Giữ giao diện Booking khi tích hợp admin — 16/10/2026
+
+- Giao diện public, giỏ hàng, thanh toán và khu vực user giữ nguyên. Không lấy CSS toàn cục hoặc thay Button/Card/Brand từ nhánh admin.
+- Inter, typography và màu chữ admin chỉ kích hoạt khi có data-admin-root, kể cả modal portal. Token Mindy hiện có không bị ghi đè ngoài admin. Khi quay về website bằng client navigation, font Nunito, màu nền/chữ và kích thước header giữ nguyên (E2E desktop/mobile).
+
 ## Tài liệu học tập — 16/10/2026
 
 - Sidebar thêm Tài liệu học tập; danh sách chỉ hiện lớp có quyền FULL hoặc CASH_PREVIEW và canViewClass. Không hiện card Chưa có quyền truy cập. Phân trang tính sau lọc quyền.

@@ -1,5 +1,11 @@
 # Kiến trúc Mindy FE2
 
+## Tích hợp admin có chọn lọc — 16/10/2026
+
+Admin nằm ở app/admin, features/admin và components/layout/admin-shell.tsx. Chỉ ghép bổ sung vào nền Booking; không thay code các tính năng public, student và commerce. lib/api/admin-rules.server.ts sở hữu allowlist/schema admin; proxy giữ toàn bộ rules học tập/commerce hiện có và bổ sung PATCH/PUT cho admin.
+
+CSS hình thức admin ở app/admin/admin.css; override font/token giới hạn bởi html:has([data-admin-root]) để portal dùng cùng style và tự khôi phục khi rời admin. globals.css chỉ import app/admin/tokens.css để Tailwind sinh utility mới, không đổi token hiện có. Login và auth queries giữ nguyên; admin đi từ link tài khoản hoặc login có returnTo admin hợp lệ.
+
 ## Học tập — mở rộng 16/10/2026
 
 `features/learning` sở hữu schemas, Query hooks, proxy policy và UI `/user/materials`, `/user/materials/[classId]`. UserShell bảo vệ STUDENT; sidebar active cho cả route con. Danh sách lấy đủ trang lớp rồi lọc quyền trước phân trang; courses dialog có link Vào học/Xem trước. Server route validate UUID và đọc async params/searchParams của Next 16.

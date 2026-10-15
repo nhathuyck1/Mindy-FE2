@@ -1,4 +1,5 @@
 import 'server-only';
+import { resolveAdminCrudRule } from './admin-rules.server';
 import {
   learningPaginationSchema,
   learningProxyRule,
@@ -74,10 +75,17 @@ const rules = {
   'POST auth/logout': { response: z.null(), cookies: ['access_token'] },
 } satisfies Record<string, { response: z.ZodType; body?: z.ZodType; cookies: string[] }>;
 
-type ApiRule = { response: z.ZodType; body?: z.ZodType; cookies: string[] };
+type ApiRule = {
+  response: z.ZodType;
+  body?: z.ZodType;
+  cookies: string[];
+  query?: z.ZodType<Record<string, string | number>>;
+};
 function resolveRule(method: string, path: string): ApiRule | undefined {
   const key = `${method} ${path}`;
   if (Object.hasOwn(rules, key)) return rules[key as keyof typeof rules];
+  const adminRule = resolveAdminCrudRule(method, path);
+  if (adminRule) return adminRule;
   const learningRule = learningProxyRule(method, path);
   if (learningRule) return learningRule;
   const parts = path.split('/');
@@ -146,18 +154,22 @@ export async function proxyApi(request: Request, path: string) {
   const env = getServerEnv();
   const rule = resolveRule(request.method, path);
   if (!rule) return error(404, 'ENDPOINT_NOT_ALLOWED', 'API không thuộc phạm vi được hỗ trợ.');
-  if (request.method === 'POST' || request.method === 'DELETE') {
+  if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(request.method)) {
     if (request.headers.get('origin') !== env.appOrigin)
       return error(403, 'ORIGIN_NOT_ALLOWED', 'Yêu cầu không hợp lệ.');
   }
   let body: unknown;
   if (rule.body) {
+    const bodyLimit = path.startsWith('admin/') ? 65_536 : 16_384;
     if (!request.headers.get('content-type')?.startsWith('application/json'))
       return error(415, 'JSON_REQUIRED', 'Yêu cầu JSON.');
-    if (Number(request.headers.get('content-length') ?? 0) > 16_384)
+    if (Number(request.headers.get('content-length') ?? 0) > bodyLimit)
       return error(413, 'PAYLOAD_TOO_LARGE', 'Dữ liệu quá lớn.');
     const raw = await request.text();
-    if (raw.length > 16_384) return error(413, 'PAYLOAD_TOO_LARGE', 'Dữ liệu quá lớn.');
+    const bodySize = path.startsWith('admin/')
+      ? new TextEncoder().encode(raw).byteLength
+      : raw.length;
+    if (bodySize > bodyLimit) return error(413, 'PAYLOAD_TOO_LARGE', 'Dữ liệu quá lớn.');
     try {
       const parsed = rule.body.safeParse(JSON.parse(raw));
       if (!parsed.success)
@@ -174,6 +186,18 @@ export async function proxyApi(request: Request, path: string) {
   if (path === 'auth/refresh' && !requestCookies(request.headers.get('cookie'), ['refresh_token']))
     return error(401, 'AUTHENTICATION_REQUIRED', 'Phiên đăng nhập đã hết hạn.');
   let search = '';
+  if (path.startsWith('admin/')) {
+    if (!requestCookies(request.headers.get('cookie'), ['access_token']))
+      return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập bằng tài khoản quản trị.');
+    if (request.method === 'GET') {
+      const input = new URL(request.url).searchParams;
+      if ([...input.keys()].some((key) => input.getAll(key).length !== 1))
+        return error(422, 'INVALID_QUERY', 'Tham số bị lặp.');
+      const parsed = (rule.query ?? z.object({}).strict()).safeParse(Object.fromEntries(input));
+      if (!parsed.success) return error(422, 'INVALID_QUERY', 'Bộ lọc quản trị không hợp lệ.');
+      search = `?${new URLSearchParams(Object.entries(parsed.data).map(([key, value]) => [key, String(value)]))}`;
+    }
+  }
   if (learningProxyRule(request.method, path)) {
     const input = new URL(request.url).searchParams;
     if ([...input.keys()].some((key) => input.getAll(key).length !== 1))

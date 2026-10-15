@@ -1,5 +1,14 @@
 # Tiến độ
 
+## 16/10/2026 — Tích hợp admin có chọn lọc trên Booking
+
+- Nền giữ nguyên main/Feat/Booking tại 86780a8; thực hiện trên nhánh main-admin. Chỉ lấy module, routes, shell, primitive mới và test admin từ origin/admin (90499af); không merge toàn bộ nhánh.
+- Giữ nguyên homepage, courses, cart, orders/payments, user/learning, root layout, login UI, auth queries và các primitive đã có. Button chỉ thêm unstyled, Icon chỉ thêm tên mới. Header chỉ bổ sung link quản trị cho ADMIN ACTIVE; returnTo thêm allowlist admin.
+- CSS admin ở src/app/admin/admin.css, chỉ đổi font/token khi có data-admin-root; globals.css chỉ import token/animation bổ sung. Thêm Inter, Recharts và tw-animate-css để phục vụ module admin.
+- API adapter thêm policy admin riêng, GET/POST/PATCH/PUT allowlist, UUID/schema/query validation, cookie access_token và Origin cho mutations. Quyền ADMIN do backend kiểm tra; không nới quyền API student.
+- Production build pass; 68 unit tests pass. Toàn bộ E2E: 157 pass, 3 skip đúng nền tảng; thêm 2 test desktop/mobile kiểm font/màu/header của website không đổi sau client navigation qua admin. Test dùng API mock theo contract, chưa nghiệm thu tài khoản admin/VPS thật.
+- Không thay đổi các file khác chỉ để sửa format: format:check toàn repo còn cảnh báo sẵn có trên nhiều file Booking (chủ yếu CRLF); kiểm format riêng các file tích hợp.
+
 ## 16/10/2026 — Đổi tên học phần thành chương
 
 - Thống nhất chữ Chương/chương trong khu vực học tập, giáo trình public, nút xem trước và chi tiết lịch học; cập nhật nhãn accessibility và test liên quan. Giữ nguyên tên field và contract API.
@@ -262,4 +271,3 @@ Course detail/lớp/lịch public, email registration/verification, cart/checkou
 
 - Khai báo data-scroll-behavior trên html để Next.js tạm tắt cuộn mượt khi chuyển route.
 - Bổ sung kiểm tra scrollY = 0 sau đăng nhập về trang chủ; Playwright desktop/mobile 2/2 pass, production build pass.
-

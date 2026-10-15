@@ -16,6 +16,11 @@ export function safeReturnPath(value: string | null | undefined): string {
         '/user/schedule',
         '/user/courses',
         '/user/materials',
+        '/admin',
+        '/admin/users',
+        '/admin/courses',
+        '/admin/classes',
+        '/admin/workflow',
       ].includes(url.pathname)
     )
       return url.pathname;
@@ -28,6 +33,14 @@ export function safeReturnPath(value: string | null | undefined): string {
         : '/';
     }
     const parts = url.pathname.split('/');
+    if (
+      parts.length === 5 &&
+      parts[1] === 'admin' &&
+      parts[2] === 'classes' &&
+      parts[4] === 'students' &&
+      z.uuid().safeParse(parts[3]).success
+    )
+      return url.pathname;
     if (
       parts.length === 4 &&
       parts[1] === 'user' &&

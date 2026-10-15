@@ -60,9 +60,9 @@ describe('Student workspace adapter', () => {
     expect((await proxyApi(request(path), path.split('?')[0])).status).toBe(422);
     expect(fetchMock).not.toHaveBeenCalled();
   });
-  it('Keeps admin paths and invalid learning URLs outside the allowlist', async () => {
+  it('Keeps unsupported admin paths and invalid learning URLs outside the allowlist', async () => {
     for (const path of [
-      'admin/users',
+      'admin/unsupported',
       'me/classes/not-a-uuid',
       'me/classes/11111111-1111-4111-8111-111111111111/students',
     ])
