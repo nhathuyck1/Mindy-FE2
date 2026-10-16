@@ -94,15 +94,16 @@ export function SessionControls() {
               <p className="mt-1 text-sm break-all text-muted">{session.data.email}</p>
             </div>
             <nav aria-label="Liên kết tài khoản" className="mt-2">
-              {session.data.role === 'ADMIN' && session.data.status === 'ACTIVE' && (
-                <Link
-                  href="/admin"
-                  onClick={() => setOpen(false)}
-                  className="flex min-h-12 items-center gap-3 rounded-xl px-4 text-sm font-bold text-black transition-colors hover:bg-soft"
-                >
-                  <Icon name="shield" className="size-5 text-mint" /> Trang quản trị
-                </Link>
-              )}
+              {(session.data.role === 'ADMIN' || session.data.role === 'MANAGER') &&
+                session.data.status === 'ACTIVE' && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setOpen(false)}
+                    className="flex min-h-12 items-center gap-3 rounded-xl px-4 text-sm font-bold text-black transition-colors hover:bg-soft"
+                  >
+                    <Icon name="shield" className="size-5 text-mint" /> Trang quản trị
+                  </Link>
+                )}
               {userNavigation
                 .filter((item) => item.href === '/user/profile' || item.href === '/user/schedule')
                 .map((item) => (

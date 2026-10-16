@@ -1,17 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
-import { loginSchema } from '@/lib/api/contracts';
-import { useLogin } from '../api/auth-queries';
-import { safeReturnPath } from '../lib/return-path';
+import { useAudienceLogin } from '../api/use-audience-login';
 
 export function LoginForm() {
-  const login = useLogin();
-  const router = useRouter();
-  const returnTo = safeReturnPath(useSearchParams().get('returnTo'));
-  const [validationError, setValidationError] = useState('');
+  const login = useAudienceLogin('student');
 
   return (
     <div className="w-full max-w-md">
@@ -24,28 +17,7 @@ export function LoginForm() {
       <p className="mt-4 text-sm leading-relaxed text-muted">
         Một điều mới đang chờ bạn ở phía trước.
       </p>
-      <form
-        onSubmit={async (event) => {
-          event.preventDefault();
-          const data = new FormData(event.currentTarget);
-          const result = loginSchema.safeParse({
-            email: String(data.get('email') ?? '').trim(),
-            password: data.get('password'),
-          });
-          if (!result.success) {
-            setValidationError('Vui lòng nhập email hợp lệ và mật khẩu từ 1 đến 128 ký tự.');
-            return;
-          }
-          setValidationError('');
-          try {
-            await login.mutateAsync(result.data);
-            router.replace(returnTo);
-          } catch {
-            /* Mutation renders its error below. */
-          }
-        }}
-        className="mt-8 space-y-5"
-      >
+      <form onSubmit={login.submit} className="mt-8 space-y-5">
         <div>
           <label htmlFor="email" className="mb-2 block text-sm font-bold">
             Email
@@ -76,29 +48,37 @@ export function LoginForm() {
             className="min-h-13 w-full rounded-xl border border-line bg-canvas px-4 text-base"
           />
         </div>
-        {(validationError || login.isError) && (
-          <p role="alert" className="rounded-xl bg-peach p-4 text-sm">
-            {validationError ||
-              'Đăng nhập chưa thành công. Vui lòng kiểm tra email, mật khẩu và trạng thái xác thực tài khoản.'}
-          </p>
+        {login.wrongRole ? (
+          <div role="alert" className="rounded-xl bg-peach p-4 text-sm">
+            <p>Tài khoản Quản trị, Quản lý hoặc Mentor vui lòng đăng nhập tại trang nội bộ.</p>
+            <Link href="/admin/login" className="text-link mt-2 text-mint">
+              Đến trang đăng nhập nội bộ →
+            </Link>
+          </div>
+        ) : (
+          login.error && (
+            <p role="alert" className="rounded-xl bg-peach p-4 text-sm">
+              {login.error}
+            </p>
+          )
         )}
         <button
           type="submit"
-          disabled={login.isPending}
+          disabled={login.pending}
           className="min-h-13 w-full cursor-pointer rounded-xl bg-mint px-5 text-sm font-extrabold text-canvas transition-colors hover:bg-forest disabled:cursor-wait disabled:opacity-60"
         >
-          {login.isPending ? 'Đang đăng nhập…' : 'Đăng nhập'}
+          {login.pending ? 'Đang đăng nhập…' : 'Đăng nhập'}
         </button>
       </form>
       <Link
-        href={`/register?returnTo=${encodeURIComponent(returnTo)}`}
+        href={`/register?returnTo=${encodeURIComponent(login.returnTo)}`}
         className="text-link mt-6 text-mint"
       >
         Chưa có tài khoản? Đăng ký →
       </Link>
       <br />
-      <Link href={returnTo === '/' ? '/' : returnTo} className="text-link mt-2">
-        {returnTo === '/' ? '← Về trang chủ' : '← Tiếp tục xem khóa học'}
+      <Link href={login.returnTo === '/' ? '/' : login.returnTo} className="text-link mt-2">
+        {login.returnTo === '/' ? '← Về trang chủ' : '← Tiếp tục xem khóa học'}
       </Link>
     </div>
   );

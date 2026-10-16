@@ -47,7 +47,7 @@ export function AdminQueryState(props: {
         }
         {status === 401 ? (
           <Link
-            href={`/login?returnTo=${encodeURIComponent(pathname)}`}
+            href={`/admin/login?returnTo=${encodeURIComponent(pathname)}`}
             className="admin-button mt-5"
           >
             Đăng nhập lại

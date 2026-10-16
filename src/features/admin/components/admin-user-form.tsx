@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import type { AdminRow } from '../lib/admin-resources';
 import type { User } from '@/lib/api/contracts';
 import { useAdminWrite } from '../api/admin-edit-queries';
@@ -125,7 +125,7 @@ export function AdminUserStatusAction(props: { row: AdminRow }) {
       destructive={status === 'SUSPENDED'}
       pending={mutation.isPending}
       trigger={{
-        icon: <ShieldCheck className="size-4" />,
+        icon: <Trash2 className="size-4" />,
         label: `${label}: ${props.row.name}`,
         className:
           'size-11 rounded-lg border-status-yellow/30 bg-status-yellow/8 p-0 text-status-yellow hover:bg-status-yellow/15',

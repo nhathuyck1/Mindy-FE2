@@ -1,0 +1,306 @@
+import { expect, test } from '@playwright/test';
+import { mockMentor, mentorIds } from './mentor-fixtures';
+
+test('weekly timetable groups slots, stacks sessions and navigates whole weeks', async ({
+  page,
+}, testInfo) => {
+  await page.clock.setFixedTime(new Date('2026-10-16T03:00:00Z'));
+  const { calls } = await mockMentor(page, { timetable: true });
+  await page.goto('/mentor');
+  await expect(page.getByRole('columnheader')).toHaveCount(8);
+  if (testInfo.project.name === 'desktop')
+    await expect(page.getByRole('columnheader', { name: /Chủ nhật/ })).toBeInViewport();
+  await expect(page.getByRole('columnheader', { name: /Thứ Sáu/ })).toHaveAttribute(
+    'aria-current',
+    'date',
+  );
+  await expect(page.getByRole('rowheader')).toHaveCount(6);
+  await expect(page.getByRole('rowheader')).toHaveText([
+    /^1\s*07:30\s*\|\s*09:00$/,
+    /^2\s*09:30\s*\|\s*11:00$/,
+    /^3\s*13:00\s*\|\s*15:30$/,
+    /^4\s*16:00\s*\|\s*17:30$/,
+    /^5\s*18:00\s*\|\s*19:30$/,
+    /^6\s*20:00\s*\|\s*21:30$/,
+  ]);
+  await expect(
+    page.getByRole('row').filter({ has: page.getByRole('rowheader', { name: /^2\s*09:30/ }) }),
+  ).toContainText('JavaScript – Buổi sáng');
+  await expect(
+    page.getByRole('row').filter({ has: page.getByRole('rowheader', { name: /^3\s*13:00/ }) }),
+  ).toContainText('Workshop buổi chiều');
+  if (testInfo.project.name === 'desktop') {
+    const emptyDay = await page.getByRole('columnheader', { name: /Thứ Hai/ }).boundingBox();
+    const teachingDay = await page.getByRole('columnheader', { name: /Thứ Ba/ }).boundingBox();
+    expect(emptyDay && teachingDay && emptyDay.width < teachingDay.width).toBeTruthy();
+    const previous = await page
+      .getByRole('button', { name: 'Tuần trước', exact: true })
+      .boundingBox();
+    const date = await page.getByLabel('Chọn ngày (dd/mm/yyyy)', { exact: true }).boundingBox();
+    expect(previous && date && date.x < previous.x).toBeTruthy();
+  }
+  const sundayCell = page.getByRole('row').filter({ hasText: '09:30' }).getByRole('cell').last();
+  await expect(sundayCell.getByRole('link')).toHaveCount(2);
+  await expect(sundayCell).toContainText('Đã hủy');
+  await expect(page.getByText('5 buổi dạy trong tuần', { exact: false })).toBeVisible();
+  await page.screenshot({
+    path: `test-results/mentor-weekly-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+  await page.getByRole('button', { name: 'Tuần sau', exact: true }).click();
+  await expect(page.getByText('Không có buổi dạy trong tuần này.')).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: /Thứ Hai/ })).toContainText('(19/10)');
+  await page.getByRole('button', { name: 'Tuần trước', exact: true }).click();
+  await expect(page.getByRole('link', { name: /Workshop buổi chiều/ })).toHaveCount(1);
+  await expect(page.getByLabel('Chọn ngày (dd/mm/yyyy)', { exact: true })).toHaveValue(
+    '12/10/2026',
+  );
+  await page.getByLabel('Chọn ngày (dd/mm/yyyy)', { exact: true }).fill('28/10/2026');
+  await page.getByLabel('Chọn ngày (dd/mm/yyyy)', { exact: true }).press('Enter');
+  await expect(page.getByRole('columnheader', { name: /Thứ Hai/ })).toContainText('(26/10)');
+  await page.getByLabel('Chọn ngày (dd/mm/yyyy)', { exact: true }).fill('31/02/2026');
+  await page.getByLabel('Chọn ngày (dd/mm/yyyy)', { exact: true }).press('Enter');
+  await expect(page.getByText('Nhập ngày hợp lệ theo dd/mm/yyyy.')).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: /Thứ Hai/ })).toContainText('(26/10)');
+  await page.getByRole('button', { name: 'Mở lịch chọn ngày' }).click();
+  await page.getByLabel('Ngày trong lịch', { exact: true }).fill('2026-10-12');
+  await expect(page.getByLabel('Chọn ngày (dd/mm/yyyy)', { exact: true })).toHaveValue(
+    '12/10/2026',
+  );
+  await page.getByRole('button', { name: 'Tuần hiện tại', exact: true }).click();
+  await expect(page.getByRole('columnheader', { name: /Thứ Hai/ })).toContainText('(12/10)');
+  await page.setViewportSize({ width: 320, height: 800 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const calendar = page.getByRole('region', { name: 'Bảng lịch dạy theo tuần' });
+  expect(await calendar.evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(true);
+  await calendar.focus();
+  await page.keyboard.press('End');
+  await calendar.evaluate((node) => {
+    node.scrollLeft = node.scrollWidth;
+  });
+  await expect(page.getByRole('link', { name: /Ôn tập cuối tuần/ })).toBeInViewport();
+  expect(
+    calls.filter((call) => call.path === 'mentor/schedule').every((call) => call.method === 'GET'),
+  ).toBe(true);
+});
+
+test('mentor schedule includes substitute sessions and attendance lifecycle', async ({
+  page,
+}, testInfo) => {
+  const { calls } = await mockMentor(page);
+  await page.goto('/mentor');
+  await expect(page.getByText('Dạy thay', { exact: true })).toBeVisible();
+  await page.screenshot({
+    path: `test-results/mentor-schedule-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+  await page.getByRole('link', { name: /Buổi 1/ }).click();
+  await expect(page.getByText('Phòng: Phòng 101', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Bắt đầu buổi' }).click();
+  await page.getByRole('checkbox', { name: 'Có mặt: Học viên An' }).click();
+  await expect(page.getByRole('checkbox')).toBeChecked();
+  await page.getByRole('button', { name: 'Đồng bộ học viên' }).click();
+  await expect(page.getByText('Học viên mới', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Chốt buổi', exact: true }).click();
+  await page.getByRole('button', { name: 'Xác nhận chốt buổi' }).click();
+  await expect(page.getByText('Hoàn thành', { exact: true })).toBeVisible();
+  await expect(page.getByRole('row', { name: /Học viên mới/ })).toContainText('Vắng mặt');
+  await page.getByRole('checkbox', { name: 'Có mặt: Học viên An' }).click();
+  await expect(page.getByRole('row', { name: /Học viên An/ })).toContainText('Vắng mặt');
+  const writes = calls.filter((c) => c.path.startsWith('class-sessions/') && c.method !== 'GET');
+  expect(writes).toHaveLength(5);
+  expect(
+    writes.every(
+      (c) => typeof c.body?.expectedVersion === 'number' && /^[\da-f-]{36}$/.test(c.key ?? ''),
+    ),
+  ).toBe(true);
+  expect(calls.some((c) => c.path.includes('cash-orders'))).toBe(false);
+});
+
+test('class roster is read only and unit release schedules in Vietnam time', async ({ page }) => {
+  const { calls } = await mockMentor(page);
+  await page.goto('/mentor/classes');
+  await page.getByRole('link', { name: /Lớp JavaScript tháng 10/ }).click();
+  await expect(page.getByText('Học viên chờ kích hoạt')).toBeVisible();
+  await expect(page.getByRole('button', { name: /thu tiền|xác nhận tiền/i })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Chương & học liệu' }).click();
+  await page.getByRole('button', { name: 'Quyền truy cập', exact: true }).click();
+  await page.getByLabel('Hẹn giờ mở').check();
+  await page.getByLabel('Thời điểm mở (UTC+7)').fill('2026-11-01T09:30');
+  await page.getByRole('button', { name: 'Lưu quyền truy cập' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(calls.find((c) => c.path.endsWith('/release'))?.body).toEqual({
+    status: 'LOCKED',
+    unlockAt: '2026-11-01T09:30:00+07:00',
+  });
+  expect(calls.some((c) => c.path.includes('cash-orders'))).toBe(false);
+});
+
+test('mentor student table matches admin layout and supports scoped search, filters and pagination', async ({
+  page,
+}, testInfo) => {
+  const { calls } = await mockMentor(page, { rosterTable: true });
+  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  await expect(page.getByRole('table')).toHaveClass(/admin-data-table/);
+  await expect(page.getByRole('columnheader')).toHaveCount(4);
+  await expect(page.getByRole('rowheader')).toHaveCount(20);
+  const firstRow = await page.getByRole('rowheader').first().locator('..').boundingBox();
+  expect(firstRow?.height).toBe(64);
+  await page.getByRole('button', { name: 'Trang học viên sau' }).click();
+  await expect(page.getByRole('rowheader')).toHaveCount(3);
+  await expect(page.getByRole('navigation', { name: 'Phân trang học viên' })).toContainText(
+    '2 / 2',
+  );
+  await page.getByRole('button', { name: 'Trang học viên trước' }).click();
+  await page.getByLabel('Số dòng mỗi trang').selectOption('10');
+  await expect(page.getByRole('rowheader')).toHaveCount(10);
+  await page.screenshot({
+    path: `test-results/mentor-students-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+  await page.getByRole('button', { name: 'Sắp xếp tên học viên trong trang' }).click();
+  await expect(page.getByRole('columnheader').first()).toHaveAttribute('aria-sort', 'ascending');
+  await page.getByLabel('Tìm học viên trong trang').fill('nguyen an');
+  await expect(page.getByRole('rowheader')).toHaveCount(1);
+  await expect(page.getByRole('rowheader')).toContainText('Nguyễn An');
+  await page.getByLabel('Tìm học viên trong trang').fill('không tìm thấy');
+  await expect(page.getByText('Không có kết quả phù hợp', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Xóa tìm kiếm' }).click();
+  await page
+    .getByRole('group', { name: 'Lọc trạng thái thanh toán' })
+    .getByRole('button', { name: 'Đã thanh toán', exact: true })
+    .click();
+  await expect(page.getByRole('rowheader')).toHaveCount(6);
+  await expect(page.getByText('6 học viên theo bộ lọc', { exact: true })).toBeVisible();
+  await page.getByLabel('Hình thức thanh toán', { exact: true }).selectOption('CASH');
+  await expect(page.getByText('Chưa có học viên theo bộ lọc', { exact: true })).toBeVisible();
+  await page.getByLabel('Hình thức thanh toán', { exact: true }).selectOption('PAYOS');
+  await expect(page.getByRole('rowheader')).toHaveCount(6);
+  await page.setViewportSize({ width: 320, height: 800 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await expect(page.getByRole('button', { name: /thu tiền|xác nhận tiền/i })).toHaveCount(0);
+  expect(
+    calls.filter((call) => call.path.endsWith('/students')).every((call) => call.method === 'GET'),
+  ).toBe(true);
+  expect(
+    calls.some((call) => call.path.startsWith('admin/') || call.path.includes('cash-orders')),
+  ).toBe(false);
+});
+
+test('mentor creates article, edits own draft and submits for manager review', async ({
+  page,
+}, testInfo) => {
+  const { calls } = await mockMentor(page);
+  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  await page.getByRole('button', { name: 'Chương & học liệu' }).click();
+  await page.getByRole('button', { name: 'Học liệu', exact: true }).click();
+  await page.getByRole('button', { name: 'Các buổi trong chương' }).click();
+  await expect(
+    page.getByRole('list').getByText('Buổi 1: Buổi 1: Làm quen JavaScript'),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Tạo học liệu', exact: true }).click();
+  await page.getByLabel('Tiêu đề', { exact: true }).fill('Bài viết đã tạo');
+  await page
+    .getByLabel('Nội dung bài viết (HTML)')
+    .fill('<h2>Học JavaScript</h2><p>Nội dung thử nghiệm</p>');
+  await page.screenshot({
+    path: `test-results/mentor-editor-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+  await page.getByRole('button', { name: 'Lưu bản nháp' }).click();
+  await expect(page.getByRole('heading', { name: 'Bài viết đã tạo' })).toBeVisible();
+  await page.getByRole('button', { name: 'Xem chi tiết' }).click();
+  await expect(
+    page
+      .frameLocator('iframe[title="Nội dung bài viết"]')
+      .getByRole('heading', { name: 'Học JavaScript' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
+  await page.getByLabel('Tiêu đề', { exact: true }).fill('Bản nháp đã sửa');
+  await page.getByRole('button', { name: 'Lưu bản nháp' }).click();
+  await expect(page.getByRole('heading', { name: 'Bản nháp đã sửa' })).toBeVisible();
+  await page.getByRole('button', { name: 'Gửi duyệt', exact: true }).click();
+  await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(page.getByRole('article').getByText('Chờ duyệt', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Xóa nháp' })).toHaveCount(0);
+  expect(
+    calls.find((c) => c.method === 'PATCH' && c.path.includes('/materials/'))?.body
+      ?.expectedRevision,
+  ).toBe(1);
+  expect(calls.find((c) => c.path.endsWith('/submit'))?.body?.expectedRevision).toBe(2);
+});
+
+test('mentor waits for validated upload before saving FILE', async ({ page }) => {
+  const { calls } = await mockMentor(page);
+  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  await page.getByRole('button', { name: 'Chương & học liệu' }).click();
+  await page.getByRole('button', { name: 'Học liệu', exact: true }).click();
+  await page.getByRole('button', { name: 'Tạo học liệu', exact: true }).click();
+  await page.getByLabel('Loại học liệu').selectOption('FILE');
+  await page.getByLabel('Tiêu đề', { exact: true }).fill('Tài liệu mới');
+  await page.getByLabel('Upload file chính').setInputFiles({
+    name: 'lesson.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-test'),
+  });
+  await expect(page.getByText('Đang kiểm tra file…', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Lưu bản nháp' })).toBeDisabled();
+  await expect(page.getByText('File đã chọn:', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Lưu bản nháp' }).click();
+  await expect(page.getByRole('heading', { name: 'Tài liệu mới' })).toBeVisible();
+  const intent = calls.find((c) => c.path === 'files/upload-intents');
+  expect(intent?.body?.classId).toBe(mentorIds.class);
+  expect(calls.some((c) => c.path.endsWith('/complete'))).toBe(true);
+  expect(
+    calls.find((c) => c.method === 'POST' && c.path.endsWith('/materials'))?.body?.fileId,
+  ).toBe(mentorIds.file);
+  await page.getByRole('button', { name: 'Xem chi tiết' }).click();
+  await page.getByRole('button', { name: 'Lấy liên kết xem file' }).click();
+  await expect(page.getByRole('link', { name: 'Mở / tải file ↗' })).toHaveAttribute(
+    'href',
+    'https://storage.example.test/lesson.pdf',
+  );
+});
+
+test('failed upload cannot be attached to a draft', async ({ page }) => {
+  const { calls } = await mockMentor(page, { fileFailure: true });
+  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  await page.getByRole('button', { name: 'Chương & học liệu' }).click();
+  await page.getByRole('button', { name: 'Học liệu', exact: true }).click();
+  await page.getByRole('button', { name: 'Tạo học liệu', exact: true }).click();
+  await page.getByLabel('Loại học liệu').selectOption('FILE');
+  await page.getByLabel('Tiêu đề', { exact: true }).fill('File không hợp lệ');
+  await page.getByLabel('Upload file chính').setInputFiles({
+    name: 'lesson.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('invalid'),
+  });
+  await expect(page.getByRole('dialog').getByRole('alert')).toContainText('File không thể sử dụng');
+  await page.getByRole('button', { name: 'Lưu bản nháp' }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  expect(calls.some((c) => c.method === 'POST' && c.path.endsWith('/materials'))).toBe(false);
+});
+
+test('mentor guard, expired attendance, conflict and narrow viewport', async ({ page }) => {
+  await mockMentor(page, { role: 'STUDENT' });
+  await page.goto('/mentor');
+  await expect(page.getByRole('heading', { name: 'Tài khoản chưa có quyền Mentor' })).toBeVisible();
+  await page.unrouteAll({ behavior: 'wait' });
+  await mockMentor(page, { expired: true });
+  await page.goto(`/mentor/sessions/${mentorIds.session}`);
+  await expect(page.getByText('Hiện không thể sửa điểm danh.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Bắt đầu buổi' })).toHaveCount(0);
+  await page.unrouteAll({ behavior: 'wait' });
+  await mockMentor(page, { conflict: true });
+  await page.goto(`/mentor/sessions/${mentorIds.session}`);
+  await page.getByRole('button', { name: 'Bắt đầu buổi' }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'Dữ liệu đã thay đổi' })).toBeVisible();
+  await page.setViewportSize({ width: 320, height: 800 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await page.getByRole('button', { name: 'Mở menu Mentor' }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+});

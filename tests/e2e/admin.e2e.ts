@@ -186,7 +186,7 @@ test('Admin entry denies guests and non-admin accounts before requesting private
   ).toBeVisible();
   await expect(page.getByRole('link', { name: 'Đăng nhập', exact: true })).toHaveAttribute(
     'href',
-    '/login?returnTo=%2Fadmin%2Fusers',
+    '/admin/login?returnTo=%2Fadmin%2Fusers',
   );
   await page.route('**/api/v1/auth/me', (route) => route.fulfill({ json: testUser }));
   await page.reload();
@@ -371,7 +371,7 @@ test('Admin list handles service failure, forbidden, expired session and empty d
   }
   await expect(page.getByRole('link', { name: 'Đăng nhập lại' })).toHaveAttribute(
     'href',
-    '/login?returnTo=%2Fadmin%2Fusers',
+    '/admin/login?returnTo=%2Fadmin%2Fusers',
   );
 });
 
@@ -397,7 +397,7 @@ test('Admin login returns to the selected admin page and logout removes private 
     authenticated = false;
     await route.fulfill({ status: 204 });
   });
-  await page.goto('/login?returnTo=%2Fadmin%2Fclasses');
+  await page.goto('/admin/login?returnTo=%2Fadmin%2Fclasses');
   await page.getByLabel('Email', { exact: true }).fill(adminUser.email);
   await page.getByLabel('Mật khẩu', { exact: true }).fill('sample-password');
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
