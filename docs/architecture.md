@@ -2,7 +2,7 @@
 
 ## Khung nội dung cuộn độc lập — 16/10/2026
 
-components/ui/course-content-frame.tsx cung cấp CourseContentFrame (sidebar title/list + panel) và CourseContentPanel (header + body). Hai component chỉ quản lý bố cục, không chứa state/API. ManagerMaterialsPage và ManagerCourseWorkspace dùng chung; state theo course/unit và mọi query/mutation giữ ở feature.
+components/ui/course-content-frame.tsx cung cấp CourseContentFrame (sidebar title/list + panel) và CourseContentPanel (header + body). Hai component chỉ quản lý bố cục, không chứa state/API. Khung dùng trong workspace khi đã chọn khóa học; state theo course/unit và mọi query/mutation giữ ở feature.
 
 Frame có chiều cao giới hạn bởi viewport, grid minmax(0,…) và các flex child min-h-0. Sidebar/body cuộn riêng, overscroll-y-contain giữ cuộn trong panel, scrollbar-hidden chỉ áp dụng trong frame. Header nằm ngoài vùng cuộn; các vùng cuộn có tên truy cập/tabIndex để dùng PageDown/End. Đổi chương remount panel nên vị trí cuộn nội dung trở về đầu.
 
@@ -14,7 +14,7 @@ ManagerCashOrderDialog đọc detail, giữ tiền thực nhận/acknowledgement
 
 ## Manager entry mặc định — 16/10/2026
 
-ManagerMaterialsPage sở hữu view khóa học mặc định, courseId và dialog tạo tài liệu khi chưa có context. Màn vào trang dùng catalogue thật để render rail chọn khóa + panel placeholder. Chọn khóa mount ManagerCourseWorkspace. ManagerMaterialsInventory là component riêng chỉ mount khi mở Toàn bộ tài liệu, giữ workflow kho hiện hữu. Vì vậy không fetch totals/list toàn kho trên màn mặc định; reload không quay về inventory. Kiểm UI dev trực tiếp trên port 3003 bằng API mock.
+ManagerMaterialsPage sở hữu view khóa học mặc định, courseId và dialog tạo tài liệu khi chưa có context. Màn vào trang dùng catalogue thật để render ManagerCourseList toàn chiều rộng; component list chỉ nhận courses/onSelect, không có query riêng, picker lặp hoặc panel placeholder. Chọn khóa mới mount ManagerCourseWorkspace; nút Danh sách khóa học đặt lại courseId. ManagerMaterialsInventory chỉ mount khi mở Toàn bộ tài liệu, giữ workflow kho hiện hữu. Không fetch course detail/totals/list toàn kho trên màn mặc định; reload trở về list. Kiểm UI dev trực tiếp trên port 3003 bằng API mock.
 
 ## Manager course workspace — 16/10/2026
 

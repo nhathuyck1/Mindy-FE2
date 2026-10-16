@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, Files, Plus } from 'lucide-react';
+import { ArrowLeft, Files, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CourseContentFrame, CourseContentPanel } from '@/components/ui/course-content-frame';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { useCourseCatalog } from '@/features/courses/api/course-queries';
 import { courseDetailSchema } from '@/features/courses/schemas/course-contracts';
 import { useManagerQuery } from '../api/manager-queries';
 import { ManagerCourseWorkspace } from './manager-course-workspace';
+import { ManagerCourseList } from './manager-course-list';
 import { ManagerMaterialEditor } from './manager-material-editor';
 import { ManagerMaterialsInventory } from './manager-materials-inventory';
 import { ManagerState } from './manager-shared';
@@ -59,6 +59,12 @@ export function ManagerMaterialsPage() {
 
   return (
     <div className="space-y-6">
+      {courseId && (
+        <Button variant="outline" onClick={() => setCourseId('')}>
+          <ArrowLeft aria-hidden="true" className="size-4" />
+          Danh sách khóa học
+        </Button>
+      )}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="mb-2 text-xs font-semibold tracking-widest text-mint uppercase">
@@ -68,7 +74,9 @@ export function ManagerMaterialsPage() {
             {course.data?.title ?? 'Quản lý tài liệu'}
           </h1>
           <p className="mt-2 text-sm text-muted">
-            Chọn khóa học, mở chương và chỉnh sửa nội dung ngay tại đây.
+            {courseId
+              ? 'Mở chương và chỉnh sửa nội dung ngay tại đây.'
+              : 'Chọn một khóa học để quản lý chương và tài liệu.'}
           </p>
         </div>
         <div className="ml-auto flex flex-wrap justify-end gap-2">
@@ -84,7 +92,7 @@ export function ManagerMaterialsPage() {
           )}
         </div>
       </div>
-      {(!courseId || !course.data) && <div className="max-w-3xl">{coursePicker}</div>}
+      {courseId && !course.data && <div className="max-w-3xl">{coursePicker}</div>}
       {courseId ? (
         <ManagerState pending={course.isPending} error={course.error} retry={course.refetch}>
           {course.data && (
@@ -96,58 +104,9 @@ export function ManagerMaterialsPage() {
           )}
         </ManagerState>
       ) : (
-        <CourseContentFrame
-          sidebarLabel="Danh sách khóa học"
-          sidebarTitle={
-            <>
-              <BookOpen aria-hidden="true" className="size-5 text-mint" />
-              Khóa học
-            </>
-          }
-          sidebar={
-            <ManagerState pending={courses.isPending} error={courses.error} retry={courses.refetch}>
-              <nav className="flex flex-col" aria-label="Khóa học">
-                {courses.data?.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setCourseId(item.id)}
-                    className="flex min-h-19 items-start gap-3 rounded-lg px-3 py-4 text-left transition-colors hover:bg-mint/10 focus-visible:outline-2 focus-visible:outline-mint"
-                  >
-                    <BookOpen aria-hidden="true" className="mt-1 size-5 shrink-0 text-mint" />
-                    <span className="min-w-0">
-                      <span className="block text-sm font-bold break-words">{item.title}</span>
-                      <span className="mt-1 block text-xs text-muted">{item.code}</span>
-                    </span>
-                  </button>
-                ))}
-                {courses.data?.length === 0 && (
-                  <p role="status" className="p-3 text-sm text-muted">
-                    Chưa có khóa học.
-                  </p>
-                )}
-              </nav>
-            </ManagerState>
-          }
-        >
-          <CourseContentPanel
-            label="Nội dung khóa học"
-            header={
-              <div>
-                <p className="text-xs font-semibold text-mint">HỌC LIỆU</p>
-                <h2 className="mt-2 text-xl font-bold">Nội dung khóa học</h2>
-              </div>
-            }
-          >
-            <p
-              role="status"
-              className="flex items-center gap-3 rounded-xl border border-line p-6 text-sm leading-7"
-            >
-              <ArrowRight aria-hidden="true" className="size-5 shrink-0 text-mint" />
-              Chọn khóa học để xem chương và tài liệu.
-            </p>
-          </CourseContentPanel>
-        </CourseContentFrame>
+        <ManagerState pending={courses.isPending} error={courses.error} retry={courses.refetch}>
+          {courses.data && <ManagerCourseList courses={courses.data} onSelect={setCourseId} />}
+        </ManagerState>
       )}
       {creating && <ManagerMaterialEditor onClose={() => setCreating(false)} />}
     </div>

@@ -1,5 +1,10 @@
 # Quy tắc giao diện Mindy
 
+## Danh sách khóa học trước khi mở nội dung — 16/10/2026
+
+- Mặc định /manager/materials chỉ hiện danh sách khóa học toàn chiều rộng: tên, mã và nút mở học liệu. Bỏ picker lặp, khung hai cột và panel hướng dẫn trống ở bước chưa chọn khóa.
+- Bấm một khóa mới mở workspace chương hiện hữu: bộ lọc phía trên, badge số tài liệu cạnh chương, khung cố định/scrollbar ẩn và chỉnh sửa tại chỗ. Có nút Danh sách khóa học để quay lại; reload trở về list. Không thêm search.
+
 ## Bộ lọc cạnh khóa học — 16/10/2026
 
 - Khóa học, Trạng thái và Loại tài liệu nằm cùng hàng phía trên khung từ xl; màn nhỏ xếp dọc, giữ ô chọn 48px. Số tài liệu là nhãn nhỏ cạnh CHƯƠNG trong header cố định. Không lặp thanh lọc bên trong vùng cuộn nội dung chương.
@@ -9,7 +14,7 @@
 
 - Dùng CourseContentFrame/CourseContentPanel: khung cao tối đa 800px và không quá viewport trừ 32px; không tăng chiều cao theo tài liệu. Desktop xl giữ sidebar 280px, mobile chia danh sách trên và nội dung dưới trong cùng khung.
 - Tiêu đề Nội dung khóa học, header chương và nút Tạo tài liệu đứng yên. Chỉ danh sách chương và body tài liệu cuộn độc lập, ẩn scrollbar, chặn cuộn lan sang trang. Vùng cuộn vẫn focus được và dùng bàn phím/cảm ứng bình thường.
-- Dùng chung khung cho danh sách khóa học khi chưa chọn khóa và workspace chương sau khi chọn. Đổi chương đưa body về đầu; không thay kích thước ô chọn hoặc thêm search.
+- Khung chỉ xuất hiện sau khi chọn khóa học. Đổi chương đưa body về đầu; không thay kích thước ô chọn hoặc thêm search.
 
 ## Thu tiền thành công — 16/10/2026
 
@@ -34,7 +39,7 @@
 
 ## Manager: màn mặc định — 16/10/2026
 
-- Vào /manager/materials luôn hiện khung khóa học–nội dung ngay từ đầu. Chưa chọn khóa học thì sidebar liệt kê khóa học thật, panel hướng dẫn; chọn khóa chuyển sidebar sang chương và mở nội dung. Bỏ chọn hoặc tải lại giữ giao diện mới.
+- Vào /manager/materials hiện danh sách khóa học thật toàn chiều rộng. Chọn một khóa mới hiển thị sidebar chương và nội dung; bỏ chọn, quay lại hoặc tải lại trở về danh sách, không hiện panel hướng dẫn trống.
 - Dashboard thống kê/bảng kho nằm sau nút Toàn bộ tài liệu; nút Khóa học đưa về workspace. Không dùng dashboard cũ làm màn mặc định. Tạo tài liệu tiếp tục nằm bên phải; không tự chọn khóa học hoặc thêm dữ liệu giả.
 
 ## Manager: khung khóa học theo Student — 16/10/2026
