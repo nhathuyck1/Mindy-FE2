@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { LockKeyhole, BookOpen, CalendarClock } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
@@ -12,7 +12,7 @@ import {
   releaseSchema,
   type ContentUnit,
 } from '../schemas/mentor-contracts';
-import { MentorPagination, MentorQueryState, MentorStatus, mentorDate } from './mentor-shared';
+import { MentorPagination, MentorQueryState, MentorStatus } from './mentor-shared';
 import { MentorMaterials } from './mentor-materials';
 
 function UnitRelease(props: { unit: ContentUnit; onClose: () => void }) {
@@ -113,21 +113,14 @@ function UnitRelease(props: { unit: ContentUnit; onClose: () => void }) {
 }
 export function MentorUnits(props: { classId: string }) {
   const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState<ContentUnit | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [release, setRelease] = useState<ContentUnit | null>(null);
   const units = useMentorQuery(
     `mentor/classes/${props.classId}/units?page=${page}&pageSize=20`,
     unitsSchema,
   );
-  if (selected)
-    return (
-      <>
-        <Button variant="outline" className="mb-5" onClick={() => setSelected(null)}>
-          ← Danh sách chương
-        </Button>
-        <MentorMaterials unit={selected} />
-      </>
-    );
+  const items = [...(units.data?.items ?? [])].sort((a, b) => a.position - b.position);
+  const selected = items.find((unit) => unit.id === selectedId) ?? items[0];
   return (
     <>
       <MentorQueryState
@@ -136,44 +129,63 @@ export function MentorUnits(props: { classId: string }) {
         retry={units.refetch}
         empty={units.data?.items.length === 0}
       >
-        <div className="space-y-4">
-          {units.data?.items.map((unit) => (
-            <section
-              key={unit.id}
-              className="flex flex-wrap items-center justify-between gap-5 rounded-2xl border border-line bg-canvas p-6"
+        <div className="grid min-w-0 overflow-hidden rounded-2xl border border-line bg-canvas xl:grid-cols-[280px_minmax(0,1fr)]">
+          <aside
+            className="min-w-0 border-b border-line bg-soft/30 xl:border-r xl:border-b-0"
+            aria-label="Nội dung khóa học"
+          >
+            <h2 className="flex items-center gap-3 border-b border-line px-5 py-6 font-bold">
+              <BookOpen aria-hidden="true" className="size-5 text-mint" />
+              Nội dung khóa học
+            </h2>
+            <nav
+              aria-label="Chương"
+              className="flex max-h-80 flex-col overflow-y-auto p-3 xl:max-h-[75vh]"
             >
-              <div className="min-w-0">
-                <div className="mb-2 flex flex-wrap items-center gap-3">
-                  <span className="text-sm font-bold text-mint">Chương {unit.position}</span>
-                  <MentorStatus value={unit.status} />
-                </div>
-                <h2 className="text-xl font-bold break-words">{unit.title}</h2>
-                {unit.unlockAt && (
-                  <p className="mt-3 flex items-center gap-2 text-sm text-muted">
-                    <CalendarClock className="size-4" />
-                    Thời điểm mở: {mentorDate(unit.unlockAt)}
-                  </p>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button onClick={() => setSelected(unit)}>
-                  <BookOpen className="size-4" />
-                  Học liệu
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={unit.status === 'COMPLETED'}
-                  onClick={() => setRelease(unit)}
+              {items.map((unit) => (
+                <button
+                  key={unit.id}
+                  aria-current={unit.id === selected?.id ? 'step' : undefined}
+                  onClick={() => setSelectedId(unit.id)}
+                  className={
+                    'flex min-h-19 items-start gap-3 rounded-lg px-3 py-4 text-left focus-visible:outline-2 focus-visible:outline-mint ' +
+                    (unit.id === selected?.id ? 'bg-mint/10 text-forest' : 'hover:bg-soft')
+                  }
                 >
-                  <LockKeyhole className="size-4" />
-                  Quyền truy cập
-                </Button>
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-line bg-canvas text-xs font-bold">
+                    {unit.position}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-bold break-words">{unit.title}</span>
+                    <span className="mt-2 block">
+                      <MentorStatus value={unit.status} />
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </nav>
+            {units.data && units.data.total > 20 && (
+              <div className="p-3">
+                <MentorPagination
+                  page={page}
+                  total={units.data.total}
+                  onChange={(next) => {
+                    setPage(next);
+                    setSelectedId(null);
+                  }}
+                />
               </div>
-            </section>
-          ))}
+            )}
+          </aside>
+          {selected && (
+            <MentorMaterials
+              key={selected.id}
+              unit={selected}
+              onRelease={() => setRelease(selected)}
+            />
+          )}
         </div>
       </MentorQueryState>
-      {units.data && <MentorPagination page={page} total={units.data.total} onChange={setPage} />}
       {release && <UnitRelease unit={release} onClose={() => setRelease(null)} />}
     </>
   );

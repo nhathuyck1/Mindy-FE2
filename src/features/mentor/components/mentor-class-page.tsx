@@ -8,7 +8,7 @@ import { MentorUnits } from './mentor-units';
 import { MentorClassStudents } from './mentor-class-students';
 
 export function MentorClassPage(props: { classId: string }) {
-  const [tab, setTab] = useState<'students' | 'units'>('students');
+  const [tab, setTab] = useState<'students' | 'units'>('units');
   return (
     <>
       <Link href="/mentor/classes" className="mb-6 inline-block text-sm font-bold text-mint">

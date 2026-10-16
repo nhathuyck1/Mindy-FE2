@@ -2,7 +2,7 @@ import type { User } from '@/lib/api/contracts';
 
 export type LoginAudience = 'student' | 'staff';
 
-const staffHomes = { ADMIN: '/admin', MANAGER: '/admin', MENTOR: '/mentor' } as const;
+const staffHomes = { ADMIN: '/admin', MANAGER: '/manager', MENTOR: '/mentor' } as const;
 
 function isWithin(path: string, home: string) {
   return path === home || path.startsWith(`${home}/`);

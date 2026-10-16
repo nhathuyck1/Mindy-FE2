@@ -97,11 +97,12 @@ export function SessionControls() {
               {(session.data.role === 'ADMIN' || session.data.role === 'MANAGER') &&
                 session.data.status === 'ACTIVE' && (
                   <Link
-                    href="/admin"
+                    href={session.data.role === 'MANAGER' ? '/manager/materials' : '/admin'}
                     onClick={() => setOpen(false)}
                     className="flex min-h-12 items-center gap-3 rounded-xl px-4 text-sm font-bold text-black transition-colors hover:bg-soft"
                   >
-                    <Icon name="shield" className="size-5 text-mint" /> Trang quản trị
+                    <Icon name="shield" className="size-5 text-mint" />{' '}
+                    {session.data.role === 'MANAGER' ? 'Trang Manager' : 'Trang quản trị'}
                   </Link>
                 )}
               {userNavigation

@@ -1,5 +1,136 @@
 # Tiến độ
 
+## 16/10/2026 — Số tài liệu cạnh nhãn chương
+
+- Chuyển Tài liệu (n) từ thanh lọc xuống cạnh CHƯƠNG, dùng nhãn nhỏ nền soft/chữ muted. Thanh trên chỉ còn ba ô chọn, giữ khung và header cố định.
+- Build/TypeScript, ESLint và 4 E2E bố cục/cuộn desktop/mobile trên dev localhost:3003 pass; đã xem ảnh desktop.
+
+## 16/10/2026 — Chuyển thanh lọc lên cạnh khóa học
+
+- Đưa bộ lọc trạng thái/loại và số tài liệu lên cạnh picker khóa học, bỏ thanh cũ khỏi nội dung chương. ManagerCourseWorkspace nhận coursePicker slot từ màn chính/kho; ManagerChapterContent giữ query/filter/page/editor theo key chương và render cả thanh lọc lẫn frame.
+- Giữ ô chọn 48px, tự xếp dọc trên mobile; đổi chương reset bộ lọc, tạo/sửa/upload vẫn trong khung cuộn độc lập.
+- Build/TypeScript, ESLint/format các file sửa và 144 unit tests pass. 10 E2E workspace trên dev localhost:3003 và 42 E2E Manager trên production desktop/mobile pass; xác nhận ba ô chọn cùng hàng, bộ lọc không còn trong vùng cuộn, lọc/phân trang/reset theo chương và 320px. Đã xem ảnh desktop.
+
+## 16/10/2026 — Khung khóa học đứng yên, cuộn bên trong
+
+- Tách CourseContentFrame/CourseContentPanel dùng chung cho màn chọn khóa học và nội dung chương. Khung giới hạn chiều cao theo viewport; sidebar và nội dung cuộn độc lập, header/nút tạo cố định, ẩn thanh cuộn và chặn overscroll lan sang trang.
+- Vùng cuộn có tên truy cập/tabIndex, hỗ trợ bàn phím; đổi chương reset cuộn nội dung, mobile xếp hai vùng trên/dưới và không tràn ở 320px.
+- Build/TypeScript, ESLint/format các file sửa và 144 unit tests pass. 42 E2E Manager desktop/mobile trên dev localhost:3003 và 8 scenario workspace liên quan trên production build pass bằng API mock. Test danh sách 24 chương/12 tệp xác nhận hai vùng cuộn độc lập, header/khung không dịch chuyển, overscroll không kéo trang, scrollbar ẩn, bàn phím End và đổi chương reset cuộn. Đã xem ảnh desktop/mobile.
+
+## 16/10/2026 — Thu tiền xong chuyển sang thông báo thành công
+
+- Khi API confirm trả CASH/PAID đúng đơn và tổng tiền, đóng modal chi tiết/thu tiền và mở hộp Đã thu tiền thành công với mã đơn, số tiền và nút Hoàn tất. Danh sách/count được làm mới qua invalidation hiện hữu.
+- Không hiện thông báo thành công khi lỗi, 409 hoặc mất response; giữ chi tiết để kiểm tra lại. Đóng thông báo đưa focus về Làm mới, không gửi lại lệnh thu.
+- Build/TypeScript, ESLint/format các file sửa và 144 unit tests pass. 10 E2E thu tiền desktop/mobile pass trên dev localhost:3003 và production build bằng API mock, gồm đóng modal cũ/mở thông báo, mã đơn/số tiền, focus sau Hoàn tất, mở lại đơn PAID và lỗi không báo thành công. Đã xem ảnh mobile; không thực hiện thu tiền thật.
+
+## 16/10/2026 — Làm gọn chi tiết tài liệu Manager
+
+- Gom tiêu đề, trạng thái và thao tác vào cùng thẻ chi tiết; giảm số nền/khối lớn, làm rõ ngày phát hành/khả dụng. Tệp hiển thị icon, tên, định dạng và dung lượng dễ đọc, không còn MIME kỹ thuật.
+- Một tài liệu mở trực tiếp, không lặp hàng chọn với tiêu đề; nhiều tài liệu chuyển sang hàng chọn cuộn ngang. Bộ lọc có nhãn, giữ chiều cao 48px và xếp dọc trên mobile.
+- Kiểm chứng: build/TypeScript, ESLint/format các file sửa, 144 unit tests và 40 E2E Manager trên production desktop/mobile pass. Kiểm tra dev localhost:3003 bằng API mock, xem ảnh chi tiết PDF desktop/mobile, xác nhận không tràn ở 320px và signed access chỉ gọi khi bấm mở tệp.
+
+## 16/10/2026 — Ô chọn và tìm khóa học Manager
+
+- Cập nhật theo yêu cầu tiếp theo: bỏ tìm kiếm khóa học và phần lọc/số kết quả; giữ picker rộng, chiều cao 48px và danh sách khóa học đầy đủ.
+- Sau khi bỏ tìm kiếm: ESLint và 4 E2E desktop/mobile trên dev localhost:3003 pass, gồm chọn khóa học, reload, kích thước ô chọn và 320px.
+
+- Tăng các ô chọn khóa học/trạng thái/loại tài liệu trong workspace lên 48px, line-height 24px; mở rộng picker, xuống hàng trên mobile để tránh cắt chữ.
+- Thêm tìm khóa học theo tên/mã, hỗ trợ gõ không dấu và không phân biệt hoa thường. Lọc cả danh sách và các lựa chọn, có số kết quả/trạng thái rỗng/nút xóa; tìm kiếm không tự đổi khóa học đang mở.
+- Build, TypeScript, ESLint/format các file sửa và 144 unit tests pass. 38 E2E Manager desktop/mobile pass trên dev localhost:3003 bằng API mock; scenario search/kích thước ô chọn/320px cũng pass trên production build. Đã xem ảnh desktop/mobile.
+
+## 16/10/2026 — Nối API thu tiền mặt Manager
+
+- Xác minh Swagger live và source BE: đã có Manager orders/detail/classes và cash confirm; thay /manager/collections local-only bằng danh sách đơn thật, filter lớp/status, exact order code, pagination, CSV trang và counts từ API.
+- Chi tiết đơn hiển thị học viên/toàn bộ lớp/tổng đơn/người thu. Confirm đòi đủ tổng tiền (không thu theo từng lớp), checkbox đã nhận, chặn quá hạn/đã PAID/quyền thay đổi; success chỉ sau CASH PAID từ BE. Không retry lệnh khi 409/403/lỗi mạng; đọc lại đơn để xử lý kết quả chưa xác định và mất response.
+- Giữ dữ liệu phiếu cũ trong localStorage, chỉ đọc/xuất qua modal riêng. Không import thành order, không cộng vào thanh toán và không tạo phiếu giả để thay API.
+- Build/TypeScript, ESLint/format các file sửa, 144 unit tests pass. 36 E2E Manager regression và 10 E2E thu tiền desktop/mobile pass (đa lớp, thiếu tiền, expiry, 403/409, mất response/không thu lặp, lọc/phân trang/CSV, 320px, bảo tồn phiếu cũ). Chạy smoke list/filter/CSV trên dev localhost:3003 bằng API mock: pass. Đã xem ảnh desktop/mobile.
+- Không sửa BE, deploy hoặc xác nhận đơn/nhận tiền thật. Chưa nghiệm thu settlement bằng phiên Manager thật.
+
+## 16/10/2026 — Mặc định Manager mở khung khóa học
+
+- /manager/materials mở ngay bố cục hai cột: danh sách khóa học bên trái, panel nội dung bên phải. Chọn khóa học mở chương đầu tiên và workspace Student đã có; bỏ chọn/reload vẫn là khung mới, không quay về dashboard cũ. Tạo tài liệu ở góc phải; kho thống kê/bảng chỉ mount khi chủ động bấm Toàn bộ tài liệu.
+- Tách giao diện kho sang ManagerMaterialsInventory để giữ đầy đủ duyệt/publication/upload và không gọi manager/materials/stat totals khi chỉ xem khóa học.
+- Build/TypeScript, ESLint, 137 unit tests và 36 E2E Manager desktop/mobile pass. Có kiểm tra màn vào trang mặc định, chọn khóa bằng danh sách, reload, 320px và quyền Student. Chạy thêm scenario default/reload trực tiếp trên dev đang chạy localhost:3003: pass (API mock; không dùng tài khoản thật).
+- Đã xem ảnh manager-default-course-desktop.png từ dev port 3003. Không sửa BE hoặc deploy.
+
+## 16/10/2026 — Manager: chọn khóa học mở bố cục giống Student
+
+- /manager/materials khi chọn khóa học chuyển toàn bộ vùng nội dung bên phải sang khung hai cột: sidebar chương 280px, panel chương/tài liệu. Tự mở chương đầu tiên; đổi chương reset bộ lọc, trang và tài liệu đang xem. Không hiện ba ô thống kê, bảng kho hoặc dropdown học phần trong workspace khóa học. Bỏ chọn khóa học quay về kho toàn bộ.
+- Nút Tạo tài liệu đặt góc phải header chương; dùng sẵn courseId/courseUnitId hiện tại. Tạo văn bản/HTML hoặc upload FILE/VIDEO ngay trong panel, không phải chọn lại khóa học/học phần. Chi tiết có thanh Chỉnh sửa/duyệt/xuất bản/xóa và editor tại chỗ; giữ nguyên canEdit, revision, kiểm tra READY và xử lý xung đột.
+- Course catalogue không có lịch buổi học theo lớp nên không bịa số buổi hoặc gọi Student APIs bằng quyền Manager. Chỉ dùng APIs hiện hữu.
+- Production build/TypeScript, ESLint và format các file sửa pass; 137 unit tests và 34 E2E Manager desktop/mobile pass, gồm workspace hai cột, 320px, pagination/filter theo chương, sửa/tạo text tại chỗ, upload FILE đúng chương và duyệt/refetch.
+- Đã xem ảnh desktop/mobile test-results/manager-student-workspace-*.png. Dữ liệu test dùng mock, chưa nghiệm thu phiên Manager/storage thật hoặc deploy FE.
+
+## 16/10/2026 — Không gian học liệu Mentor theo trang Student
+
+- Đọc lại BE api_flow 3.3/3.4 và controller/DTO; đối chiếu Swagger live /docs-json có unit detail, GET preview/assets theo expectedRevision và contentText cho Mentor.
+- Mở lớp mặc định vào Chương & học liệu. Sidebar chương và panel nội dung dùng cùng bố cục/tokens trang Student; chọn chương/học liệu xem tại chỗ, thanh ngang có Chỉnh sửa/Gửi duyệt/Xóa nháp, Tạo học liệu ở góc phải. Danh sách buổi học hiển thị trực tiếp giờ Việt Nam và liên kết điểm danh.
+- Tạo/sửa ngay trong panel: ARTICLE bằng văn bản hoặc HTML, FILE/VIDEO thay tệp đã READY. Bài HTML hiện hữu giữ định dạng; chuyển sang văn bản có xác nhận trong form. Lưu vẫn là bản nháp; canEdit/owner/firstApprovedAt/reviewStatus quyết định quyền sửa. Giữ form khi 409, không tự replay ghi đè.
+- Proxy mở chính xác GET unit detail và GET preview/assets có expectedRevision bắt buộc; signed URL chỉ trong component memory, hủy request khi unmount và xóa khi hết hạn. Body Mentor giới hạn 64 KiB UTF-8 theo BE; ARTICLE chỉ nhận một trong contentText/contentHtml.
+- Kiểm chứng: production build, TypeScript, ESLint và 137 unit tests pass; 54 E2E Mentor/Student/Manager liên quan desktop/mobile pass (có kiểm tra 320px, chuyển chương, soạn text, sửa tại chỗ, quyền sửa, 409, upload READY/FAILED và release). Hai scenario lịch Mentor có sẵn (4 lượt desktop/mobile) hiện lệch UI: assertion tên buổi học trong calendar trong khi UI hiện mã lớp. Không thay lịch trong lượt này. Format toàn repo báo CRLF/style tồn tại ở các file ngoài phạm vi; các file code/test sửa được format riêng.
+- Đã xem screenshot desktop/mobile. Các luồng cá nhân dùng mock contract; chưa nghiệm thu tài khoản Mentor/storage thật hoặc deploy FE.
+
+## 16/10/2026 — Làm lại UI upload sau khi tải thành công
+
+- User cung cấp ảnh PDF READY trên server: declaredSizeBytes = sizeBytes = 230670, mimeType application/pdf, kind PDF, errorCode null. Đây là bằng chứng upload PDF thành công do user cung cấp.
+- Thay input file native bằng nút chọn/kéo thả tiếng Việt; trạng thái truyền/kiểm tra dùng spinner và thông báo ngắn. Sau READY chỉ hiện một thẻ file có icon, tên, dung lượng dễ đọc, xác nhận thành công và Thay tệp; bỏ MIME/bytes kỹ thuật và tên lặp.
+- Attachment dùng cùng thẻ với nút bỏ; nút thêm gọn, nhãn Không bắt buộc. Form cuộn độc lập và hàng Lưu bản nháp luôn hiện ở đáy dialog. Giữ chọn lại/hủy/kiểm tra thủ công, chặn lưu khi file chưa READY.
+- ESLint, production build/TypeScript, format các file sửa, 134 unit tests và 30 E2E Manager desktop/mobile pass. Kiểm cả 320px không tràn form, hàng nút lưu luôn hiện, hộp chọn tệp, kéo thả, không lặp file thành công, thêm/bỏ attachment, thay tệp và refresh phiên. Đã xem screenshot desktop/mobile; sửa grid ô ngày cho màn hình nhỏ. Preview 3003 trả 200.
+
+## 16/10/2026 — Khôi phục phiên khi request Manager trả 401
+
+- Ảnh người dùng: upload-intents trả 401 AUTHENTICATION_REQUIRED trước PUT; metadata file đã đúng. Phát hiện chỉ auth/me có refresh, request tài nguyên Manager/Files chưa có bước khôi phục phiên.
+- Thêm managerRequest cho queries, commands, file access và intent/complete/status: chỉ khi HTTP 401 mới kiểm auth/me dưới khóa phiên hiện có, refresh một lần nếu cần, rồi gọi lại request bị từ chối một lần. Không retry lỗi quyền, conflict, network hoặc 5xx; hủy upload thì dừng recovery. PUT storage giữ nguyên và không đi qua refresh.
+- Complete hết phiên/quyền dừng ngay, không tiếp tục GET hoặc refresh lặp qua nhánh khôi phục response bị mất. Lỗi 401 hiển thị hướng dẫn đăng nhập lại bằng Manager khi không thể refresh.
+- ESLint, format các file sửa, production build/TypeScript, 134 unit tests và 28 E2E Manager desktop/mobile pass; gồm mô phỏng 401 ở cả intent, complete và polling, refresh nối tiếp luồng mà chỉ PUT một lần. Preview 3003 trả 200; chưa xác nhận refresh bằng phiên thực tế trong trình duyệt người dùng.
+
+## 16/10/2026 — Đối chiếu upload Manager với Postman Phase 3.2
+
+- Đã đọc collection người dùng gửi, `Mindy-BE/docs/api_flow/PHASE_3_2_FLOW.md`, API breakdown, DTO và allowlist BE; xác nhận lại ba Files routes/DTO trên Swagger live `/docs-json`.
+- Manager tự bắt tên/MIME/size byte từ File và hiện metadata trên form. Giữ file.type nếu hợp lệ cho đuôi file; fallback khi rỗng/sai, gồm `.ts` bị browser nhận là video/mp2t. Loại kind chỉ lấy từ BE sau READY. Chặn đuôi không hỗ trợ, tên không có extension hoặc ký tự điều khiển đúng policy BE.
+- Giữ đúng intent → PUT raw File với requiredHeaders → complete `{}` → poll status; thêm thông báo bước complete và kiểm abort trước chuyển bước. Không complete khi PUT thất bại, không gắn file PROCESSING/FAILED.
+- Kiểm thử: ESLint, format các file sửa, production build/TypeScript, 125 unit tests và 26 E2E Manager desktop/mobile pass. E2E kiểm đúng metadata PDF có MIME browser sai, bytes PUT, complete 202 và GET tự động đến READY. Dữ liệu upload dùng mock contract, chưa nghiệm thu worker/storage thật trên VPS.
+
+## 16/10/2026 — Mở lại ô chọn file khi backend kiểm tra
+
+- Người dùng báo ô chọn file bị mờ. Tách khóa lúc truyền tệp khỏi trạng thái đợi validation: sau complete, ô file chính/attachment và các trường form hoạt động lại; có thể thay tệp ngay khi file cũ còn PROCESSING.
+- Mỗi uploader có trạng thái truyền riêng để request kiểm tra file này hoàn tất không mở nhầm khóa khi file khác đang truyền. Thay file hủy request/poll cũ; unmount dọn state. Lưu vẫn đợi file READY và có hướng dẫn rõ cạnh nút.
+- Production build/TypeScript, ESLint, format code sửa, 103 unit tests và 24 E2E desktop/mobile pass. Đã kiểm thay file trong lúc PROCESSING, thêm attachment, mở lại input sau FAILED và hủy request khi đóng form; xem screenshot ô file đã mở và preview 3003 trả 200.
+
+## 16/10/2026 — Giảm polling upload và bàn giao lỗi worker
+
+- Giảm tối đa 6 GET trạng thái tự động theo backoff 3/5/10/15/20/30 giây, dừng khi tab ẩn hoặc terminal. Giữ file PROCESSING trong form; Kiểm tra lại chỉ GET một lần, không upload lại. Có dừng/bỏ file chờ, chặn lưu khi chưa READY; FILE_RETRY_EXHAUSTED được mô tả đúng là lỗi xử lý backend.
+- Manager Query có staleTime 30 giây để hạn chế refetch do đổi focus. Mutation vẫn invalidate/refetch dữ liệu liên quan.
+- Tạo `manager-upload-backend-handoff.md` theo yêu cầu người dùng, gồm mô tả 201→200→202→FAILED, UUID từ ảnh, lệnh log/config/scratch/runner/DB cho BE. Chưa chạy hoặc thay cấu hình VPS; chưa xác định exception gốc phía worker.
+- TypeScript/production build, ESLint, format code sửa, 103 unit tests và 20 E2E Manager desktop/mobile pass, gồm terminal stop, kiểm tra một lần và không upload lại. Đã xem screenshot lỗi backend mới; preview 3003 trả 200.
+
+## 16/10/2026 — Chẩn đoán upload Manager
+
+- Bổ sung E2E PDF cho cả desktop/mobile: intent → PUT storage → complete READY → gắn fileId/lưu FILE. Mock pass; chưa có phiên Manager thật để nghiệm thu storage.
+- FE hiện phân biệt lỗi theo bước upload và giữ mã lỗi HTTP/backend, không đưa lỗi file về thông báo conflict tài liệu. Có thông báo riêng cho CORS/network, timeout và HTTP storage; không complete khi PUT lỗi.
+- Live storage health 200, nhưng OPTIONS cho localhost:3003 thiếu CORS allow headers. Ghi bằng chứng và cách xử lý VPS trong `manager-upload-troubleshooting.md`; chưa khẳng định nguyên nhân lần lỗi người dùng do chưa có thông báo/request thực tế, chưa thay cấu hình VPS.
+- TypeScript/production build, ESLint, format code sửa, 99 unit tests và 16 E2E Manager desktop/mobile pass. Nghiệm thu upload thật còn cần dòng lỗi hoặc request thực tế và cấu hình CORS storage hợp lệ.
+
+## 16/10/2026 — Nới kích thước ô chọn Manager
+
+- Tăng ô chọn trạng thái/loại/khóa học/học phần ở bộ lọc và form tài liệu lên 48px, full chiều rộng cột, line-height 24px để chữ không bị cắt.
+- Thêm prop tùy chọn wrapperClassName cho NativeSelect, chuyển khoảng cách trên ra wrapper để căn giữa mũi tên. Consumer khác giữ nguyên kích thước mặc định.
+- Production build/TypeScript, ESLint, format các file sửa và 14 E2E Manager desktop/mobile pass; đã xem ảnh bộ lọc/form mới. Preview 3003 trả 200.
+
+## 16/10/2026 — Nối GET tài liệu theo học phần cho Manager
+
+- Kho tài liệu bổ sung bộ chọn khóa học/học phần và gọi GET `/manager/course-units/:courseUnitId/materials`, hoàn tất consumer cho 11 API manager-materials. Dùng danh mục public thật để chọn khóa active và Course Unit ID.
+- Danh sách/thống kê đổi theo học phần, giữ bộ lọc duyệt/loại và phân trang; đổi bộ lọc về trang 1, bỏ chọn khóa về toàn kho. Không hiện dữ liệu toàn kho khi đang chờ chọn học phần; mutation refetch danh sách của học phần đang xem.
+- Xác nhận contract Swagger live. TypeScript/production build, ESLint, format code sửa, 97 unit tests và 14 E2E Manager desktop/mobile pass. E2E kiểm luồng hiện có cùng chọn học phần, phân trang, reset, 320px và refetch sau duyệt; dữ liệu dùng mock theo contract. Đã xem screenshot desktop/mobile; preview port 3003 trả 200.
+
+## 16/10/2026 — Manager quản lý tài liệu và thu tiền chờ API
+
+- Thêm `/manager/materials` và `/manager/collections`, shell responsive, guard MANAGER ACTIVE; staff login và menu tài khoản dẫn đúng khu vực.
+- Nối API kho tài liệu: lọc/phân trang, chi tiết/preview, tạo/sửa ARTICLE/FILE/VIDEO, upload private/attachment, duyệt/từ chối có lý do, xuất bản/ẩn, xóa. Giữ revision đã xem, không retry 409; file access kiểm identity/revision/expiry, URL chỉ trong memory.
+- Thu tiền cục bộ: lập nháp → ghi nhận → hủy, chi tiết, tìm/lọc, tổng tiền và CSV; lưu theo user trong trình duyệt. Không gọi API chưa tồn tại hoặc đổi order/enrollment. `ReceiptRepository` tách riêng cho lần nối API.
+- Đối chiếu contract người dùng và route Swagger live. TypeScript, ESLint, production build pass; 96/96 unit tests; 26/26 E2E desktop/mobile (Manager, login, admin/public style regression) pass; đã xem screenshot desktop/mobile, kiểm không tràn ngang 320px. Mutation/storage dùng mock, chưa nghiệm thu tài khoản hoặc thanh toán thật.
+- Prettier toàn repo báo định dạng ở 237 file nền có sẵn; code mới/sửa đã format. Không format lại module ngoài phạm vi.
+
 ## 16/10/2026 — Tích hợp admin có chọn lọc trên Booking
 
 - Nền giữ nguyên main/Feat/Booking tại 86780a8; thực hiện trên nhánh main-admin. Chỉ lấy module, routes, shell, primitive mới và test admin từ origin/admin (90499af); không merge toàn bộ nhánh.

@@ -21,6 +21,9 @@ export function safeReturnPath(value: string | null | undefined): string {
         '/admin/courses',
         '/admin/classes',
         '/admin/workflow',
+        '/manager',
+        '/manager/materials',
+        '/manager/collections',
       ].includes(url.pathname)
     )
       return url.pathname;

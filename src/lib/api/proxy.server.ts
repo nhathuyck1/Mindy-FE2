@@ -1,5 +1,6 @@
 import 'server-only';
 import { resolveAdminCrudRule } from './admin-rules.server';
+import { resolveManagerRule } from './manager-rules.server';
 import {
   learningPaginationSchema,
   learningProxyRule,
@@ -86,6 +87,8 @@ type ApiRule = {
 function resolveRule(method: string, path: string): ApiRule | undefined {
   const key = `${method} ${path}`;
   if (Object.hasOwn(rules, key)) return rules[key as keyof typeof rules];
+  const managerRule = resolveManagerRule(method, path);
+  if (managerRule) return managerRule;
   const mentorRule = resolveMentorRule(method, path);
   if (mentorRule) return mentorRule;
   const adminRule = resolveAdminCrudRule(method, path);
@@ -169,9 +172,8 @@ export async function proxyApi(request: Request, path: string) {
   }
   let body: unknown;
   if (rule.body) {
-    const bodyLimit = path.startsWith('mentor/')
-      ? 131_072
-      : path.startsWith('admin/')
+    const bodyLimit =
+      path.startsWith('mentor/') || path.startsWith('admin/') || path.startsWith('manager/')
         ? 65_536
         : 16_384;
     if (!request.headers.get('content-type')?.startsWith('application/json'))
@@ -179,9 +181,10 @@ export async function proxyApi(request: Request, path: string) {
     if (Number(request.headers.get('content-length') ?? 0) > bodyLimit)
       return error(413, 'PAYLOAD_TOO_LARGE', 'Dữ liệu quá lớn.');
     const raw = await request.text();
-    const bodySize = path.startsWith('admin/')
-      ? new TextEncoder().encode(raw).byteLength
-      : raw.length;
+    const bodySize =
+      path.startsWith('mentor/') || path.startsWith('admin/') || path.startsWith('manager/')
+        ? new TextEncoder().encode(raw).byteLength
+        : raw.length;
     if (bodySize > bodyLimit) return error(413, 'PAYLOAD_TOO_LARGE', 'Dữ liệu quá lớn.');
     try {
       const parsed = rule.body.safeParse(JSON.parse(raw));
@@ -199,9 +202,9 @@ export async function proxyApi(request: Request, path: string) {
   if (path === 'auth/refresh' && !requestCookies(request.headers.get('cookie'), ['refresh_token']))
     return error(401, 'AUTHENTICATION_REQUIRED', 'Phiên đăng nhập đã hết hạn.');
   let search = '';
-  if (resolveMentorRule(request.method, path)) {
+  if (resolveManagerRule(request.method, path) || resolveMentorRule(request.method, path)) {
     if (!requestCookies(request.headers.get('cookie'), ['access_token']))
-      return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập bằng tài khoản Mentor.');
+      return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập bằng tài khoản nhân viên.');
     const input = new URL(request.url).searchParams;
     if ([...input.keys()].some((key) => input.getAll(key).length !== 1))
       return error(422, 'INVALID_QUERY', 'Tham số bị lặp.');
@@ -211,6 +214,8 @@ export async function proxyApi(request: Request, path: string) {
       Object.entries(parsed.data).map(([key, value]) => [key, String(value)]),
     );
     search = params.size ? `?${params}` : '';
+    if (!rule.body && request.method === 'POST' && (await request.text()).length > 0)
+      return error(422, 'INVALID_INPUT', 'Yêu cầu truy cập tệp không có body.');
   }
   if (path.startsWith('admin/')) {
     if (!requestCookies(request.headers.get('cookie'), ['access_token']))

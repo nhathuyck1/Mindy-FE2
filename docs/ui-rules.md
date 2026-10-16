@@ -1,5 +1,68 @@
 # Quy tắc giao diện Mindy
 
+## Bộ lọc cạnh khóa học — 16/10/2026
+
+- Khóa học, Trạng thái và Loại tài liệu nằm cùng hàng phía trên khung từ xl; màn nhỏ xếp dọc, giữ ô chọn 48px. Số tài liệu là nhãn nhỏ cạnh CHƯƠNG trong header cố định. Không lặp thanh lọc bên trong vùng cuộn nội dung chương.
+- Bộ lọc vẫn theo chương, đổi chương đặt lại trạng thái/loại/trang. Khi tạo tài liệu, khóa hai bộ lọc đến khi đóng hoặc lưu form; màn kho chọn khóa học cũng dùng cùng bố cục.
+
+## Khung khóa học cố định — 16/10/2026
+
+- Dùng CourseContentFrame/CourseContentPanel: khung cao tối đa 800px và không quá viewport trừ 32px; không tăng chiều cao theo tài liệu. Desktop xl giữ sidebar 280px, mobile chia danh sách trên và nội dung dưới trong cùng khung.
+- Tiêu đề Nội dung khóa học, header chương và nút Tạo tài liệu đứng yên. Chỉ danh sách chương và body tài liệu cuộn độc lập, ẩn scrollbar, chặn cuộn lan sang trang. Vùng cuộn vẫn focus được và dùng bàn phím/cảm ứng bình thường.
+- Dùng chung khung cho danh sách khóa học khi chưa chọn khóa và workspace chương sau khi chọn. Đổi chương đưa body về đầu; không thay kích thước ô chọn hoặc thêm search.
+
+## Thu tiền thành công — 16/10/2026
+
+- Sau response CASH/PAID đúng đơn và tổng tiền, đóng modal thu tiền rồi hiện một modal Đã thu tiền thành công, có dấu kiểm mint, số tiền, mã đơn và nút Hoàn tất. Không chồng hai modal hoặc giữ form thu sau thành công.
+- Lỗi hoặc kết quả chưa xác định giữ nguyên màn chi tiết để đối soát; mở một đơn PAID đã có chỉ hiển thị trạng thái thanh toán, không tự hiện thông báo thành công mới.
+
+## Chi tiết tài liệu Manager — 16/10/2026
+
+- Bộ lọc chương có nhãn và thu gọn về bên phải trên desktop, vẫn cao 48px. Chương chỉ có một tài liệu hiển thị chi tiết trực tiếp; nhiều tài liệu dùng hàng chọn cuộn ngang để không đẩy nội dung xuống cuối trang.
+- Chi tiết embedded nằm trong một thẻ: trạng thái/phiên bản, tiêu đề/mô tả và thao tác cùng header; thông tin phát hành là hai mục nhỏ với ngày và giờ tách bằng dấu chấm giữa. Thao tác xóa dùng biểu tượng riêng có tên truy cập; mobile rút gọn nhãn phụ.
+- Tệp có biểu tượng, tên được xuống dòng, nhãn PDF/Word/Video… và dung lượng KB/MB dễ đọc; nút Xem / tải tệp vẫn lấy signed access khi được bấm. Không hiển thị MIME thô hoặc thông báo upload thành công cho tệp đã lưu.
+
+## Bộ lọc workspace Manager — 16/10/2026
+
+- Ô chọn khóa học/trạng thái/loại tài liệu cao 48px, chữ 16px với line-height 24px để không cắt dấu tiếng Việt. Picker khóa học rộng tối đa 48rem, co theo chiều rộng trang trên mobile. Bỏ ô tìm kiếm theo yêu cầu cập nhật; chọn trực tiếp từ danh sách hoặc picker.
+
+## Thu tiền Manager kết nối API — 16/10/2026
+
+- /manager/collections mặc định là danh sách đơn tiền mặt từ máy chủ, có tên học viên, tổng cả đơn, trạng thái/hạn và Xem đơn. Bộ lọc lớp/status và tìm chính xác mã đơn chạy server; CSV ghi rõ chỉ trang đang xem. Các số đếm là total thật theo scope, không tạo tổng tiền/ledger khi API chưa có.
+- Dialog hiển thị toàn bộ lớp trong đơn và Tổng phải thu cả đơn, yêu cầu nhập Tiền đã nhận (VND) đúng tổng + xác nhận đã nhận đủ trước khi bật Xác nhận đã thu tiền. Chỉ PAID response từ BE mới báo thành công; sau lỗi đọc lại đơn, không tự gửi lại lệnh thu. 320px không tràn trang, bảng cuộn trong panel.
+- Bỏ banner Chưa kết nối thanh toán và Lập phiếu thu khỏi màn mặc định. Phiếu cũ trên thiết bị mở kho tra cứu/xuất riêng, không được tính là đã thanh toán máy chủ.
+
+## Manager: màn mặc định — 16/10/2026
+
+- Vào /manager/materials luôn hiện khung khóa học–nội dung ngay từ đầu. Chưa chọn khóa học thì sidebar liệt kê khóa học thật, panel hướng dẫn; chọn khóa chuyển sidebar sang chương và mở nội dung. Bỏ chọn hoặc tải lại giữ giao diện mới.
+- Dashboard thống kê/bảng kho nằm sau nút Toàn bộ tài liệu; nút Khóa học đưa về workspace. Không dùng dashboard cũ làm màn mặc định. Tạo tài liệu tiếp tục nằm bên phải; không tự chọn khóa học hoặc thêm dữ liệu giả.
+
+## Manager: khung khóa học theo Student — 16/10/2026
+
+- Sau khi chọn khóa học ở Quản lý tài liệu, thay khu thống kê/bảng bằng khung Student: sidebar Nội dung khóa học 280px bên trái từ xl, chương đang chọn nền mint nhạt, số tròn và tên chương; panel có header CHƯƠNG + title, nội dung bên phải. Mobile sidebar nằm trên với vùng cuộn giới hạn, 320px không tràn ngang.
+- Tạo tài liệu ở góc phải header chương; chọn bài xem tại chỗ, thanh Chỉnh sửa/duyệt/xuất bản/xóa ở trên nội dung. Editor embedded, dùng chương hiện tại, không mở modal hay bắt chọn lại context. Kho toàn bộ vẫn giữ dialog và các công cụ duyệt hiện có.
+- Catalogue không có số buổi theo lớp nên sidebar chỉ hiện số/tên chương; không bịa số buổi. Dùng palette/tokens và độ đậm chữ của Student, không đổi shell Manager hoặc trang Student.
+
+## Mentor: bố cục chương và học liệu — 16/10/2026
+
+- Trang chi tiết lớp mở mặc định Chương & học liệu; Học viên vẫn là tab riêng. Sidebar chương 280px bên trái từ xl, nội dung bên phải; mobile đặt sidebar trên nội dung và giới hạn chiều cao cuộn như Student.
+- Header chương có Quyền truy cập và Tạo học liệu bên phải. Các học liệu được chọn trên thanh ngang; thanh thao tác bài đang xem đặt Chỉnh sửa/Gửi duyệt/Xóa nháp cạnh tiêu đề theo quyền BE.
+- Xem/tạo/sửa bài tại panel chính, không mở thêm dialog cho thao tác soạn. Tạo ARTICLE mặc định nhập văn bản; HTML giữ định dạng bài cũ, chuyển thành text cần xác nhận trong form. File/video thay tệp thông qua upload hiện hữu, chỉ READY mới cho lưu.
+- Dùng font bold 700 cho tiêu đề/chương, nội dung regular; palette/tokens Mindy hiện có. Không đổi UI Student hoặc dựng chức năng bài kiểm tra khi BE chưa có contract.
+
+## Không gian Manager — 16/10/2026
+
+- Kế thừa admin shell, Inter và palette Mindy trong `data-admin-root`. Hai mục: Quản lý tài liệu và Thu tiền; sidebar desktop thu gọn, mobile dùng sheet.
+- Kho tài liệu có thống kê thật từ total API, bộ lọc duyệt/loại, bảng phân trang và dialog xem trước/soạn/duyệt. Không bịa tên tác giả/khóa học khi DTO chỉ có ID. Bài viết nhập HTML cơ bản theo pattern Mentor, preview sandbox sau khi lưu.
+- Bộ lọc thêm khóa học → học phần; chọn học phần thì số liệu thống kê và bảng cùng phạm vi. Chọn khóa học nhưng chưa chọn học phần hiển thị hướng dẫn, không giữ bảng cũ. Bộ chọn xếp một cột ở 320px, hai cột từ sm và bốn cột từ xl; có loading/error/retry riêng cho picker.
+- Các ô chọn của bộ lọc và form tài liệu cao 48px, rộng hết cột, line-height 24px. Khoảng cách trên đặt ở wrapper để mũi tên luôn ở giữa ô và không chèn chữ; dùng `NativeSelect.wrapperClassName` để định kích thước wrapper.
+- Upload phân biệt đã gửi tệp và đã kiểm tra READY. Kiểm tra tự động có giới hạn, có Dừng kiểm tra tự động/Kiểm tra lại/Bỏ tệp đang chờ; không khóa toàn form vô thời hạn. Lưu bản nháp bị chặn nếu thiếu file chính hoặc còn file chờ; FAILED hiển thị lỗi backend rõ ràng và không tự upload lại.
+- Upload dùng vùng chọn/kéo thả bằng tiếng Việt, input file native ẩn khỏi giao diện. Sau READY, chỉ hiện một thẻ với tên gốc, loại dễ hiểu, dung lượng KB/MB, dấu xác nhận “Đã tải lên thành công” và nút Thay tệp. Không lặp tên hoặc hiện MIME/raw bytes/field backend; declaration vẫn giữ chính xác khi gọi API.
+- Attachment đã xong dùng cùng thẻ gọn, có nút bỏ được đặt tên theo tệp; nút thêm attachment không chiếm khối lớn. Header và hàng Lưu bản nháp giữ cố định trong dialog, phần form cuộn độc lập.
+- Ô chọn file và form chỉ khóa trong lúc truyền dữ liệu/complete hoặc lưu; khi backend kiểm tra, cho phép chọn tệp thay thế và thêm attachment. Thay tệp hủy request/poll cũ, chỉ gắn kết quả của tệp mới; có giải thích riêng khi chưa chọn học phần hoặc Lưu còn chờ validation.
+- Thu tiền có nhãn “Chế độ cục bộ · Chưa kết nối thanh toán”; phiếu nháp/ghi nhận/hủy tách khỏi trạng thái order. Không seed dữ liệu giả; tổng chỉ tính phiếu ghi nhận cục bộ chưa hủy; hỗ trợ xuất CSV.
+- 320px không tràn toàn trang; bảng cuộn trong panel. Dialog hỗ trợ Escape/focus restore, bộ chọn có accessible label riêng.
+
 ## Giữ giao diện Booking khi tích hợp admin — 16/10/2026
 
 - Giao diện public, giỏ hàng, thanh toán và khu vực user giữ nguyên. Không lấy CSS toàn cục hoặc thay Button/Card/Brand từ nhánh admin.

@@ -1,5 +1,40 @@
 # Kiến trúc Mindy FE2
 
+## Khung nội dung cuộn độc lập — 16/10/2026
+
+components/ui/course-content-frame.tsx cung cấp CourseContentFrame (sidebar title/list + panel) và CourseContentPanel (header + body). Hai component chỉ quản lý bố cục, không chứa state/API. ManagerMaterialsPage và ManagerCourseWorkspace dùng chung; state theo course/unit và mọi query/mutation giữ ở feature.
+
+Frame có chiều cao giới hạn bởi viewport, grid minmax(0,…) và các flex child min-h-0. Sidebar/body cuộn riêng, overscroll-y-contain giữ cuộn trong panel, scrollbar-hidden chỉ áp dụng trong frame. Header nằm ngoài vùng cuộn; các vùng cuộn có tên truy cập/tabIndex để dùng PageDown/End. Đổi chương remount panel nên vị trí cuộn nội dung trở về đầu.
+
+## Manager collections từ máy chủ — 16/10/2026
+
+ManagerCollectionsPage thay chế độ phiếu cục bộ bằng manager/orders filters, lớp picker và thống kê total. manager-collections-contracts.ts sở hữu DTO/validation riêng (tái dùng OrderDto), manager-collections.ts sở hữu class query, formatter/CSV và thông báo lỗi; manager-rules.server.ts mở chính xác GET classes/orders/detail và POST cash confirm. Các query dùng scope user của Manager, không lưu giao dịch vào Redux/Web Storage.
+
+ManagerCashOrderDialog đọc detail, giữ tiền thực nhận/acknowledgement ở component, khóa form trong mutation và sau lỗi chưa được kiểm tra lại. Backend transaction duy nhất cập nhật PAID/entitlement; useManagerCommand invalidate Manager queries sau mutation, không optimistic settlement, không replay network/409/403. ManagerLocalReceipts đọc/xuất dữ liệu cũ bằng repository hiện hữu, không tự chuyển thành giao dịch thật và không sửa localStorage từ UI mới.
+
+## Manager entry mặc định — 16/10/2026
+
+ManagerMaterialsPage sở hữu view khóa học mặc định, courseId và dialog tạo tài liệu khi chưa có context. Màn vào trang dùng catalogue thật để render rail chọn khóa + panel placeholder. Chọn khóa mount ManagerCourseWorkspace. ManagerMaterialsInventory là component riêng chỉ mount khi mở Toàn bộ tài liệu, giữ workflow kho hiện hữu. Vì vậy không fetch totals/list toàn kho trên màn mặc định; reload không quay về inventory. Kiểm UI dev trực tiếp trên port 3003 bằng API mock.
+
+## Manager course workspace — 16/10/2026
+
+ManagerMaterialsPage khi có courseId hiển thị course title/picker và ManagerCourseWorkspace thay cho dashboard/bảng học liệu. Workspace lấy units từ CourseDetail hiện hữu, sort theo unitNumber, chọn chương đầu tiên; ManagerChapterContent key theo unit ID để không giữ editor/filter/pagination của chương cũ. Query riêng manager/course-units/:id/materials, chọn tài liệu và render ManagerMaterialDetail embedded. Header chương tạo ManagerMaterialEditor embedded có sẵn courseId/unitId và callback chọn bản nháp vừa lưu. Không cần thêm API hoặc state Redux.
+
+ManagerMaterialDetail/Editor giữ chế độ dialog mặc định cho kho toàn bộ và hỗ trợ embedded cho workspace. Review/publication/revision, signed access và uploader hiện hữu được tái sử dụng; nội dung mới trong workspace nhận contentText hoặc contentHtml theo contract chung. Không có class context nên không hiển thị lịch buổi học giả trong workspace khóa học.
+
+## Mentor content workspace — 16/10/2026
+
+MentorClassPage mặc định mở MentorUnits: sidebar phân trang chương + MentorMaterials key theo unit ID để tách state giữa chương. MentorMaterials chọn bài, render detail và MentorMaterialEditor embedded trong panel; dialog chỉ còn release và xác nhận submit/delete. Editor giữ revision tại lúc mở, báo lỗi 409 và giữ nội dung người dùng.
+
+unitDetailSchema ánh xạ ClassUnitManagementDto riêng với unitSchema của list/release. lib/api/mentor-rules.server.ts mở chính xác unit detail và revision-bound preview/assets. Server state dùng useMentorQuery theo user/class/path; ký URL dùng apiRequest có AbortSignal trong component, không đưa URL vào Query cache/storage. Material schema dùng chung Manager/Mentor được bổ sung contentText và validation exclusive input.
+
+## Manager — 16/10/2026
+
+- `/manager` chuyển đến `/manager/materials`; `/manager/collections` là sổ phiếu thu cục bộ. `ManagerShell` dùng shell/CSS quản trị hiện có, menu desktop thu gọn/mobile sheet; chỉ mount nghiệp vụ cho MANAGER ACTIVE, key theo user ID. Staff login đưa MANAGER đến `/manager`; menu tài khoản có liên kết riêng.
+- `features/manager` sở hữu UI, Query hooks, upload và receipt repository. DTO Material tái sử dụng contract chung với Mentor; manager filters/reject/upload scope có validation riêng. `lib/api/manager-rules.server.ts` sở hữu allowlist chính xác, không mở API thu tiền Manager chưa có contract.
+- Query key gồm user/filter/page, không poll tài liệu; refetch sau mutation/focus. Detail/editor giữ revision đã xem khi xác nhận/lưu, 409 không tự retry. Signed URLs nằm trong component memory, hủy request khi unmount. Bài viết preview trong iframe sandbox với CSP chặn script/network; các ảnh inline có luồng lấy liên kết riêng.
+- `ReceiptRepository` có implementation `localReceiptRepository`: localStorage theo user, runtime validation, trạng thái DRAFT/RECORDED_LOCAL/CANCELLED, xuất CSV chống formula injection. Không gọi API thanh toán hoặc đổi order/enrollment. Khi có contract thu tiền MANAGER, thay adapter và nối nguồn học viên/đơn thực tế.
+
 ## Tích hợp admin có chọn lọc — 16/10/2026
 
 Admin nằm ở app/admin, features/admin và components/layout/admin-shell.tsx. Chỉ ghép bổ sung vào nền Booking; không thay code các tính năng public, student và commerce. lib/api/admin-rules.server.ts sở hữu allowlist/schema admin; proxy giữ toàn bộ rules học tập/commerce hiện có và bổ sung PATCH/PUT cho admin.

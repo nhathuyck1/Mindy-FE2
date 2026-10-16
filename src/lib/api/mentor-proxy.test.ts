@@ -7,7 +7,10 @@ vi.mock('@/lib/env.server', () => ({
   }),
 }));
 import { proxyApi } from './proxy.server';
-import { createMaterialSchema } from '@/features/mentor/schemas/mentor-contracts';
+import {
+  createMaterialSchema,
+  patchMaterialSchema,
+} from '@/features/mentor/schemas/mentor-contracts';
 import { safeReturnPath } from '@/features/auth/lib/return-path';
 
 const id = '11111111-1111-4111-8111-111111111111';
@@ -146,5 +149,83 @@ describe('Mentor adapter boundaries', () => {
     expect(safeReturnPath(`/mentor/classes/${id}`)).toBe(`/mentor/classes/${id}`);
     expect(safeReturnPath('/mentor/cash-orders')).toBe('/');
     expect(safeReturnPath('//evil.test/mentor')).toBe('/');
+  });
+  it('accepts plain text exclusively for ARTICLE and preserves revision guards', () => {
+    expect(
+      createMaterialSchema.parse({
+        title: 'Văn bản',
+        contentType: 'ARTICLE',
+        contentText: 'Dòng 1\nDòng 2',
+      }).contentText,
+    ).toBe('Dòng 1\nDòng 2');
+    for (const payload of [
+      { contentType: 'ARTICLE', contentText: '  ' },
+      { contentType: 'ARTICLE', contentText: 'Text', contentHtml: '<p>HTML</p>' },
+      { contentType: 'FILE', contentText: 'Text', fileId: id },
+      { contentType: 'ARTICLE', contentText: 'ế'.repeat(25000) },
+    ])
+      expect(createMaterialSchema.safeParse({ title: 'Bài học', ...payload }).success).toBe(false);
+    expect(
+      patchMaterialSchema.safeParse({
+        expectedRevision: 1,
+        contentText: 'Text',
+        contentHtml: '<p>HTML</p>',
+      }).success,
+    ).toBe(false);
+    expect(patchMaterialSchema.safeParse({ contentText: 'Text' }).success).toBe(false);
+  });
+  it('allows assigned unit detail and requires an exact revision for preview/assets', async () => {
+    const unitPath = `mentor/classes/${id}/units/${key}`;
+    fetchMock.mockResolvedValueOnce(
+      Response.json({
+        id: key,
+        courseUnitId: id,
+        title: 'Chương',
+        position: 1,
+        status: 'LOCKED',
+        unlockAt: null,
+        sessions: [],
+      }),
+    );
+    expect((await proxyApi(request(unitPath), unitPath)).status).toBe(200);
+    for (const path of [
+      `mentor/classes/${id}/materials/${key}/preview`,
+      `mentor/classes/${id}/materials/${key}/assets/${id}/access`,
+    ]) {
+      for (const query of [
+        '',
+        '?expectedRevision=0',
+        '?expectedRevision=1&expectedRevision=2',
+        '?expectedRevision=1&fileId=' + key,
+      ])
+        expect((await proxyApi(request(path + query), path)).status).toBe(422);
+      fetchMock.mockResolvedValueOnce(
+        Response.json({
+          materialId: key,
+          fileId: id,
+          role: 'PRIMARY',
+          revision: 2,
+          url: 'https://storage.example.test/file.pdf',
+          expiresAt: '2026-10-16T03:01:00Z',
+        }),
+      );
+      const result = await proxyApi(request(path + '?expectedRevision=2'), path);
+      expect(result.status).toBe(200);
+      expect(result.headers.get('cache-control')).toContain('no-store');
+      expect(String(fetchMock.mock.calls.at(-1)?.[0])).toContain('expectedRevision=2');
+    }
+  });
+  it('rejects mentor JSON exceeding the backend 64 KiB UTF-8 limit', async () => {
+    const path = `mentor/classes/${id}/units/${key}/materials`;
+    const result = await proxyApi(
+      request(path, 'POST', {
+        title: 'Bài học',
+        contentType: 'ARTICLE',
+        contentText: '"'.repeat(40000),
+      }),
+      path,
+    );
+    expect(result.status).toBe(413);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

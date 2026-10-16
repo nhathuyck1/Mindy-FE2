@@ -5,6 +5,7 @@ export const mentorIds = {
   unit: '55555555-5555-4555-8555-555555555555',
   session: '66666666-6666-4666-8666-666666666666',
   material: '77777777-7777-4777-8777-777777777777',
+  nextUnit: '99999999-9999-4999-8999-999999999999',
   file: '88888888-8888-4888-8888-888888888888',
 };
 const date = '2026-10-16T03:00:00Z';
@@ -18,6 +19,9 @@ export async function mockMentor(
     fileFailure?: boolean;
     timetable?: boolean;
     rosterTable?: boolean;
+    extraUnits?: boolean;
+    materialState?: 'APPROVED' | 'PENDING_REVIEW';
+    materialConflict?: boolean;
   } = {},
 ) {
   const calls: {
@@ -65,16 +69,16 @@ export async function mockMentor(
     createdBy: testUser.id,
     createdInClassId: mentorIds.class,
     revision: 1,
-    reviewStatus: 'DRAFT',
+    reviewStatus: options.materialState ?? 'DRAFT',
     approvedRevision: null,
     reviewedBy: null,
     reviewedAt: null,
-    firstApprovedAt: null,
+    firstApprovedAt: options.materialState === 'APPROVED' ? date : null,
     rejectionReason: null,
     publishedAt: null,
     createdAt: date,
     updatedAt: date,
-    canEdit: true,
+    canEdit: !options.materialState,
     file: null,
     contentHtml: '<h2>Nội dung bài viết</h2>',
     contentSchemaVersion: 1,
@@ -314,7 +318,48 @@ export async function mockMentor(
         changedMakeupPlacementIds: [],
       });
     }
-    if (path.endsWith('/units')) return ok(paged([unit]));
+    if (path.endsWith('/units'))
+      return ok(
+        paged(
+          options.extraUnits
+            ? [
+                unit,
+                {
+                  ...unit,
+                  id: mentorIds.nextUnit,
+                  position: 2,
+                  title: 'State, sự kiện và render danh sách',
+                },
+              ]
+            : [unit],
+        ),
+      );
+    if (path === `mentor/classes/${mentorIds.class}/units/${mentorIds.nextUnit}`)
+      return ok({
+        ...unit,
+        id: mentorIds.nextUnit,
+        position: 2,
+        title: 'State, sự kiện và render danh sách',
+        sessions: [],
+      });
+    if (path.includes(`/units/${mentorIds.nextUnit}/materials`)) return ok(paged([]));
+    if (path === `mentor/classes/${mentorIds.class}/units/${mentorIds.unit}`)
+      return ok({
+        ...unit,
+        sessions: [
+          {
+            id: mentorIds.session,
+            classUnitId: unit.id,
+            title: session.title,
+            sessionNumber: 1,
+            startsAt: date,
+            endsAt: session.endsAt,
+            roomName: 'Phòng 101',
+            meetingUrl: null,
+            status: session.status,
+          },
+        ],
+      });
     if (path.endsWith('/release')) {
       unit.status = String(body?.status);
       unit.unlockAt = body?.unlockAt as string | null;
@@ -333,12 +378,12 @@ export async function mockMentor(
         ]),
       );
     if (path.includes('/materials')) {
-      if (path.endsWith('/access'))
+      if (path.endsWith('/access') || path.endsWith('/preview'))
         return ok({
           materialId: mentorIds.material,
           fileId: mentorIds.file,
           role: 'PRIMARY',
-          revision: 1,
+          revision: Number(url.searchParams.get('expectedRevision') ?? 1),
           url: 'https://storage.example.test/lesson.pdf',
           expiresAt: new Date(Date.now() + 60000).toISOString(),
         });
@@ -350,8 +395,22 @@ export async function mockMentor(
         materials[0] = { ...materials[0], reviewStatus: 'PENDING_REVIEW', canEdit: false };
         return ok(materials[0]);
       }
+      if (method === 'PATCH' && options.materialConflict)
+        return route.fulfill({
+          status: 409,
+          json: { code: 'MATERIAL_REVIEW_CONFLICT', message: 'Changed' },
+        });
       if (method === 'POST' || method === 'PATCH') {
         materials = [{ ...material, ...body, revision: method === 'PATCH' ? 2 : 1 }];
+        if (typeof body?.contentText === 'string')
+          materials[0].contentHtml =
+            '<p>' +
+            body.contentText
+              .replaceAll('&', '&amp;')
+              .replaceAll('<', '&lt;')
+              .replaceAll('>', '&gt;')
+              .replaceAll('\n', '<br>') +
+            '</p>';
         if (materials[0].contentType !== 'ARTICLE')
           materials[0] = {
             ...materials[0],

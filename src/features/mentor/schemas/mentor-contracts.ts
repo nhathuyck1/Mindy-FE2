@@ -142,6 +142,21 @@ export const unitSchema = z.object({
   unlockAt: timestamp.nullable(),
 });
 export const unitsSchema = z.object({ items: z.array(unitSchema), ...pageFields });
+export const unitDetailSchema = unitSchema.omit({ classId: true }).extend({
+  sessions: z.array(
+    z.object({
+      id: z.uuid(),
+      classUnitId: z.uuid(),
+      title: z.string(),
+      sessionNumber: version,
+      startsAt: timestamp,
+      endsAt: timestamp,
+      roomName: z.string().nullable(),
+      meetingUrl: z.url().nullable(),
+      status: sessionStatusSchema,
+    }),
+  ),
+});
 export const unitSessionsSchema = z.object({
   items: z.array(
     z.object({
@@ -220,6 +235,11 @@ const materialFields = {
     .string()
     .refine((v) => new TextEncoder().encode(v).byteLength <= 49152, 'Bài viết tối đa 48 KiB.')
     .optional(),
+  contentText: z
+    .string()
+    .max(49152)
+    .refine((v) => new TextEncoder().encode(v).byteLength <= 49152, 'Bài viết tối đa 48 KiB.')
+    .optional(),
   fileId: z.uuid().optional(),
   attachmentFileIds: z
     .array(z.uuid())
@@ -237,13 +257,15 @@ export const createMaterialSchema = z
   .superRefine((v, ctx) => {
     if (
       v.contentType === 'ARTICLE'
-        ? !v.contentHtml || v.fileId !== undefined
-        : !v.fileId || v.contentHtml !== undefined
+        ? (!v.contentHtml?.trim() && !v.contentText?.trim()) || v.fileId !== undefined
+        : !v.fileId || v.contentHtml !== undefined || v.contentText !== undefined
     )
       ctx.addIssue({
         code: 'custom',
         message: 'Bài viết cần nội dung; tài liệu và video cần file đã kiểm tra.',
       });
+    if (v.contentHtml !== undefined && v.contentText !== undefined)
+      ctx.addIssue({ code: 'custom', message: 'Chỉ chọn một cách nhập nội dung.' });
   });
 export const revisionSchema = z.object({ expectedRevision: version.max(2147483647) }).strict();
 export const deleteMaterialQuerySchema = z
@@ -253,7 +275,15 @@ export const patchMaterialSchema = z
   .object(materialFields)
   .partial()
   .extend({ expectedRevision: version.max(2147483647) })
-  .strict();
+  .strict()
+  .refine(
+    (v) => v.contentHtml === undefined || v.contentText === undefined,
+    'Chỉ chọn một cách nhập nội dung.',
+  )
+  .refine(
+    (v) => v.contentText === undefined || Boolean(v.contentText.trim()),
+    'Nội dung không được để trống.',
+  );
 const storageUrl = z.url().refine((value) => {
   const url = new URL(value);
   return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password;
