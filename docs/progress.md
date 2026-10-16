@@ -1,5 +1,11 @@
 # Tiến độ
 
+## 16/10/2026 — Màn đầu chỉ hiện danh sách khóa học
+
+- Thay rail khóa học/panel hướng dẫn trống bằng ManagerCourseList toàn chiều rộng, không hiện picker trùng ở bước đầu. Chỉ khi bấm một khóa mới mount workspace chương/tài liệu; nút Danh sách khóa học quay lại list, reload cũng về list.
+- Giữ nguyên bộ lọc, badge số tài liệu cạnh chương, khung cuộn độc lập và tạo/sửa học liệu khi đã chọn khóa. Kho toàn bộ tiếp tục mở bằng nút riêng.
+- Build/TypeScript, ESLint/format các file sửa và 144 unit tests pass. 42 E2E Manager desktop/mobile trên dev localhost:3003 và 2 scenario vào list/chọn khóa/quay lại/reload/bàn phím/320px trên production pass bằng API mock. Đã xem ảnh list desktop/mobile; không gọi course detail hoặc materials khi chưa chọn khóa.
+
 ## 16/10/2026 — Số tài liệu cạnh nhãn chương
 
 - Chuyển Tài liệu (n) từ thanh lọc xuống cạnh CHƯƠNG, dùng nhãn nhỏ nền soft/chữ muted. Thanh trên chỉ còn ba ô chọn, giữ khung và header cố định.
