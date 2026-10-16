@@ -18,8 +18,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout(props: { children: React.ReactNode }) {
   return (
-    <html lang="vi" className="h-full antialiased" data-scroll-behavior="smooth">
-      <body className="min-h-full font-sans">
+    // Browser extensions (e.g. ColorZilla) inject attributes into <html>/<body> before hydration.
+    <html
+      lang="vi"
+      className="h-full antialiased"
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
+      <body className="min-h-full font-sans" suppressHydrationWarning>
         <AppProviders>{props.children}</AppProviders>
       </body>
     </html>
