@@ -21,12 +21,16 @@ export async function apiRequest<T>(props: {
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
   body?: unknown;
   signal?: AbortSignal;
+  idempotencyKey?: string;
 }) {
   const response = await fetch(`/api/v1/${props.path}`, {
     method: props.method ?? 'GET',
     credentials: 'same-origin',
     cache: 'no-store',
-    headers: props.body === undefined ? undefined : { 'Content-Type': 'application/json' },
+    headers: {
+      ...(props.body === undefined ? {} : { 'Content-Type': 'application/json' }),
+      ...(props.idempotencyKey ? { 'Idempotency-Key': props.idempotencyKey } : {}),
+    },
     body: props.body === undefined ? undefined : JSON.stringify(props.body),
     signal: props.signal
       ? AbortSignal.any([props.signal, AbortSignal.timeout(15_000)])

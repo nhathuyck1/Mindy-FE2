@@ -291,7 +291,7 @@ export function AdminOverview() {
                 {classes.data.items.map((row) => (
                   <TableRow key={row.id}>
                     <TableHead scope="row">
-                      <p className="truncate font-extrabold" title={row.name}>
+                      <p className="truncate font-extrabold text-muted" title={row.name}>
                         {row.name}
                       </p>
                     </TableHead>

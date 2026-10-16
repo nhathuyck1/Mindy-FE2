@@ -36,6 +36,7 @@ import {
 } from '@/features/courses/schemas/course-contracts';
 import { authResponseSchema, loginSchema, userSchema } from './contracts';
 import { requestCookies, responseCookies } from './cookie-policy';
+import { resolveMentorRule } from './mentor-rules.server';
 import {
   myClassesFiltersSchema,
   myClassesPageSchema,
@@ -80,10 +81,13 @@ type ApiRule = {
   body?: z.ZodType;
   cookies: string[];
   query?: z.ZodType<Record<string, string | number>>;
+  idempotent?: boolean;
 };
 function resolveRule(method: string, path: string): ApiRule | undefined {
   const key = `${method} ${path}`;
   if (Object.hasOwn(rules, key)) return rules[key as keyof typeof rules];
+  const mentorRule = resolveMentorRule(method, path);
+  if (mentorRule) return mentorRule;
   const adminRule = resolveAdminCrudRule(method, path);
   if (adminRule) return adminRule;
   const learningRule = learningProxyRule(method, path);
@@ -140,6 +144,9 @@ async function upstream(
   const userAgent = request.headers.get('user-agent');
   if (userAgent) headers.set('User-Agent', userAgent);
   if (body !== undefined) headers.set('Content-Type', 'application/json');
+  if (resolveMentorRule(request.method, path)?.idempotent) {
+    headers.set('Idempotency-Key', request.headers.get('idempotency-key')!);
+  }
   return fetch(`${env.apiBaseUrl}/${path}${search}`, {
     method: request.method,
     headers,
@@ -154,13 +161,19 @@ export async function proxyApi(request: Request, path: string) {
   const env = getServerEnv();
   const rule = resolveRule(request.method, path);
   if (!rule) return error(404, 'ENDPOINT_NOT_ALLOWED', 'API không thuộc phạm vi được hỗ trợ.');
+  if (rule.idempotent && !z.uuid().safeParse(request.headers.get('idempotency-key')).success)
+    return error(422, 'IDEMPOTENCY_KEY_REQUIRED', 'Thiếu mã thao tác hợp lệ.');
   if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(request.method)) {
     if (request.headers.get('origin') !== env.appOrigin)
       return error(403, 'ORIGIN_NOT_ALLOWED', 'Yêu cầu không hợp lệ.');
   }
   let body: unknown;
   if (rule.body) {
-    const bodyLimit = path.startsWith('admin/') ? 65_536 : 16_384;
+    const bodyLimit = path.startsWith('mentor/')
+      ? 131_072
+      : path.startsWith('admin/')
+        ? 65_536
+        : 16_384;
     if (!request.headers.get('content-type')?.startsWith('application/json'))
       return error(415, 'JSON_REQUIRED', 'Yêu cầu JSON.');
     if (Number(request.headers.get('content-length') ?? 0) > bodyLimit)
@@ -186,6 +199,19 @@ export async function proxyApi(request: Request, path: string) {
   if (path === 'auth/refresh' && !requestCookies(request.headers.get('cookie'), ['refresh_token']))
     return error(401, 'AUTHENTICATION_REQUIRED', 'Phiên đăng nhập đã hết hạn.');
   let search = '';
+  if (resolveMentorRule(request.method, path)) {
+    if (!requestCookies(request.headers.get('cookie'), ['access_token']))
+      return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập bằng tài khoản Mentor.');
+    const input = new URL(request.url).searchParams;
+    if ([...input.keys()].some((key) => input.getAll(key).length !== 1))
+      return error(422, 'INVALID_QUERY', 'Tham số bị lặp.');
+    const parsed = rule.query!.safeParse(Object.fromEntries(input));
+    if (!parsed.success) return error(422, 'INVALID_QUERY', 'Bộ lọc không hợp lệ.');
+    const params = new URLSearchParams(
+      Object.entries(parsed.data).map(([key, value]) => [key, String(value)]),
+    );
+    search = params.size ? `?${params}` : '';
+  }
   if (path.startsWith('admin/')) {
     if (!requestCookies(request.headers.get('cookie'), ['access_token']))
       return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập bằng tài khoản quản trị.');

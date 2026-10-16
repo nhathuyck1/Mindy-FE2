@@ -12,7 +12,11 @@ import { useSession } from '@/features/auth/api/auth-queries';
 export function AdminAccess(props: { children: React.ReactNode }) {
   const session = useSession();
   const pathname = usePathname();
-  if (session.data?.role === 'ADMIN' && session.data.status === 'ACTIVE' && !session.isError)
+  if (
+    (session.data?.role === 'ADMIN' || session.data?.role === 'MANAGER') &&
+    session.data.status === 'ACTIVE' &&
+    !session.isError
+  )
     return props.children;
   if (session.isPending)
     return <LoadingOverlay scope="page" label="Đang kiểm tra phiên đăng nhập…" />;
@@ -36,7 +40,7 @@ export function AdminAccess(props: { children: React.ReactNode }) {
           {session.isError
             ? 'Kết nối hiện chưa sẵn sàng. Vui lòng thử lại.'
             : denied
-              ? 'Khu vực này dành cho tài khoản ADMIN đang hoạt động.'
+              ? 'Khu vực này dành cho tài khoản Quản trị viên hoặc Quản lý đang hoạt động.'
               : 'Dùng tài khoản quản trị của bạn để quản lý người dùng, khóa học và lớp học.'}
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
@@ -53,7 +57,7 @@ export function AdminAccess(props: { children: React.ReactNode }) {
           ) : (
             !denied && (
               <Link
-                href={`/login?returnTo=${encodeURIComponent(pathname)}`}
+                href={`/admin/login?returnTo=${encodeURIComponent(pathname)}`}
                 className="admin-button admin-button-primary"
               >
                 Đăng nhập <Icon name="arrow" className="size-4" />

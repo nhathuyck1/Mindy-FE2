@@ -105,4 +105,17 @@
   .admin-row-action {
     @apply inline-flex min-h-9 cursor-pointer items-center justify-center gap-4 rounded-lg border border-mint/40 px-3 text-[15px] font-extrabold whitespace-nowrap text-mint hover:bg-soft;
   }
+  /* Bóng đổ dài theo hướng 45° phía sau thẻ đăng nhập nội bộ. */
+  .admin-login-shadow {
+    @apply pointer-events-none absolute top-0 left-0 bg-linear-to-br from-ink/30 via-ink/10 to-transparent;
+    right: -100vmax;
+    bottom: -100vmax;
+    clip-path: polygon(
+      calc(100% - 100vmax) 0,
+      100% 100vmax,
+      100% 100%,
+      100vmax 100%,
+      0 calc(100% - 100vmax)
+    );
+  }
 }

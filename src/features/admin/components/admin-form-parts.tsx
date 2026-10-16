@@ -40,7 +40,7 @@ export function AdminField(props: {
     defaultValue: props.defaultValue,
     required: props.required,
     disabled: props.disabled,
-    className: `w-full rounded-lg border-line bg-canvas text-[14px] md:text-[14px] ${props.multiline ? 'min-h-28' : 'h-12'}`,
+    className: `w-full rounded-lg border-transparent bg-ink/4 text-[14px] md:text-[14px] ${props.multiline ? 'min-h-28' : 'h-12'}`,
   };
   return (
     <div className="min-w-0 space-y-2 [&>[data-slot=native-select-wrapper]]:w-full">

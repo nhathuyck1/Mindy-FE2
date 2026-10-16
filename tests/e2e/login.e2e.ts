@@ -155,3 +155,39 @@ test('Verifies email only after an explicit click and starts a session', async (
     await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length })),
   ).toEqual({ local: 0, session: 0 });
 });
+
+for (const scenario of [
+  {
+    path: '/login',
+    user: { ...testUser, role: 'MENTOR' },
+    message: 'vui lòng đăng nhập tại trang nội bộ',
+    link: '/admin/login',
+  },
+  {
+    path: '/admin/login',
+    user: testUser,
+    message: 'vui lòng đăng nhập tại trang dành cho học viên',
+    link: '/login',
+  },
+])
+  test(`Signs out ${scenario.user.role} accounts that use ${scenario.path}`, async ({ page }) => {
+    let loggedOut = false;
+    await page.route('**/api/v1/auth/login', (route) =>
+      route.fulfill({
+        json: { user: scenario.user, accessTokenExpiresAt: '2026-10-15T23:59:59Z' },
+      }),
+    );
+    await page.route('**/api/v1/auth/logout', async (route) => {
+      loggedOut = true;
+      await route.fulfill({ status: 204 });
+    });
+    await page.goto(scenario.path);
+    await page.getByLabel('Email', { exact: true }).fill(scenario.user.email);
+    await page.getByLabel('Mật khẩu', { exact: true }).fill('sample-password');
+    await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
+    const alert = page.locator('form').getByRole('alert');
+    await expect(alert).toContainText(scenario.message);
+    await expect(alert.getByRole('link')).toHaveAttribute('href', scenario.link);
+    await expect(page).toHaveURL(scenario.path);
+    await expect.poll(() => loggedOut).toBe(true);
+  });
