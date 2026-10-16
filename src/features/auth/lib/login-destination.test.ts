@@ -13,7 +13,11 @@ describe('loginDestination', () => {
   it('sends staff to their own workspace and rejects students', () => {
     expect(loginDestination('staff', 'STUDENT', '/admin')).toBeNull();
     expect(loginDestination('staff', 'ADMIN', '/admin/classes')).toBe('/admin/classes');
-    expect(loginDestination('staff', 'MANAGER', '/')).toBe('/admin');
+    expect(loginDestination('staff', 'MANAGER', '/')).toBe('/manager');
+    expect(loginDestination('staff', 'MANAGER', '/manager/collections')).toBe(
+      '/manager/collections',
+    );
+    expect(loginDestination('student', 'STUDENT', '/manager/materials')).toBe('/');
     expect(loginDestination('staff', 'MENTOR', '/admin/users')).toBe('/mentor');
     expect(loginDestination('staff', 'MENTOR', '/mentor/classes')).toBe('/mentor/classes');
     expect(loginDestination('staff', 'ADMIN', '/mentor')).toBe('/admin');

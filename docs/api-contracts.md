@@ -1,5 +1,42 @@
 # API catalog, lớp học và tài khoản
 
+## Manager thu tiền thật — 16/10/2026
+
+Đã đọc BE Phase 2.3/2.4 api_flow, CashPaymentsController/Service, ManagerOperations DTO/service và Swagger live /docs-json?scope=cash-collection, /docs-json?scope=finance-contract. Swagger có GET manager/orders, order detail, classes và POST cash confirm; không chỉ dựa trên plan local.
+
+- GET /manager/orders: page/pageSize (1..100), paymentType CASH/PAYOS, status PENDING/PAID/EXPIRED/CANCELLED, classId UUID, orderCode exact 1..50. UI thu tiền cố định paymentType=CASH, mặc định PENDING; filter/search chạy server và đặt lại trang. List trả ManagerOrdersPageDto với student {id,displayName}, payment summary nullable. Các ô thống kê đếm total từ API PENDING/PAID và list đang lọc, không tính tổng doanh thu giả.
+- GET /manager/orders/:id: ManagerOrderDetailDto = OrderDto + student/payment; hiển thị tất cả snapshot lớp và tổng cả đơn. Không dùng GET /me/orders của Student. Signed/private fields không được đưa vào DTO UI; payment giữ id/orderId/amount/status/paidAt/confirmedBy/review.
+- GET /manager/classes: dùng page/pageSize/status subset để lấy đủ các trang cho bộ lọc lớp. Có guard MANAGER ACTIVE ở shell và query, query key theo user; access cookie/no-store tại proxy và quyền cuối ở BE.
+- POST /manager/cash-orders/:orderId/confirm: body duy nhất {receivedAmount:number}, số nguyên 1..MAX_SAFE_INTEGER, bằng toàn bộ totalAmount. Không cần Idempotency-Key. Response OrderDto CASH/PAID/paidAt cùng order ID; UI chỉ báo thành công sau response hợp lệ. Không checkout hay tạo đơn mới/phiếu tùy ý; một đơn nhiều lớp xác nhận một lần, không dùng classAmount.
+- Dialog yêu cầu xem toàn bộ lớp, nhập tiền đã nhận và xác nhận đã nhận đủ. Khóa đơn quá hạn/đã PAID/PAYOS/review. 409/403/mất response không tự replay lệnh xác nhận; invalidate list/count/detail và đọc lại trạng thái. Cần Kiểm tra lại đơn trước khi thử lại sau lỗi chưa xác định; 401 dùng cơ chế khôi phục phiên hiện có, chỉ replay sau explicit 401.
+- Proxy chỉ mở các route/method nêu trên, strict body/query, không duplicate params; giữ đóng GET manager/cash-orders, payments/finance summary và mentor cash khi chưa có consumer. Mutation kiểm Origin, chỉ chuyển access_token; response detail/confirm kiểm cùng path ID.
+- Phiếu cũ localStorage được giữ nguyên theo tài khoản, đọc/xuất qua Phiếu cũ trên thiết bị; không tự import hoặc cộng vào đơn máy chủ, không tạo/ghi nhận phiếu cục bộ mới trên màn thu tiền.
+- Tests dùng dữ liệu mô phỏng, chưa xác nhận tiền thật. Swagger presence không thay nghiệm thu phiên Manager và settlement thật.
+
+## Mentor authoring — cập nhật 16/10/2026
+
+Đã đối chiếu BE PHASE_3_3_flow-api-breakdown.md, controller/DTO và Swagger live https://api.quanh123.id.vn/docs-json trong lượt này.
+
+- GET /mentor/classes/:classId/units/:unitId: ClassUnitManagementDto không có classId, có courseUnitId/position/title/status/unlockAt/sessions; sessions có startsAt/endsAt/roomName/meetingUrl. Dùng cho buổi học ngay dưới học liệu, giữ GET sessions phân trang cho chọn session trong editor.
+- GET /mentor/classes/:classId/materials/:materialId/preview và GET .../assets/:fileId/access: query expectedRevision bắt buộc 1..2147483647, strict/no duplicates; file access DTO có revision. Chỉ gọi khi người dùng mở file, đối chiếu materialId/fileId/revision; URL giữ trong component memory, hủy khi unmount, hết hạn phải xin lại. POST files/access hiện có được giữ tương thích.
+- Create/PATCH Mentor nhận contentText như Create/PatchManagerMaterialDto: ARTICLE chọn duy nhất contentText hoặc contentHtml; text không trắng, tối đa 48 KiB UTF-8, BE escape và lưu canonical contentHtml. FILE/VIDEO không gửi text/HTML; fileId phải READY. Body Mentor tối đa 64 KiB UTF-8. PATCH giữ expectedRevision của lần mở editor, 409 giữ nội dung chưa lưu và refetch, không tự rebase/retry.
+- Mentor chỉ sửa own never-approved DRAFT/REJECTED theo canEdit; mở khóa chương không tự duyệt/phát hành Material. Tạo mới đưa người dùng về học liệu vừa lưu; bộ lọc/phân trang được đặt lại.
+- Swagger xác nhận endpoint đã có trên server; tests dữ liệu riêng tư dùng mock, chưa chứng minh phiên Mentor và binary storage thực tế.
+
+## Manager materials và thu tiền cục bộ — 16/10/2026
+
+Đọc `API_CONTRACT_FE.md` do người dùng cung cấp (16/10/2026, §15–17/20.4/22) và xác nhận các route manager/files trong Swagger live `/docs-json`. Source BE local cũ chưa có đầy đủ controller manager; dùng hợp đồng tổng hợp và Swagger đang triển khai. Chưa nghiệm thu mutation/storage bằng tài khoản thật.
+
+- GET `/manager/materials`: page/pageSize, reviewStatus, contentType, courseUnitId; GET/POST `/manager/course-units/:courseUnitId/materials`: danh sách/tạo; GET/PATCH/DELETE `/manager/materials/:id`: chi tiết/sửa/xóa.
+- POST `/manager/materials/:id/approve|reject|publish|unpublish`: expectedRevision; reject thêm reason trim 1–2000 ký tự. DELETE lấy expectedRevision từ query. Không tự duyệt revision mới sau 409; editor giữ revision từ detail đã mở.
+- POST `/manager/materials/:id/files/:fileId/access`: không body; kiểm materialId/fileId/revision/expiry trước khi hiện URL. URL chỉ HTTP(S), không userinfo; không vào Query cache/Web Storage. Primary PDF/audio/video có preview và liên kết tab mới.
+- Files: upload-intents → PUT raw File trực tiếp storage với credentials omit và nguyên requiredHeaders → complete với `{}` sau PUT thành công → tối đa 6 GET tự động sau 3/5/10/15/20/30 giây, không chồng request. Dừng READY/FAILED/DELETED/unmount/tab ẩn; còn PROCESSING thì giữ file và chuyển sang kiểm tra thủ công, mỗi lần bấm chỉ GET một lần, không tạo intent/PUT/complete mới. Manager chỉ gửi courseUnitId; DTO chung vẫn nhận đủ cặp classId/classUnitId cho Mentor. originalFilename lấy nguyên file.name, declaredSizeBytes lấy file.size theo bytes; không gửi kind. MIME dùng file.type nếu thuộc allowlist ứng với đuôi file; rỗng/sai thì fallback theo extension từ BE `file-upload-policy.ts` (gồm nhóm text/source chấp nhận chung 7 MIME). Giới hạn 25 MiB và MP4 200 MiB; chỉ READY đúng Course Unit và kind do BE trả mới gắn vào Material.
+- Manager body tối đa 64 KiB tính byte UTF-8; query strict, UUID, cookie access_token, Origin và private/no-store giữ qua adapter. Backend quyết định quyền cuối. Không gọi preview cũ, thu tiền Manager hoặc route planned.
+- managerRequest khôi phục khi Manager/Files trả HTTP 401: cùng khóa auth hiện có, kiểm auth/me để tránh refresh trùng, POST auth/refresh nếu còn 401, replay request một lần. Refresh cookie chỉ tới endpoint auth/refresh qua adapter; signed PUT không tham gia recovery. Không replay network/5xx/403/409; refresh thất bại thì dừng và hướng dẫn đăng nhập lại.
+- Picker tạo mới và bộ lọc kho tài liệu dùng GET public `/courses` đủ trang và `/courses/:id` lấy units; chỉ khóa active. Chọn học phần gọi GET `/manager/course-units/:courseUnitId/materials` cho danh sách và thống kê theo trạng thái; gửi page/pageSize/reviewStatus/contentType, đổi bộ lọc quay về trang 1. Chưa chọn học phần thì không gọi danh sách theo học phần và không hiện nhầm danh sách toàn kho. Bỏ chọn khóa học trở về GET `/manager/materials`. Sau mutation refetch đúng danh sách đang xem.
+- Tài liệu khóa inactive vẫn hiện trong queue chung và sửa qua detail; chưa có API picker Manager cho khóa inactive.
+- `/manager/collections` dùng `ReceiptRepository` cục bộ theo tài khoản. Ghi nhận/hủy phiếu không xác nhận PAID, mở enrollment hoặc hoàn tiền. Adapter tách để nối API khi có contract MANAGER.
+
 ## Student learning — 16/10/2026
 
 Đối chiếu Swagger live `https://api.quanh123.id.vn/docs-json` trong lượt này: hợp đồng server mới hơn source/plan BE local 3.3/3.4, đã có ARTICLE và file access. Mục này mở rộng phạm vi allowlist cũ ghi bên dưới.

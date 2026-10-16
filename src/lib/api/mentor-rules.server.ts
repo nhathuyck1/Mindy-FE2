@@ -48,6 +48,7 @@ export function resolveMentorRule(method: string, path: string): MentorRule | un
     if (p[3] === 'units') return rule(dto.unitsSchema, { query: dto.mentorPaginationSchema });
   }
   if (!z.uuid().safeParse(p[4]).success) return;
+  if (p[3] === 'units' && p.length === 5 && method === 'GET') return rule(dto.unitDetailSchema);
   if (p[3] === 'units' && p.length === 6) {
     if (p[5] === 'sessions' && method === 'GET')
       return rule(dto.unitSessionsSchema, { query: dto.mentorPaginationSchema });
@@ -68,6 +69,16 @@ export function resolveMentorRule(method: string, path: string): MentorRule | un
   }
   if (method === 'POST' && p.length === 6 && p[5] === 'submit')
     return rule(dto.materialDetailSchema, { body: dto.revisionSchema });
+  if (method === 'GET' && p.length === 6 && p[5] === 'preview')
+    return rule(dto.fileAccessSchema, { query: dto.deleteMaterialQuerySchema });
+  if (
+    method === 'GET' &&
+    p.length === 8 &&
+    p[5] === 'assets' &&
+    z.uuid().safeParse(p[6]).success &&
+    p[7] === 'access'
+  )
+    return rule(dto.fileAccessSchema, { query: dto.deleteMaterialQuerySchema });
   if (
     method === 'POST' &&
     p.length === 8 &&

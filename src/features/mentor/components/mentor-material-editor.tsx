@@ -21,8 +21,14 @@ export function MentorMaterialEditor(props: {
   unit: ContentUnit;
   material?: MaterialDetail;
   onClose: () => void;
+  embedded?: boolean;
+  onSaved?: (material: MaterialDetail) => void;
 }) {
   const material = props.material;
+  const [inputMode, setInputMode] = useState<'text' | 'html'>(material ? 'html' : 'text');
+  const [html, setHtml] = useState(material?.contentHtml ?? '');
+  const [text, setText] = useState('');
+  const [convert, setConvert] = useState(false);
   const [type, setType] = useState<'ARTICLE' | 'FILE' | 'VIDEO'>(
     material?.contentType ?? 'ARTICLE',
   );
@@ -46,12 +52,13 @@ export function MentorMaterialEditor(props: {
     <Modal
       title={material ? 'Chỉnh sửa bản nháp' : 'Tạo học liệu mới'}
       contentClassName="sm:max-w-3xl"
+      embedded={props.embedded}
       onClose={() => {
         if (!command.isPending) props.onClose();
       }}
     >
       <form
-        className="space-y-5 p-5 sm:p-7"
+        className={props.embedded ? 'space-y-5' : 'space-y-5 p-5 sm:p-7'}
         onSubmit={async (e) => {
           e.preventDefault();
           if (busy) return;
@@ -63,7 +70,9 @@ export function MentorMaterialEditor(props: {
             sessionId: sessionId || null,
             availableAt: form.get('availableAt') ? `${form.get('availableAt')}:00+07:00` : null,
             ...(type === 'ARTICLE'
-              ? { contentHtml: String(form.get('contentHtml') ?? '') }
+              ? inputMode === 'text'
+                ? { contentText: String(form.get('contentText') ?? '') }
+                : { contentHtml: String(form.get('contentHtml') ?? '') }
               : { fileId: file?.id }),
             attachmentFileIds: attachments.map((f) => f.id),
           };
@@ -84,19 +93,25 @@ export function MentorMaterialEditor(props: {
           }
           setError('');
           try {
-            await command.mutateAsync({
+            const saved = await command.mutateAsync({
               path: material
                 ? `mentor/classes/${props.unit.classId}/materials/${material.id}`
                 : `mentor/classes/${props.unit.classId}/units/${props.unit.id}/materials`,
               method: material ? 'PATCH' : 'POST',
               body: parsed.data,
             });
+            props.onSaved?.(saved);
             props.onClose();
           } catch {
             /* Mutation error below. */
           }
         }}
       >
+        {props.embedded && (
+          <h3 className="text-lg font-bold">
+            {material ? 'Chỉnh sửa bản nháp' : 'Tạo học liệu mới'}
+          </h3>
+        )}
         <p className="text-sm leading-6 text-muted">
           {props.unit.title} · Lưu bản nháp trước, sau đó gửi Manager duyệt.
         </p>
@@ -141,19 +156,97 @@ export function MentorMaterialEditor(props: {
             />
           </label>
           {type === 'ARTICLE' && (
-            <label className="block text-sm font-bold">
-              Nội dung bài viết (HTML)
-              <textarea
-                className="mt-2 min-h-56 w-full rounded-xl border border-line bg-canvas p-3 font-mono text-sm font-normal"
-                name="contentHtml"
-                required
-                defaultValue={material?.contentHtml ?? '<p></p>'}
-              />
-              <span className="mt-2 block text-xs font-normal text-muted">
-                Dùng các thẻ như &lt;p&gt;, &lt;h2&gt;, &lt;ul&gt;, &lt;pre&gt;. Tối đa 48 KiB; hệ
-                thống làm sạch nội dung khi lưu.
-              </span>
-            </label>
+            <>
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Cách nhập nội dung">
+                <Button
+                  type="button"
+                  variant={inputMode === 'text' ? 'default' : 'outline'}
+                  aria-pressed={inputMode === 'text'}
+                  onClick={() => {
+                    if (inputMode === 'html' && html.trim()) setConvert(true);
+                    else setInputMode('text');
+                  }}
+                >
+                  Văn bản
+                </Button>
+                <Button
+                  type="button"
+                  variant={inputMode === 'html' ? 'default' : 'outline'}
+                  aria-pressed={inputMode === 'html'}
+                  onClick={() => {
+                    if (inputMode === 'text')
+                      setHtml(
+                        '<p>' +
+                          text
+                            .replaceAll('&', '&amp;')
+                            .replaceAll('<', '&lt;')
+                            .replaceAll('>', '&gt;')
+                            .replaceAll('\n', '<br>') +
+                          '</p>',
+                      );
+                    setInputMode('html');
+                    setConvert(false);
+                  }}
+                >
+                  HTML
+                </Button>
+              </div>
+              {convert && (
+                <div className="space-y-3 rounded-xl bg-peach p-4 text-sm">
+                  <p>
+                    Chuyển sang văn bản sẽ bỏ định dạng và ảnh trong bài. Nội dung gốc chỉ thay đổi
+                    khi bạn lưu bản nháp.
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => {
+                      const doc = new DOMParser().parseFromString(html, 'text/html');
+                      doc.querySelectorAll('script,style').forEach((node) => node.remove());
+                      doc.querySelectorAll('br').forEach((node) => node.replaceWith('\n'));
+                      doc
+                        .querySelectorAll('p,div,h1,h2,h3,h4,h5,h6,li,pre,blockquote,tr')
+                        .forEach((node) => node.append('\n'));
+                      setText(doc.body.textContent?.trim() ?? '');
+                      setInputMode('text');
+                      setConvert(false);
+                    }}
+                  >
+                    Chuyển sang văn bản
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setConvert(false)}
+                  >
+                    Giữ định dạng
+                  </Button>
+                </div>
+              )}
+              <label className="block text-sm font-bold">
+                {inputMode === 'text' ? 'Nội dung bài viết' : 'Nội dung bài viết (HTML)'}
+                <textarea
+                  aria-label={
+                    inputMode === 'text' ? 'Nội dung bài viết' : 'Nội dung bài viết (HTML)'
+                  }
+                  className="mt-2 min-h-56 w-full rounded-xl border border-line bg-canvas p-3 font-mono text-sm font-normal"
+                  name={inputMode === 'text' ? 'contentText' : 'contentHtml'}
+                  required
+                  key={inputMode}
+                  value={inputMode === 'text' ? text : html}
+                  onChange={(e) =>
+                    inputMode === 'text' ? setText(e.target.value) : setHtml(e.target.value)
+                  }
+                />
+                <span className="mt-2 block text-xs font-normal text-muted">
+                  {inputMode === 'text'
+                    ? 'Nhập trực tiếp nội dung, giữ nguyên các dòng xuống hàng.'
+                    : 'Nội dung HTML giữ định dạng bài viết hiện tại.'}{' '}
+                  Tối đa 48 KiB.
+                </span>
+              </label>
+            </>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm font-bold">

@@ -15,14 +15,16 @@ const errorSchema = z.object({
   message: z.union([z.string(), z.array(z.string())]).optional(),
 });
 
-export async function apiRequest<T>(props: {
+export type ApiRequestOptions<T> = {
   path: string;
   schema: z.ZodType<T>;
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
   body?: unknown;
   signal?: AbortSignal;
   idempotencyKey?: string;
-}) {
+};
+
+export async function apiRequest<T>(props: ApiRequestOptions<T>) {
   const response = await fetch(`/api/v1/${props.path}`, {
     method: props.method ?? 'GET',
     credentials: 'same-origin',
