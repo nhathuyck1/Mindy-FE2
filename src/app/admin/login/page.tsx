@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: 'Đăng nhập nội bộ' };
 
 export default function AdminLoginPage() {
   return (
-    <main className="admin-typography relative grid min-h-dvh place-items-center overflow-hidden bg-forest px-4 py-10">
+    <main className="admin-typography font-brand relative grid min-h-dvh place-items-center overflow-hidden bg-forest px-4 py-10">
       <div
         aria-hidden="true"
         className="absolute -top-40 -right-40 size-96 rounded-full bg-canvas/10"

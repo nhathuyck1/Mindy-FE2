@@ -37,7 +37,8 @@
   --color-hero-copy: var(--color-canvas);
   --color-feature: var(--color-sunshine);
   --color-banner: color-mix(in srgb, var(--color-mint) 26%, var(--color-canvas));
-  --font-sans: 'Nunito Variable', 'Nunito', Arial, sans-serif;
+  --font-brand: 'Nunito Variable', 'Nunito', Arial, sans-serif;
+  --font-sans: var(--font-brand);
 }
 
 @layer base {

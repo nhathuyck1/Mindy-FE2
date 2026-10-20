@@ -1,5 +1,6 @@
 # Tiến độ
 
+<<<<<<< Updated upstream
 ## 16/10/2026 — Màn đầu chỉ hiện danh sách khóa học
 
 - Thay rail khóa học/panel hướng dẫn trống bằng ManagerCourseList toàn chiều rộng, không hiện picker trùng ở bước đầu. Chỉ khi bấm một khóa mới mount workspace chương/tài liệu; nút Danh sách khóa học quay lại list, reload cũng về list.
@@ -136,6 +137,12 @@
 - Thu tiền cục bộ: lập nháp → ghi nhận → hủy, chi tiết, tìm/lọc, tổng tiền và CSV; lưu theo user trong trình duyệt. Không gọi API chưa tồn tại hoặc đổi order/enrollment. `ReceiptRepository` tách riêng cho lần nối API.
 - Đối chiếu contract người dùng và route Swagger live. TypeScript, ESLint, production build pass; 96/96 unit tests; 26/26 E2E desktop/mobile (Manager, login, admin/public style regression) pass; đã xem screenshot desktop/mobile, kiểm không tràn ngang 320px. Mutation/storage dùng mock, chưa nghiệm thu tài khoản hoặc thanh toán thật.
 - Prettier toàn repo báo định dạng ở 237 file nền có sẵn; code mới/sửa đã format. Không format lại module ngoài phạm vi.
+=======
+## 20/10/2026 — Đồng bộ font trang login admin
+
+- Trang `/admin/login` dùng Nunito Variable giống `/login` qua token `font-brand` dùng chung; giữ bố cục, cỡ chữ và luồng đăng nhập hiện có. Các trang quản trị còn lại vẫn dùng Inter.
+- Kiểm tra font thực tế trên trình duyệt: tiêu đề, mô tả, nhãn, input và nút admin đều dùng Nunito như trang user; không tràn ngang desktop. ESLint trang login và Prettier các file thay đổi pass.
+>>>>>>> Stashed changes
 
 ## 16/10/2026 — Tích hợp admin có chọn lọc trên Booking
 
