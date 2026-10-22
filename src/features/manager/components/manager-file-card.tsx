@@ -1,4 +1,4 @@
-import { Check, FileText } from 'lucide-react';
+import { CheckCircle2, CircleSlash, Clock3, FileText, LoaderCircle, XCircle } from 'lucide-react';
 import type { MaterialDetail } from '../schemas/manager-contracts';
 
 export type ManagerUploadedFile = {
@@ -26,28 +26,71 @@ export const managerFileKindLabels = {
   SOURCE_CODE: 'Văn bản / mã nguồn',
 };
 
-export function ManagerFileCard(props: { file: ManagerUploadedFile; action?: React.ReactNode }) {
+export function ManagerFileCard(props: {
+  file: { name: string; sizeBytes: number; kind?: ManagerUploadedFile['kind'] };
+  state?: 'ready' | 'uploading' | 'pending' | 'failed' | 'cancelled';
+  message?: string;
+  action?: React.ReactNode;
+}) {
+  const state = props.state ?? 'ready';
+  const appearance = {
+    ready: {
+      label: 'Đã tải lên thành công',
+      tone: 'border-status-green/30 bg-status-green/5 text-status-green',
+      icon: CheckCircle2,
+    },
+    uploading: {
+      label: 'Đang tải lên / kiểm tra',
+      tone: 'border-mint/30 bg-mint/5 text-mint',
+      icon: LoaderCircle,
+    },
+    pending: {
+      label: 'Đang chờ kiểm tra',
+      tone: 'border-line bg-soft/40 text-muted',
+      icon: Clock3,
+    },
+    failed: {
+      label: 'Tải lên thất bại',
+      tone: 'border-status-red/30 bg-status-red/5 text-status-red',
+      icon: XCircle,
+    },
+    cancelled: {
+      label: 'Đã hủy tải lên',
+      tone: 'border-line bg-soft/40 text-muted',
+      icon: CircleSlash,
+    },
+  }[state];
+  const Icon = appearance.icon;
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-3 rounded-xl border border-mint/25 bg-mint/5 p-4 sm:flex-nowrap">
-      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-mint/15 bg-canvas text-mint">
-        <FileText className="size-5" aria-hidden="true" />
+    <div
+      role={state === 'failed' ? 'alert' : 'status'}
+      aria-atomic="true"
+      data-upload-state={state}
+      className={`min-w-0 rounded-xl border p-4 ${appearance.tone}`}
+    >
+      <div className="flex items-start gap-3">
+        <FileText className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+        <div className="min-w-0 flex-1">
+          <p className="text-[16px] leading-6 font-semibold text-foreground [overflow-wrap:anywhere]">
+            {props.file.name}
+          </p>
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px] leading-6">
+            <span className="font-semibold">{appearance.label}</span>
+            <span className="text-muted">
+              {props.file.kind && `${managerFileKindLabels[props.file.kind]} · `}
+              {managerFileSize(props.file.sizeBytes)}
+            </span>
+          </p>
+        </div>
+        <Icon
+          aria-hidden="true"
+          className={`mt-0.5 size-5 shrink-0 ${state === 'uploading' ? 'motion-safe:animate-spin' : ''}`}
+        />
       </div>
-      <div className="min-w-0 flex-1 basis-36">
-        <p className="break-words text-sm font-semibold [overflow-wrap:anywhere]">
-          {props.file.name}
-        </p>
-        <p className="mt-1 text-xs text-muted">
-          {managerFileKindLabels[props.file.kind]} · {managerFileSize(props.file.sizeBytes)}
-        </p>
-        <p
-          role="status"
-          className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-forest"
-        >
-          <Check className="size-3.5 text-mint" aria-hidden="true" />
-          Đã tải lên thành công
-        </p>
-      </div>
-      {props.action && <div className="ml-auto shrink-0">{props.action}</div>}
+      {props.message && (
+        <p className="mt-2 text-[14px] leading-6 [overflow-wrap:anywhere]">{props.message}</p>
+      )}
+      {props.action && <div className="mt-3 flex flex-wrap justify-end gap-2">{props.action}</div>}
     </div>
   );
 }

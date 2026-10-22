@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { AlertCircle, FileText, LoaderCircle, Paperclip, Upload } from 'lucide-react';
+import { AlertCircle, Paperclip, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   checkManagerFile,
@@ -11,7 +11,7 @@ import {
   type ManagerFileStatus,
 } from '../api/manager-upload';
 import { managerError } from '../api/manager-queries';
-import { ManagerFileCard, managerFileSize, type ManagerUploadedFile } from './manager-file-card';
+import { ManagerFileCard, type ManagerUploadedFile } from './manager-file-card';
 
 export function ManagerFileUpload(props: {
   courseUnitId: string;
@@ -23,6 +23,7 @@ export function ManagerFileUpload(props: {
   onBusy: (value: boolean) => void;
   onPending: (value: boolean) => void;
   onReady: (file: ManagerUploadedFile) => void;
+  onSelect?: () => void;
 }) {
   const controller = useRef<AbortController | null>(null);
   const input = useRef<HTMLInputElement | null>(null);
@@ -30,6 +31,7 @@ export function ManagerFileUpload(props: {
   const [pending, setPending] = useState<ManagerFileStatus | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [cancelled, setCancelled] = useState(false);
   const [declaration, setDeclaration] = useState<ReturnType<typeof managerFileInput> | null>(null);
   const [dragging, setDragging] = useState(false);
   const onPending = props.onPending;
@@ -91,6 +93,7 @@ export function ManagerFileUpload(props: {
     setBusy(true);
     onBusy(transferring);
     setError('');
+    setCancelled(false);
     try {
       const file = await operation(abort.signal);
       if (!abort.signal.aborted) receive(file);
@@ -108,6 +111,7 @@ export function ManagerFileUpload(props: {
   }
   async function selectFile(file: File) {
     if (disabled) return;
+    props.onSelect?.();
     setPending(null);
     onPending(false);
     setDeclaration(null);
@@ -134,13 +138,20 @@ export function ManagerFileUpload(props: {
   const choosing = () => input.current?.click();
   const limit = props.video ? 'MP4 · Tối đa 200 MB' : 'Tối đa 25 MB mỗi tệp · MP4 tối đa 200 MB';
   return (
-    <div
+    <section
+      aria-label={`${props.label} - tải lên`}
       className="min-w-0 space-y-3"
       onDragOver={(event) => {
         event.preventDefault();
         if (!disabled) setDragging(true);
       }}
-      onDragLeave={() => setDragging(false)}
+      onDragLeave={(event) => {
+        if (
+          !(event.relatedTarget instanceof Node) ||
+          !event.currentTarget.contains(event.relatedTarget)
+        )
+          setDragging(false);
+      }}
       onDrop={(event) => {
         event.preventDefault();
         setDragging(false);
@@ -162,6 +173,36 @@ export function ManagerFileUpload(props: {
           if (file) void selectFile(file);
         }}
       />
+      <Button
+        type="button"
+        variant="outline"
+        aria-label={
+          props.compact
+            ? 'Thêm tệp đính kèm'
+            : props.video
+              ? 'Chọn video để tải lên'
+              : 'Chọn tệp để tải lên'
+        }
+        disabled={disabled}
+        onClick={choosing}
+        className={`h-auto w-full flex-wrap justify-center gap-3 rounded-xl border-2 border-dashed whitespace-normal text-mint shadow-none ${props.compact ? 'px-4 py-4' : 'px-5 py-6'} ${dragging ? 'border-mint bg-mint/10' : 'border-mint/40 bg-mint/5 hover:border-mint hover:bg-mint/10'}`}
+      >
+        {props.compact ? (
+          <Paperclip aria-hidden="true" className="size-5" />
+        ) : (
+          <Upload aria-hidden="true" className="size-6" />
+        )}
+        <span className="min-w-0 text-center">
+          <span className="block text-[16px] leading-6 font-semibold">
+            {props.video ? 'Kéo thả video MP4 vào đây' : 'Kéo thả tài liệu vào đây'}
+          </span>
+          <span className="mt-1 block text-[14px] leading-6 font-normal text-muted">
+            {!props.courseUnitId
+              ? 'Chọn khóa học và học phần trước'
+              : `hoặc nhấn để chọn tệp · ${limit}`}
+          </span>
+        </span>
+      </Button>
       {props.value && !declaration ? (
         <ManagerFileCard
           file={props.value}
@@ -178,129 +219,83 @@ export function ManagerFileUpload(props: {
           }
         />
       ) : declaration ? (
-        <div className="space-y-3 rounded-xl border border-line bg-soft/40 p-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-canvas text-mint">
-              {busy ? (
-                <LoaderCircle className="size-5 motion-safe:animate-spin" aria-hidden="true" />
-              ) : (
-                <FileText className="size-5" aria-hidden="true" />
+        <ManagerFileCard
+          file={{ name: declaration.originalFilename, sizeBytes: declaration.declaredSizeBytes }}
+          state={error ? 'failed' : busy ? 'uploading' : cancelled ? 'cancelled' : 'pending'}
+          message={error || message}
+          action={
+            <>
+              {(!busy || pending) && (
+                <Button type="button" variant="outline" disabled={disabled} onClick={choosing}>
+                  Chọn tệp khác
+                </Button>
               )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="break-words text-sm font-semibold [overflow-wrap:anywhere]">
-                {declaration.originalFilename}
-              </p>
-              <p className="mt-1 text-xs text-muted">
-                {managerFileSize(declaration.declaredSizeBytes)}
-              </p>
-            </div>
-          </div>
-          {message && (
-            <p role="status" className="text-sm text-muted">
-              {message}
-            </p>
-          )}
-          <div className="flex flex-wrap gap-2">
-            {(!busy || pending) && (
-              <Button type="button" variant="outline" disabled={disabled} onClick={choosing}>
-                Chọn tệp khác
-              </Button>
-            )}
-            {pending && !busy && (
-              <Button
-                type="button"
-                variant="outline"
-                disabled={props.disabled}
-                onClick={() =>
-                  run((signal) => checkManagerFile(pending.id, props.courseUnitId, signal))
-                }
-              >
-                Kiểm tra lại
-              </Button>
-            )}
-            {busy ? (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  controller.current?.abort();
-                  setBusy(false);
-                  onBusy(false);
-                  if (pending)
-                    setMessage(
-                      'Đã dừng kiểm tra tự động. Tệp vẫn được xử lý; bạn có thể kiểm tra lại sau.',
-                    );
-                  else {
-                    setDeclaration(null);
-                    setMessage('Đã hủy tải lên.');
+              {pending && !busy && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={props.disabled}
+                  onClick={() =>
+                    run((signal) => checkManagerFile(pending.id, props.courseUnitId, signal))
                   }
-                }}
-              >
-                {pending ? 'Dừng kiểm tra tự động' : 'Hủy tải lên'}
-              </Button>
-            ) : (
-              pending && (
+                >
+                  Kiểm tra lại
+                </Button>
+              )}
+              {busy ? (
                 <Button
                   type="button"
                   variant="ghost"
-                  disabled={props.disabled}
                   onClick={() => {
-                    setPending(null);
-                    onPending(false);
-                    setDeclaration(null);
-                    setMessage('');
-                    setError('');
+                    controller.current?.abort();
+                    setBusy(false);
+                    onBusy(false);
+                    if (pending)
+                      setMessage(
+                        'Đã dừng kiểm tra tự động. Tệp vẫn được xử lý; bạn có thể kiểm tra lại sau.',
+                      );
+                    else {
+                      setCancelled(true);
+                      setMessage('Bạn có thể chọn tệp khác để tiếp tục.');
+                    }
                   }}
                 >
-                  Bỏ tệp đang chờ
+                  {pending ? 'Dừng kiểm tra tự động' : 'Hủy tải lên'}
                 </Button>
-              )
-            )}
-          </div>
-        </div>
-      ) : (
-        <Button
-          type="button"
-          variant="outline"
-          disabled={disabled}
-          onClick={choosing}
-          className={`h-auto w-full whitespace-normal rounded-xl border-dashed shadow-none ${dragging ? 'border-mint bg-mint/10' : 'border-line bg-soft/30 hover:border-mint hover:bg-mint/5'} ${props.compact ? 'justify-start gap-3 px-4 py-3' : 'flex-col gap-3 px-5 py-7'}`}
-        >
-          {props.compact ? (
-            <Paperclip className="size-5 text-mint" aria-hidden="true" />
-          ) : (
-            <span className="flex size-12 items-center justify-center rounded-xl bg-mint/10 text-mint">
-              <Upload className="size-6" aria-hidden="true" />
-            </span>
-          )}
-          <span className={props.compact ? 'min-w-0 text-left' : 'text-center'}>
-            <span className="block text-sm font-semibold">
-              {props.compact
-                ? 'Thêm tệp đính kèm'
-                : props.video
-                  ? 'Chọn video để tải lên'
-                  : 'Chọn tệp để tải lên'}
-            </span>
-            <span className="mt-1 block text-xs font-normal text-muted">
-              {!props.courseUnitId
-                ? 'Chọn khóa học và học phần trước'
-                : props.compact
-                  ? limit
-                  : `hoặc kéo thả tệp vào đây · ${limit}`}
-            </span>
-          </span>
-        </Button>
-      )}
-      {error && (
+              ) : (
+                pending && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={props.disabled}
+                    onClick={() => {
+                      setPending(null);
+                      onPending(false);
+                      setDeclaration(null);
+                      setMessage('');
+                      setError('');
+                    }}
+                  >
+                    Bỏ tệp đang chờ
+                  </Button>
+                )
+              )}
+            </>
+          }
+        />
+      ) : null}
+      {error && !declaration && (
         <div
           role="alert"
-          className="flex items-start gap-2.5 rounded-xl bg-peach/60 p-3 text-sm leading-6"
+          className="flex items-start gap-2.5 rounded-xl border border-status-red/30 bg-status-red/5 p-4 text-sm leading-6 text-status-red"
         >
-          <AlertCircle className="mt-0.5 size-5 shrink-0 text-headsup" aria-hidden="true" />
-          <p className="min-w-0 break-words">{error}</p>
+          <AlertCircle className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+          <div className="min-w-0">
+            <p className="font-semibold">Tải lên thất bại</p>
+            <p className="mt-1 break-words">{error}</p>
+          </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }

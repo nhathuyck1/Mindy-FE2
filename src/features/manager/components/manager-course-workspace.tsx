@@ -1,22 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { BookOpen, FileText, Plus, PlayCircle } from 'lucide-react';
+import { ClipboardCheck, Plus, RefreshCw, FilterX, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CourseContentFrame, CourseContentPanel } from '@/components/ui/course-content-frame';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import type { CourseDetail } from '@/features/courses/schemas/course-contracts';
 import { useManagerQuery } from '../api/manager-queries';
 import { materialsSchema } from '../schemas/manager-contracts';
 import { ManagerMaterialDetail } from './manager-material-detail';
 import { ManagerMaterialEditor } from './manager-material-editor';
+import { ManagerCourseMaterialsTable } from './manager-course-materials-table';
 import { ManagerPagination, ManagerState, reviewLabels, typeLabels } from './manager-shared';
 
-function ManagerChapterContent(props: {
+function ManagerChapterRegister(props: {
   courseId: string;
   unit: CourseDetail['units'][number];
-  coursePicker: React.ReactNode;
-  sidebar: React.ReactNode;
+  coursePicker?: React.ReactNode;
+  unitPicker: React.ReactNode;
 }) {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState('');
@@ -30,246 +30,210 @@ function ManagerChapterContent(props: {
     `manager/course-units/${props.unit.id}/materials?${params}`,
     materialsSchema,
   );
-  const selectedId = materialId ?? materials.data?.items[0]?.id;
+  const resetFilters = () => {
+    setStatus('');
+    setType('');
+    setPage(1);
+  };
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div
         role="group"
         aria-label="Bộ lọc tài liệu"
-        className="grid min-w-0 items-end gap-4 xl:grid-cols-[minmax(0,1fr)_224px_224px]"
+        className="rounded-xl border border-line bg-soft/30 p-4 sm:p-5"
       >
-        {props.coursePicker}
-        <label className="min-w-0 text-sm font-semibold">
-          Trạng thái
-          <NativeSelect
-            aria-label="Trạng thái duyệt trong chương"
-            wrapperClassName="mt-1.5 w-full"
-            className="h-12 py-2 text-base leading-6 font-normal"
-            value={status}
-            disabled={creating}
-            onChange={(event) => {
-              setStatus(event.target.value);
-              setPage(1);
-              setMaterialId(null);
-            }}
-          >
-            <NativeSelectOption value="">Tất cả trạng thái</NativeSelectOption>
-            {Object.entries(reviewLabels).map(([value, label]) => (
-              <NativeSelectOption key={value} value={value}>
-                {label}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        </label>
-        <label className="min-w-0 text-sm font-semibold">
-          Loại tài liệu
-          <NativeSelect
-            aria-label="Loại tài liệu trong chương"
-            wrapperClassName="mt-1.5 w-full"
-            className="h-12 py-2 text-base leading-6 font-normal"
-            value={type}
-            disabled={creating}
-            onChange={(event) => {
-              setType(event.target.value);
-              setPage(1);
-              setMaterialId(null);
-            }}
-          >
-            <NativeSelectOption value="">Tất cả loại tài liệu</NativeSelectOption>
-            {Object.entries(typeLabels).map(([value, label]) => (
-              <NativeSelectOption key={value} value={value}>
-                {label}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        </label>
-      </div>
-      <CourseContentFrame
-        sidebarLabel="Nội dung khóa học"
-        sidebarTitle={
-          <>
-            <BookOpen aria-hidden="true" className="size-5 text-mint" />
-            Nội dung khóa học
-          </>
-        }
-        sidebar={props.sidebar}
-      >
-        <CourseContentPanel
-          label="Nội dung chương"
-          header={
-            <>
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-xs font-semibold text-mint">CHƯƠNG {props.unit.unitNumber}</p>
-                  {materials.data && (
-                    <span className="rounded-full bg-soft px-2 py-0.5 text-xs font-normal whitespace-nowrap text-muted">
-                      Tài liệu ({materials.data.total})
-                    </span>
-                  )}
-                </div>
-                <h2 className="mt-2 text-xl font-bold break-words">{props.unit.title}</h2>
-              </div>
-              <Button className="ml-auto" disabled={creating} onClick={() => setCreating(true)}>
-                <Plus aria-hidden="true" className="size-4" />
-                Tạo tài liệu
-              </Button>
-            </>
-          }
+        <div
+          className={`grid min-w-0 items-end gap-4 ${props.coursePicker ? 'md:grid-cols-2' : ''}`}
         >
-          {creating ? (
-            <ManagerMaterialEditor
-              embedded
-              courseId={props.courseId}
-              unitId={props.unit.id}
-              onSaved={(material) => {
-                setMaterialId(material.id);
-                setStatus('');
-                setType('');
+          {props.coursePicker}
+          {props.unitPicker}
+        </div>
+        <div className="mt-5 grid min-w-0 items-end gap-4 border-t border-line pt-4 md:grid-cols-2">
+          <label className="min-w-0 text-sm font-semibold">
+            Trạng thái duyệt
+            <NativeSelect
+              aria-label="Trạng thái duyệt trong chương"
+              wrapperClassName="mt-2 w-full"
+              className="h-12 w-full text-base leading-6 font-normal"
+              value={status}
+              onChange={(event) => {
+                setStatus(event.target.value);
                 setPage(1);
               }}
-              onClose={() => setCreating(false)}
-            />
+            >
+              <NativeSelectOption value="">Tất cả trạng thái</NativeSelectOption>
+              {Object.entries(reviewLabels).map(([value, label]) => (
+                <NativeSelectOption key={value} value={value}>
+                  {label}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          </label>
+          <label className="min-w-0 text-sm font-semibold">
+            Loại tài liệu
+            <NativeSelect
+              aria-label="Loại tài liệu trong chương"
+              wrapperClassName="mt-2 w-full"
+              className="h-12 w-full text-base leading-6 font-normal"
+              value={type}
+              onChange={(event) => {
+                setType(event.target.value);
+                setPage(1);
+              }}
+            >
+              <NativeSelectOption value="">Tất cả loại tài liệu</NativeSelectOption>
+              {Object.entries(typeLabels).map(([value, label]) => (
+                <NativeSelectOption key={value} value={value}>
+                  {label}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          </label>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <Button
+            variant="outline"
+            className="border-line shadow-none"
+            disabled={!status && !type}
+            onClick={resetFilters}
+          >
+            <FilterX aria-hidden="true" className="size-4" />
+            Xóa bộ lọc
+          </Button>
+        </div>
+      </div>
+      <section
+        aria-label="Danh sách tài liệu của chương"
+        className="min-w-0 overflow-hidden rounded-xl border border-line bg-canvas"
+      >
+        <header className="flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
+          <div className="flex min-w-0 flex-[1_1_16rem] items-start gap-3">
+            <span
+              aria-hidden="true"
+              className="grid size-11 shrink-0 place-items-center rounded-lg bg-mint/10 text-mint"
+            >
+              <ClipboardCheck className="size-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold tracking-wide text-muted">
+                CHƯƠNG {props.unit.unitNumber}
+              </p>
+              <h2 className="mt-1 text-lg leading-7 font-bold [overflow-wrap:anywhere]">
+                {props.unit.title}
+              </h2>
+              <p className="mt-1 text-xs text-muted">
+                {materials.data
+                  ? `${materials.data.total} tài liệu${status || type ? ' khớp bộ lọc' : ''}`
+                  : 'Đang tải danh sách'}{' '}
+                · Chọn tài liệu để kiểm tra và duyệt.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              className="border-line shadow-none"
+              disabled={materials.isFetching}
+              onClick={() => void materials.refetch()}
+            >
+              <RefreshCw aria-hidden="true" className="size-4" />
+              Làm mới
+            </Button>
+            <Button onClick={() => setCreating(true)}>
+              <Plus aria-hidden="true" className="size-4" />
+              Tạo tài liệu
+            </Button>
+          </div>
+        </header>
+        {props.unit.description && (
+          <p className="px-5 pb-5 text-sm leading-7 text-muted sm:px-6">{props.unit.description}</p>
+        )}
+        <ManagerState
+          pending={materials.isPending}
+          error={materials.error}
+          retry={materials.refetch}
+        >
+          {materials.data?.items.length ? (
+            <ManagerCourseMaterialsTable items={materials.data.items} onOpen={setMaterialId} />
           ) : (
-            <>
-              {props.unit.description && (
-                <p className="text-sm leading-7 whitespace-pre-wrap">{props.unit.description}</p>
-              )}
-              <ManagerState
-                pending={materials.isPending}
-                error={materials.error}
-                retry={materials.refetch}
-              >
-                {materials.data?.items.length === 0 && !materialId ? (
-                  <p role="status" className="rounded-xl border border-line p-6 text-sm leading-7">
-                    {status || type
-                      ? 'Chưa có tài liệu phù hợp với bộ lọc trong chương này.'
-                      : 'Chương này chưa có tài liệu. Chọn Tạo tài liệu ở góc phải để soạn nội dung hoặc tải tệp lên.'}
-                  </p>
-                ) : (
-                  <>
-                    {materials.data && materials.data.total > 1 && (
-                      <nav
-                        aria-label="Tài liệu trong chương"
-                        className="flex min-w-0 gap-2 overflow-x-auto pb-2"
-                      >
-                        {materials.data?.items.map((item, index) => {
-                          const Icon = item.contentType === 'VIDEO' ? PlayCircle : FileText;
-                          return (
-                            <button
-                              key={item.id}
-                              type="button"
-                              aria-current={selectedId === item.id ? 'true' : undefined}
-                              onClick={() => setMaterialId(item.id)}
-                              className={
-                                'flex min-h-12 max-w-72 shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors ' +
-                                (selectedId === item.id
-                                  ? 'border-mint bg-mint/10 font-bold'
-                                  : 'border-line hover:bg-soft')
-                              }
-                            >
-                              <Icon aria-hidden="true" className="size-5 shrink-0 text-mint" />
-                              <span className="shrink-0 text-xs font-normal text-muted">
-                                {(page - 1) * 20 + index + 1}.
-                              </span>
-                              <span className="min-w-0 flex-1 break-words">{item.title}</span>
-                            </button>
-                          );
-                        })}
-                      </nav>
-                    )}
-                    {selectedId && (
-                      <ManagerMaterialDetail
-                        embedded
-                        key={selectedId}
-                        id={selectedId}
-                        onClose={() => {
-                          setMaterialId(null);
-                          void materials.refetch();
-                        }}
-                      />
-                    )}
-                  </>
-                )}
-                {materials.data && materials.data.total > 20 && (
-                  <ManagerPagination
-                    page={page}
-                    total={materials.data.total}
-                    onChange={(next) => {
-                      setPage(next);
-                      setMaterialId(null);
-                    }}
-                  />
-                )}
-              </ManagerState>
-            </>
+            <div role="status" className="space-y-3 border-t border-line p-8 text-center">
+              <FolderOpen aria-hidden="true" className="mx-auto size-9 text-mint/70" />
+              <p className="text-sm leading-7 text-muted">
+                {status || type
+                  ? 'Chưa có tài liệu phù hợp với bộ lọc trong chương này.'
+                  : 'Chương này chưa có tài liệu. Chọn Tạo tài liệu để soạn nội dung hoặc tải tệp lên.'}
+              </p>
+            </div>
           )}
-        </CourseContentPanel>
-      </CourseContentFrame>
+          {materials.data && materials.data.total > 20 && (
+            <ManagerPagination page={page} total={materials.data.total} onChange={setPage} />
+          )}
+        </ManagerState>
+      </section>
+      {materialId && (
+        <ManagerMaterialDetail
+          key={materialId}
+          id={materialId}
+          onClose={() => {
+            setMaterialId(null);
+            void materials.refetch();
+          }}
+        />
+      )}
+      {creating && (
+        <ManagerMaterialEditor
+          courseId={props.courseId}
+          unitId={props.unit.id}
+          onSaved={(material) => {
+            setMaterialId(material.id);
+            resetFilters();
+          }}
+          onClose={() => setCreating(false)}
+        />
+      )}
     </div>
   );
 }
 
 export function ManagerCourseWorkspace(props: {
   course: CourseDetail;
-  coursePicker: React.ReactNode;
+  coursePicker?: React.ReactNode;
 }) {
-  const [unitId, setUnitId] = useState<string | null>(null);
+  const [unitId, setUnitId] = useState('');
   const units = [...props.course.units].sort((a, b) => a.unitNumber - b.unitNumber);
   const selected = units.find((unit) => unit.id === unitId) ?? units[0];
-  const sidebar = (
-    <nav aria-label="Chương" className="flex flex-col">
-      {units.map((unit) => (
-        <button
-          key={unit.id}
-          type="button"
-          aria-current={unit.id === selected?.id ? 'step' : undefined}
-          onClick={() => setUnitId(unit.id)}
-          className={
-            'flex min-h-19 items-start gap-3 rounded-lg px-3 py-4 text-left focus-visible:outline-2 focus-visible:outline-mint ' +
-            (unit.id === selected?.id ? 'bg-mint/10 text-forest' : 'hover:bg-soft')
-          }
-        >
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-line bg-canvas text-xs font-bold">
-            {unit.unitNumber}
-          </span>
-          <span className="min-w-0">
-            <span className="block text-sm font-bold break-words">{unit.title}</span>
-            <span className="mt-1 block text-xs text-muted">Chương {unit.unitNumber}</span>
-          </span>
-        </button>
-      ))}
-    </nav>
-  );
-  if (selected)
-    return (
-      <ManagerChapterContent
-        key={selected.id}
-        courseId={props.course.id}
-        unit={selected}
-        coursePicker={props.coursePicker}
-        sidebar={sidebar}
-      />
-    );
-  return (
-    <div className="space-y-6">
-      <div className="min-w-0 max-w-3xl">{props.coursePicker}</div>
-      <CourseContentFrame
-        sidebarLabel="Nội dung khóa học"
-        sidebarTitle={
-          <>
-            <BookOpen aria-hidden="true" className="size-5 text-mint" />
-            Nội dung khóa học
-          </>
-        }
-        sidebar={sidebar}
+  const unitPicker = (
+    <label className="min-w-0 text-sm font-semibold">
+      Chương
+      <NativeSelect
+        aria-label="Chọn chương quản lý"
+        wrapperClassName="mt-2 w-full"
+        className="h-12 w-full text-base leading-6 font-normal"
+        value={selected?.id ?? ''}
+        onChange={(event) => setUnitId(event.target.value)}
       >
-        <p
-          role="status"
-          className="scrollbar-hidden min-h-0 overflow-y-auto overscroll-y-contain p-6 text-sm text-muted"
-        >
-          Khóa học này chưa có chương.
-        </p>
-      </CourseContentFrame>
-    </div>
+        {units.map((unit) => (
+          <NativeSelectOption key={unit.id} value={unit.id}>
+            Chương {unit.unitNumber}: {unit.title}
+          </NativeSelectOption>
+        ))}
+      </NativeSelect>
+    </label>
+  );
+  return selected ? (
+    <ManagerChapterRegister
+      key={selected.id}
+      courseId={props.course.id}
+      unit={selected}
+      coursePicker={props.coursePicker}
+      unitPicker={unitPicker}
+    />
+  ) : (
+    <section className="space-y-5 rounded-xl border border-line p-5">
+      {props.coursePicker && <div className="max-w-2xl">{props.coursePicker}</div>}
+      <p role="status" className="text-sm text-muted">
+        Khóa học này chưa có chương.
+      </p>
+    </section>
   );
 }

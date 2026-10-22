@@ -5,6 +5,34 @@ test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-10-16T03:00:00Z'));
 });
 
+test('missing collection routes show a cash-specific error and recover without any confirmation', async ({
+  page,
+}) => {
+  const fixture = await mockCollections(page);
+  let unavailable = true;
+  await page.route(/\/api\/v1\/manager\/(orders|classes)\?/, async (route) => {
+    if (!unavailable) return route.fallback();
+    return route.fulfill({
+      status: 404,
+      json: { code: 'HTTP_ERROR', message: 'Cannot GET /api/v1/manager/orders' },
+    });
+  });
+  await page.goto('/manager/collections');
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'Chức năng thu tiền chưa khả dụng trên máy chủ.' }),
+  ).toBeVisible();
+  await expect(page.getByText('Không có đơn tiền mặt phù hợp')).toHaveCount(0);
+  await expect(page.getByText('Chưa tìm thấy tài liệu', { exact: false })).toHaveCount(0);
+  await expect(page.getByRole('table')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Xuất trang CSV' })).toBeDisabled();
+  unavailable = false;
+  await page.getByRole('button', { name: 'Thử lại', exact: true }).click();
+  await expect(page.getByRole('table').getByRole('rowheader')).toHaveCount(20);
+  await expect(page.getByLabel('Lọc đơn theo lớp')).toBeEnabled();
+  expect(fixture.confirmed()).toBe(0);
+  expect(fixture.calls.every((call) => call.method === 'GET')).toBe(true);
+});
+
 test('cash collection uses server orders, filters, pagination and page CSV', async ({
   page,
 }, info) => {

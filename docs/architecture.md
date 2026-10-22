@@ -1,5 +1,16 @@
 # Kiến trúc Mindy FE2
 
+## Thẻ trạng thái upload Manager — 22/10/2026
+
+- ManagerFileCard nhận metadata tệp và state ready/uploading/pending/failed/cancelled để dùng cùng thẻ cho tệp đã kiểm tra và lần tải đang chạy. Component chỉ trình bày, không sở hữu request hoặc quyền lưu.
+- ManagerFileUpload giữ upload/check/pause/abort hiện có, vùng chọn luôn hiển thị và chuyển màu thẻ theo kết quả thật. onSelect của tệp chính xóa file cũ trên form ngay khi bắt đầu thay, ngăn lưu nhầm file cũ sau lỗi/hủy thay tệp. ManagerMaterialEditor vẫn chỉ nhận file READY và giữ guards pending/busy; không đổi payload hoặc giới hạn API.
+
+## Bảng kiểm duyệt tài liệu Manager — 22/10/2026
+
+- ManagerCourseWorkspace dùng bộ chọn chương và ManagerChapterRegister với danh sách phân trang từ endpoint course-units/materials hiện có. ManagerCourseMaterialsTable hiển thị bảng trên vùng rộng và thẻ trên vùng hẹp; không tự tải chi tiết tài liệu đầu tiên hoặc dựng khung đọc theo chương như Mentor/Student.
+- Xem tài liệu mở ManagerMaterialDetail trong dialog hiện hữu, giữ approve/reject/publish/unpublish/delete, quyền canEdit, expectedRevision và signed access. Tạo mới mở ManagerMaterialEditor theo courseId/unitId đã chọn, giữ ngữ cảnh bằng tên khóa/chương; lưu xong mở chi tiết. Mutation vẫn invalidate manager và đóng dialog refetch danh sách.
+- UI Manager tiếp tục import font Inter và admin.css qua layout, dùng data-admin-root, admin-workspace và admin-typography cho portal. Không thay token dùng chung hoặc font của Mentor/Admin. Kiểm tra computed font và font đã tải trên trang/dialog; nội dung HTML bên trong iframe vẫn là tài liệu sandbox riêng.
+
 ## Nội dung Mentor theo từng buổi học — 22/10/2026
 
 - MentorMaterials mở danh sách buổi trước thay vì tự chọn tài liệu đầu tiên. MentorSessionMaterials ghép Material.sessionId với sessions của query chi tiết chương, sắp buổi theo sessionNumber, nội dung theo sortOrder; phần chưa gắn buổi và liên kết không còn thuộc chương được giữ riêng, không tự gán vào buổi đầu.

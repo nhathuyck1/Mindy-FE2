@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { ArrowLeft, Files, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { useCourseCatalog } from '@/features/courses/api/course-queries';
 import { courseDetailSchema } from '@/features/courses/schemas/course-contracts';
 import { useManagerQuery } from '../api/manager-queries';
@@ -20,31 +19,6 @@ export function ManagerMaterialsPage() {
   const courses = useCourseCatalog({});
   const selectedCourse = courses.data?.find((item) => item.id === courseId);
   const course = useManagerQuery(`courses/${courseId}`, courseDetailSchema, Boolean(courseId));
-
-  const coursePicker = (
-    <div className="min-w-0">
-      <label htmlFor="manager-course-picker" className="mb-2 block text-sm font-semibold">
-        Khóa học
-      </label>
-      <NativeSelect
-        id="manager-course-picker"
-        aria-label="Lọc theo khóa học"
-        wrapperClassName="w-full"
-        className="h-12 py-2 text-base leading-6"
-        title={selectedCourse?.title}
-        value={courseId}
-        disabled={courses.isPending || courses.isError}
-        onChange={(event) => setCourseId(event.target.value)}
-      >
-        <NativeSelectOption value="">Chọn khóa học</NativeSelectOption>
-        {courses.data?.map((item) => (
-          <NativeSelectOption key={item.id} value={item.id}>
-            {item.title}
-          </NativeSelectOption>
-        ))}
-      </NativeSelect>
-    </div>
-  );
 
   if (inventory)
     return (
@@ -71,11 +45,11 @@ export function ManagerMaterialsPage() {
             Mindy / Quản lý tài liệu
           </p>
           <h1 className="text-2xl font-bold sm:text-3xl">
-            {course.data?.title ?? 'Quản lý tài liệu'}
+            {course.data?.title ?? selectedCourse?.title ?? 'Quản lý tài liệu'}
           </h1>
           <p className="mt-2 text-sm text-muted">
             {courseId
-              ? 'Mở chương và chỉnh sửa nội dung ngay tại đây.'
+              ? 'Kiểm tra, duyệt và quản lý xuất bản tài liệu theo từng chương.'
               : 'Chọn một khóa học để quản lý chương và tài liệu.'}
           </p>
         </div>
@@ -92,16 +66,9 @@ export function ManagerMaterialsPage() {
           )}
         </div>
       </div>
-      {courseId && !course.data && <div className="max-w-3xl">{coursePicker}</div>}
       {courseId ? (
         <ManagerState pending={course.isPending} error={course.error} retry={course.refetch}>
-          {course.data && (
-            <ManagerCourseWorkspace
-              key={courseId}
-              course={course.data}
-              coursePicker={coursePicker}
-            />
-          )}
+          {course.data && <ManagerCourseWorkspace key={courseId} course={course.data} />}
         </ManagerState>
       ) : (
         <ManagerState pending={courses.isPending} error={courses.error} retry={courses.refetch}>

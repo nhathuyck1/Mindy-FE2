@@ -21,6 +21,7 @@ export function ReviewBadge(props: { status: keyof typeof reviewLabels }) {
 export function ManagerState(props: {
   pending: boolean;
   error: unknown;
+  errorMessage?: string;
   retry: () => unknown;
   children: React.ReactNode;
 }) {
@@ -33,7 +34,7 @@ export function ManagerState(props: {
   if (props.error)
     return (
       <div role="alert" className="space-y-3 rounded-xl bg-peach p-6">
-        <p>{managerError(props.error)}</p>
+        <p>{props.errorMessage ?? managerError(props.error)}</p>
         <Button variant="outline" onClick={() => props.retry()}>
           Thử lại
         </Button>

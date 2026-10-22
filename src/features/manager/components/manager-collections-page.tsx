@@ -12,6 +12,7 @@ import {
   collectionMoney,
   collectionStatuses,
   collectionOrdersCsv,
+  cashCollectionListError,
 } from '../api/manager-collections';
 import {
   collectionOrdersSchema,
@@ -179,7 +180,7 @@ export function ManagerCollectionsPage() {
           </div>
           {classes.isError && (
             <div role="alert" className="flex flex-wrap items-center gap-3 text-sm">
-              <p>Chưa tải được bộ lọc lớp. Bạn vẫn có thể xem đơn tiền mặt.</p>
+              <p>Chưa tải được danh sách lớp.</p>
               <Button size="sm" variant="outline" onClick={() => void classes.refetch()}>
                 Thử tải lớp
               </Button>
@@ -222,7 +223,14 @@ export function ManagerCollectionsPage() {
             )}
           </form>
         </div>
-        <ManagerState pending={orders.isPending} error={orders.error} retry={orders.refetch}>
+        <ManagerState
+          pending={orders.isPending}
+          error={orders.error}
+          errorMessage={cashCollectionListError(orders.error)}
+          retry={() =>
+            Promise.all([orders.refetch(), pending.refetch(), paid.refetch(), classes.refetch()])
+          }
+        >
           {orders.data?.items.length === 0 ? (
             <div className="space-y-3 border-t border-line p-10 text-center">
               <Wallet aria-hidden="true" className="mx-auto size-10 text-mint/60" />

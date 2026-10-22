@@ -1,5 +1,11 @@
 # API catalog, lớp học và tài khoản
 
+## Kiểm tra lại API thu tiền trên server — 22/10/2026
+
+- Gọi GET trực tiếp upstream cấu hình https://api.quanh123.id.vn/api/v1: manager/orders (page/pageSize/paymentType=CASH/status=PENDING), manager/classes và manager/cash-orders đều trả 404 Cannot GET. GET manager/materials cùng host/prefix trả 401, xác nhận đây là route thu tiền thiếu trên bản server đang chạy, không phải sai prefix chung hoặc dữ liệu đơn rỗng.
+- Swagger /docs-json?scope=cash-collection và ?scope=finance-contract trả 200 nhưng không có route manager/orders/classes/cash-orders; bản cash-collection hiện có 117 paths, có materials/catalog. Kết quả live này thay thế giả định endpoint đã deploy trong ghi nhận 16/10 bên dưới.
+- Source Mindy-BE local đã có ManagerOperationsController GET orders/classes, CashPaymentsController và đăng ký ManagerOperationsModule trong AppModule. Chưa xác minh bản triển khai server trùng source local; cần cập nhật backend phù hợp để khôi phục thu tiền. Không chuyển sang endpoint/role khác hoặc tạo đơn/thu tiền cục bộ thay thế.
+
 ## Manager thu tiền thật — 16/10/2026
 
 Đã đọc BE Phase 2.3/2.4 api_flow, CashPaymentsController/Service, ManagerOperations DTO/service và Swagger live /docs-json?scope=cash-collection, /docs-json?scope=finance-contract. Swagger có GET manager/orders, order detail, classes và POST cash confirm; không chỉ dựa trên plan local.

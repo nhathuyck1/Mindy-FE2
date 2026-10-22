@@ -1,5 +1,22 @@
 # Quy tắc giao diện Mindy
 
+## Bỏ chọn lại khóa học sau danh sách — 22/10/2026
+
+- Sau khi chọn từ Danh sách khóa học, workspace Manager không hiện thêm dropdown Khóa học. Tên khóa giữ ở tiêu đề; đổi khóa bằng nút Danh sách khóa học. Chọn Chương chiếm hàng riêng, Trạng thái/Loại tài liệu chia hai cột đều bên dưới; Xóa bộ lọc vẫn ở hàng riêng.
+- Luồng Toàn bộ tài liệu vẫn giữ bộ chọn khóa riêng để đổi phạm vi kho; không thay API hoặc ngữ cảnh courseId/unitId khi tạo tài liệu.
+
+## Canh bộ lọc và đồng bộ upload Manager — 22/10/2026
+
+- Hai hàng Khóa học/Chương và Trạng thái/Loại tài liệu dùng cùng grid hai cột và gap; trên mobile xếp một cột. Xóa bộ lọc đặt một hàng riêng căn phải bên dưới, không chiếm chiều rộng cột select.
+- Upload Manager dùng vùng kéo thả viền mint nét đứt, icon upload/paperclip, tên 16px và hướng dẫn 14px như Mentor. Vùng chọn luôn hiện cả khi có tệp, thẻ kết quả nằm riêng bên dưới; giữ giới hạn và định dạng thực tế của API Manager (không sao chép giới hạn Mentor).
+- READY mới hiện thẻ xanh với Đã tải lên thành công; lỗi dùng viền/nền/chữ đỏ, spinner chỉ trong lúc chạy; tạm chờ/hủy dùng trung tính. Áp dụng cho tệp chính và đính kèm. Tên dài xuống dòng, thao tác xuống hàng; không đổi luồng upload/polling/quyền truy cập.
+
+## Manager có bố cục kiểm duyệt riêng — 22/10/2026
+
+- Quản lý tài liệu khóa học dùng bộ lọc Khóa học/Chương phía trên, Trạng thái duyệt/Loại tài liệu ở hàng kế, bảng tài liệu phía dưới. Bỏ sidebar chương, dãy tài liệu ngang và preview tự mở như giao diện học tập Mentor. Không tạo số liệu giả để trang trí.
+- Bảng có tên, loại/phiên bản, tình trạng xuất bản, trạng thái duyệt và ngày cập nhật. Bấm tên hoặc biểu tượng mắt mở dialog xem/duyệt/chỉnh sửa hiện hữu. Mobile dùng thẻ và dropdown chương, không cuộn ngang toàn trang; nút ít nhất 44px, filter 48px, chọn bằng bàn phím được.
+- Manager dùng chung Inter và thang chữ Admin: nền workspace 18px, text-sm 16px, nhãn nhỏ 14px; dialog dùng admin-typography. Không đổi font/token toàn cục, không tuyên bố nội dung HTML sandbox của tác giả là cùng font UI. Các select bộ lọc cùng cỡ chữ và weight thường.
+
 ## Chương → Buổi học → Nội dung — 22/10/2026
 
 - Tham khảo cách Coursera gom video, readings và assignments theo module tại https://www.coursera.org/learn/learning-and-development; Mindy áp dụng thêm cấp buổi học phù hợp lớp có lịch dạy. Không sao chép màu sắc hoặc thêm loại nội dung chưa được API hỗ trợ.

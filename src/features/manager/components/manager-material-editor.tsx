@@ -31,7 +31,7 @@ export function ManagerMaterialEditor(props: {
   const [courseId, setCourseId] = useState(props.courseId ?? '');
   const [unitId, setUnitId] = useState(material?.courseUnitId ?? props.unitId ?? '');
   const [inputMode, setInputMode] = useState<'text' | 'html'>(
-    props.embedded && !material ? 'text' : 'html',
+    (props.embedded || props.unitId) && !material ? 'text' : 'html',
   );
   const [contentText, setContentText] = useState('');
   const [contentHtml, setContentHtml] = useState(
@@ -137,6 +137,16 @@ export function ManagerMaterialEditor(props: {
             <h3 className="text-lg font-bold">
               {material ? 'Chỉnh sửa tài liệu' : 'Tạo tài liệu mới'}
             </h3>
+          )}
+          {!material && props.unitId && course.data && (
+            <div className="space-y-1 border-b border-line pb-4 text-sm">
+              <p className="font-semibold">{course.data.title}</p>
+              <p className="text-muted">
+                Chương:{' '}
+                {course.data.units.find((unit) => unit.id === props.unitId)?.title ??
+                  'Chương đã chọn'}
+              </p>
+            </div>
           )}
           <p className="rounded-xl bg-soft p-4 text-sm leading-6">
             {material
@@ -348,6 +358,10 @@ export function ManagerMaterialEditor(props: {
                 value={file}
                 onBusy={setPrimaryUploading}
                 onPending={setPrimaryPending}
+                onSelect={() => {
+                  setFile(null);
+                  setError('');
+                }}
                 onReady={(next) => {
                   if ((type === 'VIDEO') !== (next.kind === 'VIDEO')) {
                     setError('Chọn đúng loại tệp: video cần MP4; tài liệu cần tệp khác video.');

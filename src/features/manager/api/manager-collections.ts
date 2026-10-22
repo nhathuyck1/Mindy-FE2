@@ -37,6 +37,15 @@ export function useCollectionClasses() {
     },
   });
 }
+export function cashCollectionListError(error: unknown) {
+  if (error instanceof ApiError) {
+    if (error.status === 404)
+      return 'Chức năng thu tiền chưa khả dụng trên máy chủ. Vui lòng thử lại sau.';
+    if (error.status === 401 || error.status === 403)
+      return 'Phiên đăng nhập hoặc quyền thu tiền đã thay đổi. Vui lòng đăng nhập lại.';
+  }
+  return 'Chưa tải được dữ liệu thu tiền. Vui lòng thử lại.';
+}
 export function cashCollectionError(error: unknown) {
   if (error instanceof ApiError) {
     if (error.status === 409)

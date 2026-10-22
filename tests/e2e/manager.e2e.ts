@@ -561,6 +561,35 @@ test('manager detects PDF metadata and polls automatically after complete', asyn
   });
 });
 
+test('manager clears the previous primary file when its replacement fails', async ({ page }) => {
+  const { calls } = await mockManager(page);
+  const upload = await mockFileUpload(page);
+  await openCourseRegister(page);
+  await page.getByRole('button', { name: 'Tạo tài liệu', exact: true }).click();
+  await page.getByLabel('Loại tài liệu', { exact: true }).selectOption('FILE');
+  await page.getByLabel('Tiêu đề', { exact: true }).fill('Tài liệu thay tệp');
+  const input = page.getByRole('dialog').locator('input[type="file"]').first();
+  await input.setInputFiles({
+    name: 'tai-lieu.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-1.4\n%%EOF'),
+  });
+  await expect(page.getByText('Đã tải lên thành công', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Lưu bản nháp' })).toBeEnabled();
+  await input.setInputFiles({
+    name: 'tep-rong.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.alloc(0),
+  });
+  await expect(page.getByRole('alert').filter({ hasText: 'Tải lên thất bại' })).toBeVisible();
+  await expect(page.getByText('Đã tải lên thành công', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Lưu bản nháp' })).toBeDisabled();
+  expect(upload.declarations).toHaveLength(1);
+  expect(calls.some((call) => call.method === 'POST' && call.path.endsWith('/materials'))).toBe(
+    false,
+  );
+});
+
 test('manager drops a file, sees a compact success card and adds or removes an attachment', async ({
   page,
 }, info) => {
@@ -839,48 +868,32 @@ test('attachments remain available while the primary file is being validated', a
   expect(upload.calls).toHaveLength(countBefore);
 });
 
-test('manager course workspace matches student chapters and keeps pagination scoped', async ({
-  page,
-}, info) => {
-  const { calls } = await mockManager(page, { unitPaging: true });
+async function openCourseRegister(page: Page) {
   await page.goto('/manager/materials');
   await page
     .getByRole('region', { name: 'Danh sách khóa học', exact: true })
     .getByRole('button', { name: /Khóa học kiểm thử/ })
     .click();
-  const rail = page.getByRole('complementary', { name: 'Nội dung khóa học' });
-  await expect(rail.getByRole('button')).toHaveCount(2);
-  await expect(rail.getByRole('button').first()).toHaveAttribute('aria-current', 'step');
-  await expect(page.getByRole('table')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /Đang chờ duyệt/ })).toHaveCount(0);
-  const content = page.getByRole('region', { name: 'Nội dung chương', exact: true });
-  await expect(
-    content.getByRole('heading', { name: 'JavaScript căn bản', exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole('navigation', { name: 'Tài liệu trong chương' }).getByRole('button'),
-  ).toHaveCount(20);
-  await expect(
-    page
-      .getByRole('toolbar', { name: 'Thao tác tài liệu' })
-      .getByRole('button', { name: 'Chỉnh sửa', exact: true }),
-  ).toBeVisible();
-  if (info.project.name === 'desktop') {
-    const sidebar = await rail.boundingBox();
-    const panel = await content.boundingBox();
-    const create = await content
-      .getByRole('button', { name: 'Tạo tài liệu', exact: true })
-      .boundingBox();
-    expect(
-      sidebar && panel && create && sidebar.x + sidebar.width <= panel.x && create.x > panel.x,
-    ).toBeTruthy();
-  }
+  await expect(page.getByRole('region', { name: 'Danh sách tài liệu của chương' })).toBeVisible();
+}
+
+test('manager uses a review register with chapter filters and scoped pagination', async ({
+  page,
+}, info) => {
+  const { calls } = await mockManager(page, { unitPaging: true });
+  await openCourseRegister(page);
+  await expect(page.getByRole('complementary', { name: 'Nội dung khóa học' })).toHaveCount(0);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Duyệt tài liệu', exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('Chọn chương quản lý')).toHaveValue(unitId);
+  if (info.project.name === 'desktop')
+    await expect(
+      page.getByRole('table', { name: 'Danh sách tài liệu trong chương' }),
+    ).toBeVisible();
+  else await expect(page.getByRole('list', { name: 'Tài liệu trong chương' })).toBeVisible();
+  expect(calls.some((call) => call.path === `manager/materials/${id}`)).toBe(false);
   await page.getByRole('button', { name: 'Sau', exact: true }).click();
-  await expect(
-    page
-      .getByRole('navigation', { name: 'Tài liệu trong chương' })
-      .getByRole('button', { name: /Học liệu trang 2/ }),
-  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Học liệu trang 2', exact: true })).toBeVisible();
   expect(
     calls.some(
       (call) =>
@@ -888,208 +901,201 @@ test('manager course workspace matches student chapters and keeps pagination sco
         new URLSearchParams(call.search).get('page') === '2',
     ),
   ).toBe(true);
-  await page.getByLabel('Loại tài liệu trong chương', { exact: true }).selectOption('VIDEO');
+  await page.getByLabel('Loại tài liệu trong chương').selectOption('VIDEO');
   await expect(
     page.getByText('Chưa có tài liệu phù hợp với bộ lọc trong chương này.'),
   ).toBeVisible();
-  const videoCall = calls
-    .filter(
-      (call) =>
-        call.path === `manager/course-units/${unitId}/materials` &&
-        new URLSearchParams(call.search).get('contentType') === 'VIDEO',
-    )
+  const filtered = calls
+    .filter((call) => new URLSearchParams(call.search).get('contentType') === 'VIDEO')
     .at(-1);
-  expect(new URLSearchParams(videoCall?.search).get('page')).toBe('1');
-  await rail.getByRole('button', { name: /Học phần chưa có tài liệu/ }).click();
-  await expect(
-    content.getByRole('heading', { name: 'Học phần chưa có tài liệu', exact: true }),
-  ).toBeVisible();
-  await expect(page.getByText('Chương này chưa có tài liệu.', { exact: false })).toBeVisible();
+  expect(new URLSearchParams(filtered?.search).get('page')).toBe('1');
+  await page.getByRole('button', { name: 'Xóa bộ lọc' }).click();
   await expect(page.getByLabel('Loại tài liệu trong chương')).toHaveValue('');
-  await expect(page.getByRole('toolbar')).toHaveCount(0);
-  await page.setViewportSize(
-    info.project.name === 'desktop' ? { width: 1440, height: 1000 } : { width: 393, height: 1100 },
-  );
-  await page.screenshot({
-    path: `test-results/manager-student-workspace-${info.project.name}.png`,
-    fullPage: true,
-  });
+  await page.getByLabel('Chọn chương quản lý').selectOption(emptyUnitId);
+  await expect(page.getByText('Chương này chưa có tài liệu.', { exact: false })).toBeVisible();
   await page.setViewportSize({ width: 320, height: 800 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByLabel('Lọc theo khóa học', { exact: true }).selectOption('');
+  await page.getByRole('button', { name: 'Danh sách khóa học', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Danh sách khóa học', exact: true })).toBeVisible();
-  await expect(page.getByRole('table')).toHaveCount(0);
 });
 
-test('manager edits and creates directly inside the selected chapter', async ({ page }) => {
+test('manager reviews from a dialog and sees the updated publication state in the register', async ({
+  page,
+}, info) => {
   const { calls } = await mockManager(page);
-  await page.goto('/manager/materials');
-  await page
-    .getByRole('region', { name: 'Danh sách khóa học', exact: true })
-    .getByRole('button', { name: /Khóa học kiểm thử/ })
-    .click();
-  await page.getByRole('toolbar').getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
-  await page.getByLabel('Tiêu đề', { exact: true }).fill('Nội dung đã sửa trực tiếp');
+  await openCourseRegister(page);
+  await page.getByRole('button', { name: 'Hướng dẫn JavaScript cơ bản', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('Phiên bản 3');
+  await dialog.getByRole('button', { name: 'Duyệt tài liệu', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(dialog.getByText('Đã cập nhật tài liệu.', { exact: true })).toBeVisible();
+  expect(calls.find((call) => call.path.endsWith('/approve'))?.body).toEqual({
+    expectedRevision: 3,
+  });
+  await dialog.getByRole('button', { name: 'Đóng', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Hướng dẫn JavaScript cơ bản', exact: true }),
+  ).toBeFocused();
+  const register = page.getByRole('region', { name: 'Danh sách tài liệu của chương' });
+  await expect(
+    register.getByText('Đã duyệt', { exact: true }).filter({ visible: true }),
+  ).toBeVisible();
+  await page.getByLabel('Trạng thái duyệt trong chương').selectOption('DRAFT');
+  await expect(
+    page.getByText('Chưa có tài liệu phù hợp với bộ lọc trong chương này.'),
+  ).toBeVisible();
+  await page.getByLabel('Trạng thái duyệt trong chương').selectOption('APPROVED');
+  await expect(
+    register.getByText('Đã xuất bản', { exact: true }).filter({ visible: true }),
+  ).toBeVisible();
+  if (info.project.name === 'desktop') await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.screenshot({
+    path: `test-results/manager-review-register-${info.project.name}.png`,
+    fullPage: true,
+  });
+});
+
+test('manager creates and edits a material from the selected chapter context', async ({ page }) => {
+  const { calls } = await mockManager(page);
+  await openCourseRegister(page);
+  await page.getByRole('button', { name: 'Hướng dẫn JavaScript cơ bản', exact: true }).click();
+  await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Chỉnh sửa tài liệu' })).toBeVisible();
+  await page.getByLabel('Tiêu đề', { exact: true }).fill('Nội dung đã kiểm tra');
   await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Nội dung đã sửa trực tiếp' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Nội dung đã kiểm tra' })).toBeVisible();
   expect(calls.find((call) => call.method === 'PATCH')?.body?.expectedRevision).toBe(3);
+  await page.getByRole('button', { name: 'Đóng', exact: true }).click();
   await page.getByRole('button', { name: 'Tạo tài liệu', exact: true }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.getByLabel('Học phần', { exact: true })).toHaveCount(0);
-  await page.getByLabel('Tiêu đề', { exact: true }).fill('Bài viết trong chương đã chọn');
+  await expect(
+    page.getByRole('dialog').getByText('Khóa học kiểm thử', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('dialog').getByText('Chương: JavaScript căn bản', { exact: true }),
+  ).toBeVisible();
+  await page.getByLabel('Tiêu đề', { exact: true }).fill('Tài liệu của chương đã chọn');
   await page.getByLabel('Nội dung bài viết', { exact: true }).fill('Dòng một\nDòng hai');
   await page.setViewportSize({ width: 320, height: 800 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Bài viết trong chương đã chọn' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Chi tiết tài liệu' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Tài liệu của chương đã chọn' })).toBeVisible();
   expect(
     calls.find((call) => call.method === 'POST' && call.path.endsWith('/materials'))?.body,
   ).toMatchObject({ contentText: 'Dòng một\nDòng hai', contentType: 'ARTICLE' });
 });
 
-test('material approval refetches the selected chapter inline', async ({ page }) => {
-  await mockManager(page);
-  await page.goto('/manager/materials');
-  await page
-    .getByRole('region', { name: 'Danh sách khóa học', exact: true })
-    .getByRole('button', { name: /Khóa học kiểm thử/ })
-    .click();
-  await page.getByRole('button', { name: 'Duyệt tài liệu', exact: true }).click();
-  const refetch = page.waitForRequest(
-    (request) =>
-      request.method() === 'GET' &&
-      request.url().includes(`/manager/course-units/${unitId}/materials?`) &&
-      new URL(request.url()).searchParams.get('pageSize') === '20',
-  );
-  await page.getByRole('button', { name: 'Xác nhận', exact: true }).click();
-  await refetch;
-  await expect(page.getByText('Đã cập nhật tài liệu.', { exact: true })).toBeVisible();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Ẩn tài liệu', exact: true })).toBeVisible();
-  await page.getByLabel('Trạng thái duyệt trong chương', { exact: true }).selectOption('DRAFT');
-  await expect(
-    page.getByText('Chưa có tài liệu phù hợp với bộ lọc trong chương này.'),
-  ).toBeVisible();
-  await page.getByLabel('Trạng thái duyệt trong chương', { exact: true }).selectOption('APPROVED');
-  await expect(
-    page.getByRole('heading', { name: 'Hướng dẫn JavaScript cơ bản', exact: true }),
-  ).toBeVisible();
-});
-
-test('manager uploads a file inline using the selected chapter context', async ({ page }) => {
+test('manager uploads using the selected chapter and keeps readable file details', async ({
+  page,
+}, info) => {
   const { calls } = await mockManager(page);
   const upload = await mockFileUpload(page);
-  await page.goto('/manager/materials');
-  await page
-    .getByRole('region', { name: 'Danh sách khóa học', exact: true })
-    .getByRole('button', { name: /Khóa học kiểm thử/ })
-    .click();
+  await openCourseRegister(page);
   await page.getByRole('button', { name: 'Tạo tài liệu', exact: true }).click();
   await page.getByLabel('Loại tài liệu', { exact: true }).selectOption('FILE');
   await page.getByLabel('Tiêu đề', { exact: true }).fill('PDF của chương đang chọn');
   await expect(page.getByRole('button', { name: 'Lưu bản nháp', exact: true })).toBeDisabled();
-  const choosing = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: /^Chọn tệp để tải lên/ }).click();
-  await (
-    await choosing
-  ).setFiles({
-    name: 'lesson.pdf',
-    mimeType: 'application/pdf',
-    buffer: Buffer.from('%PDF-1.7\nlesson'),
-  });
+  await page
+    .getByRole('dialog')
+    .locator('input[type="file"]')
+    .first()
+    .setInputFiles({
+      name: 'tai-lieu.pdf',
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('%PDF-1.4\n%%EOF'),
+    });
   await expect(page.getByText('Đã tải lên thành công', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
-  await expect(
-    page.getByRole('heading', { name: 'PDF của chương đang chọn', exact: true }),
-  ).toBeVisible();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Chi tiết tài liệu' })).toBeVisible();
   expect(upload.declarations[0]).toMatchObject({ courseUnitId: unitId });
   expect(
-    calls.find(
-      (call) => call.method === 'POST' && call.path === `manager/course-units/${unitId}/materials`,
-    )?.body,
+    calls.find((call) => call.method === 'POST' && call.path.endsWith('/materials'))?.body,
   ).toMatchObject({ contentType: 'FILE', fileId: '88888888-8888-4888-8888-888888888888' });
-});
-
-test('manager keeps course headers still while scrolling each hidden-scrollbar panel', async ({
-  page,
-}, info) => {
-  await page.setViewportSize(
-    info.project.name === 'desktop' ? { width: 1440, height: 1000 } : { width: 393, height: 950 },
-  );
-  await mockManager(page, { fileMaterial: true, scrollContent: true });
-  await page.goto('/manager/materials');
-  await page
-    .getByRole('region', { name: 'Danh sách khóa học', exact: true })
-    .getByRole('button', { name: /Khóa học kiểm thử/ })
-    .click();
-  await expect(
-    page.getByRole('heading', { name: 'Yêu cầu bài thuyết trình', exact: true }),
-  ).toBeVisible();
-  const frame = page.locator('[data-slot="course-content-frame"]');
-  const sidebar = page.getByRole('region', { name: 'Nội dung khóa học - vùng cuộn', exact: true });
-  const content = page.getByRole('region', { name: 'Nội dung chương - vùng cuộn', exact: true });
-  const chapterTitle = page.getByRole('heading', { name: 'JavaScript căn bản', exact: true });
-  await frame.scrollIntoViewIfNeeded();
-  const initialFrame = await frame.boundingBox();
-  const initialTitle = await chapterTitle.boundingBox();
-  const initialPageY = await page.evaluate(() => scrollY);
-  for (const panel of [sidebar, content]) {
-    const dimensions = await panel.evaluate((element) => ({
-      scrollHeight: element.scrollHeight,
-      clientHeight: element.clientHeight,
-      scrollbar: getComputedStyle(element).scrollbarWidth,
-      webkitScrollbar: getComputedStyle(element, '::-webkit-scrollbar').display,
-    }));
-    expect(dimensions.scrollHeight).toBeGreaterThan(dimensions.clientHeight);
-    expect(dimensions.scrollbar).toBe('none');
-    expect(dimensions.webkitScrollbar).toBe('none');
-  }
-  await content.hover();
-  await page.mouse.wheel(0, -500);
-  await page.evaluate(
-    () =>
-      new Promise<void>((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-      ),
-  );
-  expect(await page.evaluate(() => scrollY)).toBe(initialPageY);
-  await page.mouse.wheel(0, 500);
-  await expect.poll(() => content.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
-  expect(await sidebar.evaluate((element) => element.scrollTop)).toBe(0);
-  expect(await frame.boundingBox()).toEqual(initialFrame);
-  expect(await chapterTitle.boundingBox()).toEqual(initialTitle);
-  expect(await page.evaluate(() => scrollY)).toBe(initialPageY);
-  await content.focus();
-  await page.keyboard.press('End');
-  await expect
-    .poll(() =>
-      content.evaluate((element) =>
-        Math.abs(element.scrollHeight - element.clientHeight - element.scrollTop),
-      ),
-    )
-    .toBeLessThanOrEqual(1);
-  const contentY = await content.evaluate((element) => element.scrollTop);
-  await sidebar.focus();
-  await page.keyboard.press('End');
-  const lastChapter = sidebar.getByRole('button', { name: /Chương thực hành 24/ });
-  await expect(lastChapter).toBeInViewport();
-  expect(await sidebar.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
-  expect(await content.evaluate((element) => element.scrollTop)).toBe(contentY);
-  expect(await frame.boundingBox()).toEqual(initialFrame);
-  expect(await page.evaluate(() => scrollY)).toBe(initialPageY);
   await page.screenshot({
-    path: `test-results/manager-scroll-frame-${info.project.name}.png`,
+    path: `test-results/manager-register-file-${info.project.name}.png`,
     fullPage: true,
   });
-  await lastChapter.click();
-  await expect(
-    page.getByRole('heading', { name: 'Chương thực hành 24', exact: true }),
-  ).toBeVisible();
-  expect(await content.evaluate((element) => element.scrollTop)).toBe(0);
-  await page.setViewportSize({ width: 320, height: 800 });
+});
+
+test('manager register and dialog use Admin Inter typography and adapt to narrow screens', async ({
+  page,
+}, info) => {
+  await mockManager(page);
+  await openCourseRegister(page);
+  await expect(page.getByLabel('Lọc theo khóa học', { exact: true })).toHaveCount(0);
+  const typography = await page.locator('.admin-workspace').evaluate(async (element) => {
+    await document.fonts.ready;
+    const style = getComputedStyle(element);
+    return {
+      font: style.fontFamily,
+      size: style.fontSize,
+      token: style.getPropertyValue('--font-admin').trim(),
+      loaded: document.fonts.check('16px "Inter Variable"'),
+    };
+  });
+  expect(typography.font.replaceAll('"', '')).toBe(typography.token.replaceAll('"', ''));
+  expect(typography.font).toContain('Inter');
+  expect(typography.size).toBe('18px');
+  expect(typography.loaded).toBe(true);
+  for (const width of [320, 768, 1009, 1440]) {
+    await page.setViewportSize({ width, height: 950 });
+    for (const name of [
+      'Chọn chương quản lý',
+      'Trạng thái duyệt trong chương',
+      'Loại tài liệu trong chương',
+    ]) {
+      const box = await page.getByLabel(name, { exact: true }).boundingBox();
+      expect(box?.height).toBeGreaterThanOrEqual(48);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    if (width >= 768) {
+      const chapter = await page.getByLabel('Chọn chương quản lý').boundingBox();
+      const status = await page.getByLabel('Trạng thái duyệt trong chương').boundingBox();
+      const type = await page.getByLabel('Loại tài liệu trong chương').boundingBox();
+      const reset = await page.getByRole('button', { name: 'Xóa bộ lọc' }).boundingBox();
+      expect(chapter && status && type && reset).toBeTruthy();
+      if (chapter && status && type && reset) {
+        expect(chapter.width).toBeGreaterThan(status.width);
+        expect(Math.abs(status.width - type.width)).toBeLessThan(1);
+        expect(reset.y).toBeGreaterThanOrEqual(status.y + status.height);
+      }
+    }
+  }
+  await page.getByRole('button', { name: 'Hướng dẫn JavaScript cơ bản', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  const dialog = page.getByRole('dialog');
+  const font = await dialog.evaluate((element) => getComputedStyle(element).fontFamily);
+  expect(font).toBe(typography.font);
+  await page.setViewportSize({ width: 320, height: 850 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await page.screenshot({
+    path: `test-results/manager-register-narrow-${info.project.name}.png`,
+    fullPage: true,
+  });
+});
+
+test('manager lists courses first and opens the review register only after choosing one', async ({
+  page,
+}) => {
+  const { calls } = await mockManager(page);
+  await page.goto('/manager/materials');
+  const list = page.getByRole('region', { name: 'Danh sách khóa học', exact: true });
+  const courseButton = list.getByRole('button', { name: /Khóa học kiểm thử/ });
+  await expect(courseButton).toBeVisible();
+  expect(calls.some((call) => call.path.startsWith('manager/course-units/'))).toBe(false);
+  await courseButton.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('region', { name: 'Danh sách tài liệu của chương' })).toBeVisible();
+  await page.getByRole('button', { name: 'Danh sách khóa học', exact: true }).click();
+  await expect(list).toBeVisible();
+  await page.reload();
+  await expect(list).toBeVisible();
 });
 
 test('manager shows one clear file detail with grouped actions and readable dates', async ({
@@ -1118,11 +1124,12 @@ test('manager shows one clear file detail with grouped actions and readable date
     .getByRole('region', { name: 'Danh sách khóa học', exact: true })
     .getByRole('button', { name: /Khóa học kiểm thử/ })
     .click();
+  await page.getByRole('button', { name: 'Yêu cầu bài thuyết trình', exact: true }).click();
   await expect(
     page.getByRole('heading', { name: 'Yêu cầu bài thuyết trình', exact: true }),
   ).toHaveCount(1);
   await expect(page.getByRole('navigation', { name: 'Tài liệu trong chương' })).toHaveCount(0);
-  const toolbar = page.getByRole('toolbar', { name: 'Thao tác tài liệu' });
+  const toolbar = page.getByRole('dialog', { name: 'Chi tiết tài liệu' });
   await expect(toolbar.getByRole('button', { name: 'Chỉnh sửa', exact: true })).toBeVisible();
   await expect(toolbar.getByRole('button', { name: 'Ẩn tài liệu', exact: true })).toBeVisible();
   await expect(toolbar.getByRole('button', { name: 'Xóa tài liệu', exact: true })).toBeVisible();
@@ -1141,115 +1148,4 @@ test('manager shows one clear file detail with grouped actions and readable date
   await page.getByRole('button', { name: 'Xem / tải tệp', exact: true }).click();
   await expect(page.getByRole('link', { name: /Mở tệp trong tab mới/ })).toBeVisible();
   expect(accessCalls).toBe(1);
-});
-
-test('manager keeps spacious filters on small screens without course search', async ({
-  page,
-}, info) => {
-  await mockManager(page);
-  await page.goto('/manager/materials');
-  await expect(page.getByRole('searchbox', { name: 'Tìm khóa học', exact: true })).toHaveCount(0);
-  const picker = page.getByLabel('Lọc theo khóa học', { exact: true });
-  const rail = page.getByRole('region', { name: 'Danh sách khóa học', exact: true });
-  const courseButton = rail.getByRole('button', { name: /Khóa học kiểm thử/ });
-  await expect(courseButton).toBeVisible();
-  await courseButton.click();
-  await expect(picker.locator('option')).toHaveCount(2);
-  await expect(page.getByRole('toolbar', { name: 'Thao tác tài liệu' })).toBeVisible();
-  await expect(picker).toHaveValue(courseId);
-  await expect(page.getByRole('complementary', { name: 'Nội dung khóa học' })).toBeVisible();
-  const filters = page.getByRole('group', { name: 'Bộ lọc tài liệu', exact: true });
-  await expect(filters.getByLabel('Lọc theo khóa học', { exact: true })).toHaveValue(courseId);
-  await expect(
-    page
-      .getByRole('region', { name: 'Nội dung chương - vùng cuộn', exact: true })
-      .getByRole('combobox'),
-  ).toHaveCount(0);
-  if (info.project.name === 'desktop') {
-    const coursePickerBox = await picker.boundingBox();
-    const statusBox = await filters
-      .getByLabel('Trạng thái duyệt trong chương', { exact: true })
-      .boundingBox();
-    const typeBox = await filters
-      .getByLabel('Loại tài liệu trong chương', { exact: true })
-      .boundingBox();
-    expect(coursePickerBox && statusBox && typeBox).toBeTruthy();
-    expect(coursePickerBox?.y).toBe(statusBox?.y);
-    expect(coursePickerBox?.y).toBe(typeBox?.y);
-    expect(
-      coursePickerBox && statusBox && coursePickerBox.x + coursePickerBox.width < statusBox.x,
-    ).toBeTruthy();
-  }
-  for (const control of [
-    picker,
-    page.getByLabel('Trạng thái duyệt trong chương', { exact: true }),
-    page.getByLabel('Loại tài liệu trong chương', { exact: true }),
-  ]) {
-    await expect(control).toBeVisible();
-    const dimensions = await control.evaluate((element) => {
-      const style = getComputedStyle(element);
-      return {
-        height: element.getBoundingClientRect().height,
-        contentHeight:
-          element.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom),
-        lineHeight: parseFloat(style.lineHeight),
-      };
-    });
-    expect(dimensions.height).toBeGreaterThanOrEqual(48);
-    expect(dimensions.lineHeight).toBeGreaterThanOrEqual(24);
-    expect(dimensions.contentHeight).toBeGreaterThanOrEqual(dimensions.lineHeight);
-  }
-  await page.screenshot({
-    path: `test-results/manager-course-filters-${info.project.name}.png`,
-    fullPage: true,
-  });
-  await page.setViewportSize({ width: 320, height: 850 });
-  await expect(picker).toHaveValue(courseId);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-});
-
-test('manager lists courses first and opens the workspace only after choosing one', async ({
-  page,
-}, info) => {
-  const { calls } = await mockManager(page);
-  await page.goto('/manager/materials');
-  const list = page.getByRole('region', { name: 'Danh sách khóa học', exact: true });
-  const courseButton = list.getByRole('button', { name: /Khóa học kiểm thử/ });
-  await expect(courseButton).toBeVisible();
-  await expect(page.getByLabel('Lọc theo khóa học', { exact: true })).toHaveCount(0);
-  await expect(page.locator('[data-slot="course-content-frame"]')).toHaveCount(0);
-  await expect(
-    page.getByText('Chọn khóa học để xem chương và tài liệu.', { exact: true }),
-  ).toHaveCount(0);
-  await expect(page.getByRole('table')).toHaveCount(0);
-  expect(
-    calls.some(
-      (call) =>
-        call.path === 'manager/materials' ||
-        call.path === 'courses/' + courseId ||
-        call.path.startsWith('manager/course-units/'),
-    ),
-  ).toBe(false);
-  await page.setViewportSize(
-    info.project.name === 'desktop' ? { width: 1440, height: 1000 } : { width: 393, height: 1100 },
-  );
-  await page.screenshot({
-    path: 'test-results/manager-course-list-' + info.project.name + '.png',
-    fullPage: true,
-  });
-  await courseButton.click();
-  await expect(list).toHaveCount(0);
-  await expect(page.getByRole('complementary', { name: 'Nội dung khóa học' })).toBeVisible();
-  await expect(page.getByRole('toolbar', { name: 'Thao tác tài liệu' })).toBeVisible();
-  await page.getByRole('button', { name: 'Danh sách khóa học', exact: true }).click();
-  await expect(courseButton).toBeVisible();
-  await expect(page.locator('[data-slot="course-content-frame"]')).toHaveCount(0);
-  await courseButton.focus();
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('toolbar', { name: 'Thao tác tài liệu' })).toBeVisible();
-  await page.reload();
-  await expect(list).toBeVisible();
-  await expect(page.locator('[data-slot="course-content-frame"]')).toHaveCount(0);
-  await page.setViewportSize({ width: 320, height: 800 });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

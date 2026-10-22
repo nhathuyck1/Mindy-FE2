@@ -1,5 +1,29 @@
 # Tiến độ
 
+## 22/10/2026 — Chẩn đoán lỗi API thu tiền Manager
+
+- Xác minh trực tiếp orders/classes/cash-orders trên upstream trả 404 và Swagger live không có các route; materials cùng host trả 401. FE đang gọi đúng route của source BE local, nhưng bản backend đang phục vụ thiếu API tương ứng. Không deploy backend hoặc ghi nhận thanh toán thật.
+- Đổi lỗi tải danh sách thu tiền sang thông báo riêng, không báo nhầm không tìm thấy tài liệu hoặc hiển thị danh sách rỗng. Thử lại tải cả đơn, số liệu và lớp; không thực hiện lại lệnh xác nhận tiền.
+- Local: build/TypeScript, lint/format, 144 unit và 12 E2E thu tiền desktop/mobile pass với API mock, gồm 404 rồi phục hồi và không phát lệnh thu tiền. Backend live vẫn cần cập nhật; test mock không xác nhận tính năng đã hoạt động trên server.
+
+## 22/10/2026 — Bỏ dropdown khóa học bị lặp trong workspace Manager
+
+- Trang đi từ danh sách khóa học chỉ giữ Chương, Trạng thái duyệt và Loại tài liệu; tên khóa ở tiêu đề, nút Danh sách khóa học dùng để quay lại chọn khóa. Khi tải chi tiết vẫn giữ tên đã chọn từ catalog.
+- ManagerCourseWorkspace nhận coursePicker tùy chọn để chỉ giữ selector ở luồng kho toàn bộ tài liệu, không để khoảng trống khi không truyền.
+- Local: build/TypeScript, lint/format và 6 E2E desktop/mobile pass, gồm quay lại danh sách, lọc/phân trang, bố cục 320–1440px và font. Chưa deploy.
+
+## 22/10/2026 — Bộ lọc Manager đều cột và upload giống Mentor
+
+- Canh hai hàng filter theo cùng grid hai cột; Xóa bộ lọc ở hàng riêng bên dưới. Giữ reset trạng thái/loại và phân trang.
+- Đồng bộ vùng kéo thả và thẻ upload tệp chính/đính kèm theo Mentor: xanh khi READY, đỏ khi lỗi, đang tải/chờ/hủy rõ ràng. Giữ định dạng/giới hạn/polling riêng của Manager; khi thay tệp chính xóa tham chiếu cũ ngay để lỗi không lưu nhầm file cũ.
+- Local: build/TypeScript, ESLint/Prettier, 144 unit tests và 42 E2E Manager desktop/mobile pass. Kiểm tra chiều rộng hai hàng filter, vị trí reset, thay tệp lỗi không giữ file cũ; đã xem ảnh bộ lọc, upload xanh và lỗi đỏ trên mobile. Chưa deploy.
+
+## 22/10/2026 — Tách giao diện Manager khỏi Mentor
+
+- Đổi workspace tài liệu khóa học thành bảng kiểm duyệt với bộ chọn chương, bộ lọc trạng thái/loại và phân trang. Bỏ khung chương bên trái và preview tự mở; chi tiết/duyệt/sửa chuyển sang dialog, tạo mới vẫn tự chọn ngữ cảnh khóa/chương.
+- Responsive bảng/thẻ theo chiều rộng nội dung, giữ các luồng duyệt/xuất bản, expectedRevision, upload và signed access. Font Manager đã dùng chung Inter/thang chữ Admin; xác nhận computed font, tải font và typography dialog bằng E2E. Không sửa backend hoặc Mentor.
+- Local: build/TypeScript, ESLint/Prettier và 144 unit tests pass. 40 ca E2E Manager liên quan đã pass qua các lượt; lượt cuối chạy lại 14 ca workspace desktop/mobile, gồm lọc/phân trang, duyệt và cập nhật bảng, tạo/sửa/upload đúng chương, signed file, font, focus và 320px. Đã xem ảnh desktop/mobile; chưa deploy.
+
 ## 22/10/2026 — Sắp xếp nội dung theo buổi học cho Mentor
 
 - Thay dãy nút tài liệu ngang và danh sách buổi tách rời bằng cấu trúc Chương → Buổi học → Nội dung. Mỗi buổi có lịch, trạng thái, danh sách bài viết/tài liệu/video và thao tác thêm/điểm danh; chưa gắn buổi và liên kết buổi không xác định hiển thị riêng.
