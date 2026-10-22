@@ -1,5 +1,13 @@
 # Quy tắc giao diện Mindy
 
+## Chương → Buổi học → Nội dung — 22/10/2026
+
+- Tham khảo cách Coursera gom video, readings và assignments theo module tại https://www.coursera.org/learn/learning-and-development; Mindy áp dụng thêm cấp buổi học phù hợp lớp có lịch dạy. Không sao chép màu sắc hoặc thêm loại nội dung chưa được API hỗ trợ.
+- Cột chương giữ nguyên. Vùng nội dung mặc định hiển thị từng buổi với tên, lịch UTC+7, phòng nếu có, trạng thái, số nội dung và nút Điểm danh/Thêm nội dung. Danh sách mỗi buổi có icon, tên, loại và trạng thái duyệt, nhấn để mở chi tiết và sửa/gửi duyệt khi có quyền.
+- Phân biệt tên gọi: Chương là nhóm ngoài; Bài viết/Tài liệu/Video là nội dung bên trong buổi. Thao tác Tạo chương cũ ở tài liệu được đổi thành Thêm nội dung, form dùng Loại nội dung và bộ lọc Trạng thái nội dung.
+- Chưa gắn buổi học là khu riêng cho nội dung dùng chung; buổi chưa xác định không bị giấu hoặc tự gán. Buổi trống và buổi không khớp bộ lọc có thông báo khác nhau. Màn hình tổng quan chờ cả chương và nội dung với một loading.
+- Chi tiết/form mở trong cùng vùng cuộn, có Về danh sách buổi học. Các hàng có tên 16px xuống dòng và focus bàn phím rõ, nút tối thiểu 44px; kiểm tra từ 320px đến desktop.
+
 ## Thẻ tệp đính kèm Mentor — 22/10/2026
 
 - Thẻ tệp đã lưu dùng biểu tượng tài liệu trên nền mint nhạt, tên 16px xuống dòng khi dài, nhãn loại tệp dễ hiểu và dung lượng B/KB/MB; không hiển thị MIME thô.

@@ -1,20 +1,18 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/api/client';
 import {
   Plus,
   FileText,
-  Video,
   Paperclip,
   Send,
   Pencil,
   Trash2,
   CalendarDays,
   LockKeyhole,
-  ArrowRight,
+  ArrowLeft,
   ExternalLink,
   LoaderCircle,
 } from 'lucide-react';
@@ -23,9 +21,13 @@ import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { useSession } from '@/features/auth/api/auth-queries';
-import { useMentorCommand, useMentorQuery, mentorError } from '../api/mentor-queries';
 import {
-  materialsSchema,
+  useMentorCommand,
+  useMentorQuery,
+  useMentorUnitMaterials,
+  mentorError,
+} from '../api/mentor-queries';
+import {
   materialDetailSchema,
   fileAccessSchema,
   unitDetailSchema,
@@ -34,7 +36,8 @@ import {
   type MaterialDetail,
 } from '../schemas/mentor-contracts';
 import { MentorMaterialEditor } from './mentor-material-editor';
-import { MentorPagination, MentorQueryState, MentorStatus, mentorDate } from './mentor-shared';
+import { MentorQueryState, MentorStatus, mentorDate } from './mentor-shared';
+import { MentorSessionMaterials } from './mentor-session-materials';
 
 type UnitContextQuery = UseQueryResult<z.infer<typeof unitDetailSchema>>;
 
@@ -54,42 +57,6 @@ function fileSize(bytes: number) {
   const unit = bytes < 1048576 ? 'KB' : 'MB';
   const size = bytes / (unit === 'KB' ? 1024 : 1048576);
   return `${size.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ${unit}`;
-}
-
-function UnitSessionContext(props: { context: UnitContextQuery }) {
-  const context = props.context;
-  if (context.isPending) return null;
-  return (
-    <section className="mt-8 border-t border-line pt-6" aria-label="Buổi học của chương">
-      <h3 className="mb-4 flex items-center gap-2 font-bold">
-        <CalendarDays aria-hidden="true" className="size-5 text-mint" />
-        Buổi học
-      </h3>
-      <MentorQueryState pending={false} error={context.error} retry={context.refetch}>
-        <ul className="divide-y divide-line">
-          {context.data?.sessions.map((session) => (
-            <li key={session.id} className="space-y-2 py-4 text-sm">
-              <div className="flex flex-wrap items-center gap-3">
-                <p className="font-semibold">{session.title}</p>
-                <MentorStatus value={session.status} />
-              </div>
-              <p className="text-muted">
-                {mentorDate(session.startsAt)} – {mentorDate(session.endsAt)}
-              </p>
-              {session.roomName && <p>Phòng: {session.roomName}</p>}
-              <Link href={`/mentor/sessions/${session.id}`} className="text-link font-semibold">
-                Xem buổi học & điểm danh
-                <ArrowRight aria-hidden="true" className="size-4" />
-              </Link>
-            </li>
-          ))}
-        </ul>
-        {context.data?.sessions.length === 0 && (
-          <p className="text-sm text-muted">Chương này chưa có buổi học.</p>
-        )}
-      </MentorQueryState>
-    </section>
-  );
 }
 
 function MaterialSession(props: {
@@ -316,7 +283,7 @@ function MaterialDetail(props: {
     ['DRAFT', 'REJECTED'].includes(item.reviewStatus);
   return (
     <Modal
-      title={item?.title ?? 'Chi tiết chương'}
+      title={item?.title ?? 'Chi tiết nội dung'}
       contentClassName="sm:max-w-4xl"
       onClose={props.onClose}
       embedded
@@ -328,7 +295,7 @@ function MaterialDetail(props: {
               <div
                 className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4"
                 role="toolbar"
-                aria-label="Thao tác chương"
+                aria-label="Thao tác nội dung"
               >
                 <div className="min-w-0 flex-[1_1_16rem] space-y-3">
                   <h3 className="text-xl leading-7 font-bold break-words">{item.title}</h3>
@@ -436,25 +403,26 @@ function MaterialDetail(props: {
   );
 }
 export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => void }) {
-  const [page, setPage] = useState(1);
   const [filter, setFilter] = useState('');
   const [detail, setDetail] = useState<string | null>(null);
-  const [editor, setEditor] = useState<{ material?: MaterialDetail } | null>(null);
+  const [editor, setEditor] = useState<{ material?: MaterialDetail; sessionId?: string } | null>(
+    null,
+  );
   const [confirm, setConfirm] = useState<{
     action: 'submit' | 'delete';
     material: Material;
   } | null>(null);
   const prefix = `mentor/classes/${props.unit.classId}`;
   const unitContext = useMentorQuery(`${prefix}/units/${props.unit.id}`, unitDetailSchema);
-  const materials = useMentorQuery(
-    `${prefix}/units/${props.unit.id}/materials?page=${page}&pageSize=20${filter ? `&reviewStatus=${filter}` : ''}`,
-    materialsSchema,
-  );
+  const materials = useMentorUnitMaterials(props.unit, filter);
   const submit = useMentorCommand(materialDetailSchema);
   const remove = useMentorCommand(z.null());
   const busy = submit.isPending || remove.isPending;
-  const selectedId = detail ?? materials.data?.items[0]?.id;
-  const hasMaterials = Boolean(materials.data?.items.length);
+  const body = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    body.current?.scrollTo({ top: 0 });
+    if (detail || editor) body.current?.focus({ preventScroll: true });
+  }, [detail, editor]);
   return (
     <section
       aria-label="Nội dung chương"
@@ -468,100 +436,93 @@ export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => voi
         <div className="flex flex-wrap gap-2 [&>button]:grow">
           <Button
             variant="outline"
-            size="sm"
+            className="border-line bg-soft/50 text-forest shadow-none"
             disabled={props.unit.status === 'COMPLETED'}
             onClick={props.onRelease}
           >
             <LockKeyhole aria-hidden="true" className="size-4" />
             Quyền truy cập
           </Button>
-          <Button size="sm" onClick={() => setEditor({})}>
+          <Button
+            disabled={Boolean(editor)}
+            onClick={() => {
+              setDetail(null);
+              setEditor({});
+            }}
+          >
             <Plus className="size-4" />
-            Tạo chương
+            Thêm nội dung
           </Button>
         </div>
       </div>
       <div
+        ref={body}
         role="region"
         aria-label="Nội dung chương - vùng cuộn"
         tabIndex={0}
         className="scrollbar-hidden @container/mentor-content min-h-0 min-w-0 flex-1 p-5 focus-visible:outline-2 focus-visible:outline-mint focus-visible:-outline-offset-2 sm:p-6 @3xl/mentor-course:overflow-y-auto @3xl/mentor-course:overscroll-y-contain"
       >
-        <div
-          className={`mb-6 grid min-w-0 items-start gap-4 ${hasMaterials ? '@xl/mentor-content:grid-cols-[minmax(0,1fr)_15rem]' : ''}`}
-        >
-          <MentorQueryState
-            pending={materials.isPending && !editor}
-            error={materials.error}
-            retry={materials.refetch}
-            empty={materials.data?.items.length === 0}
-          >
-            <nav
-              className="flex min-w-0 gap-2 overflow-x-auto overscroll-x-contain pb-2"
-              aria-label="Nội dung trong chương"
+        {!editor && !detail && (
+          <>
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+              <div className="min-w-0 flex-[1_1_14rem]">
+                <h3 className="text-lg font-bold">Nội dung theo buổi học</h3>
+                <p className="mt-1 text-sm leading-6 text-muted">
+                  Chọn nội dung để xem, chỉnh sửa hoặc gửi duyệt. Thêm nội dung ngay tại buổi cần
+                  dạy.
+                </p>
+              </div>
+              <NativeSelect
+                aria-label="Trạng thái nội dung"
+                wrapperClassName="ml-auto w-60 max-w-full min-w-0"
+                className="h-12 w-full text-[16px] leading-6"
+                value={filter}
+                onChange={(e) => {
+                  setFilter(e.target.value);
+                }}
+              >
+                <NativeSelectOption value="">Mọi trạng thái nội dung</NativeSelectOption>
+                <NativeSelectOption value="DRAFT">Bản nháp</NativeSelectOption>
+                <NativeSelectOption value="PENDING_REVIEW">Chờ duyệt</NativeSelectOption>
+                <NativeSelectOption value="REJECTED">Cần chỉnh sửa</NativeSelectOption>
+                <NativeSelectOption value="APPROVED">Đã duyệt</NativeSelectOption>
+              </NativeSelect>
+            </div>
+            <MentorQueryState
+              pending={materials.isPending || unitContext.isPending}
+              error={materials.error ?? unitContext.error}
+              retry={() => Promise.all([materials.refetch(), unitContext.refetch()])}
             >
-              {materials.data?.items.map((item) => {
-                const Icon =
-                  item.contentType === 'VIDEO'
-                    ? Video
-                    : item.contentType === 'ARTICLE'
-                      ? FileText
-                      : Paperclip;
-                return (
-                  <Button
-                    key={item.id}
-                    variant={selectedId === item.id ? 'default' : 'outline'}
-                    className="h-12 max-w-full shrink-0 text-left"
-                    title={item.title}
-                    aria-pressed={selectedId === item.id}
-                    onClick={() => {
-                      setDetail(item.id);
-                      setEditor(null);
-                    }}
-                  >
-                    <Icon aria-hidden="true" className="size-4 shrink-0" />
-                    <span className="min-w-0 truncate">{item.title}</span>
-                  </Button>
-                );
-              })}
-            </nav>
-          </MentorQueryState>
-          <NativeSelect
-            aria-label="Trạng thái chương"
-            wrapperClassName={`order-first ml-auto w-60 max-w-full min-w-0 ${hasMaterials ? '@xl/mentor-content:order-last' : ''}`}
-            className="h-12 w-full text-[16px] leading-6"
-            value={filter}
-            onChange={(e) => {
-              setFilter(e.target.value);
-              setPage(1);
+              <MentorSessionMaterials
+                sessions={unitContext.data?.sessions ?? []}
+                items={materials.data ?? []}
+                filtered={Boolean(filter)}
+                onSelect={setDetail}
+                onCreate={(sessionId) => setEditor({ sessionId })}
+              />
+            </MentorQueryState>
+          </>
+        )}
+        {(detail || editor) && (
+          <Button
+            variant="ghost"
+            className="mb-5 -ml-3 text-forest"
+            onClick={() => {
               setDetail(null);
               setEditor(null);
+              body.current?.focus({ preventScroll: true });
             }}
           >
-            <NativeSelectOption value="">Mọi trạng thái chương</NativeSelectOption>
-            <NativeSelectOption value="DRAFT">Bản nháp</NativeSelectOption>
-            <NativeSelectOption value="PENDING_REVIEW">Chờ duyệt</NativeSelectOption>
-            <NativeSelectOption value="REJECTED">Cần chỉnh sửa</NativeSelectOption>
-            <NativeSelectOption value="APPROVED">Đã duyệt</NativeSelectOption>
-          </NativeSelect>
-        </div>
-        {materials.data && materials.data.total > 20 && (
-          <MentorPagination
-            page={page}
-            total={materials.data.total}
-            onChange={(next) => {
-              setPage(next);
-              setDetail(null);
-              setEditor(null);
-            }}
-          />
+            <ArrowLeft aria-hidden="true" className="size-4" />
+            Về danh sách buổi học
+          </Button>
         )}
-        {selectedId && !editor && !materials.isError && (
+        {detail && !editor && (
           <MaterialDetail
-            key={selectedId}
+            key={detail}
             classId={props.unit.classId}
             unitContext={unitContext}
-            id={selectedId}
+            id={detail}
             onClose={() => setDetail(null)}
             onAction={(action, material) => {
               submit.reset();
@@ -579,19 +540,18 @@ export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => voi
             key={editor.material?.id ?? 'new'}
             unit={props.unit}
             material={editor.material}
+            initialSessionId={editor.sessionId}
             onSaved={(material) => {
               setDetail(material.id);
               setFilter('');
-              setPage(1);
             }}
             onClose={() => setEditor(null)}
           />
         )}
-        <UnitSessionContext context={unitContext} />
       </div>
       {confirm && (
         <Modal
-          title={confirm.action === 'submit' ? 'Gửi chương duyệt' : 'Xóa bản nháp'}
+          title={confirm.action === 'submit' ? 'Gửi nội dung duyệt' : 'Xóa bản nháp'}
           onClose={() => {
             if (!busy) setConfirm(null);
           }}
@@ -600,7 +560,7 @@ export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => voi
             <p>
               {confirm.action === 'submit'
                 ? 'Gửi bản nháp này cho Manager duyệt? Bạn sẽ không sửa được khi đang chờ duyệt.'
-                : 'Xóa bản nháp này khỏi danh sách chương?'}{' '}
+                : 'Xóa bản nháp này khỏi buổi học?'}{' '}
               <strong>{confirm.material.title}</strong>
             </p>
             {(submit.isError || remove.isError) && (

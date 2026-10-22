@@ -96,23 +96,27 @@ test('mentor chapter keeps one loading across content, editor and session reads'
     await page.goto(`/mentor/classes/${mentorIds.class}`);
     const loading = page.getByRole('status', { name: 'Đang tải dữ liệu…', exact: true });
     await expect(loading).toHaveCount(1);
-    await page.getByRole('button', { name: 'Tạo chương', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Tạo chương mới', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Thêm nội dung', exact: true }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Thêm nội dung mới', exact: true }),
+    ).toBeVisible();
     await expect(loading).toHaveCount(1);
     gates.sessions.resolve();
     await expect(loading).toHaveCount(0);
     await page.getByRole('button', { name: 'Đóng', exact: true }).click();
     await expect(loading).toHaveCount(1);
     gates.list.resolve();
-    await expect(
-      page.getByRole('button', { name: 'Bài viết đầu tiên', exact: true }),
-    ).toBeVisible();
+    await expect(loading).toHaveCount(1);
+    gates.context.resolve();
+    await expect(page.getByRole('button', { name: /Bài viết đầu tiên/ })).toBeVisible();
+    await expect(loading).toHaveCount(0);
+    await page.getByRole('button', { name: /Bài viết đầu tiên/ }).click();
     await expect(loading).toHaveCount(1);
     gates.detail.resolve();
-    await expect(page.getByRole('toolbar', { name: 'Thao tác chương', exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('toolbar', { name: 'Thao tác nội dung', exact: true }),
+    ).toBeVisible();
     await expect(loading).toHaveCount(0);
-    gates.context.resolve();
-    await expect(page.getByRole('heading', { name: 'Buổi học', exact: true })).toBeVisible();
     await expect(loading).toHaveCount(0);
   } finally {
     for (const gate of Object.values(gates)) gate.resolve();

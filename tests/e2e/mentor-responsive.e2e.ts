@@ -11,8 +11,8 @@ test('mentor chapters adapt to available space and keep drafts while resizing', 
   const sidebar = page.getByRole('complementary', { name: 'Nội dung khóa học' });
   const content = page.getByRole('region', { name: 'Nội dung chương', exact: true });
   const selector = page.getByLabel('Chương đang xem');
-  const create = page.getByRole('button', { name: 'Tạo chương', exact: true });
-  await expect(page.getByRole('toolbar', { name: 'Thao tác chương' })).toBeVisible();
+  const create = page.getByRole('button', { name: 'Thêm nội dung', exact: true });
+  await expect(page.getByRole('heading', { name: 'Nội dung theo buổi học' })).toBeVisible();
 
   for (const viewport of [
     { width: 320, height: 800, columns: false },
@@ -59,7 +59,7 @@ test('mentor chapters adapt to available space and keep drafts while resizing', 
   for (const width of [320, 1009, 1024, 1440, 390]) {
     await page.setViewportSize({ width, height: 844 });
     await expect(title).toHaveValue('Bản nháp đang soạn');
-    await expect(page.getByRole('heading', { name: 'Tạo chương mới' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Thêm nội dung mới' })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
@@ -87,7 +87,7 @@ test('mentor chapters adapt to available space and keep drafts while resizing', 
   }
   await page.getByRole('button', { name: 'Đóng', exact: true }).click();
   await selector.selectOption(mentorIds.unit);
-  await expect(page.getByRole('toolbar', { name: 'Thao tác chương' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Nội dung theo buổi học' })).toBeVisible();
   await page.screenshot({ path: 'test-results/mentor-responsive-390.png', fullPage: true });
 });
 
@@ -121,8 +121,8 @@ test('mentor chapter list and material body scroll independently at tablet width
   await page.goto(`/mentor/classes/${mentorIds.class}`);
   const chapters = page.getByRole('navigation', { name: 'Chương', exact: true });
   const body = page.getByRole('region', { name: 'Nội dung chương - vùng cuộn', exact: true });
-  const create = page.getByRole('button', { name: 'Tạo chương', exact: true });
-  await expect(page.getByRole('toolbar', { name: 'Thao tác chương' })).toBeVisible();
+  const create = page.getByRole('button', { name: 'Thêm nội dung', exact: true });
+  await expect(page.getByRole('heading', { name: 'Nội dung theo buổi học' })).toBeVisible();
   expect(await chapters.evaluate((node) => node.scrollHeight > node.clientHeight)).toBe(true);
   expect(await body.evaluate((node) => node.scrollHeight > node.clientHeight)).toBe(true);
   await chapters.scrollIntoViewIfNeeded();
@@ -135,5 +135,7 @@ test('mentor chapter list and material body scroll independently at tablet width
   await page.keyboard.press('End');
   await expect.poll(() => body.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
   expect(await create.boundingBox()).toEqual(before);
-  await expect(page.getByRole('heading', { name: 'Buổi học', exact: true })).toBeInViewport();
+  await expect(
+    page.getByRole('region', { name: 'Nội dung chưa gắn buổi học', exact: true }),
+  ).toBeInViewport();
 });

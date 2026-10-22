@@ -10,6 +10,7 @@ import {
   uploadIntentSchema,
   fileStatusSchema,
   type ContentUnit,
+  materialsSchema,
 } from '../schemas/mentor-contracts';
 
 export function useMentorQuery<T>(path: string, schema: z.ZodType<T>, enabled = true) {
@@ -29,6 +30,34 @@ export function useMentorWeek(monday: string) {
     queryFn: ({ signal }) => fetchMentorWeek(monday, signal),
     enabled: session.data?.role === 'MENTOR' && session.data.status === 'ACTIVE',
     retry: false,
+  });
+}
+
+export function useMentorUnitMaterials(unit: ContentUnit, reviewStatus: string) {
+  const session = useSession();
+  const path = `mentor/classes/${unit.classId}/units/${unit.id}/materials`;
+  return useQuery({
+    queryKey: ['mentor', session.data?.id, path, 'by-session', reviewStatus],
+    enabled: session.data?.role === 'MENTOR' && session.data.status === 'ACTIVE',
+    retry: false,
+    queryFn: async ({ signal }) => {
+      const read = (page: number) =>
+        apiRequest({
+          path: `${path}?page=${page}&pageSize=100${reviewStatus ? `&reviewStatus=${reviewStatus}` : ''}`,
+          schema: materialsSchema,
+          signal,
+        });
+      const first = await read(1);
+      const items = [...first.items];
+      // Group the entire chapter, including content beyond the first API page.
+      for (let page = 2; page <= Math.ceil(first.total / first.pageSize); page++) {
+        const next = await read(page);
+        items.push(...next.items);
+      }
+      return [...new Map(items.map((item) => [item.id, item])).values()].sort(
+        (a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title, 'vi'),
+      );
+    },
   });
 }
 

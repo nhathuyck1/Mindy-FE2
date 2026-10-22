@@ -24,6 +24,7 @@ export async function mockMentor(
     materialState?: 'APPROVED' | 'PENDING_REVIEW';
     materialConflict?: boolean;
     savedAttachment?: boolean;
+    sessionMaterials?: boolean;
   } = {},
 ) {
   const calls: {
@@ -98,6 +99,50 @@ export async function mockMentor(
       : [],
   };
   let materials: Record<string, unknown>[] = [material];
+  if (options.sessionMaterials)
+    materials = [
+      { ...material, sessionId: mentorIds.session },
+      {
+        ...material,
+        id: mentorIds.file,
+        title: 'Tài liệu thực hành HTML',
+        contentType: 'FILE',
+        sessionId: mentorIds.session,
+        reviewStatus: 'APPROVED',
+        canEdit: false,
+        firstApprovedAt: date,
+        contentHtml: null,
+        file: {
+          id: mentorIds.file,
+          originalFilename: 'thuc-hanh.pdf',
+          mimeType: 'application/pdf',
+          sizeBytes: 40960,
+          kind: 'PDF',
+        },
+      },
+      {
+        ...material,
+        id: mentorIds.nextUnit,
+        title: 'Video làm quen biểu mẫu',
+        contentType: 'VIDEO',
+        sessionId: mentorIds.nextUnit,
+        contentHtml: null,
+        file: {
+          id: mentorIds.file,
+          originalFilename: 'bieu-mau.mp4',
+          mimeType: 'video/mp4',
+          sizeBytes: 1048576,
+          kind: 'VIDEO',
+        },
+      },
+      { ...material, id: mentorIds.unit, title: 'Tài liệu dùng chung' },
+      {
+        ...material,
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        title: 'Nội dung cần kiểm tra buổi',
+        sessionId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+      },
+    ];
   let marks: string[] = [];
   const totals = () => ({
     eligible: marks.length,
@@ -375,6 +420,21 @@ export async function mockMentor(
             meetingUrl: null,
             status: session.status,
           },
+          ...(options.sessionMaterials
+            ? [
+                {
+                  id: mentorIds.nextUnit,
+                  classUnitId: unit.id,
+                  title: 'Thực hành biểu mẫu',
+                  sessionNumber: 2,
+                  startsAt: '2026-10-18T03:00:00Z',
+                  endsAt: '2026-10-18T05:00:00Z',
+                  roomName: null,
+                  meetingUrl: null,
+                  status: 'SCHEDULED',
+                },
+              ]
+            : []),
         ],
       });
     if (path.endsWith('/release')) {
@@ -392,6 +452,17 @@ export async function mockMentor(
             sessionNumber: 1,
             status: session.status,
           },
+          ...(options.sessionMaterials
+            ? [
+                {
+                  id: mentorIds.nextUnit,
+                  classUnitId: unit.id,
+                  title: 'Thực hành biểu mẫu',
+                  sessionNumber: 2,
+                  status: 'SCHEDULED',
+                },
+              ]
+            : []),
         ]),
       );
     if (path.includes('/materials')) {
@@ -404,13 +475,19 @@ export async function mockMentor(
           url: 'https://storage.example.test/lesson.pdf',
           expiresAt: new Date(Date.now() + 60000).toISOString(),
         });
+      const requestedId = path.split('/materials/')[1]?.split('/')[0];
+      const currentIndex = materials.findIndex((item) => item.id === requestedId);
       if (method === 'DELETE') {
-        materials = [];
+        materials = materials.filter((item) => item.id !== requestedId);
         return route.fulfill({ status: 204 });
       }
       if (path.endsWith('/submit')) {
-        materials[0] = { ...materials[0], reviewStatus: 'PENDING_REVIEW', canEdit: false };
-        return ok(materials[0]);
+        materials[currentIndex] = {
+          ...materials[currentIndex],
+          reviewStatus: 'PENDING_REVIEW',
+          canEdit: false,
+        };
+        return ok(materials[currentIndex]);
       }
       if (method === 'PATCH' && options.materialConflict)
         return route.fulfill({
@@ -418,9 +495,20 @@ export async function mockMentor(
           json: { code: 'MATERIAL_REVIEW_CONFLICT', message: 'Changed' },
         });
       if (method === 'POST' || method === 'PATCH') {
-        materials = [{ ...material, ...body, revision: method === 'PATCH' ? 2 : 1 }];
+        const index =
+          method === 'PATCH' ? currentIndex : options.sessionMaterials ? materials.length : 0;
+        materials[index] = {
+          ...(method === 'PATCH'
+            ? materials[index]
+            : {
+                ...material,
+                id: options.sessionMaterials ? 'cccccccc-cccc-4ccc-8ccc-cccccccccccc' : material.id,
+              }),
+          ...body,
+          revision: method === 'PATCH' ? 2 : 1,
+        };
         if (typeof body?.contentText === 'string')
-          materials[0].contentHtml =
+          materials[index].contentHtml =
             '<p>' +
             body.contentText
               .replaceAll('&', '&amp;')
@@ -428,9 +516,9 @@ export async function mockMentor(
               .replaceAll('>', '&gt;')
               .replaceAll('\n', '<br>') +
             '</p>';
-        if (materials[0].contentType !== 'ARTICLE')
-          materials[0] = {
-            ...materials[0],
+        if (materials[index].contentType !== 'ARTICLE')
+          materials[index] = {
+            ...materials[index],
             contentHtml: null,
             contentSchemaVersion: null,
             file: {
@@ -441,10 +529,19 @@ export async function mockMentor(
               kind: 'PDF',
             },
           };
-        return ok(materials[0]);
+        return ok(materials[index]);
       }
-      if (path.endsWith('/materials')) return ok(paged(materials));
-      return ok(materials[0]);
+      if (path.endsWith('/materials'))
+        return ok(
+          paged(
+            materials.filter(
+              (item) =>
+                !url.searchParams.get('reviewStatus') ||
+                item.reviewStatus === url.searchParams.get('reviewStatus'),
+            ),
+          ),
+        );
+      return ok(materials[currentIndex]);
     }
     const fileStatus = {
       id: mentorIds.file,
