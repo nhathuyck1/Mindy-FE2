@@ -1,5 +1,11 @@
 # Tiến độ
 
+## 22/10/2026 — Sắp xếp nội dung theo buổi học cho Mentor
+
+- Thay dãy nút tài liệu ngang và danh sách buổi tách rời bằng cấu trúc Chương → Buổi học → Nội dung. Mỗi buổi có lịch, trạng thái, danh sách bài viết/tài liệu/video và thao tác thêm/điểm danh; chưa gắn buổi và liên kết buổi không xác định hiển thị riêng.
+- Thêm từ buổi tự chọn sessionId tương ứng trên form, lưu xong mở nội dung vừa tạo; quay lại danh sách thấy đúng nhóm. Giữ quyền sửa bản nháp, gửi duyệt, upload đã kiểm tra và signed access. Lấy đủ trang API trước khi gom nhóm; không thêm API hoặc loại bài tập chưa được hỗ trợ.
+- Local: build/TypeScript, ESLint/Prettier, 144 unit tests và 44 E2E liên quan pass; 2 lượt mobile được skip chủ động vì hai ca responsive tự chạy ma trận viewport desktop/tablet/mobile. Đã xem ảnh desktop/mobile, kiểm tra 320px, bộ lọc, liên kết buổi không xác định, tạo đúng sessionId và thử lại khi trang API sau lỗi; chưa deploy.
+
 ## 22/10/2026 — Làm lại thẻ tệp đính kèm Mentor
 
 - Thẻ gọn với biểu tượng mint, tên tệp 16px, nhãn loại tệp và dung lượng dễ đọc; thêm số tệp cạnh tiêu đề. Nút Xem / tải tệp đặt bên phải trên desktop, xuống hàng đầy đủ chiều rộng trên mobile.

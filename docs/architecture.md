@@ -1,5 +1,12 @@
 # Kiến trúc Mindy FE2
 
+## Nội dung Mentor theo từng buổi học — 22/10/2026
+
+- MentorMaterials mở danh sách buổi trước thay vì tự chọn tài liệu đầu tiên. MentorSessionMaterials ghép Material.sessionId với sessions của query chi tiết chương, sắp buổi theo sessionNumber, nội dung theo sortOrder; phần chưa gắn buổi và liên kết không còn thuộc chương được giữ riêng, không tự gán vào buổi đầu.
+- useMentorUnitMaterials lấy đủ các trang của endpoint materials hiện có (pageSize=100), xác thực từng response, loại trùng ID và chỉ hiển thị nhóm khi tải đủ; lỗi trang sau phải thử lại, không hiển thị số lượng thiếu. TanStack Query giữ server state, query key theo user/chương/reviewStatus, truyền AbortSignal và dùng cơ chế invalidate mentor hiện có.
+- Nhấn Thêm nội dung trong buổi truyền initialSessionId vào editor; người dùng có thể đổi hoặc bỏ gắn trước khi lưu. POST/PATCH vẫn dùng sessionId và expectedRevision theo contract cũ. Chi tiết nội dung, quyền sửa, gửi duyệt, upload và signed file access không đổi.
+- API hiện chỉ có ARTICLE/FILE/VIDEO; chưa tạo loại hay thao tác bài tập giả. Không sửa backend hoặc thêm endpoint để thực hiện bố cục này.
+
 ## Giới hạn thời gian hẹn giờ Mentor — 22/10/2026
 
 - minimumScheduleInput dùng timestamp và UTC+7 để tạo min cho datetime-local, làm tròn lên phút vì input lưu giây 00. MentorMaterialEditor áp dụng khi tạo mới; UnitRelease áp dụng ở chế độ SCHEDULE.

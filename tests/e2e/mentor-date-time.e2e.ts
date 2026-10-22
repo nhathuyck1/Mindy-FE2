@@ -7,7 +7,7 @@ test('mentor cannot create a chapter with a past availability or a time that ela
   await page.clock.setFixedTime(new Date('2026-10-22T03:00:30Z'));
   const { calls } = await mockMentor(page);
   await page.goto(`/mentor/classes/${mentorIds.class}`);
-  await page.getByRole('button', { name: 'Tạo chương', exact: true }).click();
+  await page.getByRole('button', { name: 'Thêm nội dung', exact: true }).click();
   await page.getByLabel('Tiêu đề', { exact: true }).fill('Chương có hẹn giờ');
   await page.getByLabel('Nội dung bài viết', { exact: true }).fill('Nội dung thử nghiệm');
   const date = page.getByLabel('Khả dụng từ (UTC+7)', { exact: true });

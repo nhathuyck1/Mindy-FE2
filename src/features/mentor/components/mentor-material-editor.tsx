@@ -22,6 +22,7 @@ import { minimumScheduleInput } from '../lib/schedule-time';
 export function MentorMaterialEditor(props: {
   unit: ContentUnit;
   material?: MaterialDetail;
+  initialSessionId?: string;
   onClose: () => void;
   embedded?: boolean;
   onSaved?: (material: MaterialDetail) => void;
@@ -52,7 +53,7 @@ export function MentorMaterialEditor(props: {
   const [uploadBusy, setUploadBusy] = useState(false);
   const [error, setError] = useState('');
   const [sessionPage, setSessionPage] = useState(1);
-  const [sessionId, setSessionId] = useState(material?.sessionId ?? '');
+  const [sessionId, setSessionId] = useState(material?.sessionId ?? props.initialSessionId ?? '');
   const [minimumTime, setMinimumTime] = useState(() => minimumScheduleInput(Date.now()));
   const refreshMinimumTime = () => setMinimumTime(minimumScheduleInput(Date.now()));
   const sessions = useMentorQuery(
@@ -63,7 +64,7 @@ export function MentorMaterialEditor(props: {
   const busy = uploadBusy || command.isPending;
   return (
     <Modal
-      title={material ? 'Chỉnh sửa bản nháp' : 'Tạo chương mới'}
+      title={material ? 'Chỉnh sửa bản nháp' : 'Thêm nội dung mới'}
       contentClassName="sm:max-w-3xl"
       embedded={props.embedded}
       onClose={() => {
@@ -127,16 +128,16 @@ export function MentorMaterialEditor(props: {
       >
         {props.embedded && (
           <h3 className="text-lg font-bold">
-            {material ? 'Chỉnh sửa bản nháp' : 'Tạo chương mới'}
+            {material ? 'Chỉnh sửa bản nháp' : 'Thêm nội dung mới'}
           </h3>
         )}
         <p className="text-sm leading-6 text-muted">
           {props.unit.title} · Lưu bản nháp trước, sau đó gửi Manager duyệt.
         </p>
         <fieldset disabled={busy} className="min-w-0 space-y-5">
-          <legend className="sr-only">Thông tin chương</legend>
+          <legend className="sr-only">Thông tin nội dung</legend>
           <label className="block text-sm font-bold">
-            Loại chương
+            Loại nội dung
             <NativeSelect
               wrapperClassName="mt-2 w-full min-w-0"
               className="h-12 w-full"
@@ -322,7 +323,7 @@ export function MentorMaterialEditor(props: {
             onBusy={setUploadBusy}
             onReady={(id, name, kind, sizeBytes) => {
               if (type === 'VIDEO' && kind !== 'VIDEO') {
-                setError('Chương dạng video cần file video hợp lệ.');
+                setError('Nội dung dạng video cần file video hợp lệ.');
                 return;
               }
               setFile({ id, name, sizeBytes });
