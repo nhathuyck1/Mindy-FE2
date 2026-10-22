@@ -1,5 +1,59 @@
 # Quy tắc giao diện Mindy
 
+## Thẻ tệp đính kèm Mentor — 22/10/2026
+
+- Thẻ tệp đã lưu dùng biểu tượng tài liệu trên nền mint nhạt, tên 16px xuống dòng khi dài, nhãn loại tệp dễ hiểu và dung lượng B/KB/MB; không hiển thị MIME thô.
+- Nút Xem / tải tệp cao tối thiểu 44px, nằm bên phải khi đủ chỗ và xuống hàng toàn chiều rộng trên màn hình nhỏ. Tiêu đề Tệp đính kèm có biểu tượng và số tệp.
+- Chỉ lấy liên kết có hạn khi người dùng nhấn; giữ loading, lỗi, mở tab mới và trình xem nội tuyến sau khi được cấp quyền.
+
+## Hẹn giờ Mentor không chọn quá khứ — 22/10/2026
+
+- Khi tạo chương mới, ô Khả dụng từ có min theo giờ Việt Nam, làm tròn lên phút gần nhất. Hẹn giờ mở trong Quyền truy cập áp dụng cùng giới hạn. Mốc min cập nhật khi focus/nhấn ô và khi bị từ chối lưu vì thời gian đã trôi qua.
+- Kiểm tra lại thời điểm thực khi lưu để chặn lịch đã thành quá khứ lúc form còn mở. Để trống Khả dụng từ vẫn hợp lệ; Mở ngay/Khóa chương vẫn hoạt động. Không bắt sửa mốc lịch cũ khi chỉ chỉnh nội dung bản nháp đã có.
+
+## Chuyển chế độ soạn bài Mentor — 22/10/2026
+
+- Bấm Văn bản chuyển trực tiếp từ HTML sang phần chữ, giữ xuống dòng; không có khung cảnh báo hoặc bước xác nhận. Chỉ cập nhật bản nháp trên form, dữ liệu server chỉ đổi khi bấm Lưu bản nháp.
+
+## Thông tin buổi học của tài liệu — 22/10/2026
+
+- Gom tên tài liệu và nhãn loại/trạng thái vào cùng phần đầu. Ngay bên dưới có khối Buổi học của tài liệu, icon lịch, tên buổi, số buổi và thời gian; bỏ nút Xem buổi học theo yêu cầu mới nhất.
+- Tài liệu không có sessionId phải ghi rõ Chưa gắn buổi học; tác giả có quyền sửa được Gắn buổi học qua form hiện tại. Không suy đoán tài liệu thuộc buổi đầu của chương. Tên dài/nút xuống hàng trong panel nhỏ, vẫn đọc được ở 320px.
+
+## Một loading cho dữ liệu Mentor — 22/10/2026
+
+- Trang buổi học chỉ hiển thị một loading cho thông tin buổi và điểm danh, không xếp hai loading dọc. Hai dữ liệu cùng sẵn sàng mới hiện nội dung; lỗi có Thử lại.
+- Workspace chương không thêm loading ở mục buổi học phụ khi nội dung chính/form đang tải. Không thay loading auth/route hoặc tiến trình upload tệp.
+
+## Điểm danh Có mặt/Vắng — 22/10/2026
+
+- Tiêu đề Điểm danh căn giữa theo chính cụm hai nút bên dưới, không căn theo toàn bộ chiều rộng cột.
+
+- Hai nút Có mặt và Vắng nằm trong một cụm chọn bo góc rộng tối đa 220px, hai phần bằng nhau, cao 44px mỗi nút và căn trái. Nút được chọn có nền canvas, viền mint/đỏ nhẹ và chữ forest/đỏ đậm; nút còn lại trung tính. Giữ aria-pressed, icon, focus bàn phím và độ tương phản khi khóa chỉnh sửa.
+- Thẻ số liệu Vắng mặt chỉ có viền status-red khi absent > 0; bằng 0 dùng border-line như các thẻ còn lại. Bảng chỉ còn Học viên, Trạng thái và Điểm danh.
+- Vùng bảng dưới 768px chuyển thành thẻ, giữ đủ chỗ cho hai nút ở 320px. Điểm danh theo quyền và thời hạn do backend trả về.
+
+## Upload tài liệu Mentor — 22/10/2026
+
+- Thay input tệp native bằng vùng kéo thả/nhấn chọn, viền nét đứt và nền mint nhạt theo ảnh tham chiếu. Tên tệp 16px, dung lượng và trạng thái trên thẻ riêng; không lặp tên tệp chính. Giữ giới hạn 200 MiB hiện có.
+- Chỉ sau khi máy chủ trả READY mới hiện thẻ xanh và chữ Tải lên thành công. Thất bại dùng nền/viền/chữ đỏ, icon lỗi, nguyên nhân và nút Thử lại. Đang gửi/kiểm tra dùng spinner và thông báo thật; hủy dùng màu trung tính.
+- Áp dụng cùng thẻ cho tài liệu chính và tệp đính kèm. Kéo thả, chọn bằng bàn phím, thay tệp, thử lại và hủy phải hoạt động ở desktop/mobile; tên dài xuống dòng, không làm tràn 320px.
+
+## Điểm danh Mentor — 22/10/2026
+
+- Tên học viên dùng 20px/line-height 28px, weight 600 và avatar chữ cái; hiển thị đầy đủ tên, cho xuống dòng. Header bảng, trạng thái và nội dung phụ dùng ít nhất 16px, tiêu đề Bảng điểm danh 24px; số thống kê 32px.
+- Bảng có header nền nhẹ, đường chia hàng và padding 20px theo chiều dọc. Có mặt dùng mint, Vắng mặt dùng đỏ và Chưa điểm danh dùng trung tính, luôn kèm chữ/icon. Hai nút điểm danh có vùng bấm tối thiểu 44px, focus bàn phím và disabled theo quyền máy chủ.
+- Vùng danh sách rộng từ 768px dùng bảng; dưới mốc này dùng thẻ học viên với tên ở trên, trạng thái/thao tác phía dưới. 320px giữ cỡ chữ và cho xuống hàng, không cuộn ngang toàn trang. Styling chỉ ở feature Mentor.
+
+## Mentor trên tablet và điện thoại — 22/10/2026
+
+- Toàn bộ nhãn giao diện Mentor dùng Chương theo yêu cầu mới nhất: tab Chương, Tạo chương, Mọi trạng thái chương, Loại chương và các tiêu đề/thông báo tương ứng.
+- Bộ lọc trạng thái chương đặt bên phải trên cùng hàng với các nút chọn nội dung; cả hai cao 48px. Ô lọc rộng 240px và không vượt chiều ngang panel; bên trái cuộn ngang danh sách nội dung. Panel dưới 576px đặt bộ lọc ở hàng riêng. Chữ 16px/line-height 24px, không dùng truncate để cắt nhãn bộ lọc.
+- Khi danh sách nội dung rỗng, thông báo Chưa có dữ liệu nằm một hàng riêng bên dưới bộ lọc và rộng toàn panel.
+- Khung chương/học liệu chuyển bố cục theo chiều rộng chính khung, không chờ viewport đạt xl. Vùng nội dung từ 768px dùng hai cột với sidebar chương 248px; danh sách chương và body học liệu cuộn độc lập, giữ header và thao tác bên ngoài vùng cuộn.
+- Vùng hẹp hơn dùng ô Chương đang xem cao 48px kèm trạng thái, thay danh sách chương xếp dọc phía trên học liệu. Tiêu đề đầy đủ vẫn hiện trong panel. Các nút được xuống hàng, bộ lọc/select vừa panel, rail học liệu cuộn ngang; 320px không tràn hoặc cắt trường form.
+- Form chỉ chia hai cột thứ tự/ngày khi bản thân form rộng từ 576px; resize hoặc thu gọn shell giữ chương và bản nháp đang soạn. Quy tắc này thay bố cục xếp danh sách chương phía trên trên màn nhỏ của Mentor ngày 16/10.
+
 ## Danh sách khóa học trước khi mở nội dung — 16/10/2026
 
 - Mặc định /manager/materials chỉ hiện danh sách khóa học toàn chiều rộng: tên, mã và nút mở học liệu. Bỏ picker lặp, khung hai cột và panel hướng dẫn trống ở bước chưa chọn khóa.

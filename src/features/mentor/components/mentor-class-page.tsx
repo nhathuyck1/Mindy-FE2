@@ -31,7 +31,7 @@ export function MentorClassPage(props: { classId: string }) {
           variant={tab === 'units' ? 'default' : 'outline'}
           onClick={() => setTab('units')}
         >
-          Chương & học liệu
+          Chương
         </Button>
       </div>
       {tab === 'students' ? (

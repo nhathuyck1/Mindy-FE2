@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import type { UseQueryResult } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/api/client';
 import {
   Plus,
@@ -14,6 +15,8 @@ import {
   CalendarDays,
   LockKeyhole,
   ArrowRight,
+  ExternalLink,
+  LoaderCircle,
 } from 'lucide-react';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -33,18 +36,36 @@ import {
 import { MentorMaterialEditor } from './mentor-material-editor';
 import { MentorPagination, MentorQueryState, MentorStatus, mentorDate } from './mentor-shared';
 
-function UnitSessionContext(props: { unit: ContentUnit }) {
-  const context = useMentorQuery(
-    `mentor/classes/${props.unit.classId}/units/${props.unit.id}`,
-    unitDetailSchema,
-  );
+type UnitContextQuery = UseQueryResult<z.infer<typeof unitDetailSchema>>;
+
+const fileKindLabels = {
+  PDF: 'PDF',
+  IMAGE: 'Hình ảnh',
+  DOCUMENT: 'Tài liệu',
+  PRESENTATION: 'Bài trình chiếu',
+  SPREADSHEET: 'Bảng tính',
+  AUDIO: 'Âm thanh',
+  VIDEO: 'Video',
+  SOURCE_CODE: 'Văn bản / mã nguồn',
+};
+
+function fileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  const unit = bytes < 1048576 ? 'KB' : 'MB';
+  const size = bytes / (unit === 'KB' ? 1024 : 1048576);
+  return `${size.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ${unit}`;
+}
+
+function UnitSessionContext(props: { context: UnitContextQuery }) {
+  const context = props.context;
+  if (context.isPending) return null;
   return (
     <section className="mt-8 border-t border-line pt-6" aria-label="Buổi học của chương">
       <h3 className="mb-4 flex items-center gap-2 font-bold">
         <CalendarDays aria-hidden="true" className="size-5 text-mint" />
         Buổi học
       </h3>
-      <MentorQueryState pending={context.isPending} error={context.error} retry={context.refetch}>
+      <MentorQueryState pending={false} error={context.error} retry={context.refetch}>
         <ul className="divide-y divide-line">
           {context.data?.sessions.map((session) => (
             <li key={session.id} className="space-y-2 py-4 text-sm">
@@ -67,6 +88,73 @@ function UnitSessionContext(props: { unit: ContentUnit }) {
           <p className="text-sm text-muted">Chương này chưa có buổi học.</p>
         )}
       </MentorQueryState>
+    </section>
+  );
+}
+
+function MaterialSession(props: {
+  sessionId: string | null;
+  context: UnitContextQuery;
+  onChoose?: () => void;
+}) {
+  const linked = props.context.data?.sessions.find((item) => item.id === props.sessionId);
+  const hasActions = Boolean(
+    (props.sessionId && props.context.error) || (!props.sessionId && props.onChoose),
+  );
+  return (
+    <section
+      aria-label="Buổi học của tài liệu"
+      className={`grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] items-start gap-3 rounded-xl border border-line bg-soft/50 p-4 sm:gap-4 ${hasActions ? '@xl/mentor-content:grid-cols-[2.5rem_minmax(0,1fr)_auto]' : ''}`}
+    >
+      <span
+        aria-hidden="true"
+        className="grid size-10 shrink-0 place-items-center rounded-lg border border-line bg-canvas text-mint"
+      >
+        <CalendarDays className="size-5" />
+      </span>
+      <div className="min-w-0 space-y-1">
+        <p className="text-sm font-medium text-muted">Buổi học của tài liệu</p>
+        {linked ? (
+          <>
+            <p className="text-base leading-7 font-semibold [overflow-wrap:anywhere]">
+              {linked.title}
+            </p>
+            <p className="text-sm leading-6 text-muted">
+              Buổi {linked.sessionNumber} · {mentorDate(linked.startsAt)} –{' '}
+              {mentorDate(linked.endsAt)}
+            </p>
+          </>
+        ) : (
+          <p className="text-base leading-7 font-semibold">
+            {!props.sessionId
+              ? 'Chưa gắn buổi học'
+              : props.context.isPending
+                ? 'Đang tải thông tin buổi học…'
+                : props.context.error
+                  ? 'Chưa tải được thông tin buổi học'
+                  : 'Buổi học đã gắn không nằm trong chương này'}
+          </p>
+        )}
+        {!props.sessionId && (
+          <p className="text-sm leading-6 text-muted">
+            Tài liệu chưa được gắn với một buổi học cụ thể.
+          </p>
+        )}
+      </div>
+      {hasActions && (
+        <div className="col-span-full flex flex-wrap items-center gap-2 @xl/mentor-content:col-span-1">
+          {props.sessionId && props.context.error && (
+            <Button type="button" variant="outline" onClick={() => props.context.refetch()}>
+              Thử lại
+            </Button>
+          )}
+          {!props.sessionId && props.onChoose && (
+            <Button type="button" variant="outline" onClick={props.onChoose}>
+              Gắn buổi học
+            </Button>
+          )}
+        </div>
+      )}
     </section>
   );
 }
@@ -95,52 +183,77 @@ function MaterialFilePreview(props: {
     return () => clearTimeout(timer);
   }, [link]);
   return (
-    <div className="space-y-3 rounded-xl border border-line p-4">
-      <p className="text-sm font-bold break-all">{props.file.originalFilename}</p>
-      <p className="text-xs text-muted">
-        {props.file.mimeType} ·{' '}
-        {(props.file.sizeBytes / 1048576).toLocaleString('vi-VN', { maximumFractionDigits: 2 })} MiB
-      </p>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        disabled={pending}
-        onClick={async () => {
-          setLink(null);
-          setPending(true);
-          setError(null);
-          const abort = new AbortController();
-          controller.current = abort;
-          try {
-            const result = await apiRequest({
-              path,
-              schema: fileAccessSchema,
-              signal: abort.signal,
-            });
-            if (
-              result.materialId !== props.materialId ||
-              result.fileId !== props.file.id ||
-              result.revision !== props.revision
-            )
-              throw new Error('File trả về không khớp.');
-            if (!abort.signal.aborted) setLink(result);
-          } catch (error) {
-            if (!abort.signal.aborted) setError(error);
-          } finally {
-            if (!abort.signal.aborted) setPending(false);
-          }
-        }}
-      >
-        {pending ? 'Đang lấy quyền xem…' : 'Lấy liên kết xem file'}
-      </Button>
+    <section
+      aria-label={props.file.originalFilename}
+      className="min-w-0 overflow-hidden rounded-xl border border-line bg-canvas"
+    >
+      <div className="flex flex-wrap items-center gap-4 bg-soft/40 p-4 @xl/mentor-content:p-5">
+        <span
+          aria-hidden="true"
+          className="grid size-12 shrink-0 place-items-center rounded-xl border border-mint/15 bg-mint/10 text-mint"
+        >
+          <FileText className="size-6" />
+        </span>
+        <div className="min-w-0 flex-[1_1_10rem] space-y-2">
+          <p className="text-base leading-6 font-semibold [overflow-wrap:anywhere]">
+            {props.file.originalFilename}
+          </p>
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+            <span className="rounded-md border border-line bg-canvas px-2 py-0.5 text-xs font-semibold text-forest">
+              {fileKindLabels[props.file.kind]}
+            </span>
+            <span>{fileSize(props.file.sizeBytes)}</span>
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full border-mint/25 text-forest shadow-none @xl/mentor-content:ml-auto @xl/mentor-content:w-auto"
+          disabled={pending}
+          onClick={async () => {
+            setLink(null);
+            setPending(true);
+            setError(null);
+            const abort = new AbortController();
+            controller.current = abort;
+            try {
+              const result = await apiRequest({
+                path,
+                schema: fileAccessSchema,
+                signal: abort.signal,
+              });
+              if (
+                result.materialId !== props.materialId ||
+                result.fileId !== props.file.id ||
+                result.revision !== props.revision
+              )
+                throw new Error('File trả về không khớp.');
+              if (!abort.signal.aborted) setLink(result);
+            } catch (error) {
+              if (!abort.signal.aborted) setError(error);
+            } finally {
+              if (!abort.signal.aborted) setPending(false);
+            }
+          }}
+        >
+          {pending ? (
+            <LoaderCircle
+              aria-hidden="true"
+              className="size-4 animate-spin motion-reduce:animate-none"
+            />
+          ) : (
+            <ExternalLink aria-hidden="true" className="size-4" />
+          )}
+          {pending ? 'Đang lấy quyền xem…' : 'Xem / tải tệp'}
+        </Button>
+      </div>
       {Boolean(error) && (
-        <p role="alert" className="text-sm">
+        <p role="alert" className="border-t border-line px-4 py-3 text-sm text-destructive">
           {mentorError(error)}
         </p>
       )}
       {link && (
-        <div className="space-y-3">
+        <div className="space-y-4 border-t border-line p-4 @xl/mentor-content:p-5">
           <a
             href={link.url}
             target="_blank"
@@ -148,7 +261,8 @@ function MaterialFilePreview(props: {
             referrerPolicy="no-referrer"
             className="text-link break-words text-mint"
           >
-            Mở / tải file ↗
+            Mở tệp trong tab mới
+            <ExternalLink aria-hidden="true" className="size-4" />
           </a>
           <p className="text-xs text-muted">Liên kết hết hạn: {mentorDate(link.expiresAt)}</p>
           {props.file.kind === 'AUDIO' && (
@@ -178,11 +292,12 @@ function MaterialFilePreview(props: {
           )}
         </div>
       )}
-    </div>
+    </section>
   );
 }
 function MaterialDetail(props: {
   classId: string;
+  unitContext: UnitContextQuery;
   id: string;
   onClose: () => void;
   onEdit: (material: MaterialDetail) => void;
@@ -201,7 +316,7 @@ function MaterialDetail(props: {
     ['DRAFT', 'REJECTED'].includes(item.reviewStatus);
   return (
     <Modal
-      title={item?.title ?? 'Chi tiết học liệu'}
+      title={item?.title ?? 'Chi tiết chương'}
       contentClassName="sm:max-w-4xl"
       onClose={props.onClose}
       embedded
@@ -213,9 +328,16 @@ function MaterialDetail(props: {
               <div
                 className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4"
                 role="toolbar"
-                aria-label="Thao tác học liệu"
+                aria-label="Thao tác chương"
               >
-                <h3 className="min-w-0 text-lg font-bold break-words">{item.title}</h3>
+                <div className="min-w-0 flex-[1_1_16rem] space-y-3">
+                  <h3 className="text-xl leading-7 font-bold break-words">{item.title}</h3>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <MentorStatus value={item.contentType} />
+                    <MentorStatus value={item.reviewStatus} />
+                    {item.publishedAt && <span className="text-sm text-muted">Đã xuất bản</span>}
+                  </div>
+                </div>
                 {editable && (
                   <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => props.onEdit(item)}>
@@ -241,11 +363,11 @@ function MaterialDetail(props: {
                   </div>
                 )}
               </div>
-              <div className="flex flex-wrap gap-2">
-                <MentorStatus value={item.contentType} />
-                <MentorStatus value={item.reviewStatus} />
-                {item.publishedAt && <span className="text-sm text-muted">Đã xuất bản</span>}
-              </div>
+              <MaterialSession
+                sessionId={item.sessionId}
+                context={props.unitContext}
+                onChoose={editable ? () => props.onEdit(item) : undefined}
+              />
               {item.description && (
                 <p className="whitespace-pre-wrap text-base leading-7">{item.description}</p>
               )}
@@ -283,7 +405,15 @@ function MaterialDetail(props: {
                   file={file}
                 />
               ))}
-              {item.attachments.length > 0 && <h3 className="font-bold">File đính kèm</h3>}
+              {item.attachments.length > 0 && (
+                <h3 className="flex items-center gap-2 text-base font-bold">
+                  <Paperclip aria-hidden="true" className="size-5 text-mint" />
+                  Tệp đính kèm
+                  <span className="rounded-full bg-mint/10 px-2.5 py-0.5 text-sm font-semibold text-forest">
+                    {item.attachments.length}
+                  </span>
+                </h3>
+              )}
               {item.attachments.map((file) => (
                 <MaterialFilePreview
                   key={`${file.id}-${item.revision}`}
@@ -315,6 +445,7 @@ export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => voi
     material: Material;
   } | null>(null);
   const prefix = `mentor/classes/${props.unit.classId}`;
+  const unitContext = useMentorQuery(`${prefix}/units/${props.unit.id}`, unitDetailSchema);
   const materials = useMentorQuery(
     `${prefix}/units/${props.unit.id}/materials?page=${page}&pageSize=20${filter ? `&reviewStatus=${filter}` : ''}`,
     materialsSchema,
@@ -323,14 +454,18 @@ export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => voi
   const remove = useMentorCommand(z.null());
   const busy = submit.isPending || remove.isPending;
   const selectedId = detail ?? materials.data?.items[0]?.id;
+  const hasMaterials = Boolean(materials.data?.items.length);
   return (
-    <section className="min-w-0">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line p-5 sm:px-8 sm:py-6">
-        <div>
+    <section
+      aria-label="Nội dung chương"
+      className="flex min-h-0 min-w-0 flex-col [overflow-wrap:anywhere]"
+    >
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-b border-line p-5 sm:px-6 sm:py-6">
+        <div className="min-w-0 flex-[1_1_16rem]">
           <p className="mb-2 text-sm font-bold text-mint">Chương {props.unit.position}</p>
-          <h2 className="text-xl font-bold break-words">{props.unit.title}</h2>
+          <h2 className="text-xl font-bold [overflow-wrap:anywhere]">{props.unit.title}</h2>
         </div>
-        <div className="ml-auto flex flex-wrap justify-end gap-2">
+        <div className="flex flex-wrap gap-2 [&>button]:grow">
           <Button
             variant="outline"
             size="sm"
@@ -342,14 +477,59 @@ export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => voi
           </Button>
           <Button size="sm" onClick={() => setEditor({})}>
             <Plus className="size-4" />
-            Tạo học liệu
+            Tạo chương
           </Button>
         </div>
       </div>
-      <div className="p-5 sm:p-8">
-        <div className="mb-6 max-w-xs">
+      <div
+        role="region"
+        aria-label="Nội dung chương - vùng cuộn"
+        tabIndex={0}
+        className="scrollbar-hidden @container/mentor-content min-h-0 min-w-0 flex-1 p-5 focus-visible:outline-2 focus-visible:outline-mint focus-visible:-outline-offset-2 sm:p-6 @3xl/mentor-course:overflow-y-auto @3xl/mentor-course:overscroll-y-contain"
+      >
+        <div
+          className={`mb-6 grid min-w-0 items-start gap-4 ${hasMaterials ? '@xl/mentor-content:grid-cols-[minmax(0,1fr)_15rem]' : ''}`}
+        >
+          <MentorQueryState
+            pending={materials.isPending && !editor}
+            error={materials.error}
+            retry={materials.refetch}
+            empty={materials.data?.items.length === 0}
+          >
+            <nav
+              className="flex min-w-0 gap-2 overflow-x-auto overscroll-x-contain pb-2"
+              aria-label="Nội dung trong chương"
+            >
+              {materials.data?.items.map((item) => {
+                const Icon =
+                  item.contentType === 'VIDEO'
+                    ? Video
+                    : item.contentType === 'ARTICLE'
+                      ? FileText
+                      : Paperclip;
+                return (
+                  <Button
+                    key={item.id}
+                    variant={selectedId === item.id ? 'default' : 'outline'}
+                    className="h-12 max-w-full shrink-0 text-left"
+                    title={item.title}
+                    aria-pressed={selectedId === item.id}
+                    onClick={() => {
+                      setDetail(item.id);
+                      setEditor(null);
+                    }}
+                  >
+                    <Icon aria-hidden="true" className="size-4 shrink-0" />
+                    <span className="min-w-0 truncate">{item.title}</span>
+                  </Button>
+                );
+              })}
+            </nav>
+          </MentorQueryState>
           <NativeSelect
-            aria-label="Trạng thái học liệu"
+            aria-label="Trạng thái chương"
+            wrapperClassName={`order-first ml-auto w-60 max-w-full min-w-0 ${hasMaterials ? '@xl/mentor-content:order-last' : ''}`}
+            className="h-12 w-full text-[16px] leading-6"
             value={filter}
             onChange={(e) => {
               setFilter(e.target.value);
@@ -358,45 +538,13 @@ export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => voi
               setEditor(null);
             }}
           >
-            <NativeSelectOption value="">Mọi trạng thái học liệu</NativeSelectOption>
+            <NativeSelectOption value="">Mọi trạng thái chương</NativeSelectOption>
             <NativeSelectOption value="DRAFT">Bản nháp</NativeSelectOption>
             <NativeSelectOption value="PENDING_REVIEW">Chờ duyệt</NativeSelectOption>
             <NativeSelectOption value="REJECTED">Cần chỉnh sửa</NativeSelectOption>
             <NativeSelectOption value="APPROVED">Đã duyệt</NativeSelectOption>
           </NativeSelect>
         </div>
-        <MentorQueryState
-          pending={materials.isPending}
-          error={materials.error}
-          retry={materials.refetch}
-          empty={materials.data?.items.length === 0}
-        >
-          <nav className="mb-6 flex flex-wrap gap-2" aria-label="Học liệu trong chương">
-            {materials.data?.items.map((item) => {
-              const Icon =
-                item.contentType === 'VIDEO'
-                  ? Video
-                  : item.contentType === 'ARTICLE'
-                    ? FileText
-                    : Paperclip;
-              return (
-                <Button
-                  key={item.id}
-                  variant={selectedId === item.id ? 'default' : 'outline'}
-                  className="h-auto max-w-full whitespace-normal text-left"
-                  aria-pressed={selectedId === item.id}
-                  onClick={() => {
-                    setDetail(item.id);
-                    setEditor(null);
-                  }}
-                >
-                  <Icon aria-hidden="true" className="size-4 shrink-0" />
-                  <span className="min-w-0 break-words">{item.title}</span>
-                </Button>
-              );
-            })}
-          </nav>
-        </MentorQueryState>
         {materials.data && materials.data.total > 20 && (
           <MentorPagination
             page={page}
@@ -412,6 +560,7 @@ export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => voi
           <MaterialDetail
             key={selectedId}
             classId={props.unit.classId}
+            unitContext={unitContext}
             id={selectedId}
             onClose={() => setDetail(null)}
             onAction={(action, material) => {
@@ -438,11 +587,11 @@ export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => voi
             onClose={() => setEditor(null)}
           />
         )}
-        <UnitSessionContext unit={props.unit} />
+        <UnitSessionContext context={unitContext} />
       </div>
       {confirm && (
         <Modal
-          title={confirm.action === 'submit' ? 'Gửi học liệu duyệt' : 'Xóa bản nháp'}
+          title={confirm.action === 'submit' ? 'Gửi chương duyệt' : 'Xóa bản nháp'}
           onClose={() => {
             if (!busy) setConfirm(null);
           }}
@@ -451,7 +600,7 @@ export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => voi
             <p>
               {confirm.action === 'submit'
                 ? 'Gửi bản nháp này cho Manager duyệt? Bạn sẽ không sửa được khi đang chờ duyệt.'
-                : 'Xóa bản nháp này khỏi danh sách học liệu?'}{' '}
+                : 'Xóa bản nháp này khỏi danh sách chương?'}{' '}
               <strong>{confirm.material.title}</strong>
             </p>
             {(submit.isError || remove.isError) && (

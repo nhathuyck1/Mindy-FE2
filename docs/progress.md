@@ -1,6 +1,103 @@
 # Tiến độ
 
+## 22/10/2026 — Làm lại thẻ tệp đính kèm Mentor
+
+- Thẻ gọn với biểu tượng mint, tên tệp 16px, nhãn loại tệp và dung lượng dễ đọc; thêm số tệp cạnh tiêu đề. Nút Xem / tải tệp đặt bên phải trên desktop, xuống hàng đầy đủ chiều rộng trên mobile.
+- Giữ luồng lấy quyền xem khi nhấn, kiểm tra file/revision, hủy request và hết hạn liên kết; trình xem và liên kết mở tab mới vẫn hoạt động.
+- Local: build/TypeScript, ESLint/Prettier và 4 E2E desktop/mobile pass cho tệp đính kèm đã lưu và upload tệp chính. Đã xem ảnh desktop/mobile; chưa deploy.
+
+## 22/10/2026 — Chặn lịch quá khứ ở tạo chương và quyền truy cập
+
+- Thêm min UTC+7 cho Khả dụng từ khi tạo mới và Thời điểm mở khi hẹn giờ quyền truy cập. Mốc phút cập nhật khi mở ô chọn; kiểm tra lại tại submit và không gửi mutation nếu thời gian đã qua.
+- Không thay dữ liệu cũ của bản nháp, không bắt buộc Khả dụng từ; giữ Mở ngay/Khóa chương và payload API hiện có. Test thời gian qua nửa đêm và form để lâu trước khi lưu.
+- Local: build/TypeScript, lint/format, 144 unit tests và 10 E2E desktop/mobile pass (4 ca thời gian mới, 6 ca hồi quy tạo/sửa/gắn buổi/quyền truy cập). Kiểm min UTC+7, quá khứ nhập tay, lịch đã trôi qua trong lúc sửa và payload thời gian tương lai; chưa deploy.
+
+## 22/10/2026 — Bỏ nút Xem buổi học ở tài liệu
+
+- Gỡ nút Xem buổi học khỏi khối buổi học của tài liệu, giữ tên/số/lịch buổi và chức năng gắn buổi cho bản nháp. Không chừa cột thao tác rỗng khi đã gắn thành công.
+- Cập nhật E2E hiển thị/gắn buổi để bỏ bước điều hướng qua nút đã xóa.
+- Local: lint/format, production build/TypeScript và 2 E2E gắn/hiển thị buổi học desktop/mobile pass. Chưa deploy.
+
+## 22/10/2026 — Bỏ xác nhận chuyển sang Văn bản
+
+- Xóa khung cảnh báo và hai nút xác nhận/giữ định dạng. Bấm Văn bản chuyển trực tiếp nội dung HTML thành chữ, giữ xuống dòng theo logic chuyển đổi hiện có; bỏ state xác nhận. Không tự lưu hoặc đổi API.
+- Cập nhật E2E workspace để kiểm tra nội dung văn bản ngay sau một lần bấm Văn bản.
+- Local: lint/format, production build/TypeScript và 2 E2E workspace desktop/mobile pass; chuyển trực tiếp vẫn giữ phần chữ. Chưa deploy.
+
+## 22/10/2026 — Hiện buổi học của tài liệu Mentor
+
+- Phần chi tiết trước đây không trình bày sessionId nên không biết tài liệu áp dụng cho buổi nào. Đưa tên/loại/trạng thái vào header và thêm khối buổi học gần tiêu đề, có tên, số buổi, lịch và nút mở buổi học/điểm danh.
+- Chưa gắn thì thông báo rõ và cho tác giả còn quyền sửa mở form Gắn buổi học. Dùng API và sessionId hiện có; chia sẻ query chi tiết chương với danh sách buổi phía dưới, không tạo thêm loading hay tự gán dữ liệu.
+- Local: build/TypeScript, ESLint/format file sửa và 144 unit tests pass. E2E liên quan 34 pass gộp lượt tổng hợp và lượt chạy lại 2 ca mới; 2 bản mobile của ma trận responsive skip có chủ đích. Test mới kiểm chưa gắn→chọn buổi→lưu→reload, payload sessionId, link điểm danh và 320px. Đã xem ảnh desktop; dữ liệu mock, chưa deploy.
+
+## 22/10/2026 — Căn giữa tiêu đề Điểm danh
+
+- Căn chữ Điểm danh theo tâm cụm hai nút rộng 220px bên dưới, giữ vị trí cụm nút và các cột còn lại.
+- Local: lint/format, production build/TypeScript và 2 E2E điểm danh desktop/mobile pass. Chưa deploy.
+
+## 22/10/2026 — Bỏ loading trùng ở Mentor
+
+- Gộp context/attendance của trang buổi học vào một loading/error boundary, giữ hai request song song và retry cả hai. Không thay API, quyền hoặc mutation điểm danh.
+- Rà soát schedule/classes/auth/route: các vùng chính đã chỉ có một loading. Workspace chương bỏ loading phụ của danh sách buổi học và không chồng loading danh sách với form editor.
+- Local: production build/TypeScript, ESLint/format file sửa, 144 unit tests và 32 E2E Mentor pass; 2 bản mobile của ma trận responsive skip có chủ đích. Test mới giữ request chậm và đổi thứ tự context/attendance, lỗi/retry, mở editor khi danh sách còn tải; xác nhận chỉ một loading trên desktop/mobile. Giữ test lịch tuần cũ ngoài lượt chạy như các lần trước. API mock, chưa deploy.
+
+## 22/10/2026 — Làm lại cụm nút và viền thống kê vắng
+
+- Gom Có mặt/Vắng thành cụm chọn hai phần bằng nhau, nền nhẹ và góc bo đồng bộ. Lựa chọn hiện tại dùng nền trắng, chữ đậm có màu và viền nhẹ để tránh chữ trắng bị chìm; trạng thái bị khóa vẫn đọc rõ. Giữ căn trái, thao tác và quyền API.
+- Viền thống kê Vắng mặt chỉ đỏ khi có ít nhất một học viên vắng, trở về viền thường khi số vắng bằng 0.
+- Local: ESLint/format file sửa, production build/TypeScript và 4 E2E điểm danh desktop/mobile pass; kiểm số vắng 0→1→0, payload/phiên bản, quyền, bàn phím và 320px không tràn. Đã xem ảnh cả hai trạng thái, API dùng mock; chưa deploy.
+
+## 22/10/2026 — Căn trái nút điểm danh
+
+- Hai nút Có mặt/Vắng cùng kích thước 104×44px, căn trái trong ô. Tăng cột Điểm danh 32px để cụm nút dịch trái và có khoảng đệm bên phải; giữ trạng thái đủ chỗ và căn trái cả trên thẻ mobile.
+- Local: lint/format file sửa, production build/TypeScript và 2 E2E điểm danh desktop/mobile pass, gồm 320px không tràn. Chưa deploy.
+
+## 22/10/2026 — Bỏ ghi chú điểm danh theo yêu cầu mới
+
+- Xóa cột/ô ghi chú, trạng thái bản nháp, callback lưu và contract ghi chú. Gỡ mã backend, migration chưa chạy và các test dành riêng cho note; giữ API điểm danh gốc.
+- Giữ hai nút Có mặt/Vắng và viền đỏ của thẻ Vắng mặt, bố cục bảng ba cột/thẻ mobile. Không cần cập nhật backend hoặc migration mới để dùng hai nút.
+- Local: build/TypeScript FE và BE, lint/format file sửa, 144 unit tests FE và 4 E2E attendance desktop/mobile pass. Kiểm ba cột, chuyển Có mặt/Vắng, tải lại trạng thái, payload chỉ có enrollmentId/status và 320px. Không còn mã/migration ghi chú trong source hoặc backend build; chưa deploy.
+
+## 22/10/2026 — Ẩn thanh cuộn trong khung nội dung Mentor
+
+- Áp dụng utility scrollbar-hidden hiện có vào đúng body cuộn của MentorMaterials, gồm form upload/chỉnh sửa embedded. Giữ overflow-y-auto, focus bàn phím và overscroll containment để vẫn xem/lưu được nội dung cuối khung.
+- Chỉ thay hiển thị thanh cuộn trong panel Mentor, không đổi API hoặc logic upload.
+- Local: ESLint/format file sửa, production build/TypeScript và 2 E2E responsive hiện có pass; kiểm 320–1440px, giữ draft khi resize và cuộn bằng bàn phím đến cuối khung. Chưa deploy.
+
+## 22/10/2026 — Hai nút điểm danh
+
+- Thay checkbox bằng hai nút Có mặt/Vắng, trạng thái chọn có aria-pressed và màu xanh/đỏ. Thẻ thống kê Vắng mặt có viền đỏ cả khi bằng 0.
+- Phần ghi chú từng được chuẩn bị đã hủy theo yêu cầu tiếp theo; API và migration ghi chú chưa được deploy/chạy trên dữ liệu thật.
+
+## 22/10/2026 — Upload tài liệu Mentor theo ảnh tham chiếu
+
+- Thay ô file native bằng vùng kéo thả/nhấn chọn màu mint và thẻ tên tệp/dung lượng. READY hiện xanh, thất bại hiện đỏ và Thử lại; đang gửi/kiểm tra có spinner, hủy hiện trung tính. Dùng cùng thẻ cho file chính và attachments, bỏ tên tệp chính bị lặp.
+- Thay file xóa lựa chọn cũ trước khi tải; lỗi/hủy không thể lưu lại fileId cũ. Giữ nguyên Files API, polling, khóa form và giới hạn dung lượng; VIDEO chỉ thành công khi kind đúng.
+- Production build/TypeScript, ESLint/format các file sửa và 24 E2E liên quan pass (2 bản mobile của ma trận responsive skip có chủ đích). Kiểm chính xác READY trước xanh, thay file lỗi/không lưu nhầm, retry, kéo thả, hủy, attachments/bỏ tệp và 320px. Test responsive được cập nhật để chỉ đo control đang hiển thị sau khi file input native chuyển sang hidden.
+- Đã xem ảnh upload thành công/thất bại trên desktop/mobile; dữ liệu API/storage dùng mock. Chưa deploy.
+
+## 22/10/2026 — Làm lại giao diện điểm danh Mentor
+
+- Tăng tên học viên lên 20px, trạng thái/header/nội dung phụ 16px, thêm avatar và khoảng đệm hàng. Bảng có header nền nhẹ, phân cách rõ, trạng thái kèm icon/màu và checkbox 24px trong vùng bấm 44px. Sắp xếp lại thông tin buổi, thống kê và hạn sửa.
+- Tách MentorAttendanceRoster chỉ lo trình bày, chuyển sang thẻ khi vùng danh sách dưới 768px; giữ tên và trạng thái dễ đọc ở 320px. Không thay query, phiên bản, khóa idempotency hoặc quyền điểm danh; không ghi dữ liệu thật.
+- Build/TypeScript, ESLint/format các file sửa, 144 unit tests và 20 E2E Mentor desktop/mobile liên quan pass (2 bản mobile của ma trận responsive skip có chủ đích). Test vòng đời điểm danh vào thẳng trang buổi học, kiểm đủ năm mutation, font tên, bàn phím Space và 320px. Hai lượt test lịch tuần cũ lệch mã lớp/tên buổi học nằm ngoài lần kiểm này.
+- Đã xem ảnh desktop và 320px từ production build dùng API mock. Chưa deploy.
+
+## 22/10/2026 — Sửa responsive khu vực chương và học liệu Mentor
+
+- Theo phản hồi tiếp theo, đổi nhãn tab Chương & học liệu thành Chương; cập nhật selector E2E tương ứng.
+- Phản hồi mới nhất: thay toàn bộ từ học liệu bằng chương trong nhãn Mentor, gồm nút tạo, bộ lọc, form, mô tả, thông báo và accessible labels. Đồng bộ selector E2E; giữ nguyên API và dữ liệu.
+- Mở rộng bộ lọc trạng thái học liệu tối đa 384px, đưa sang góc phải phía trên nội dung và bỏ truncate; màn nhỏ dùng đủ chiều rộng panel.
+- Theo ảnh tiếp theo, căn bộ lọc trạng thái chương và nút chọn nội dung trên cùng hàng, cao 48px; panel hẹp tự chia hàng để giữ nhãn bộ lọc đầy đủ.
+- Điều chỉnh mới nhất: thu chiều rộng bộ lọc trạng thái còn 240px, giữ chiều cao và vị trí bên phải.
+- Khi chưa có nội dung, thông báo rỗng xuống hàng riêng bên dưới bộ lọc, chiếm đủ chiều ngang panel.
+- Khắc phục màn 1009px xếp toàn bộ danh sách chương lên trên học liệu: bố cục theo container 768px, hai cột khi đủ chỗ; màn hẹp dùng ô chọn chương và trạng thái. Khung rộng có hai vùng cuộn độc lập, giữ header/thao tác.
+- Bộ lọc và ô chọn vừa panel, tên dài được ngắt dòng, rail học liệu cuộn ngang. Form dùng container riêng cho nhóm thứ tự/ngày và cho hàng nút xuống dòng. Giữ nguyên chương/nội dung đang soạn khi resize, giữ các luồng tạo/sửa/upload/release và quyền hiện có.
+- ESLint toàn repo, format các file code/test sửa, production build/TypeScript và 144 unit tests pass. E2E responsive và lớp/học liệu Mentor: 18 pass, 2 bản chạy mobile được bỏ qua vì hai test mới tự chạy ma trận viewport. Đã kiểm 320/390/768/834/1009/1024/1280/1440px và 1009x600, cuộn bằng bàn phím và giữ draft; xem ảnh 1009px/390px/form 320px từ production build.
+- Chạy toàn bộ Mentor cho 18 pass, 2 skip và 4 fail thuộc hai scenario lịch cũ đã ghi ngày 16/10: assertion tên buổi học/mẫu lịch không còn khớp UI mã lớp. Không sửa lịch trong lượt này. API dùng mock; chưa deploy lên Vercel.
+
 <<<<<<< Updated upstream
+
 ## 16/10/2026 — Màn đầu chỉ hiện danh sách khóa học
 
 - Thay rail khóa học/panel hướng dẫn trống bằng ManagerCourseList toàn chiều rộng, không hiện picker trùng ở bước đầu. Chỉ khi bấm một khóa mới mount workspace chương/tài liệu; nút Danh sách khóa học quay lại list, reload cũng về list.
@@ -137,12 +234,14 @@
 - Thu tiền cục bộ: lập nháp → ghi nhận → hủy, chi tiết, tìm/lọc, tổng tiền và CSV; lưu theo user trong trình duyệt. Không gọi API chưa tồn tại hoặc đổi order/enrollment. `ReceiptRepository` tách riêng cho lần nối API.
 - Đối chiếu contract người dùng và route Swagger live. TypeScript, ESLint, production build pass; 96/96 unit tests; 26/26 E2E desktop/mobile (Manager, login, admin/public style regression) pass; đã xem screenshot desktop/mobile, kiểm không tràn ngang 320px. Mutation/storage dùng mock, chưa nghiệm thu tài khoản hoặc thanh toán thật.
 - Prettier toàn repo báo định dạng ở 237 file nền có sẵn; code mới/sửa đã format. Không format lại module ngoài phạm vi.
-=======
+  \=======
+
 ## 20/10/2026 — Đồng bộ font trang login admin
 
 - Trang `/admin/login` dùng Nunito Variable giống `/login` qua token `font-brand` dùng chung; giữ bố cục, cỡ chữ và luồng đăng nhập hiện có. Các trang quản trị còn lại vẫn dùng Inter.
 - Kiểm tra font thực tế trên trình duyệt: tiêu đề, mô tả, nhãn, input và nút admin đều dùng Nunito như trang user; không tràn ngang desktop. ESLint trang login và Prettier các file thay đổi pass.
->>>>>>> Stashed changes
+
+> > > > > > > Stashed changes
 
 ## 16/10/2026 — Tích hợp admin có chọn lọc trên Booking
 

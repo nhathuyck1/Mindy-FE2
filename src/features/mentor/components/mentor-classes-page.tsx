@@ -24,7 +24,7 @@ export function MentorClassesPage() {
     <>
       <MentorHeading
         title="Lớp của tôi"
-        description="Các lớp bạn đang được phân công. Mở lớp để xem học viên, chuẩn bị học liệu và quản lý quyền truy cập chương."
+        description="Các lớp bạn đang được phân công. Mở lớp để xem học viên, chuẩn bị nội dung và quản lý quyền truy cập chương."
       />
       <div className="mb-5 max-w-xs">
         <label htmlFor="mentor-class-status" className="mb-2 block text-sm font-bold">

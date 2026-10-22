@@ -1,5 +1,30 @@
 import { expect, test } from '@playwright/test';
 import { mockMentor, mentorIds } from './mentor-fixtures';
+import { testUser } from './api-fixtures';
+
+test('mentor saved attachments show readable metadata and request access on demand', async ({
+  page,
+}, testInfo) => {
+  const { calls } = await mockMentor(page, { savedAttachment: true });
+  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  const card = page.getByRole('region', { name: 'Invoice-FCPCKEXP-0002.pdf', exact: true });
+  await expect(card).toBeVisible();
+  await expect(card).toContainText('41 KB');
+  await expect(card).not.toContainText('application/pdf');
+  expect(calls.some((call) => call.path.endsWith('/access'))).toBe(false);
+  await card.scrollIntoViewIfNeeded();
+  await page.screenshot({
+    path: `test-results/mentor-attachment-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+  await card.getByRole('button', { name: 'Xem / tải tệp' }).click();
+  await expect(card.getByRole('link', { name: 'Mở tệp trong tab mới' })).toHaveAttribute(
+    'href',
+    'https://storage.example.test/lesson.pdf',
+  );
+  expect(calls.some((call) => call.path.includes(`/assets/${mentorIds.file}/access`))).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
 
 test('weekly timetable groups slots, stacks sessions and navigates whole weeks', async ({
   page,
@@ -84,31 +109,81 @@ test('weekly timetable groups slots, stacks sessions and navigates whole weeks',
   ).toBe(true);
 });
 
-test('mentor schedule includes substitute sessions and attendance lifecycle', async ({
+test('mentor attendance keeps student names readable and preserves the attendance lifecycle', async ({
   page,
 }, testInfo) => {
   const { calls } = await mockMentor(page);
-  await page.goto('/mentor');
-  await expect(page.getByText('Dạy thay', { exact: true })).toBeVisible();
-  await page.screenshot({
-    path: `test-results/mentor-schedule-${testInfo.project.name}.png`,
-    fullPage: true,
-  });
-  await page.getByRole('link', { name: /Buổi 1/ }).click();
+  await page.goto(`/mentor/sessions/${mentorIds.session}`);
   await expect(page.getByText('Phòng: Phòng 101', { exact: false })).toBeVisible();
+  const absentStat = page.getByText('Vắng mặt', { exact: true }).first().locator('..');
+  await expect(absentStat).not.toHaveClass(/border-status-red/);
   await page.getByRole('button', { name: 'Bắt đầu buổi' }).click();
-  await page.getByRole('checkbox', { name: 'Có mặt: Học viên An' }).click();
-  await expect(page.getByRole('checkbox')).toBeChecked();
+  await page.getByRole('button', { name: 'Có mặt: Học viên An' }).click();
+  await expect(page.getByRole('button', { name: 'Có mặt: Học viên An' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   await page.getByRole('button', { name: 'Đồng bộ học viên' }).click();
-  await expect(page.getByText('Học viên mới', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Có mặt: Học viên mới', exact: true }),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Chốt buổi', exact: true }).click();
   await page.getByRole('button', { name: 'Xác nhận chốt buổi' }).click();
   await expect(page.getByText('Hoàn thành', { exact: true })).toBeVisible();
-  await expect(page.getByRole('row', { name: /Học viên mới/ })).toContainText('Vắng mặt');
-  await page.getByRole('checkbox', { name: 'Có mặt: Học viên An' }).click();
-  await expect(page.getByRole('row', { name: /Học viên An/ })).toContainText('Vắng mặt');
+  const roster = page.getByRole('region', { name: 'Danh sách điểm danh', exact: true });
+  const studentRow = (name: string) =>
+    roster
+      .locator('tr:visible, li:visible')
+      .filter({ has: page.getByRole('button', { name: `Có mặt: ${name}`, exact: true }) });
+  await expect(studentRow('Học viên mới')).toContainText('Vắng mặt');
+  await expect(absentStat).toHaveClass(/border-status-red/);
+  const studentName = studentRow('Học viên An').getByText('Học viên An', { exact: true });
+  expect(
+    await studentName.evaluate((node) => parseFloat(getComputedStyle(node).fontSize)),
+  ).toBeGreaterThanOrEqual(20);
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await page.screenshot({
+    path: `test-results/mentor-attendance-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+  const present = page.getByRole('button', { name: 'Có mặt: Học viên An', exact: true });
+  const absent = page.getByRole('button', { name: 'Vắng: Học viên An', exact: true });
+  await absent.focus();
+  await page.keyboard.press('Space');
+  await expect(studentRow('Học viên An')).toContainText('Vắng mặt');
+  await expect(absent).toHaveAttribute('aria-pressed', 'true');
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await expect(roster.getByRole('table')).toBeVisible();
+  await expect(roster.getByRole('columnheader')).toHaveCount(3);
+  await page.locator('section[aria-labelledby="attendance-heading"]').screenshot({
+    path: `test-results/mentor-attendance-controls-${testInfo.project.name}.png`,
+  });
+  await present.click();
+  await expect(present).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Có mặt: Học viên mới', exact: true }).click();
+  await expect(absentStat).not.toHaveClass(/border-status-red/);
+  await expect(absentStat).toContainText('0');
+  await page.locator('section[aria-labelledby="attendance-heading"]').screenshot({
+    path: `test-results/mentor-attendance-present-${testInfo.project.name}.png`,
+  });
+  await absent.click();
+  await expect(absent).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Làm mới', exact: true }).click();
+  await expect(absent).toHaveAttribute('aria-pressed', 'true');
+  expect(calls.filter((call) => call.method === 'PUT').at(-1)?.body?.records).toEqual([
+    { enrollmentId: testUser.id, status: 'ABSENT' },
+  ]);
+  await expect(absentStat).toHaveClass(/border-status-red/);
+  await page.setViewportSize({ width: 320, height: 800 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await expect(roster.getByRole('listitem')).toHaveCount(2);
+  await expect(present).toHaveAttribute('aria-pressed', 'false');
+  await page.screenshot({
+    path: `test-results/mentor-attendance-320-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
   const writes = calls.filter((c) => c.path.startsWith('class-sessions/') && c.method !== 'GET');
-  expect(writes).toHaveLength(5);
+  expect(writes).toHaveLength(8);
   expect(
     writes.every(
       (c) => typeof c.body?.expectedVersion === 'number' && /^[\da-f-]{36}$/.test(c.key ?? ''),
@@ -118,13 +193,14 @@ test('mentor schedule includes substitute sessions and attendance lifecycle', as
 });
 
 test('class roster is read only and unit release schedules in Vietnam time', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-10-22T03:00:30Z'));
   const { calls } = await mockMentor(page);
   await page.goto('/mentor/classes');
   await page.getByRole('link', { name: /Lớp JavaScript tháng 10/ }).click();
   await page.getByRole('button', { name: 'Học viên', exact: true }).click();
   await expect(page.getByText('Học viên chờ kích hoạt')).toBeVisible();
   await expect(page.getByRole('button', { name: /thu tiền|xác nhận tiền/i })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Chương & học liệu' }).click();
+  await page.getByRole('button', { name: 'Chương', exact: true }).click();
   await page.getByRole('button', { name: 'Quyền truy cập', exact: true }).click();
   await page.getByLabel('Hẹn giờ mở').check();
   await page.getByLabel('Thời điểm mở (UTC+7)').fill('2026-11-01T09:30');
@@ -194,13 +270,13 @@ test('mentor creates article, edits own draft and submits for manager review', a
 }, testInfo) => {
   const { calls } = await mockMentor(page);
   await page.goto(`/mentor/classes/${mentorIds.class}`);
-  await page.getByRole('button', { name: 'Chương & học liệu' }).click();
+  await page.getByRole('button', { name: 'Chương', exact: true }).click();
   await expect(
     page
       .getByRole('region', { name: 'Buổi học của chương' })
       .getByText('Buổi 1: Làm quen JavaScript'),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Tạo học liệu', exact: true }).click();
+  await page.getByRole('button', { name: 'Tạo chương', exact: true }).click();
   await page.getByLabel('Tiêu đề', { exact: true }).fill('Bài viết đã tạo');
   await page
     .getByLabel('Nội dung bài viết', { exact: true })
@@ -220,7 +296,7 @@ test('mentor creates article, edits own draft and submits for manager review', a
       .getByText('Học JavaScript', { exact: false }),
   ).toBeVisible();
   await page
-    .getByRole('toolbar', { name: 'Thao tác học liệu' })
+    .getByRole('toolbar', { name: 'Thao tác chương' })
     .getByRole('button', { name: 'Chỉnh sửa', exact: true })
     .click();
   await page.getByLabel('Tiêu đề', { exact: true }).fill('Bản nháp đã sửa');
@@ -245,8 +321,10 @@ test('mentor workspace keeps chapters beside content, edit toolbar and creation 
   const { calls } = await mockMentor(page, { extraUnits: true });
   await page.goto(`/mentor/classes/${mentorIds.class}`);
   const rail = page.getByRole('complementary', { name: 'Nội dung khóa học' });
-  await expect(rail.getByRole('button')).toHaveCount(2);
-  const toolbar = page.getByRole('toolbar', { name: 'Thao tác học liệu' });
+  const chapterSelect = page.getByLabel('Chương đang xem');
+  if (testInfo.project.name === 'desktop') await expect(rail.getByRole('button')).toHaveCount(2);
+  else await expect(chapterSelect).toBeVisible();
+  const toolbar = page.getByRole('toolbar', { name: 'Thao tác chương' });
   await expect(toolbar.getByRole('button', { name: 'Chỉnh sửa', exact: true })).toBeVisible();
   await expect(
     page
@@ -258,7 +336,7 @@ test('mentor workspace keeps chapters beside content, edit toolbar and creation 
     const sidebar = await rail.boundingBox();
     const content = await toolbar.boundingBox();
     const create = await page
-      .getByRole('button', { name: 'Tạo học liệu', exact: true })
+      .getByRole('button', { name: 'Tạo chương', exact: true })
       .boundingBox();
     expect(
       sidebar &&
@@ -279,26 +357,54 @@ test('mentor workspace keeps chapters beside content, edit toolbar and creation 
   );
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button', { name: 'Văn bản', exact: true }).click();
-  await expect(
-    page.getByText('Chuyển sang văn bản sẽ bỏ định dạng', { exact: false }),
-  ).toBeVisible();
-  await page.getByRole('button', { name: 'Chuyển sang văn bản', exact: true }).click();
   await expect(page.getByLabel('Nội dung bài viết', { exact: true })).toHaveValue(
     'Nội dung bài viết',
   );
   await page.getByRole('button', { name: 'Đóng', exact: true }).click();
-  await rail.getByRole('button', { name: /State, sự kiện/ }).click();
+  if (await chapterSelect.isVisible()) await chapterSelect.selectOption(mentorIds.nextUnit);
+  else await rail.getByRole('button', { name: /State, sự kiện/ }).click();
   await expect(
     page.getByRole('heading', { name: 'State, sự kiện và render danh sách', exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole('toolbar', { name: 'Thao tác học liệu' })).toHaveCount(0);
+  await expect(page.getByRole('toolbar', { name: 'Thao tác chương' })).toHaveCount(0);
   await expect(page.getByText('Chương này chưa có buổi học.')).toBeVisible();
   await page.setViewportSize({ width: 320, height: 800 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByRole('button', { name: 'Tạo học liệu', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Tạo học liệu mới' })).toBeVisible();
+  await page.getByRole('button', { name: 'Tạo chương', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Tạo chương mới' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(calls.some((c) => c.path.endsWith(`/units/${mentorIds.nextUnit}`))).toBe(true);
+});
+
+test('mentor material shows its linked lesson and lets the author attach one', async ({
+  page,
+}, testInfo) => {
+  const { calls } = await mockMentor(page);
+  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  const lesson = page.getByRole('region', { name: 'Buổi học của tài liệu', exact: true });
+  await expect(lesson).toContainText('Chưa gắn buổi học');
+  await expect(lesson.getByRole('link')).toHaveCount(0);
+  await lesson.getByRole('button', { name: 'Gắn buổi học', exact: true }).click();
+  const select = page.getByRole('combobox', { name: 'Gắn với buổi học (tùy chọn)', exact: true });
+  await select.selectOption(mentorIds.session);
+  await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
+  await expect(lesson).toContainText('Buổi 1: Làm quen JavaScript');
+  expect(
+    calls.find(
+      (call) => call.method === 'PATCH' && call.path.endsWith(`/materials/${mentorIds.material}`),
+    )?.body?.sessionId,
+  ).toBe(mentorIds.session);
+  await page.reload();
+  await expect(lesson).toContainText('Buổi 1: Làm quen JavaScript');
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await lesson.scrollIntoViewIfNeeded();
+  await page.screenshot({
+    path: `test-results/mentor-material-lesson-${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 320, height: 800 });
+  await expect(lesson).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
 test('mentor cannot edit reviewed materials and preserves unsaved text on conflict', async ({
@@ -321,21 +427,42 @@ test('mentor cannot edit reviewed materials and preserves unsaved text on confli
   expect(calls.filter((c) => c.method === 'PATCH')).toHaveLength(1);
 });
 
-test('mentor waits for validated upload before saving FILE', async ({ page }) => {
-  const { calls } = await mockMentor(page);
+test('mentor waits for validated upload before saving FILE', async ({ page }, testInfo) => {
+  const options = { fileFailure: false };
+  const { calls } = await mockMentor(page, options);
   await page.goto(`/mentor/classes/${mentorIds.class}`);
-  await page.getByRole('button', { name: 'Chương & học liệu' }).click();
-  await page.getByRole('button', { name: 'Tạo học liệu', exact: true }).click();
-  await page.getByLabel('Loại học liệu').selectOption('FILE');
+  await page.getByRole('button', { name: 'Chương', exact: true }).click();
+  await page.getByRole('button', { name: 'Tạo chương', exact: true }).click();
+  await page.getByLabel('Loại chương').selectOption('FILE');
   await page.getByLabel('Tiêu đề', { exact: true }).fill('Tài liệu mới');
-  await page.getByLabel('Upload file chính').setInputFiles({
+  const uploader = page.getByRole('region', { name: 'Tài liệu chính - tải lên', exact: true });
+  await page.getByLabel('Tài liệu chính', { exact: true }).setInputFiles({
     name: 'lesson.pdf',
     mimeType: 'application/pdf',
     buffer: Buffer.from('%PDF-test'),
   });
-  await expect(page.getByText('Đang kiểm tra file…', { exact: true })).toBeVisible();
+  await expect(page.getByText('Đang kiểm tra tệp…', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Lưu bản nháp' })).toBeDisabled();
-  await expect(page.getByText('File đã chọn:', { exact: false })).toBeVisible();
+  await expect(uploader.getByText('Tải lên thành công', { exact: true })).toBeVisible();
+  await expect(uploader.getByText('lesson.pdf', { exact: true })).toHaveCount(1);
+  await uploader.screenshot({
+    path: `test-results/mentor-upload-success-${testInfo.project.name}.png`,
+  });
+  options.fileFailure = true;
+  await page.getByLabel('Tài liệu chính', { exact: true }).setInputFiles({
+    name: 'broken.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('invalid'),
+  });
+  await expect(uploader.getByRole('alert')).toContainText('Tải lên thất bại');
+  await expect(uploader.getByText('Tải lên thành công', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Lưu bản nháp' }).click();
+  expect(calls.some((call) => call.method === 'POST' && call.path.endsWith('/materials'))).toBe(
+    false,
+  );
+  options.fileFailure = false;
+  await uploader.getByRole('button', { name: 'Thử lại', exact: true }).click();
+  await expect(uploader.getByText('Tải lên thành công', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Lưu bản nháp' }).click();
   await expect(page.getByRole('heading', { name: 'Tài liệu mới' })).toBeVisible();
   const intent = calls.find((c) => c.path === 'files/upload-intents');
@@ -344,29 +471,86 @@ test('mentor waits for validated upload before saving FILE', async ({ page }) =>
   expect(
     calls.find((c) => c.method === 'POST' && c.path.endsWith('/materials'))?.body?.fileId,
   ).toBe(mentorIds.file);
-  await page.getByRole('button', { name: 'Lấy liên kết xem file' }).click();
-  await expect(page.getByRole('link', { name: 'Mở / tải file ↗' })).toHaveAttribute(
+  await page.getByRole('button', { name: 'Xem / tải tệp' }).click();
+  await expect(page.getByRole('link', { name: 'Mở tệp trong tab mới' })).toHaveAttribute(
     'href',
     'https://storage.example.test/lesson.pdf',
   );
 });
 
-test('failed upload cannot be attached to a draft', async ({ page }) => {
+test('failed upload cannot be attached to a draft', async ({ page }, testInfo) => {
   const { calls } = await mockMentor(page, { fileFailure: true });
   await page.goto(`/mentor/classes/${mentorIds.class}`);
-  await page.getByRole('button', { name: 'Chương & học liệu' }).click();
-  await page.getByRole('button', { name: 'Tạo học liệu', exact: true }).click();
-  await page.getByLabel('Loại học liệu').selectOption('FILE');
+  await page.getByRole('button', { name: 'Chương', exact: true }).click();
+  await page.getByRole('button', { name: 'Tạo chương', exact: true }).click();
+  await page.getByLabel('Loại chương').selectOption('FILE');
   await page.getByLabel('Tiêu đề', { exact: true }).fill('File không hợp lệ');
-  await page.getByLabel('Upload file chính').setInputFiles({
+  await page.getByLabel('Tài liệu chính', { exact: true }).setInputFiles({
     name: 'lesson.pdf',
     mimeType: 'application/pdf',
     buffer: Buffer.from('invalid'),
   });
   await expect(page.getByRole('alert').filter({ hasText: 'File không thể sử dụng' })).toBeVisible();
+  const uploader = page.getByRole('region', { name: 'Tài liệu chính - tải lên', exact: true });
+  await expect(uploader.getByRole('alert')).toContainText('Tải lên thất bại');
+  await uploader.screenshot({
+    path: `test-results/mentor-upload-failed-${testInfo.project.name}.png`,
+  });
   await page.getByRole('button', { name: 'Lưu bản nháp' }).click();
-  await expect(page.getByRole('heading', { name: 'Tạo học liệu mới' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Tạo chương mới' })).toBeVisible();
   expect(calls.some((c) => c.method === 'POST' && c.path.endsWith('/materials'))).toBe(false);
+});
+
+test('mentor can drop, cancel and retry a pending document upload', async ({ page }) => {
+  const options = { filePending: true };
+  const { calls } = await mockMentor(page, options);
+  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  await page.getByRole('button', { name: 'Tạo chương', exact: true }).click();
+  await page.getByLabel('Loại chương').selectOption('FILE');
+  await page.getByLabel('Tiêu đề', { exact: true }).fill('Tài liệu kéo thả');
+  const transfer = await page.evaluateHandle(() => {
+    const data = new DataTransfer();
+    data.items.add(new File(['%PDF-test'], 'tai-lieu.pdf', { type: 'application/pdf' }));
+    return data;
+  });
+  const uploader = page.getByRole('region', { name: 'Tài liệu chính - tải lên', exact: true });
+  await uploader
+    .getByRole('button', { name: 'Chọn tệp: Tài liệu chính', exact: true })
+    .dispatchEvent('drop', { dataTransfer: transfer });
+  await expect(uploader.getByText('Đang kiểm tra tệp…', { exact: true })).toBeVisible();
+  await uploader.getByRole('button', { name: 'Hủy tải lên', exact: true }).click();
+  await expect(uploader.getByText('Đã hủy tải lên', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Lưu bản nháp' }).click();
+  expect(calls.some((call) => call.method === 'POST' && call.path.endsWith('/materials'))).toBe(
+    false,
+  );
+  options.filePending = false;
+  await uploader.getByRole('button', { name: 'Thử lại', exact: true }).click();
+  await expect(uploader.getByText('Tải lên thành công', { exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 320, height: 800 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('mentor shows validated attachments as removable green file cards', async ({ page }) => {
+  const { calls } = await mockMentor(page);
+  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  await page.getByRole('button', { name: 'Tạo chương', exact: true }).click();
+  await page.getByLabel('Tiêu đề', { exact: true }).fill('Bài đọc có tài liệu');
+  await page.getByLabel('Nội dung bài viết', { exact: true }).fill('Nội dung bài đọc');
+  await page.getByLabel('Thêm tệp đính kèm', { exact: true }).setInputFiles({
+    name: 'lesson.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-test'),
+  });
+  const ready = page.getByRole('status').filter({ hasText: 'Tải lên thành công' });
+  await expect(ready).toContainText('lesson.pdf');
+  await ready.getByRole('button', { name: 'Bỏ', exact: true }).click();
+  await expect(ready).toHaveCount(0);
+  await page.getByRole('button', { name: 'Lưu bản nháp' }).click();
+  expect(
+    calls.find((call) => call.method === 'POST' && call.path.endsWith('/materials'))?.body
+      ?.attachmentFileIds,
+  ).toEqual([]);
 });
 
 test('mentor guard, expired attendance, conflict and narrow viewport', async ({ page }) => {

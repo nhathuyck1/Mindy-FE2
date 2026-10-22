@@ -17,11 +17,13 @@ export async function mockMentor(
     expired?: boolean;
     conflict?: boolean;
     fileFailure?: boolean;
+    filePending?: boolean;
     timetable?: boolean;
     rosterTable?: boolean;
     extraUnits?: boolean;
     materialState?: 'APPROVED' | 'PENDING_REVIEW';
     materialConflict?: boolean;
+    savedAttachment?: boolean;
   } = {},
 ) {
   const calls: {
@@ -83,7 +85,17 @@ export async function mockMentor(
     contentHtml: '<h2>Nội dung bài viết</h2>',
     contentSchemaVersion: 1,
     inlineImages: [],
-    attachments: [],
+    attachments: options.savedAttachment
+      ? [
+          {
+            id: mentorIds.file,
+            originalFilename: 'Invoice-FCPCKEXP-0002.pdf',
+            mimeType: 'application/pdf',
+            sizeBytes: 41943,
+            kind: 'PDF',
+          },
+        ]
+      : [],
   };
   let materials: Record<string, unknown>[] = [material];
   let marks: string[] = [];
@@ -302,9 +314,14 @@ export async function mockMentor(
       }
       if (path.endsWith('/sync-roster')) marks.push('UNMARKED');
       if (method === 'PUT') {
-        const records = body?.records as { enrollmentId: string; status: string }[];
-        for (const record of records)
-          marks[record.enrollmentId === testUser.id ? 0 : 1] = record.status;
+        const records = body?.records as {
+          enrollmentId: string;
+          status: string;
+        }[];
+        for (const record of records) {
+          const index = record.enrollmentId === testUser.id ? 0 : 1;
+          marks[index] = record.status;
+        }
       }
       if (path.endsWith('/finalize')) {
         session.status = 'COMPLETED';
@@ -431,7 +448,11 @@ export async function mockMentor(
     }
     const fileStatus = {
       id: mentorIds.file,
-      status: options.fileFailure ? 'FAILED' : path.endsWith('/complete') ? 'PROCESSING' : 'READY',
+      status: options.fileFailure
+        ? 'FAILED'
+        : path.endsWith('/complete') || options.filePending
+          ? 'PROCESSING'
+          : 'READY',
       originalFilename: 'lesson.pdf',
       courseUnitId: unit.courseUnitId,
       declaredSizeBytes: 10,

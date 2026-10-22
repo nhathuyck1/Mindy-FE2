@@ -1,5 +1,39 @@
 # Kiến trúc Mindy FE2
 
+## Giới hạn thời gian hẹn giờ Mentor — 22/10/2026
+
+- minimumScheduleInput dùng timestamp và UTC+7 để tạo min cho datetime-local, làm tròn lên phút vì input lưu giây 00. MentorMaterialEditor áp dụng khi tạo mới; UnitRelease áp dụng ở chế độ SCHEDULE.
+- Hai form kiểm tra Date.now tại submit trước mutation để chặn giá trị đã trôi qua sau lúc chọn. Payload ISO +07:00 và contract API không đổi. Đây là validation UI, không migration hoặc sửa backend.
+
+## Buổi học gắn với tài liệu Mentor — 22/10/2026
+
+- MentorMaterials sở hữu query chi tiết chương sẵn có và chia sẻ cùng dữ liệu cho danh sách buổi học phía dưới và MaterialSession ở ngay dưới tiêu đề tài liệu. Ghép sessionId của tài liệu với sessions của chương, không tạo API hoặc query trùng.
+- Khi sessionId null, hiển thị Chưa gắn buổi học và nút Gắn buổi học chỉ cho tác giả còn quyền sửa. Nút mở editor hiện hữu để chọn/lưu sessionId; khi đã gắn hiển thị tên, số và lịch buổi, không có nút Xem buổi học theo yêu cầu mới nhất. Không tự gán theo thứ tự hoặc buổi đầu tiên. Chờ/lỗi query phụ dùng thông báo tại chỗ, không thêm loading overlay.
+
+## Loading dữ liệu Mentor — 22/10/2026
+
+- MentorSessionPage dùng một MentorQueryState cho context và attendance: hai query vẫn chạy song song, chỉ một loading cho tới khi cả hai kết thúc; lỗi chung và Thử lại refetch cả hai. Background refetch có cache không che lại trang.
+- Trong workspace chương, danh sách buổi học phụ chỉ hiện khi query kết thúc, không thêm overlay cùng danh sách/chi tiết. Khi mở editor, loading danh sách nội dung tạm ẩn để chỉ còn loading dữ liệu form; lỗi và thử lại của từng phần vẫn giữ.
+
+## Hai nút điểm danh Mentor — 22/10/2026
+
+- MentorAttendanceRoster hiển thị hai nút Có mặt/Vắng, không có state điểm danh riêng. MentorSessionPage sở hữu mutation/version/idempotency và refetch, chỉ gửi enrollmentId/status theo API hiện có.
+- Theo yêu cầu mới nhất đã bỏ toàn bộ ô ghi chú, contract và mã backend/migration ghi chú chưa triển khai. Điểm danh dùng trực tiếp backend hiện có, không cần migration mới.
+
+## Upload và phản hồi màu trong Mentor — 22/10/2026
+
+MentorFileUpload quản lý lần tải đang chạy/lỗi/hủy, vùng kéo thả và input native ẩn. MentorUploadFileCard chỉ trình bày tên, dung lượng, trạng thái và action; MentorMaterialEditor giữ metadata tệp READY cho file chính và attachments. Bắt đầu thay tệp xóa fileId cũ khỏi form, do đó thất bại/hủy không thể lưu nhầm file cũ. Chỉ gọi onReady sau uploadMentorFile hoàn tất READY; VIDEO kiểm kind trước khi báo thành công. Controller ngăn hai lần tải trong cùng widget, hủy khi unmount và bỏ phản hồi sau abort. API, bytes PUT, polling và giới hạn dung lượng giữ nguyên.
+
+## Giao diện điểm danh Mentor — 22/10/2026
+
+MentorAttendanceRoster là component trình bày danh sách và thao tác điểm danh, dùng type suy từ attendanceSchema. Nhận items/disabled/scheduled/onMark từ MentorSessionPage; không có query, mutation hoặc state điểm danh riêng. Container 768px chuyển giữa bảng và thẻ mobile. MentorSessionPage giữ act, expectedVersion, idempotency key và permissions; hai nút gửi PRESENT/ABSENT trực tiếp. Table dùng chung không bị đổi style toàn cục.
+
+## Responsive khung Mentor — 22/10/2026
+
+MentorUnits dùng named container `mentor-course` để quyết định bố cục theo chiều rộng vùng nội dung sau sidebar của shell. Từ 48rem, danh sách chương 248px và MentorMaterials nằm cạnh nhau trong khung cao tối đa 800px/viewport trừ 32px; danh sách và body học liệu cuộn riêng, header/thao tác giữ vị trí. Dưới 48rem, NativeSelect thay danh sách chương, nội dung cuộn theo trang. Hai cách chọn dùng chung selectedId và không remount học liệu khi resize nên giữ bản nháp.
+
+MentorMaterialEditor dùng container riêng `mentor-editor`: nhóm thứ tự/ngày chỉ chia đôi khi form rộng ít nhất 36rem, ô chọn có wrapper rộng đầy đủ. Material rail cuộn ngang trong panel. Thay đổi nằm trong feature Mentor; CourseContentFrame của Manager giữ nguyên.
+
 ## Khung nội dung cuộn độc lập — 16/10/2026
 
 components/ui/course-content-frame.tsx cung cấp CourseContentFrame (sidebar title/list + panel) và CourseContentPanel (header + body). Hai component chỉ quản lý bố cục, không chứa state/API. Khung dùng trong workspace khi đã chọn khóa học; state theo course/unit và mọi query/mutation giữ ở feature.
