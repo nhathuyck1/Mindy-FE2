@@ -92,6 +92,9 @@ function TimetableSession(props: {
           {item.effectiveMentor?.displayName ?? '—'}
         </span>
       </span>
+      {item.status === 'CANCELLED' && (
+        <span className="text-xs font-bold text-status-red">Đã hủy</span>
+      )}
       {item.assignmentType === 'SUBSTITUTE' && (
         <span className="w-fit rounded bg-peach px-1.5 text-[11px] leading-4 font-bold text-foreground">
           Dạy thay

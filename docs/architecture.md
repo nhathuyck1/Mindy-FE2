@@ -1,10 +1,25 @@
 # Kiến trúc Mindy FE2
 
+## UI Mentor và trực quan tiến độ — 22/10/2026
+
+- mentor-report-ui.tsx cung cấp presentation chung cho hàng học viên, heading/action và MentorProgressBar. Thanh nhận value nullable: số thật có role progressbar/aria-valuenow, unknown là track nét đứt không mang giá trị số. Không ghi tracking hoặc suy learning completion.
+- Class summary chỉ vẽ độ phủ record theo counts BE; StudentProgress đọc phần trăm từng chương từ endpoint chi tiết hiện hữu. Đổi unit filter vẫn reset list/page; detail và danh sách giữ nguyên pagination/query/permission.
+- mentor-leave-ui.tsx trình bày ba bước theo state preview/mapping và badge trạng thái đơn. MentorLeavePage chỉ mount form hoặc list; LeaveCreate/Detail/SessionMakeupSlot giữ mutations và contract cũ. Không thêm dependency hoặc API.
+
+## Mentor workspace đầy đủ — 22/10/2026
+
+- features/mentor/schemas/workspace-contracts.ts và leave-contracts.ts mô tả đúng DTO và quyền mới; lib/api/mentor-rules.server.ts mở chính xác method/path/query/body, chuyển key có kiểm UUIDv4 và Origin theo adapter cũ. Server state trong TanStack Query theo user/path/filter, không thêm Redux hoặc storage cho dữ liệu riêng tư.
+- MentorClassPage đọc shell trước khi mount các tab Chương/Buổi học/Học viên/Chuyên cần/Tiến độ. Scope SESSION không mount roster/reports hoặc authoring. Giữ workspace nội dung và upload hiện hữu; loại bỏ UnitRelease đã bị BE xóa.
+- MentorClassTimetable dùng timetable phân trang/range. MentorClassReports trình bày credit BE và tracking thiếu/zero/invalid, detail học viên phân trang. useMentorUnitIndex lấy đủ trang cho filter và tên chương.
+- MentorSessionPage kiểm class state và session permissions, candidates trước start, snapshot sau start, guest placement IDs, confirm bulk toàn roster, meeting editor và notes editor. Note draft/version nằm trong editor; bản mới không tự ghi đè draft.
+- /mentor/leave-requests dùng MentorLeavePage; LeaveCreate/SessionMakeupSlot/LeaveDetail tách form preview, chọn lịch, tạo/xem/rút đơn. Backend sở hữu phê duyệt, conflict, transaction và lịch.
+- useMentorCommand giữ key của request chưa xác định khi lỗi mạng; thành công/lỗi business kết thúc ý định. Mutation invalidate mentor queries, không tự replay command. Đây là integration teaching-notes nội bộ theo BE mới, khác ghi chú từng dòng điểm danh đã bỏ trong lịch sử bên dưới.
+
 ## Nội dung Mentor theo từng buổi học — 22/10/2026
 
-- MentorMaterials mở danh sách buổi trước thay vì tự chọn tài liệu đầu tiên. MentorSessionMaterials ghép Material.sessionId với sessions của query chi tiết chương, sắp buổi theo sessionNumber, nội dung theo sortOrder; phần chưa gắn buổi và liên kết không còn thuộc chương được giữ riêng, không tự gán vào buổi đầu.
+- MentorMaterials mở danh sách buổi trước thay vì tự chọn tài liệu đầu tiên. useMentorUnitSessions ghép danh sách buổi được cấp quyền `/units/:unitId/sessions` (ID/số buổi) với `/mentor/classes/:classId/sessions?unitId=...` (lịch/quyền) theo sessionId, tải đủ trang và kiểm đúng lớp/chương. Không dùng sessions trong chi tiết chương: BE hiện trả mảng rỗng cho Mentor. MentorSessionMaterials ghép Material.sessionId với kết quả, sắp buổi theo sessionNumber, nội dung theo sortOrder; phần chưa gắn buổi và liên kết không còn thuộc chương được giữ riêng, không tự gán vào buổi đầu.
 - useMentorUnitMaterials lấy đủ các trang của endpoint materials hiện có (pageSize=100), xác thực từng response, loại trùng ID và chỉ hiển thị nhóm khi tải đủ; lỗi trang sau phải thử lại, không hiển thị số lượng thiếu. TanStack Query giữ server state, query key theo user/chương/reviewStatus, truyền AbortSignal và dùng cơ chế invalidate mentor hiện có.
-- Nhấn Thêm nội dung trong buổi truyền initialSessionId vào editor; người dùng có thể đổi hoặc bỏ gắn trước khi lưu. POST/PATCH vẫn dùng sessionId và expectedRevision theo contract cũ. Chi tiết nội dung, quyền sửa, gửi duyệt, upload và signed file access không đổi.
+- Chỉ giữ nút Thêm nội dung ở header chương; người dùng chọn buổi trong editor trước khi lưu. POST/PATCH vẫn dùng sessionId và expectedRevision theo contract cũ. Chi tiết nội dung, quyền sửa, gửi duyệt, upload và signed file access không đổi. Link Điểm danh chỉ hiện khi timetable trả capabilities.readSessionContext; không suy đoán phòng hoặc meeting URL từ API không có các field này.
 - API hiện chỉ có ARTICLE/FILE/VIDEO; chưa tạo loại hay thao tác bài tập giả. Không sửa backend hoặc thêm endpoint để thực hiện bố cục này.
 
 ## Giới hạn thời gian hẹn giờ Mentor — 22/10/2026
@@ -14,7 +29,7 @@
 
 ## Buổi học gắn với tài liệu Mentor — 22/10/2026
 
-- MentorMaterials sở hữu query chi tiết chương sẵn có và chia sẻ cùng dữ liệu cho danh sách buổi học phía dưới và MaterialSession ở ngay dưới tiêu đề tài liệu. Ghép sessionId của tài liệu với sessions của chương, không tạo API hoặc query trùng.
+- MentorMaterials sở hữu useMentorUnitSessions và chia sẻ cùng dữ liệu cho danh sách buổi học phía dưới và MaterialSession ở ngay dưới tiêu đề tài liệu. Ghép sessionId của tài liệu với danh sách buổi được cấp quyền, không dùng mảng sessions rỗng của chi tiết chương hoặc tạo API mới.
 - Khi sessionId null, hiển thị Chưa gắn buổi học và nút Gắn buổi học chỉ cho tác giả còn quyền sửa. Nút mở editor hiện hữu để chọn/lưu sessionId; khi đã gắn hiển thị tên, số và lịch buổi, không có nút Xem buổi học theo yêu cầu mới nhất. Không tự gán theo thứ tự hoặc buổi đầu tiên. Chờ/lỗi query phụ dùng thông báo tại chỗ, không thêm loading overlay.
 
 ## Loading dữ liệu Mentor — 22/10/2026

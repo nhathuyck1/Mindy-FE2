@@ -2,135 +2,15 @@
 
 import { useState } from 'react';
 import { BookOpen } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Modal } from '@/components/ui/modal';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { useMentorCommand, useMentorQuery, mentorError } from '../api/mentor-queries';
-import {
-  unitsSchema,
-  unitSchema,
-  releaseSchema,
-  type ContentUnit,
-} from '../schemas/mentor-contracts';
-import { MentorPagination, MentorQueryState, MentorStatus } from './mentor-shared';
+import { useMentorQuery } from '../api/mentor-queries';
+import { unitsSchema } from '../schemas/mentor-contracts';
+import { MentorPagination, MentorQueryState } from './mentor-shared';
 import { MentorMaterials } from './mentor-materials';
-import { minimumScheduleInput } from '../lib/schedule-time';
 
-function UnitRelease(props: { unit: ContentUnit; onClose: () => void }) {
-  const [mode, setMode] = useState('OPEN');
-  const [date, setDate] = useState('');
-  const [error, setError] = useState('');
-  const [minimumTime, setMinimumTime] = useState(() => minimumScheduleInput(Date.now()));
-  const refreshMinimumTime = () => setMinimumTime(minimumScheduleInput(Date.now()));
-  const command = useMentorCommand(unitSchema);
-  return (
-    <Modal
-      title={`Quyền truy cập · ${props.unit.title}`}
-      onClose={() => {
-        if (!command.isPending) props.onClose();
-      }}
-    >
-      <form
-        className="space-y-5 p-6"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          const result = releaseSchema.safeParse({
-            status: mode === 'OPEN' ? 'OPEN' : 'LOCKED',
-            unlockAt: mode === 'SCHEDULE' ? `${date}:00+07:00` : null,
-          });
-          if (!result.success) {
-            setError('Chọn thời gian mở hợp lệ.');
-            return;
-          }
-          if (
-            mode === 'SCHEDULE' &&
-            result.data.unlockAt &&
-            Date.parse(result.data.unlockAt) < Date.now()
-          ) {
-            refreshMinimumTime();
-            setError('Thời điểm mở không được ở trong quá khứ (UTC+7).');
-            return;
-          }
-          setError('');
-          try {
-            await command.mutateAsync({
-              path: `mentor/classes/${props.unit.classId}/units/${props.unit.id}/release`,
-              method: 'PATCH',
-              body: result.data,
-            });
-            props.onClose();
-          } catch {
-            /* Visible error below. */
-          }
-        }}
-      >
-        <p className="text-sm leading-6 text-muted">
-          Mở ngay cho học viên, khóa lại hoặc đặt thời điểm mở theo giờ Việt Nam (UTC+7).
-        </p>
-        <fieldset disabled={command.isPending} className="space-y-3">
-          <legend className="sr-only">Chế độ mở chương</legend>
-          {[
-            ['OPEN', 'Mở ngay'],
-            ['LOCKED', 'Khóa chương'],
-            ['SCHEDULE', 'Hẹn giờ mở'],
-          ].map(([value, label]) => (
-            <label
-              key={value}
-              className="flex cursor-pointer items-center gap-3 rounded-xl border border-line p-4"
-            >
-              <input
-                type="radio"
-                name="release"
-                value={value}
-                checked={mode === value}
-                onChange={() => setMode(value)}
-              />
-              {label}
-            </label>
-          ))}
-          {mode === 'SCHEDULE' && (
-            <label className="block text-sm font-bold">
-              Thời điểm mở (UTC+7)
-              <Input
-                className="mt-2"
-                type="datetime-local"
-                min={minimumTime}
-                onFocus={refreshMinimumTime}
-                onClick={refreshMinimumTime}
-                required
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-            </label>
-          )}
-        </fieldset>
-        {(error || command.isError) && (
-          <p role="alert" className="rounded-xl bg-peach p-4">
-            {error || mentorError(command.error)}
-          </p>
-        )}
-        <div className="flex justify-end gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={command.isPending}
-            onClick={props.onClose}
-          >
-            Quay lại
-          </Button>
-          <Button disabled={command.isPending}>
-            {command.isPending ? 'Đang lưu…' : 'Lưu quyền truy cập'}
-          </Button>
-        </div>
-      </form>
-    </Modal>
-  );
-}
-export function MentorUnits(props: { classId: string }) {
+export function MentorUnits(props: { classId: string; canAuthor: boolean }) {
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [release, setRelease] = useState<ContentUnit | null>(null);
   const units = useMentorQuery(
     `mentor/classes/${props.classId}/units?page=${page}&pageSize=20`,
     unitsSchema,
@@ -171,7 +51,6 @@ export function MentorUnits(props: { classId: string }) {
                     ))}
                   </NativeSelect>
                 </label>
-                {selected && <MentorStatus value={selected.status} />}
               </div>
               <nav
                 aria-label="Chương"
@@ -195,9 +74,6 @@ export function MentorUnits(props: { classId: string }) {
                       <span className="block text-sm font-bold [overflow-wrap:anywhere]">
                         {unit.title}
                       </span>
-                      <span className="mt-2 block">
-                        <MentorStatus value={unit.status} />
-                      </span>
                     </span>
                   </button>
                 ))}
@@ -216,16 +92,11 @@ export function MentorUnits(props: { classId: string }) {
               )}
             </aside>
             {selected && (
-              <MentorMaterials
-                key={selected.id}
-                unit={selected}
-                onRelease={() => setRelease(selected)}
-              />
+              <MentorMaterials key={selected.id} unit={selected} canAuthor={props.canAuthor} />
             )}
           </div>
         </div>
       </MentorQueryState>
-      {release && <UnitRelease unit={release} onClose={() => setRelease(null)} />}
     </>
   );
 }

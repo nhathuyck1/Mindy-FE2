@@ -1,5 +1,30 @@
 # Tiến độ
 
+## 22/10/2026 — Làm gọn UI API mới và thêm thanh tiến độ Mentor
+
+- Thu gọn metadata lớp, tab có icon/gạch dưới; timetable/chuyên cần/tiến độ phân cấp heading, bộ lọc, hàng học viên và action rõ hơn. Chuyên cần có thanh rate BE và giữ unknown khác zero.
+- Tổng quan học tập có thanh Chương đã có dữ liệu từ counts, không suy thành hoàn thành toàn khóa; chi tiết có bar phần trăm từng chương. Đủ các trạng thái 0%, 60%, 100%, chưa tracking và dữ liệu sai, nhãn tiếng Việt; bỏ tracking jargon khỏi thông báo chính.
+- Xin nghỉ tách danh sách và form, ba bước trực quan với aria-current, mapping buổi nghỉ/ngày bù, slot dễ chọn, status badge và lịch gốc/bù trong detail. Bulk và nhật ký buổi học thành nhóm riêng, giữ nghiệp vụ/version/idempotency/scope.
+- Lint, TypeScript/production build, 156 unit tests PASS. Toàn bộ 76 Mentor E2E: 74 PASS, 2 skip có chủ đích trong ma trận viewport. Bổ sung kiểm bar 0/60/100/unknown/invalid, độ phủ 4/5 không double-count invalid, không mutation khi đọc và ba bước form/gửi đơn. Đã xem ảnh desktop/320px, kiểm tràn ngang, dùng mock API theo contract; chưa deploy.
+
+## 22/10/2026 — Tích hợp toàn bộ nhóm API Mentor mới
+
+- Đọc lại source BE dev 36753cf, API flow/DTO và đối chiếu endpoint Swagger live. Bổ sung 18 method/path mới dành cho Mentor vào proxy và các màn tiêu thụ; không mở staff approval/correction hoặc Admin tracking.
+- Lớp đọc shell/capabilities trước khi mở các tab; có lọc PRIMARY/SUBSTITUTE/ANY, timetable phân trang/range, chuyên cần lớp/học viên và tiến độ lưu sẵn. Mentor dạy thay chỉ xem scope được phân công, không mount roster/report/authoring. Lớp hủy vào lịch sử, lớp hoàn thành vẫn cho sửa notes trong deadline theo BE.
+- Buổi học có candidates chỉ đọc trước start, snapshot sau start, bulk có xác nhận toàn roster/mọi trang, guestRecords dùng makeupPlacementId. Sửa link riêng/null fallback với session version. Notes có version riêng, draft giữ sau 409/lỗi tải lại, merge do người dùng quyết định và kiểm deadline lúc submit.
+- /mentor/leave-requests: danh sách/bộ lọc, preview, slots, FULL_DAY dayMappings hoặc sessionMappings, tạo/xem chi tiết/rút đơn bằng sourceVersions/expectedVersion/key hiện hành. Không giả giữ slot hoặc áp dụng lịch trước approval.
+- Gỡ UnitRelease và route proxy đã bị BE xóa; giữ CRUD/submit/upload/access tài liệu hiện hữu. Giữ cookie HttpOnly, same-origin, strict Zod, Origin, no-store; UUIDv4 key giữ nguyên cho retry cùng request sau lỗi mạng. Không thay BE, không thêm dependency hoặc lưu token/draft trong Web Storage.
+- Kiểm chứng local: lint PASS; 156 unit tests PASS; production build + TypeScript PASS. Ma trận Mentor desktop/mobile 66 PASS + 2 skip có chủ đích (hai test ma trận responsive tự chạy viewport); sau bổ sung case cancelled/completed và điều chỉnh guard, chạy lại 16 tests liên quan PASS, gồm 4 case mới. Tổng 70 scenario riêng biệt đã PASS, 2 skip. Kiểm ảnh 320px/desktop, ô ngày/buổi không chồng nhau; kiểm cả hồi quy material/upload/phân trang và lịch tuần.
+- Prettier các tệp thay đổi PASS; git diff --check PASS. Format toàn repo chưa PASS: 250 tệp có sẵn ngoài phạm vi dùng định dạng/line ending khác; không format lại các feature không liên quan. Các marker merge trong phần lịch sử progress đã có từ trước, giữ nguyên nội dung.
+- E2E dùng API/storage mock theo contract; chưa nghiệm thu thao tác ghi bằng tài khoản thật hoặc deploy FE. Swagger live chỉ xác nhận endpoint hiện diện.
+
+## 22/10/2026 — Khôi phục danh sách buổi học theo API workspace Mentor
+
+- Nguyên nhân: BE mới trả sessions rỗng trong chi tiết chương cho Mentor; FE vẫn dùng mảng này nên báo chưa có buổi và chuyển nội dung đã gắn buổi sang nhóm chưa xác định. Đã xác minh source BE và sự tồn tại/DTO của endpoint workspace trên Swagger live.
+- FE chuyển sang hai endpoint buổi được cấp quyền: danh sách theo chương để lấy số buổi và timetable lớp có unitId để lấy lịch/quyền, ghép theo ID sau khi tải đủ trang. Không dùng khoảng tuần hiện tại, không sửa BE hay dữ liệu buổi. Lỗi/thiếu trang/sai scope phải thử lại, không hiển thị danh sách rỗng giả.
+- Giữ một nút Thêm nội dung ở đầu chương, chọn buổi trong editor; link Điểm danh theo capabilities.readSessionContext. Fixture chi tiết chương đổi thành sessions rỗng đúng BE để bắt lỗi hồi quy.
+- Local: production build/TypeScript, ESLint/Prettier file sửa, 15 unit/adapter tests và 10 E2E desktop/mobile pass. Đã xem ảnh hai kích thước, kiểm 320px, chọn/gắn buổi, đổi chương, tải thiếu trang và loading chung bằng API mock. Chưa nghiệm thu với phiên Mentor thật hoặc deploy frontend.
+
 ## 22/10/2026 — Sắp xếp nội dung theo buổi học cho Mentor
 
 - Thay dãy nút tài liệu ngang và danh sách buổi tách rời bằng cấu trúc Chương → Buổi học → Nội dung. Mỗi buổi có lịch, trạng thái, danh sách bài viết/tài liệu/video và thao tác thêm/điểm danh; chưa gắn buổi và liên kết buổi không xác định hiển thị riêng.

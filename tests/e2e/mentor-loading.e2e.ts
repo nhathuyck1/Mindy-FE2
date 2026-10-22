@@ -80,7 +80,7 @@ test('mentor chapter keeps one loading across content, editor and session reads'
       ...Promise.withResolvers<void>(),
     },
     detail: { path: `${prefix}/materials/${mentorIds.material}`, ...Promise.withResolvers<void>() },
-    context: { path: `${prefix}/units/${mentorIds.unit}`, ...Promise.withResolvers<void>() },
+    context: { path: `${prefix}/sessions?*`, ...Promise.withResolvers<void>() },
     sessions: {
       path: `${prefix}/units/${mentorIds.unit}/sessions?*`,
       ...Promise.withResolvers<void>(),

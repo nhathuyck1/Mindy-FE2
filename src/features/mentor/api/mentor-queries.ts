@@ -1,16 +1,19 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
 import { z } from 'zod';
 import { ApiError, apiRequest } from '@/lib/api/client';
 import { useSession } from '@/features/auth/api/auth-queries';
 import { fetchMentorWeek } from './mentor-schedule';
+import { fetchMentorUnitSessions } from './mentor-unit-sessions';
 import {
   uploadInputSchema,
   uploadIntentSchema,
   fileStatusSchema,
   type ContentUnit,
   materialsSchema,
+  unitsSchema,
 } from '../schemas/mentor-contracts';
 
 export function useMentorQuery<T>(path: string, schema: z.ZodType<T>, enabled = true) {
@@ -61,21 +64,110 @@ export function useMentorUnitMaterials(unit: ContentUnit, reviewStatus: string) 
   });
 }
 
+export function useMentorUnitSessions(unit: ContentUnit) {
+  const session = useSession();
+  return useQuery({
+    queryKey: ['mentor', session.data?.id, 'unit-sessions', unit.classId, unit.id],
+    queryFn: ({ signal }) => fetchMentorUnitSessions(unit, signal),
+    enabled: session.data?.role === 'MENTOR' && session.data.status === 'ACTIVE',
+    retry: false,
+  });
+}
+
+export function useMentorUnitIndex(classId: string) {
+  const session = useSession();
+  return useQuery({
+    queryKey: ['mentor', session.data?.id, 'unit-index', classId],
+    enabled: session.data?.role === 'MENTOR' && session.data.status === 'ACTIVE',
+    retry: false,
+    queryFn: async ({ signal }) => {
+      const read = (page: number) =>
+        apiRequest({
+          path: `mentor/classes/${classId}/units?page=${page}&pageSize=100`,
+          schema: unitsSchema,
+          signal,
+        });
+      const first = await read(1);
+      const items = [...first.items];
+      for (let page = 2; page <= Math.ceil(first.total / first.pageSize); page++) {
+        const next = await read(page);
+        if (next.total !== first.total || next.page !== page || next.pageSize !== first.pageSize)
+          throw new Error('Danh sách chương đã thay đổi. Hãy tải lại.');
+        items.push(...next.items);
+      }
+      if (
+        items.length !== first.total ||
+        new Set(items.map((item) => item.id)).size !== items.length
+      )
+        throw new Error('Chưa tải đủ danh sách chương. Hãy tải lại.');
+      return items.sort((a, b) => a.position - b.position);
+    },
+  });
+}
+
 export function useMentorCommand<T>(schema: z.ZodType<T>) {
   const client = useQueryClient();
+  const unresolved = useRef<{ fingerprint: string; key: string } | null>(null);
   return useMutation({
     retry: false,
-    mutationFn: (input: {
+    mutationFn: async (input: {
       path: string;
       method?: 'POST' | 'PATCH' | 'PUT' | 'DELETE';
       body?: unknown;
       idempotencyKey?: string;
-    }) => apiRequest({ ...input, method: input.method ?? 'POST', schema }),
+      idempotent?: boolean;
+    }) => {
+      const fingerprint = JSON.stringify([input.path, input.method ?? 'POST', input.body]);
+      const key =
+        input.idempotencyKey ??
+        (input.idempotent
+          ? unresolved.current?.fingerprint === fingerprint
+            ? unresolved.current.key
+            : crypto.randomUUID()
+          : undefined);
+      if (key) unresolved.current = { fingerprint, key };
+      try {
+        const result = await apiRequest({
+          ...input,
+          idempotencyKey: key,
+          method: input.method ?? 'POST',
+          schema,
+        });
+        unresolved.current = null;
+        return result;
+      } catch (error) {
+        if (error instanceof ApiError && error.status < 500) unresolved.current = null;
+        throw error;
+      }
+    },
     onSettled: () => client.invalidateQueries({ queryKey: ['mentor'] }),
   });
 }
 
 export function mentorError(error: unknown) {
+  if (error instanceof ApiError) {
+    const messages: Record<string, string> = {
+      MENTOR_SCOPE_REQUIRED: 'Phân công giảng dạy đã thay đổi. Hãy tải lại quyền của lớp.',
+      TEACHING_VERSION_CONFLICT:
+        'Ghi chú đã thay đổi. Hãy đối chiếu nội dung mới với bản nháp trước khi lưu.',
+      TEACHING_NOTE_WINDOW_CLOSED:
+        'Đã hết thời hạn sửa ghi chú. Bản nháp vẫn được giữ để bạn sao chép.',
+      TEACHING_NOTE_STATE_CONFLICT: 'Trạng thái buổi học hiện không cho phép lưu ghi chú.',
+      SESSION_VERSION_CONFLICT:
+        'Buổi học đã thay đổi. Hãy kiểm tra dữ liệu mới trước khi thao tác lại.',
+      SESSION_STATE_CONFLICT: 'Trạng thái buổi học hoặc lớp không còn cho phép thao tác này.',
+      LEAVE_REQUEST_STALE:
+        'Lịch nguồn đã thay đổi. Hãy xem trước lại; với đơn đã gửi, cần rút đơn chờ và tạo đơn mới.',
+      LEAVE_VERSION_CONFLICT: 'Đơn đã thay đổi. Hãy mở lại chi tiết và kiểm tra trạng thái mới.',
+      LEAVE_REQUEST_EXPIRED: 'Đơn đã hết hạn, không thể tiếp tục thao tác.',
+      LEAVE_TARGET_CONFLICT: 'Lịch dạy bù bị trùng. Hãy chọn khung giờ khác.',
+      LEAVE_STUDENT_CONFLICT: 'Lịch dạy bù bị trùng lịch học viên. Hãy chọn khung giờ khác.',
+      LEAVE_NOTICE_TOO_SHORT: 'Khoảng nghỉ cần được báo trước ít nhất hai ngày lịch.',
+      IDEMPOTENCY_KEY_REUSED:
+        'Mã thao tác đã được dùng cho yêu cầu khác. Hãy kiểm tra lại kết quả trước khi gửi tiếp.',
+    };
+    if (messages[error.code]) return messages[error.code];
+  }
   if (error instanceof ApiError && error.status === 409)
     return 'Dữ liệu đã thay đổi. Hệ thống đang tải lại; hãy kiểm tra trước khi thao tác lại.';
   return error instanceof Error ? error.message : 'Không thể hoàn tất thao tác. Vui lòng thử lại.';

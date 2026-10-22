@@ -22,7 +22,6 @@ import { minimumScheduleInput } from '../lib/schedule-time';
 export function MentorMaterialEditor(props: {
   unit: ContentUnit;
   material?: MaterialDetail;
-  initialSessionId?: string;
   onClose: () => void;
   embedded?: boolean;
   onSaved?: (material: MaterialDetail) => void;
@@ -53,7 +52,7 @@ export function MentorMaterialEditor(props: {
   const [uploadBusy, setUploadBusy] = useState(false);
   const [error, setError] = useState('');
   const [sessionPage, setSessionPage] = useState(1);
-  const [sessionId, setSessionId] = useState(material?.sessionId ?? props.initialSessionId ?? '');
+  const [sessionId, setSessionId] = useState(material?.sessionId ?? '');
   const [minimumTime, setMinimumTime] = useState(() => minimumScheduleInput(Date.now()));
   const refreshMinimumTime = () => setMinimumTime(minimumScheduleInput(Date.now()));
   const sessions = useMentorQuery(

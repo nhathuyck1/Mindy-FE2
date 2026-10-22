@@ -10,6 +10,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Globe,
+  CalendarOff,
 } from 'lucide-react';
 import { Brand } from '@/components/ui/brand';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ import { SessionControls } from '@/features/auth/components/session-controls';
 const navigation = [
   { href: '/mentor', title: 'Lịch dạy', icon: CalendarDays },
   { href: '/mentor/classes', title: 'Lớp của tôi', icon: GraduationCap },
+  { href: '/mentor/leave-requests', title: 'Đơn xin nghỉ', icon: CalendarOff },
 ];
 function MentorAccess(props: { children: React.ReactNode }) {
   const session = useSession();

@@ -254,9 +254,46 @@ export async function mockMentor(
             availableSeats: 15,
             mentor: { id: testUser.id, displayName: mentor.displayName },
             status: 'IN_PROGRESS',
+            assignmentType: 'PRIMARY',
+            accessScope: 'CLASS',
           },
         ]),
       );
+    if (path === `mentor/classes/${mentorIds.class}`)
+      return ok({
+        id: mentorIds.class,
+        classId: mentorIds.class,
+        code: 'JS101-A',
+        name: 'Lớp JavaScript tháng 10',
+        course: { id: mentorIds.material, title: 'JavaScript' },
+        status: 'IN_PROGRESS',
+        accessScope: 'CLASS',
+        assignmentType: 'PRIMARY',
+        readonly: false,
+        capabilities: {
+          readClass: true,
+          readClassRoster: true,
+          readClassReports: true,
+          authorMaterials: true,
+        },
+        visibleUnitCount: 1,
+        visibleSessionCount: 1,
+        asOf: date,
+        timeZone: 'Asia/Ho_Chi_Minh',
+      });
+    if (path.endsWith('/attendance-candidates'))
+      return ok({
+        ...paged([
+          {
+            enrollmentId: testUser.id,
+            student: { id: testUser.id, displayName: 'Học viên An' },
+            entryType: 'REGULAR',
+            makeupPlacementId: null,
+          },
+        ]),
+        provisional: true,
+        asOf: date,
+      });
     if (path.endsWith('/students') && options.rosterTable) {
       const students = Array.from({ length: 23 }, (_, index) => {
         const id = `20000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`;
@@ -380,6 +417,32 @@ export async function mockMentor(
         changedMakeupPlacementIds: [],
       });
     }
+    if (path === `mentor/classes/${mentorIds.class}/sessions`)
+      return ok(
+        paged(
+          url.searchParams.get('unitId') === mentorIds.nextUnit
+            ? []
+            : [
+                {
+                  ...session,
+                  capabilities: { readSessionContext: true, writeTeachingNotes: false },
+                },
+                ...(options.sessionMaterials
+                  ? [
+                      {
+                        ...session,
+                        sessionId: mentorIds.nextUnit,
+                        title: 'Thực hành biểu mẫu',
+                        startsAt: '2026-10-18T03:00:00Z',
+                        endsAt: '2026-10-18T05:00:00Z',
+                        status: 'SCHEDULED',
+                        capabilities: { readSessionContext: true, writeTeachingNotes: false },
+                      },
+                    ]
+                  : []),
+              ],
+        ),
+      );
     if (path.endsWith('/units'))
       return ok(
         paged(
@@ -408,34 +471,7 @@ export async function mockMentor(
     if (path === `mentor/classes/${mentorIds.class}/units/${mentorIds.unit}`)
       return ok({
         ...unit,
-        sessions: [
-          {
-            id: mentorIds.session,
-            classUnitId: unit.id,
-            title: session.title,
-            sessionNumber: 1,
-            startsAt: date,
-            endsAt: session.endsAt,
-            roomName: 'Phòng 101',
-            meetingUrl: null,
-            status: session.status,
-          },
-          ...(options.sessionMaterials
-            ? [
-                {
-                  id: mentorIds.nextUnit,
-                  classUnitId: unit.id,
-                  title: 'Thực hành biểu mẫu',
-                  sessionNumber: 2,
-                  startsAt: '2026-10-18T03:00:00Z',
-                  endsAt: '2026-10-18T05:00:00Z',
-                  roomName: null,
-                  meetingUrl: null,
-                  status: 'SCHEDULED',
-                },
-              ]
-            : []),
-        ],
+        sessions: [],
       });
     if (path.endsWith('/release')) {
       unit.status = String(body?.status);
@@ -444,26 +480,30 @@ export async function mockMentor(
     }
     if (path.endsWith('/sessions'))
       return ok(
-        paged([
-          {
-            id: mentorIds.session,
-            classUnitId: unit.id,
-            title: session.title,
-            sessionNumber: 1,
-            status: session.status,
-          },
-          ...(options.sessionMaterials
-            ? [
+        paged(
+          path.includes(`/units/${mentorIds.nextUnit}/`)
+            ? []
+            : [
                 {
-                  id: mentorIds.nextUnit,
+                  id: mentorIds.session,
                   classUnitId: unit.id,
-                  title: 'Thực hành biểu mẫu',
-                  sessionNumber: 2,
-                  status: 'SCHEDULED',
+                  title: session.title,
+                  sessionNumber: 1,
+                  status: session.status,
                 },
-              ]
-            : []),
-        ]),
+                ...(options.sessionMaterials
+                  ? [
+                      {
+                        id: mentorIds.nextUnit,
+                        classUnitId: unit.id,
+                        title: 'Thực hành biểu mẫu',
+                        sessionNumber: 2,
+                        status: 'SCHEDULED',
+                      },
+                    ]
+                  : []),
+              ],
+        ),
       );
     if (path.includes('/materials')) {
       if (path.endsWith('/access') || path.endsWith('/preview'))

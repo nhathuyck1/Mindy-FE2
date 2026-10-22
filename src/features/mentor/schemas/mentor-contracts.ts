@@ -12,12 +12,21 @@ export const mentorPaginationSchema = paginationQuerySchema.strict();
 export const classStatusSchema = z.enum(['DRAFT', 'OPEN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']);
 export const sessionStatusSchema = z.enum(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']);
 export const mentorClassesQuerySchema = paginationQuerySchema
-  .extend({ status: classStatusSchema.optional() })
+  .extend({
+    status: classStatusSchema.optional(),
+    assignment: z.enum(['PRIMARY', 'SUBSTITUTE', 'ANY']).optional(),
+  })
   .strict();
-export const mentorClassSchema = publicClassSchema.extend({ status: classStatusSchema });
+export const mentorClassSchema = publicClassSchema.extend({
+  status: classStatusSchema,
+  assignmentType: z.enum(['PRIMARY', 'SUBSTITUTE', 'BOTH']),
+  accessScope: z.enum(['CLASS', 'SESSION']),
+});
 export const mentorClassPageSchema = z.object({ items: z.array(mentorClassSchema), ...pageFields });
 const person = z.object({ id: z.uuid(), displayName: z.string().nullable() });
 export const teachingSessionSchema = z.object({
+  makeupForSessionId: z.uuid().nullable().optional(),
+  makeupRootSessionId: z.uuid().nullable().optional(),
   sessionId: z.uuid(),
   classId: z.uuid(),
   classUnitId: z.uuid(),
@@ -108,8 +117,8 @@ export const attendanceSchema = z.object({
     z.object({
       attendanceId: z.uuid(),
       enrollmentId: z.uuid(),
-      entryType: z.literal('REGULAR'),
-      makeupPlacementId: z.null(),
+      entryType: z.enum(['REGULAR', 'MAKEUP']),
+      makeupPlacementId: z.uuid().nullable(),
       student: person,
       status: attendanceStatus,
       checkedInAt: timestamp.nullable(),
@@ -128,10 +137,15 @@ export const attendanceMarkSchema = attendanceCommandSchema
   .extend({
     records: z
       .array(z.object({ enrollmentId: z.uuid(), status: attendanceStatus }).strict())
-      .min(1)
+      .min(0)
       .max(100),
+    guestRecords: z
+      .array(z.object({ makeupPlacementId: z.uuid(), status: attendanceStatus }).strict())
+      .max(100)
+      .optional(),
   })
-  .strict();
+  .strict()
+  .refine((v) => v.records.length + (v.guestRecords?.length ?? 0) > 0);
 export const unitSchema = z.object({
   id: z.uuid(),
   classId: z.uuid(),
@@ -157,21 +171,30 @@ export const unitDetailSchema = unitSchema.omit({ classId: true }).extend({
     }),
   ),
 });
+export const unitSessionSchema = z.object({
+  id: z.uuid(),
+  classUnitId: z.uuid(),
+  title: z.string(),
+  sessionNumber: version,
+  status: sessionStatusSchema,
+});
 export const unitSessionsSchema = z.object({
+  items: z.array(unitSessionSchema),
+  ...pageFields,
+});
+export const unitTimetableSchema = z.object({
   items: z.array(
-    z.object({
-      id: z.uuid(),
-      classUnitId: z.uuid(),
-      title: z.string(),
-      sessionNumber: version,
-      status: sessionStatusSchema,
+    teachingSessionSchema.extend({
+      capabilities: z.object({ readSessionContext: z.boolean(), writeTeachingNotes: z.boolean() }),
     }),
   ),
   ...pageFields,
 });
-export const releaseSchema = z
-  .object({ status: z.enum(['LOCKED', 'OPEN']), unlockAt: timestamp.nullable().optional() })
-  .strict();
+export type ContentSession = z.infer<typeof unitSessionSchema> & {
+  startsAt: string;
+  endsAt: string;
+  canReadContext: boolean;
+};
 export const materialTypeSchema = z.enum(['ARTICLE', 'FILE', 'VIDEO']);
 const reviewStatus = z.enum(['DRAFT', 'PENDING_REVIEW', 'APPROVED', 'REJECTED']);
 const fileKind = z.enum([

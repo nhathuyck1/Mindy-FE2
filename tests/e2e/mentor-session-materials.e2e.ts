@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { mockMentor, mentorIds } from './mentor-fixtures';
 
-test('mentor organises mixed content by lesson and creates within the chosen lesson', async ({
+test('mentor loads lessons independently of empty unit detail and creates from the header', async ({
   page,
 }, testInfo) => {
   const { calls } = await mockMentor(page, { sessionMaterials: true });
@@ -22,8 +22,15 @@ test('mentor organises mixed content by lesson and creates within the chosen les
     `/mentor/sessions/${mentorIds.session}`,
   );
   await expect(page.getByRole('button', { name: /bài tập/i })).toHaveCount(0);
-  await second.getByRole('button', { name: 'Thêm nội dung vào buổi 2', exact: true }).click();
-  await expect(page.getByLabel('Gắn với buổi học (tùy chọn)')).toHaveValue(mentorIds.nextUnit);
+  await expect(first).toContainText('10:00 16/10/26');
+  expect(
+    calls.some((call) => call.path === `mentor/classes/${mentorIds.class}/units/${mentorIds.unit}`),
+  ).toBe(false);
+  const create = page.getByRole('button', { name: /Thêm nội dung/ });
+  await expect(create).toHaveCount(1);
+  await create.click();
+  await expect(page.getByLabel('Gắn với buổi học (tùy chọn)')).toHaveValue('');
+  await page.getByLabel('Gắn với buổi học (tùy chọn)').selectOption(mentorIds.nextUnit);
   await page.getByLabel('Tiêu đề', { exact: true }).fill('Hướng dẫn buổi 2');
   await page.getByLabel('Nội dung bài viết', { exact: true }).fill('Nội dung chuẩn bị cho buổi 2');
   await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
@@ -54,8 +61,10 @@ test('mentor organises mixed content by lesson and creates within the chosen les
   });
   await page.setViewportSize({ width: 320, height: 800 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await second.getByRole('button', { name: 'Thêm nội dung vào buổi 2', exact: true }).click();
-  await expect(page.getByLabel('Gắn với buổi học (tùy chọn)')).toHaveValue(mentorIds.nextUnit);
+  await expect(create).toHaveCount(1);
+  await create.click();
+  await expect(page.getByLabel('Gắn với buổi học (tùy chọn)')).toHaveValue('');
+  await page.getByLabel('Gắn với buổi học (tùy chọn)').selectOption(mentorIds.nextUnit);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 

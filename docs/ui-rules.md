@@ -1,9 +1,25 @@
 # Quy tắc giao diện Mindy
 
+## Gọn giao diện API Mentor và thanh tiến độ — 22/10/2026
+
+- Navigation lớp dùng tab biểu tượng, gạch dưới và cuộn ngang trên mobile; phạm vi phân công trình bày gọn, không thêm thẻ thống kê giả. Buổi học, chuyên cần và tiến độ có tiêu đề/mô tả, bộ lọc và danh sách riêng.
+- Chuyên cần/tiến độ dùng hàng học viên có avatar, thông tin theo cột và Xem chi tiết. Thanh chuyên cần dùng rate BE; null giữ trạng thái chưa có dữ liệu.
+- Thanh tổng quan tiến độ ghi Chương đã có dữ liệu và số storedUnitCount/(storedUnitCount+untrackedUnitCount), không gọi là tỷ lệ hoàn thành. invalidStoredUnitCount là tập con của storedUnitCount, chỉ hiển thị badge cần kiểm tra, không cộng thêm vào mẫu số.
+- Chi tiết học viên có thanh phần trăm đã lưu của từng chương, bao gồm 0 và 100; UNTRACKED/INVALID_PERCENT hiển thị thanh nét đứt, không giả làm 0 hoặc loading. aria-valuenow chỉ xuất hiện với giá trị thật. Không tính trung bình toàn khóa.
+- Xin nghỉ tách chế độ tạo khỏi danh sách đơn; form có ba bước Khoảng nghỉ → Lịch dạy bù → Gửi đơn. Mapping ngày hiển thị buổi gốc cạnh ngày bù; slot dạng ô chọn, có dấu đã chọn. Giữ các field/version/key và bản nháp khi lỗi.
+- Bulk điểm danh đặt riêng dưới thống kê với phạm vi cả buổi; nhật ký giảng dạy có mô tả và action riêng. Giữ kích thước/hành vi hai nút điểm danh từng học viên.
+
+## Mentor workspace và xin nghỉ — 22/10/2026
+
+- Lớp hiển thị tên/mã thật, phạm vi chính/dạy thay và các tab theo capabilities. Bỏ nút/modal khóa/mở/hẹn giờ chương; không thay bằng quyền giả tại UI.
+- Chuyên cần hiển thị Chưa có dữ liệu với rate=null, kết quả điểm danh thực tế và credit học bù tách nhãn. Tiến độ ghi rõ dữ liệu lưu sẵn, không tự tính hoàn thành toàn khóa.
+- Trang buổi học giữ một loading chính, xem trước học viên trước start; đánh dấu học bù rõ. Hai nút bulk xác nhận toàn bộ roster qua mọi trang. Ghi chú giảng dạy là khối nội bộ riêng với hai trường đã dạy/việc tiếp theo, không thêm cột ghi chú điểm danh.
+- Menu Đơn xin nghỉ mở danh sách và form preview → lịch bù → gửi. Các ô ngày/buổi xếp một cột trên điện thoại, grid khi đủ chỗ; nút tối thiểu 44px, nhãn đọc đầy đủ và không đè nhau ở 320px. Conflict giữ dữ liệu người nhập, có hướng dẫn đọc lại và thao tác mới.
+
 ## Chương → Buổi học → Nội dung — 22/10/2026
 
 - Tham khảo cách Coursera gom video, readings và assignments theo module tại https://www.coursera.org/learn/learning-and-development; Mindy áp dụng thêm cấp buổi học phù hợp lớp có lịch dạy. Không sao chép màu sắc hoặc thêm loại nội dung chưa được API hỗ trợ.
-- Cột chương giữ nguyên. Vùng nội dung mặc định hiển thị từng buổi với tên, lịch UTC+7, phòng nếu có, trạng thái, số nội dung và nút Điểm danh/Thêm nội dung. Danh sách mỗi buổi có icon, tên, loại và trạng thái duyệt, nhấn để mở chi tiết và sửa/gửi duyệt khi có quyền.
+- Cột chương giữ nguyên. Vùng nội dung mặc định hiển thị từng buổi với tên, lịch UTC+7, trạng thái, số nội dung và nút Điểm danh khi được cấp quyền. Chỉ giữ một nút Thêm nội dung ở đầu chương, chọn buổi trong form; không lặp nút ở các thẻ bên dưới. Danh sách mỗi buổi có icon, tên, loại và trạng thái duyệt, nhấn để mở chi tiết và sửa/gửi duyệt khi có quyền.
 - Phân biệt tên gọi: Chương là nhóm ngoài; Bài viết/Tài liệu/Video là nội dung bên trong buổi. Thao tác Tạo chương cũ ở tài liệu được đổi thành Thêm nội dung, form dùng Loại nội dung và bộ lọc Trạng thái nội dung.
 - Chưa gắn buổi học là khu riêng cho nội dung dùng chung; buổi chưa xác định không bị giấu hoặc tự gán. Buổi trống và buổi không khớp bộ lọc có thông báo khác nhau. Màn hình tổng quan chờ cả chương và nội dung với một loading.
 - Chi tiết/form mở trong cùng vùng cuộn, có Về danh sách buổi học. Các hàng có tên 16px xuống dòng và focus bàn phím rõ, nút tối thiểu 44px; kiểm tra từ 320px đến desktop.
