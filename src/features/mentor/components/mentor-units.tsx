@@ -5,6 +5,7 @@ import { BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { useMentorCommand, useMentorQuery, mentorError } from '../api/mentor-queries';
 import {
   unitsSchema,
@@ -14,11 +15,14 @@ import {
 } from '../schemas/mentor-contracts';
 import { MentorPagination, MentorQueryState, MentorStatus } from './mentor-shared';
 import { MentorMaterials } from './mentor-materials';
+import { minimumScheduleInput } from '../lib/schedule-time';
 
 function UnitRelease(props: { unit: ContentUnit; onClose: () => void }) {
   const [mode, setMode] = useState('OPEN');
   const [date, setDate] = useState('');
   const [error, setError] = useState('');
+  const [minimumTime, setMinimumTime] = useState(() => minimumScheduleInput(Date.now()));
+  const refreshMinimumTime = () => setMinimumTime(minimumScheduleInput(Date.now()));
   const command = useMentorCommand(unitSchema);
   return (
     <Modal
@@ -37,6 +41,15 @@ function UnitRelease(props: { unit: ContentUnit; onClose: () => void }) {
           });
           if (!result.success) {
             setError('Chọn thời gian mở hợp lệ.');
+            return;
+          }
+          if (
+            mode === 'SCHEDULE' &&
+            result.data.unlockAt &&
+            Date.parse(result.data.unlockAt) < Date.now()
+          ) {
+            refreshMinimumTime();
+            setError('Thời điểm mở không được ở trong quá khứ (UTC+7).');
             return;
           }
           setError('');
@@ -82,6 +95,9 @@ function UnitRelease(props: { unit: ContentUnit; onClose: () => void }) {
               <Input
                 className="mt-2"
                 type="datetime-local"
+                min={minimumTime}
+                onFocus={refreshMinimumTime}
+                onClick={refreshMinimumTime}
                 required
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
@@ -129,61 +145,84 @@ export function MentorUnits(props: { classId: string }) {
         retry={units.refetch}
         empty={units.data?.items.length === 0}
       >
-        <div className="grid min-w-0 overflow-hidden rounded-2xl border border-line bg-canvas xl:grid-cols-[280px_minmax(0,1fr)]">
-          <aside
-            className="min-w-0 border-b border-line bg-soft/30 xl:border-r xl:border-b-0"
-            aria-label="Nội dung khóa học"
-          >
-            <h2 className="flex items-center gap-3 border-b border-line px-5 py-6 font-bold">
-              <BookOpen aria-hidden="true" className="size-5 text-mint" />
-              Nội dung khóa học
-            </h2>
-            <nav
-              aria-label="Chương"
-              className="flex max-h-80 flex-col overflow-y-auto p-3 xl:max-h-[75vh]"
+        <div className="@container/mentor-course min-w-0">
+          <div className="grid min-w-0 overflow-hidden rounded-2xl border border-line bg-canvas @3xl/mentor-course:h-[min(800px,calc(100dvh-2rem))] @3xl/mentor-course:grid-cols-[248px_minmax(0,1fr)]">
+            <aside
+              className="flex min-h-0 min-w-0 flex-col border-b border-line bg-soft/30 @3xl/mentor-course:border-r @3xl/mentor-course:border-b-0"
+              aria-label="Nội dung khóa học"
             >
-              {items.map((unit) => (
-                <button
-                  key={unit.id}
-                  aria-current={unit.id === selected?.id ? 'step' : undefined}
-                  onClick={() => setSelectedId(unit.id)}
-                  className={
-                    'flex min-h-19 items-start gap-3 rounded-lg px-3 py-4 text-left focus-visible:outline-2 focus-visible:outline-mint ' +
-                    (unit.id === selected?.id ? 'bg-mint/10 text-forest' : 'hover:bg-soft')
-                  }
-                >
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-line bg-canvas text-xs font-bold">
-                    {unit.position}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-sm font-bold break-words">{unit.title}</span>
-                    <span className="mt-2 block">
-                      <MentorStatus value={unit.status} />
-                    </span>
-                  </span>
-                </button>
-              ))}
-            </nav>
-            {units.data && units.data.total > 20 && (
-              <div className="p-3">
-                <MentorPagination
-                  page={page}
-                  total={units.data.total}
-                  onChange={(next) => {
-                    setPage(next);
-                    setSelectedId(null);
-                  }}
-                />
+              <h2 className="flex shrink-0 items-center gap-3 border-b border-line px-5 py-4 font-bold">
+                <BookOpen aria-hidden="true" className="size-5 shrink-0 text-mint" />
+                Nội dung khóa học
+              </h2>
+              <div className="space-y-3 p-4 @3xl/mentor-course:hidden">
+                <label className="block space-y-2 text-sm font-semibold">
+                  <span>Chương đang xem</span>
+                  <NativeSelect
+                    wrapperClassName="w-full min-w-0"
+                    className="h-12 w-full truncate bg-canvas"
+                    value={selected?.id ?? ''}
+                    onChange={(event) => setSelectedId(event.target.value)}
+                  >
+                    {items.map((unit) => (
+                      <NativeSelectOption key={unit.id} value={unit.id}>
+                        {unit.position}. {unit.title}
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                </label>
+                {selected && <MentorStatus value={selected.status} />}
               </div>
+              <nav
+                aria-label="Chương"
+                tabIndex={0}
+                className="hidden min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain p-3 focus-visible:outline-2 focus-visible:outline-mint focus-visible:-outline-offset-2 @3xl/mentor-course:flex"
+              >
+                {items.map((unit) => (
+                  <button
+                    key={unit.id}
+                    aria-current={unit.id === selected?.id ? 'step' : undefined}
+                    onClick={() => setSelectedId(unit.id)}
+                    className={
+                      'flex min-h-19 shrink-0 items-start gap-3 rounded-lg px-3 py-4 text-left focus-visible:outline-2 focus-visible:outline-mint ' +
+                      (unit.id === selected?.id ? 'bg-mint/10 text-forest' : 'hover:bg-soft')
+                    }
+                  >
+                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-line bg-canvas text-xs font-bold">
+                      {unit.position}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-bold [overflow-wrap:anywhere]">
+                        {unit.title}
+                      </span>
+                      <span className="mt-2 block">
+                        <MentorStatus value={unit.status} />
+                      </span>
+                    </span>
+                  </button>
+                ))}
+              </nav>
+              {units.data && units.data.total > 20 && (
+                <div className="shrink-0 border-t border-line p-3">
+                  <MentorPagination
+                    page={page}
+                    total={units.data.total}
+                    onChange={(next) => {
+                      setPage(next);
+                      setSelectedId(null);
+                    }}
+                  />
+                </div>
+              )}
+            </aside>
+            {selected && (
+              <MentorMaterials
+                key={selected.id}
+                unit={selected}
+                onRelease={() => setRelease(selected)}
+              />
             )}
-          </aside>
-          {selected && (
-            <MentorMaterials
-              key={selected.id}
-              unit={selected}
-              onRelease={() => setRelease(selected)}
-            />
-          )}
+          </div>
         </div>
       </MentorQueryState>
       {release && <UnitRelease unit={release} onClose={() => setRelease(null)} />}
