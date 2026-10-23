@@ -1,4 +1,5 @@
 import { localDate } from './leave-display';
+import { teachingShifts } from '@/lib/weekly-timetable';
 
 type Interval = { startsAt: string; endsAt: string };
 export type LeaveWindow = {
@@ -22,6 +23,21 @@ export function localClock(value: string, timeZone: string) {
     second: '2-digit',
     hourCycle: 'h23',
   }).format(new Date(value));
+}
+
+export function withinTeachingShift(slot: Interval, timeZone: string) {
+  if (
+    Date.parse(slot.endsAt) <= Date.parse(slot.startsAt) ||
+    localDate(slot.startsAt, timeZone) !== localDate(slot.endsAt, timeZone)
+  )
+    return false;
+  const seconds = (value: string) => {
+    const [hours, minutes, seconds] = localClock(value, timeZone).split(':').map(Number);
+    return hours * 3600 + minutes * 60 + seconds;
+  };
+  const start = seconds(slot.startsAt);
+  const end = seconds(slot.endsAt);
+  return teachingShifts.some((shift) => start >= shift.start * 60 && end <= shift.end * 60);
 }
 
 export function outsideLeave(slot: Interval, leave: LeaveWindow) {

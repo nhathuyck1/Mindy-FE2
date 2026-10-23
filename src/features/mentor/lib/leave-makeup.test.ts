@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { outsideLeave, overlaps, type LeaveWindow } from './leave-makeup';
+import { outsideLeave, overlaps, withinTeachingShift, type LeaveWindow } from './leave-makeup';
 import { createLeaveInputSchema } from '../schemas/leave-contracts';
 
 const leave: LeaveWindow = {
@@ -13,6 +13,34 @@ const slot = (day: string, from: string, to: string) => ({
   endsAt: `${day}T${to}:00+07:00`,
 });
 describe('Makeup leave boundaries', () => {
+  it('keeps makeup inside teaching shifts, including boundaries and UTC input', () => {
+    for (const [from, to] of [
+      ['07:30', '09:00'],
+      ['09:30', '11:00'],
+      ['13:00', '15:30'],
+      ['16:00', '17:30'],
+      ['18:00', '19:30'],
+      ['20:00', '21:30'],
+    ]) {
+      expect(withinTeachingShift(slot('2026-11-10', from, to), leave.timeZone)).toBe(true);
+    }
+    for (const [from, to] of [
+      ['00:00', '02:00'],
+      ['07:15', '08:45'],
+      ['08:00', '10:00'],
+      ['19:00', '21:00'],
+      ['20:00', '22:00'],
+      ['23:00', '01:00'],
+    ]) {
+      expect(withinTeachingShift(slot('2026-11-10', from, to), leave.timeZone)).toBe(false);
+    }
+    expect(
+      withinTeachingShift(
+        { startsAt: '2026-11-10T00:30:00Z', endsAt: '2026-11-10T02:00:00Z' },
+        leave.timeZone,
+      ),
+    ).toBe(true);
+  });
   it('blocks all days in the full-day leave range and allows a later week', () => {
     expect(outsideLeave(slot('2026-11-02', '15:00', '17:00'), leave)).toBe(false);
     expect(outsideLeave(slot('2026-11-03', '19:00', '21:00'), leave)).toBe(false);

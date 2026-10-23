@@ -14,7 +14,7 @@ function ContentRows(props: {
       <p className="px-5 py-6 text-sm leading-6 text-muted">
         {props.filtered
           ? 'Không có nội dung khớp trạng thái đang lọc.'
-          : 'Chưa có nội dung. Thêm bài viết, tài liệu hoặc video để chuẩn bị cho buổi học.'}
+          : 'Chưa có nội dung. Thêm bài viết, tài liệu hoặc video để chuẩn bị nội dung học tập.'}
       </p>
     );
   return (
@@ -67,8 +67,7 @@ export function MentorSessionMaterials(props: {
     <div className="space-y-5">
       {!sessions.length && (
         <p className="rounded-xl border border-dashed border-line bg-soft/40 p-5 text-sm leading-6 text-muted">
-          Chương này chưa có buổi học. Bạn có thể chuẩn bị nội dung chung bên dưới và gắn vào buổi
-          học sau.
+          Chương này chưa có buổi học. Bạn có thể thêm nội dung chung cho chương bên dưới.
         </p>
       )}
       {sessions.map((session) => {
@@ -130,18 +129,18 @@ export function MentorSessionMaterials(props: {
         );
       })}
       <section
-        aria-label="Nội dung chưa gắn buổi học"
+        aria-label="Nội dung chung của chương"
         className="min-w-0 overflow-hidden rounded-xl border border-dashed border-line bg-canvas"
       >
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-soft/30 p-4 sm:p-5">
           <div className="min-w-0 space-y-1">
             <h3 className="flex items-center gap-2 text-base font-bold">
               <FolderOpen aria-hidden="true" className="size-5 text-mint" />
-              Chưa gắn buổi học
+              Nội dung chung của chương
             </h3>
             <p className="text-sm leading-6 text-muted">
-              {unassigned.length} nội dung{props.filtered ? ' khớp bộ lọc' : ''} · Nội dung dùng
-              chung hoặc đang chờ phân buổi.
+              {unassigned.length} nội dung{props.filtered ? ' khớp bộ lọc' : ''} · Dùng chung cho
+              chương, không thuộc buổi học cụ thể.
             </p>
           </div>
         </div>

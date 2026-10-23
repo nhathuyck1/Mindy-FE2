@@ -1,5 +1,10 @@
 # Kiến trúc Mindy FE2
 
+## Lịch tuần dùng chung — 23/10/2026
+
+- src/lib/weekly-timetable.ts chia ca theo cấu trúc sessionId/startsAt/endsAt, dùng cho cả TeachingSession của Mentor và ScheduleEvent của Student. Module mentor/lib/weekly-timetable.ts re-export để giữ API nội bộ cũ.
+- UserWeeklyTimetable trình bày bảng ca và thẻ Student, gọi onSelect để giữ modal ở UserSchedulePage. schedule-attendance.ts thống nhất nhãn điểm danh ở bảng và chi tiết; kết quả chỉ lấy attendanceStatus từ API.
+
 ## Lịch bù linh hoạt — 23/10/2026
 
 - LeaveCreate dùng sessionMappings cho mọi khoảng nghỉ. SessionMakeupSlot tìm slot cả ngày hoặc theo buổi qua API hiện hữu, ưu tiên giờ gốc, giữ thời lượng. leave-makeup.ts kiểm giao khoảng nghỉ theo timeZone và giao các mapping trong cùng đơn; lựa chọn nằm ở LeaveCreate để tránh trùng và được xóa khi đổi ngày/buổi.
@@ -46,7 +51,7 @@
 ## Buổi học gắn với tài liệu Mentor — 22/10/2026
 
 - MentorMaterials sở hữu useMentorUnitSessions và chia sẻ cùng dữ liệu cho danh sách buổi học phía dưới và MaterialSession ở ngay dưới tiêu đề tài liệu. Ghép sessionId của tài liệu với danh sách buổi được cấp quyền, không dùng mảng sessions rỗng của chi tiết chương hoặc tạo API mới.
-- Khi sessionId null, hiển thị Chưa gắn buổi học và nút Gắn buổi học chỉ cho tác giả còn quyền sửa. Nút mở editor hiện hữu để chọn/lưu sessionId; khi đã gắn hiển thị tên, số và lịch buổi, không có nút Xem buổi học theo yêu cầu mới nhất. Không tự gán theo thứ tự hoặc buổi đầu tiên. Chờ/lỗi query phụ dùng thông báo tại chỗ, không thêm loading overlay.
+- Khi sessionId null, hiển thị Nội dung chung của chương và nút Gắn buổi học chỉ cho tác giả còn quyền sửa. Nút mở editor hiện hữu để chọn/lưu sessionId; khi đã gắn hiển thị tên, số và lịch buổi, không có nút Xem buổi học theo yêu cầu mới nhất. Không tự gán theo thứ tự hoặc buổi đầu tiên. Chờ/lỗi query phụ dùng thông báo tại chỗ, không thêm loading overlay.
 
 ## Loading dữ liệu Mentor — 22/10/2026
 

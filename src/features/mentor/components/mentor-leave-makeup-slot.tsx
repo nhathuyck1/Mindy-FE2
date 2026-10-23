@@ -12,7 +12,13 @@ import {
 } from '../schemas/leave-contracts';
 import { leavePeriods } from '../lib/leave-display';
 import { mentorDate } from './mentor-shared';
-import { localClock, outsideLeave, overlaps, type LeaveWindow } from '../lib/leave-makeup';
+import {
+  localClock,
+  outsideLeave,
+  overlaps,
+  withinTeachingShift,
+  type LeaveWindow,
+} from '../lib/leave-makeup';
 import { localDate } from '../lib/leave-display';
 import { sessionTime } from '../lib/weekly-timetable';
 export function SessionMakeupSlot(props: {
@@ -28,6 +34,7 @@ export function SessionMakeupSlot(props: {
   const slots = useMentorCommand(leaveSlotsSchema);
   const available = (slots.data?.slots ?? []).filter(
     (slot) =>
+      withinTeachingShift(slot, props.leave.timeZone) &&
       outsideLeave(slot, props.leave) &&
       !Object.values(props.mappings).some(
         (mapping) => mapping.sourceSessionId !== props.source.sessionId && overlaps(slot, mapping),
@@ -75,6 +82,7 @@ export function SessionMakeupSlot(props: {
             const original = result.slots.find(
               (slot) =>
                 localClock(slot.startsAt, props.leave.timeZone) === originalClock &&
+                withinTeachingShift(slot, props.leave.timeZone) &&
                 outsideLeave(slot, props.leave) &&
                 !Object.values(props.mappings).some(
                   (mapping) =>
@@ -158,7 +166,10 @@ export function SessionMakeupSlot(props: {
       ) : (
         slots.data && (
           <fieldset className="grid gap-2 sm:grid-cols-2">
-            <legend className="mb-2 text-sm font-bold">Chọn khung giờ</legend>
+            <legend className="mb-2 text-sm font-bold">Chọn khung giờ theo ca học</legend>
+            <p className="text-sm text-muted sm:col-span-2">
+              Giữ thời lượng buổi gốc; khung giờ phải nằm trọn trong một ca học.
+            </p>
             {ordered.length > 0 &&
               !ordered.some(
                 (slot) => localClock(slot.startsAt, props.leave.timeZone) === originalClock,

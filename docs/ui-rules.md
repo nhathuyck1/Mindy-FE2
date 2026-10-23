@@ -1,5 +1,10 @@
 # Quy tắc giao diện Mindy
 
+## Lịch Student theo lịch Mentor — 23/10/2026
+
+- Bảng lịch học có cột Ca học và 7 ngày, 6 ca cố định cùng ca Khác nếu cần. Ô trống dùng dấu gạch, ngày hiện tại nền mint nhạt; cột ngày trống hẹp, cột có buổi rộng hơn, cuộn ngang trong bảng trên mobile.
+- Buổi học hiện mã lớp mint, giờ vàng, Online/Offline và mentor, thêm pill điểm danh xanh/đỏ/trung tính. Nhãn Có mặt/Vắng lấy kết quả API; null là Chưa bắt đầu khi SCHEDULED hoặc Chưa điểm danh khi đã bắt đầu. Buổi hủy hiện Đã hủy.
+
 ## Chọn giờ bù — 23/10/2026
 
 - Cả ngày và sáng/chiều/tối đều có thẻ từng buổi, gồm lịch gốc, thời lượng và lịch bù đã chọn. Giờ cũ đứng đầu, tự chọn khi còn trống; người dùng được đổi giờ. Tìm trong cả ngày mặc định hoặc lọc buổi.
@@ -30,7 +35,7 @@
 - Tham khảo cách Coursera gom video, readings và assignments theo module tại https://www.coursera.org/learn/learning-and-development; Mindy áp dụng thêm cấp buổi học phù hợp lớp có lịch dạy. Không sao chép màu sắc hoặc thêm loại nội dung chưa được API hỗ trợ.
 - Cột chương giữ nguyên. Vùng nội dung mặc định hiển thị từng buổi với tên, lịch UTC+7, trạng thái, số nội dung và nút Điểm danh khi được cấp quyền. Chỉ giữ một nút Thêm nội dung ở đầu chương, chọn buổi trong form; không lặp nút ở các thẻ bên dưới. Danh sách mỗi buổi có icon, tên, loại và trạng thái duyệt, nhấn để mở chi tiết và sửa/gửi duyệt khi có quyền.
 - Phân biệt tên gọi: Chương là nhóm ngoài; Bài viết/Tài liệu/Video là nội dung bên trong buổi. Thao tác Tạo chương cũ ở tài liệu được đổi thành Thêm nội dung, form dùng Loại nội dung và bộ lọc Trạng thái nội dung.
-- Chưa gắn buổi học là khu riêng cho nội dung dùng chung; buổi chưa xác định không bị giấu hoặc tự gán. Buổi trống và buổi không khớp bộ lọc có thông báo khác nhau. Màn hình tổng quan chờ cả chương và nội dung với một loading.
+- Nội dung chung của chương là khu riêng cho nội dung không có sessionId; buổi chưa xác định không bị giấu hoặc tự gán. Buổi trống và buổi không khớp bộ lọc có thông báo khác nhau. Màn hình tổng quan chờ cả chương và nội dung với một loading.
 - Chi tiết/form mở trong cùng vùng cuộn, có Về danh sách buổi học. Các hàng có tên 16px xuống dòng và focus bàn phím rõ, nút tối thiểu 44px; kiểm tra từ 320px đến desktop.
 
 ## Thẻ tệp đính kèm Mentor — 22/10/2026
@@ -51,7 +56,7 @@
 ## Thông tin buổi học của tài liệu — 22/10/2026
 
 - Gom tên tài liệu và nhãn loại/trạng thái vào cùng phần đầu. Ngay bên dưới có khối Buổi học của tài liệu, icon lịch, tên buổi, số buổi và thời gian; bỏ nút Xem buổi học theo yêu cầu mới nhất.
-- Tài liệu không có sessionId phải ghi rõ Chưa gắn buổi học; tác giả có quyền sửa được Gắn buổi học qua form hiện tại. Không suy đoán tài liệu thuộc buổi đầu của chương. Tên dài/nút xuống hàng trong panel nhỏ, vẫn đọc được ở 320px.
+- Tài liệu không có sessionId phải ghi rõ Nội dung chung của chương; tác giả có quyền sửa được Gắn buổi học qua form hiện tại. Không suy đoán tài liệu thuộc buổi đầu của chương. Tên dài/nút xuống hàng trong panel nhỏ, vẫn đọc được ở 320px.
 
 ## Một loading cho dữ liệu Mentor — 22/10/2026
 

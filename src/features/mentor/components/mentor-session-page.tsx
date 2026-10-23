@@ -116,10 +116,7 @@ export function MentorSessionPage(props: { sessionId: string }) {
       <Link href="/mentor" className="mb-6 inline-block text-sm font-bold text-mint">
         ← Lịch dạy
       </Link>
-      <MentorHeading
-        title={context.data?.session.title ?? 'Thông tin buổi học'}
-        description="Theo dõi điểm danh, ghi nhật ký và giao bài tập cho buổi học."
-      />
+      <MentorHeading title={context.data?.session.title ?? 'Thông tin buổi học'} />
       <MentorQueryState
         pending={
           context.isPending ||
@@ -164,14 +161,12 @@ export function MentorSessionPage(props: { sessionId: string }) {
                 {mentorDate(context.data?.session.endsAt ?? null)}
               </p>
               <p className="text-[16px] leading-6 text-muted">
-                {context.data?.roomName ? `Phòng: ${context.data.roomName}` : 'Chưa có phòng học'} ·
+                {context.data?.roomName && `Phòng: ${context.data.roomName} · `}
                 Giờ Việt Nam (UTC+7)
               </p>
-              <p className="text-[16px] leading-6">
-                {context.data?.session.assignmentType === 'SUBSTITUTE'
-                  ? 'Phân công dạy thay'
-                  : 'Phân công chính'}
-              </p>
+              {context.data?.session.assignmentType === 'SUBSTITUTE' && (
+                <p className="text-[16px] leading-6">Phân công dạy thay</p>
+              )}
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -273,17 +268,6 @@ export function MentorSessionPage(props: { sessionId: string }) {
                     ))}
                   </div>
                 )}
-                <div className="mb-5 flex items-start gap-3 rounded-xl bg-soft/60 px-4 py-3">
-                  <Clock3 aria-hidden="true" className="mt-1 size-4 shrink-0 text-mint" />
-                  <p className="text-[16px] leading-7 text-muted">
-                    {session?.editableUntil
-                      ? `Hạn chỉnh sửa: ${mentorDate(session.editableUntil)} (UTC+7).`
-                      : 'Chỉ bắt đầu được trong ngày học.'}
-                    {!session?.permissions.canEditAttendance && ' Hiện không thể sửa điểm danh.'}
-                    {attendance.data.pendingPaymentCount > 0 &&
-                      ` Có ${attendance.data.pendingPaymentCount} học viên chờ thanh toán, chưa thuộc danh sách điểm danh.`}
-                  </p>
-                </div>
                 {session?.permissions.canEditAttendance && !workspace.data?.readonly && (
                   <div className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-line bg-canvas p-4">
                     <div>
@@ -312,10 +296,6 @@ export function MentorSessionPage(props: { sessionId: string }) {
                 )}
                 {scheduled ? (
                   <section aria-label="Danh sách học viên dự kiến" className="space-y-4">
-                    <p role="status" className="text-sm text-muted">
-                      Danh sách dự kiến: {candidates.data?.total ?? 0} học viên đủ điều kiện lúc
-                      đọc. Bắt đầu buổi sẽ kiểm tra lại và tạo danh sách điểm danh chính thức.
-                    </p>
                     <ul className="divide-y divide-line rounded-xl border border-line">
                       {candidates.data?.items.map((item) => (
                         <li

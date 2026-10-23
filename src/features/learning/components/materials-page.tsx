@@ -23,9 +23,6 @@ export function MaterialsPage() {
         <div>
           <p className="eyebrow font-bold text-mint">Không gian học tập</p>
           <h1 className="mt-2 text-2xl font-bold sm:text-3xl">Tài liệu học tập</h1>
-          <p className="mt-3 text-sm text-muted">
-            Mở khóa học để xem chương, bài đọc, video và tài liệu của lớp.
-          </p>
         </div>
       </div>
       {query.isPending ? (

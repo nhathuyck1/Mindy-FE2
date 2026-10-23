@@ -1,15 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  UserRound,
-  Monitor,
-  MapPin,
-} from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatDate, formatTime, deliveryLabel } from '@/features/courses/lib/course-format';
 import { useMySchedule } from '../api/user-queries';
@@ -19,6 +11,8 @@ import { UserDetailsDialog } from './user-details-dialog';
 import { UserScheduleMeeting } from './user-schedule-meeting';
 import { AssignmentList } from '@/features/assignments/assignment-list';
 import type { ScheduleEvent } from '../schemas/user-contracts';
+import { UserWeeklyTimetable } from './user-weekly-timetable';
+import { scheduleAttendanceLabel } from '../lib/schedule-attendance';
 const weekdays = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
 const statuses = {
   SCHEDULED: 'Sắp diễn ra',
@@ -26,10 +20,6 @@ const statuses = {
   COMPLETED: 'Đã hoàn thành',
   CANCELLED: 'Đã hủy',
 };
-const attendanceLabels = { PRESENT: 'Có mặt', ABSENT: 'Vắng' };
-function attendanceLabel(status: ScheduleEvent['attendanceStatus']) {
-  return status === null ? 'Chưa bắt đầu' : attendanceLabels[status];
-}
 export function UserSchedulePage() {
   const [selectedDate, setSelectedDate] = useState(() => vietnamToday());
   const [selected, setSelected] = useState<ScheduleEvent | null>(null);
@@ -131,137 +121,7 @@ export function UserSchedulePage() {
                 Tuần này bạn chưa có lịch học.
               </p>
             )}
-            <div
-              role="region"
-              aria-label="Bảng lịch học từ Thứ 2 đến Chủ nhật"
-              tabIndex={0}
-              className="mt-4 max-w-full overflow-x-auto overscroll-x-contain"
-            >
-              <table className="w-full min-w-[980px] table-fixed border-collapse text-left">
-                <thead>
-                  <tr>
-                    {days.map((day) => (
-                      <th
-                        key={day.date}
-                        scope="col"
-                        className={
-                          'border-y border-r border-line p-4 text-center last:border-r-0 ' +
-                          (day.date === vietnamToday() ? 'bg-mint text-canvas' : 'bg-soft')
-                        }
-                      >
-                        <span className="block text-sm font-extrabold">{day.label}</span>
-                        <span className="mt-1 block text-xs font-normal">
-                          {formatDate(day.date)}
-                        </span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    {days.map((day) => {
-                      const dayStart = Date.parse(day.date + 'T00:00:00+07:00');
-                      const events = query.data.items.filter(
-                        (event) =>
-                          Date.parse(event.startsAt) < dayStart + 86400000 &&
-                          Date.parse(event.endsAt) > dayStart,
-                      );
-                      return (
-                        <td
-                          key={day.date}
-                          className="h-96 border-r border-line p-2 align-top last:border-r-0"
-                        >
-                          <div className="space-y-3">
-                            {events.length === 0 ? (
-                              <p className="py-6 text-center text-xs text-muted">
-                                Không có buổi học
-                              </p>
-                            ) : (
-                              events.map((event) => (
-                                <article
-                                  key={event.sessionId}
-                                  aria-label={event.sessionTitle}
-                                  className={
-                                    'overflow-hidden rounded-xl border text-sm ' +
-                                    (event.sessionStatus === 'CANCELLED'
-                                      ? 'border-coral/40 bg-peach/50'
-                                      : 'border-line bg-soft/70')
-                                  }
-                                >
-                                  <button
-                                    type="button"
-                                    aria-label={'Xem chi tiết ' + event.sessionTitle}
-                                    onClick={() => setSelected(event)}
-                                    className="block min-h-24 w-full cursor-pointer p-3 text-left transition-colors hover:bg-mint/10 focus-visible:-outline-offset-4"
-                                  >
-                                    <span className="mb-2 flex items-center gap-1.5 text-xs font-extrabold text-forest">
-                                      <Clock aria-hidden="true" className="size-3.5 shrink-0" />
-                                      {formatTime(event.startsAt)} – {formatTime(event.endsAt)}
-                                    </span>
-                                    <span
-                                      className={
-                                        'block line-clamp-2 text-sm leading-relaxed font-extrabold ' +
-                                        (event.sessionStatus === 'CANCELLED' ? 'line-through' : '')
-                                      }
-                                    >
-                                      {event.courseTitle}
-                                    </span>
-                                    <span className="mt-2 flex items-center gap-1.5 text-xs">
-                                      {event.deliveryMode === 'ONLINE' ? (
-                                        <Monitor
-                                          aria-hidden="true"
-                                          className="size-3.5 shrink-0 text-mint"
-                                        />
-                                      ) : (
-                                        <MapPin
-                                          aria-hidden="true"
-                                          className="size-3.5 shrink-0 text-mint"
-                                        />
-                                      )}
-                                      {event.deliveryMode === 'ONLINE' ? 'Online' : 'Offline'}
-                                    </span>
-                                    <span className="mt-2 flex min-w-0 items-center gap-1.5 text-xs">
-                                      <UserRound
-                                        aria-hidden="true"
-                                        className="size-3.5 shrink-0 text-mint"
-                                      />
-                                      <span
-                                        className="truncate"
-                                        title={event.mentor.displayName || undefined}
-                                      >
-                                        {event.mentor.displayName || 'Chưa cập nhật mentor'}
-                                      </span>
-                                    </span>
-                                    <span
-                                      className={
-                                        'mt-2 inline-flex rounded-full px-2 py-1 text-xs font-semibold ' +
-                                        (event.attendanceStatus === 'PRESENT'
-                                          ? 'bg-green-100 text-green-800'
-                                          : event.attendanceStatus === 'ABSENT'
-                                            ? 'bg-red-100 text-red-800'
-                                            : 'bg-slate-100 text-slate-600')
-                                      }
-                                    >
-                                      {attendanceLabel(event.attendanceStatus)}
-                                    </span>
-                                    {event.sessionStatus !== 'SCHEDULED' &&
-                                      event.sessionStatus !== 'COMPLETED' && (
-                                        <span className="mt-2 block text-xs font-semibold">
-                                          {statuses[event.sessionStatus]}
-                                        </span>
-                                      )}
-                                  </button>
-                                </article>
-                              ))
-                            )}
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <UserWeeklyTimetable events={query.data.items} monday={monday} onSelect={setSelected} />
           </>
         )}
       </section>
@@ -286,7 +146,7 @@ export function UserSchedulePage() {
             {[
               ['Buổi học', String(selected.sessionNumber)],
               ['Nội dung buổi học', selected.sessionTitle],
-              ['Điểm danh', attendanceLabel(selected.attendanceStatus)],
+              ['Điểm danh', scheduleAttendanceLabel(selected)],
               ['Chương', selected.unitTitle],
               ['Mentor', selected.mentor.displayName || 'Chưa cập nhật mentor'],
               ['Bắt đầu', formatDate(selected.startsAt) + ' · ' + formatTime(selected.startsAt)],

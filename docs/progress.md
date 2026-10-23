@@ -1,10 +1,37 @@
 # Tiến độ
 
+## 23/10/2026 — Khóa ngày xin nghỉ trên FE
+
+- Lịch chọn ngày nghỉ chỉ cho chọn từ ngày hiện tại tại Việt Nam + 2 ngày. Ngày kết thúc không trước ngày bắt đầu; kiểm lại mốc báo trước khi xem trước và gửi đơn.
+
+## 23/10/2026 — Giờ học bù theo ca
+
+- Chọn giờ bù chỉ hiện khung nằm trọn trong 6 ca của lịch tuần; dùng chung định nghĩa ca, giữ thời lượng buổi gốc. Lọc cả danh sách và tự chọn giờ cũ, không đổi API.
+
+## 23/10/2026 — Mở tài liệu từ chi tiết khóa học của tôi
+
+- Thay nút Thông tin khóa học bằng Tài liệu học tập, mở workspace của đúng classId đã đăng ký. Giữ chế độ CASH_PREVIEW và chỉ hiện khi có quyền xem lớp.
+
+## 23/10/2026 — Lịch Student đồng bộ Mentor
+
+- Lịch Student dùng bảng 6 ca, cột ca cố định khi cuộn, ngày hiện tại nền mint và ô buổi học gọn như lịch Mentor. Hiện mã lớp, giờ thật, Online/Offline, mentor và pill Có mặt/Vắng/Chưa bắt đầu/Chưa điểm danh theo API; buổi hủy có nhãn Đã hủy. Giữ chi tiết, link online, bài tập và phân trang API hiện hữu.
+- Dùng chung thuật toán chia ca ở src/lib/weekly-timetable.ts; module Mentor re-export để các consumer hiện có tiếp tục hoạt động. Không đổi API hoặc tự suy kết quả điểm danh.
+- Kiểm tra: ESLint phần sửa, TypeScript, 162 unit tests và production build pass. 12 E2E lịch Student/Mentor trên desktop/mobile pass; đã xem ảnh desktop và 320px, có cuộn ngang trong bảng và không tràn trang.
+
+## 23/10/2026 — Nội dung chung của chương
+
+- Nội dung không có sessionId hiển thị là Nội dung chung của chương trong danh sách, chi tiết và lựa chọn của form thêm/sửa. Giữ nhóm theo course unit và khả năng gắn buổi học khi cần; không đổi API.
+
+## 23/10/2026 — Rút gọn trang buổi học Mentor
+
+- Bỏ mô tả dưới tiêu đề, khối thông báo trên bảng điểm danh, dòng giải thích danh sách dự kiến, nhãn Chưa có phòng học và Phân công chính theo ảnh. Giữ phòng thật nếu có và nhãn dạy thay. Không đổi API hoặc quyền thao tác điểm danh.
+
 ## 23/10/2026 — Chọn giờ dạy bù linh hoạt
 
 - Nghỉ cả ngày và nghỉ theo buổi đều chọn lịch bù cho từng buổi học; tự ưu tiên/chọn giờ cũ nếu API còn trả khung đó, cho chọn giờ khác và ngày ở tuần sau. Thời lượng giữ nguyên. Nghỉ cả ngày chặn ngày trong khoảng nghỉ; nghỉ theo buổi loại mọi khung giao khoảng nghỉ, kể cả giao một phần.
 - Thẻ hiển thị lịch gốc, thời lượng, lịch bù; đổi ngày/buổi xóa lựa chọn cũ. Loại lịch trùng các buổi bù khác trong cùng đơn; BE kiểm lại mentor/lớp/học viên lúc tạo và duyệt.
 - Contract mới dùng sessionMappings với targetPeriod có FULL_DAY; BE vẫn nhận dayMappings cũ để giữ giờ. Cần triển khai BE mới cùng FE. Không còn cho phép staff bỏ qua trùng lịch học viên.
+- Kiểm tra: lint, TypeScript, 162 unit tests FE, build FE/BE và 14 E2E xin nghỉ trên desktop/mobile pass; đã xem ảnh 1440px/320px. BE có 9 test calendar/planning pass, 15 integration tests PostgreSQL bỏ qua vì thiếu TEST_DATABASE_URL. Prettier phần sửa pass; kiểm tra toàn repo còn 291 file cũ lệch định dạng. Chưa deploy hoặc xác nhận bằng tài khoản thật.
 
 ## 23/10/2026 — Lịch đối chiếu khi chọn lịch dạy bù
 

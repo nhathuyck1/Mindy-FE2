@@ -92,7 +92,7 @@ function MaterialSession(props: {
         ) : (
           <p className="text-base leading-7 font-semibold">
             {!props.sessionId
-              ? 'Chưa gắn buổi học'
+              ? 'Nội dung chung của chương'
               : props.context.isPending
                 ? 'Đang tải thông tin buổi học…'
                 : props.context.error
@@ -102,7 +102,7 @@ function MaterialSession(props: {
         )}
         {!props.sessionId && (
           <p className="text-sm leading-6 text-muted">
-            Tài liệu chưa được gắn với một buổi học cụ thể.
+            Nội dung dùng chung cho chương, không thuộc buổi học cụ thể.
           </p>
         )}
       </div>

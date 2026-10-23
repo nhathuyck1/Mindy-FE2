@@ -180,9 +180,15 @@ export function MyCoursesPage() {
                 </Link>
               </Button>
             )}
-            <Button asChild variant="outline">
-              <Link href={'/courses/' + selected.courseId}>Thông tin khóa học</Link>
-            </Button>
+            {selected.canViewClass && selected.accessMode !== 'NONE' && (
+              <Button asChild variant="outline">
+                <Link
+                  href={`/user/materials/${selected.classId}${selected.accessMode === 'CASH_PREVIEW' ? '?preview=true' : ''}`}
+                >
+                  Tài liệu học tập
+                </Link>
+              </Button>
+            )}
             {selected.canViewSchedule && (
               <Button asChild>
                 <Link href="/user/schedule">Xem lịch học</Link>

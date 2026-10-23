@@ -377,7 +377,7 @@ test('mentor material shows its linked lesson and lets the author attach one', a
   await page.goto(`/mentor/classes/${mentorIds.class}`);
   const lesson = page.getByRole('region', { name: 'Buổi học của tài liệu', exact: true });
   await page.getByRole('button', { name: /Bài viết đầu tiên/ }).click();
-  await expect(lesson).toContainText('Chưa gắn buổi học');
+  await expect(lesson).toContainText('Nội dung chung của chương');
   await expect(lesson.getByRole('link')).toHaveCount(0);
   await lesson.getByRole('button', { name: 'Gắn buổi học', exact: true }).click();
   const select = page.getByRole('combobox', { name: 'Gắn với buổi học (tùy chọn)', exact: true });

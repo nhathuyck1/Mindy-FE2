@@ -107,12 +107,14 @@ export function mentorDate(value: string | null, time = true) {
     ...(time ? { timeStyle: 'short' as const } : {}),
   }).format(new Date(value));
 }
-export function MentorHeading(props: { title: string; description: string }) {
+export function MentorHeading(props: { title: string; description?: string }) {
   return (
     <div className="mb-7">
       <p className="eyebrow text-mint">Mindy · Mentor</p>
       <h1 className="mt-2 text-3xl font-extrabold sm:text-4xl">{props.title}</h1>
-      <p className="mt-3 max-w-3xl text-base leading-7 text-muted">{props.description}</p>
+      {props.description && (
+        <p className="mt-3 max-w-3xl text-base leading-7 text-muted">{props.description}</p>
+      )}
     </div>
   );
 }

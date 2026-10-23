@@ -19,7 +19,7 @@ import { leavePeriods } from '../lib/leave-display';
 import { mentorDate } from './mentor-shared';
 import { SessionMakeupSlot } from './mentor-leave-makeup-slot';
 import { LeaveSchedule } from './mentor-leave-schedule';
-import { vietnamDate } from '../lib/weekly-timetable';
+import { shiftDate, vietnamDate } from '../lib/weekly-timetable';
 import { overlaps } from '../lib/leave-makeup';
 export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string) => void }) {
   const [fromDate, setFromDate] = useState('');
@@ -34,6 +34,7 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
   const read = useMentorCommand(leavePreviewSchema);
   const create = useMentorCommand(leaveRequestSchema);
   const busy = read.isPending || create.isPending;
+  const minimumLeaveDate = shiftDate(vietnamDate(), 2);
   const resetPreview = () => {
     setPreview(null);
     setSessions({});
@@ -71,6 +72,10 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
         className="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-3"
         onSubmit={async (event) => {
           event.preventDefault();
+          if (fromDate < shiftDate(vietnamDate(), 2)) {
+            setError('Ngày bắt đầu nghỉ phải từ ngày hiện tại + 2 ngày trở đi.');
+            return;
+          }
           const input = leavePreviewInputSchema.safeParse({ fromDate, toDate, period });
           if (!input.success) {
             setError('Chọn khoảng ngày hợp lệ, tối đa 93 ngày.');
@@ -94,11 +99,13 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
           <Input
             className="h-12"
             type="date"
+            min={minimumLeaveDate}
             required
             value={fromDate}
             disabled={busy}
             onChange={(e) => {
               setFromDate(e.target.value);
+              if (toDate && toDate < e.target.value) setToDate('');
               resetPreview();
             }}
           />
@@ -108,6 +115,7 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
           <Input
             className="h-12"
             type="date"
+            min={fromDate > minimumLeaveDate ? fromDate : minimumLeaveDate}
             required
             value={toDate}
             disabled={busy}
@@ -236,6 +244,10 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
                 className="space-y-4"
                 onSubmit={async (event) => {
                   event.preventDefault();
+                  if (fromDate < shiftDate(vietnamDate(), 2)) {
+                    setError('Ngày bắt đầu nghỉ phải từ ngày hiện tại + 2 ngày trở đi.');
+                    return;
+                  }
                   const input = createLeaveInputSchema.safeParse({
                     fromDate,
                     toDate,

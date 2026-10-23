@@ -186,10 +186,18 @@ test('Weekly schedule has Monday through Sunday columns, all API pages and week 
   await page.goto('/user/schedule');
   await page.getByLabel('Chọn ngày xem lịch', { exact: true }).fill('2026-10-14');
   const table = page.getByRole('table');
-  await expect(table.getByRole('columnheader')).toHaveCount(7);
-  await expect(table.getByRole('columnheader').first()).toContainText('Thứ 2');
+  await expect(table.getByRole('columnheader')).toHaveCount(8);
+  await expect(table.getByRole('columnheader').first()).toHaveText('Ca học');
+  await expect(table.getByRole('rowheader')).toHaveCount(6);
+  await expect(
+    table
+      .getByRole('row')
+      .filter({ has: page.getByRole('article', { name: 'Thực hành Web', exact: true }) })
+      .getByRole('rowheader'),
+  ).toContainText('5');
+  await expect(table.getByRole('columnheader').nth(1)).toContainText('Thứ Hai');
   await expect(table.getByRole('columnheader').last()).toContainText('Chủ nhật');
-  await expect(table.getByRole('columnheader').first()).toContainText('12/10/2026');
+  await expect(table.getByRole('columnheader').nth(1)).toContainText('(12/10)');
   await expect(table.getByRole('article', { name: 'Thực hành Web' })).toContainText(
     '19:00 – 21:00',
   );
@@ -197,9 +205,9 @@ test('Weekly schedule has Monday through Sunday columns, all API pages and week 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('user-schedule.png'), fullPage: true });
   await page.getByRole('button', { name: 'Tuần sau', exact: true }).click();
-  await expect(table.getByRole('columnheader').first()).toContainText('19/10/2026');
+  await expect(table.getByRole('columnheader').nth(1)).toContainText('(19/10)');
   await page.getByRole('button', { name: 'Tuần trước', exact: true }).click();
-  await expect(table.getByRole('columnheader').first()).toContainText('12/10/2026');
+  await expect(table.getByRole('columnheader').nth(1)).toContainText('(12/10)');
 });
 test('Orders use existing order API, preserve server statuses and show an empty result', async ({
   page,
@@ -279,9 +287,9 @@ test('Compact course rows open full details and restore focus on Escape at deskt
   const dialog = page.getByRole('dialog', { name: 'Chi tiết khóa học của tôi', exact: true });
   await expect(dialog).toContainText('Mentor Mindy');
   await expect(dialog).toContainText('Lớp Web buổi tối');
-  await expect(dialog.getByRole('link', { name: 'Thông tin khóa học' })).toHaveAttribute(
+  await expect(dialog.getByRole('link', { name: 'Tài liệu học tập' })).toHaveAttribute(
     'href',
-    '/courses/' + courseId,
+    '/user/materials/' + classId,
   );
   await expect(dialog.getByRole('link', { name: 'Xem lịch học' })).toHaveAttribute(
     'href',
@@ -337,6 +345,9 @@ for (const [status, label] of [
     await page.goto('/user/schedule');
     const tile = page.getByRole('article', { name: 'Thực hành Web', exact: true });
     await expect(tile.getByText(label, { exact: true })).toBeVisible();
+    await expect(tile.getByLabel(`Điểm danh: ${label}`, { exact: true })).toHaveClass(
+      /rounded-full/,
+    );
     await expect(tile).not.toContainText('Đã hoàn thành');
     await tile.getByRole('button').click();
     const dialog = page.getByRole('dialog', { name: 'Chi tiết lớp học', exact: true });
@@ -376,6 +387,7 @@ test('Schedule tiles stay compact and open full class/session details in a modal
   await page.goto('/user/schedule');
   const tile = page.getByRole('article', { name: 'Thực hành Web', exact: true });
   await expect(tile).toBeVisible();
+  await expect(tile).toContainText('WEB-A');
   await expect(tile).toContainText('Mentor Mindy');
   await expect(tile).toContainText('Online');
   await expect(tile.getByText('Chưa bắt đầu', { exact: true })).toBeVisible();
