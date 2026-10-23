@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation';
+import { ManagerOverviewPage } from '@/features/manager/components/manager-overview-page';
 export default function ManagerPage() {
-  redirect('/manager/materials');
+  return <ManagerOverviewPage />;
 }

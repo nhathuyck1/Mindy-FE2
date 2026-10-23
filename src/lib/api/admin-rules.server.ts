@@ -30,6 +30,14 @@ import {
   adminClassDetailSchema,
   updateAdminSessionTimeSchema,
 } from '@/features/admin/schemas/admin-write-contracts';
+import {
+  adminReconciliationPageSchema,
+  adminReconciliationQuerySchema,
+  adminTrackingDetailSchema,
+  adminTrackingPageSchema,
+  adminTrackingQuerySchema,
+  trackingSourceSchema,
+} from '@/features/admin/schemas/admin-read-contracts';
 
 type Rule = {
   response: z.ZodType;
@@ -47,6 +55,22 @@ export function resolveAdminCrudRule(method: string, path: string): Rule | undef
   const parts = path.split('/');
   if (parts[0] !== 'admin') return undefined;
   const resource = parts[1];
+  if (method === 'GET' && resource === 'tracking' && parts[2] === 'events') {
+    if (parts.length === 3)
+      return { ...rule(adminTrackingPageSchema), query: adminTrackingQuerySchema };
+    if (
+      parts.length === 5 &&
+      trackingSourceSchema.safeParse(parts[3]).success &&
+      z.uuid().safeParse(parts[4]).success
+    )
+      return rule(adminTrackingDetailSchema);
+    return undefined;
+  }
+  if (method === 'GET' && resource === 'payments' && parts[2] === 'reconciliation') {
+    if (parts.length === 3)
+      return { ...rule(adminReconciliationPageSchema), query: adminReconciliationQuerySchema };
+    return undefined;
+  }
   if (method === 'GET' && parts.length === 2) {
     if (resource === 'users')
       return { ...rule(adminUserPageSchema), query: adminUserFiltersSchema };

@@ -1,5 +1,33 @@
 # API catalog, lớp học và tài khoản
 
+## Manager duyệt đơn xin nghỉ Mentor — 23/10/2026
+
+Đã đối chiếu contract Manager leave trong FE2 với backend/Swagger. Response là JSON trực tiếp, không bọc `data`.
+
+- `GET /management/mentor-leave-requests` nhận `page`, `pageSize`, `status`, `mentorId`; `GET /management/mentor-leave-requests/:requestId` nhận `page`, `pageSize` và trả phiên bản, hạn xử lý, lịch bị ảnh hưởng, `sourcesCurrent`, số lượng/danh sách xung đột và phản hồi.
+- `POST .../:requestId/approve` gửi `{expectedVersion, reason, acknowledgeStudentConflicts}`; `POST .../:requestId/reject` gửi `{expectedVersion, reason}`. Cả hai yêu cầu `Idempotency-Key` UUIDv4. Approve trả đơn, buổi thay thế, ngày kết thúc lớp mới và số xung đột đã xác nhận; reject trả đơn đã xử lý.
+- Proxy dùng schema strict cho query/body, kiểm UUID route, cookie `access_token`, Origin cùng `private, no-store`; chỉ chuyển `Idempotency-Key` cho rule đã đánh dấu idempotent. GET bổ trợ lấy mentor, học viên, lớp theo ID và tìm mentor để lọc.
+- Chỉ cho approve đơn PENDING còn hạn, nguồn hiện hành; FULL_DAY có xung đột phải gửi xác nhận chủ động. Đơn theo buổi có xung đột bị chặn duyệt. Reject giữ nguyên lịch. Backend sở hữu transaction, hủy buổi gốc, tạo buổi bù, extension, khoảng nghỉ và audit.
+
+## Dashboard và duyệt tài liệu Manager — 23/10/2026
+
+Đã xác nhận controller/DTO/policy backend và Swagger live `/docs-json`. Các API duyệt đã có trong proxy; lượt này sửa cách xác nhận và bổ sung consumer dashboard/trang chi tiết, không thêm endpoint backend.
+
+- Hàng chờ dùng GET `/manager/materials?reviewStatus=PENDING_REVIEW&page=...&pageSize=20`, phân trang/thứ tự từ backend; cột thời gian dùng updatedAt, không coi là thời điểm gửi duyệt. Chi tiết GET `/manager/materials/:id`; UUID sai không mount query.
+- Chỉnh sửa lưu PATCH `/manager/materials/:id` cùng expectedRevision; backend tăng revision, về DRAFT và hủy approval/publication. Không giữ thao tác duyệt cho bản nháp Mentor chưa từng được duyệt và chưa gửi lại.
+- Duyệt POST `/manager/materials/:id/approve` gửi `{expectedRevision}` và đồng thời xuất bản. Yêu cầu chỉnh sửa POST `.../reject` gửi `{expectedRevision,reason}` với reason trim không rỗng, tối đa 2000 ký tự. Xóa DELETE `/manager/materials/:id?expectedRevision=...` không có body, thành công 204.
+- Hộp thoại giữ phiên bản khi mở, chặn gửi trùng; 409 hoặc lỗi mạng không tự replay. Người dùng phải tải lại và kiểm tra trước khi mở xác nhận mới. Thành công invalidate query Manager (chi tiết/danh sách/số liệu); same-origin, Origin, cookie HttpOnly, Zod và private/no-store giữ nguyên.
+
+## Học liệu CKEditor — 23/10/2026
+
+Đã đối chiếu Swagger live `https://api.quanh123.id.vn/docs-json` với DTO/controller và sanitizer trong backend local. Không cần sửa backend cho CKEditor.
+
+- Manager tạo bằng POST `/manager/course-units/:courseUnitId/materials`, sửa bằng PATCH `/manager/materials/:materialId`.
+- Mentor tạo bằng POST `/mentor/classes/:classId/units/:unitId/materials`, sửa bằng PATCH `/mentor/classes/:classId/materials/:materialId`.
+- Tạo bài gửi `contentType: ARTICLE`, `title`, `contentHtml`, `contentSchemaVersion: 1` và metadata/attachmentFileIds. Sửa gửi `expectedRevision` đã đọc cùng HTML/metadata; không gửi contentType/contentSchemaVersion trong PATCH. Frontend mới chỉ dùng contentHtml, không gửi đồng thời contentText hoặc fileId cho ARTICLE.
+- Giới hạn HTML là 49.152 bytes UTF-8 (bao gồm markup), backend làm sạch theo allowlist và lưu canonical HTML. Giữ `<img data-file-id="UUIDv4" alt="…">` cho ảnh đã upload; URL storage/base64 không thuộc contract. Màu, font, căn lề, embed không được bật vì backend loại các style/thuộc tính này.
+- Lưu chỉnh sửa trở về DRAFT; duyệt/gửi duyệt và publication tiếp tục dùng workflow/revision hiện hữu. Kiểm thử mutations dùng API mock theo contract, không tạo dữ liệu kiểm thử vào backend live.
+
 ## Toàn bộ API Mentor — 22/10/2026
 
 Đối chiếu source BE dev 36753cf, docs/api_flow Phase 4.4 mục 19, Phase 4.6, ATTENDANCE_BULK, MENTOR_SESSION_MEETING, CLASS_UNIT_ACCESS và Swagger live /docs-json ngày 22/10. Ghi chú này thay contract Mentor/release cũ phía dưới; Swagger presence không thay nghiệm thu bằng tài khoản thật.
@@ -178,3 +206,15 @@ Mở rộng 15/10: live qua adapter `/courses/:id`, `/courses/:id/classes`, `/cl
 | GET `/me/schedule` | User schedule: from/to ISO có timezone, from < to ≤31 ngày, pageSize≤100, includeCancelled chuỗi true/false. Lấy đủ trang; UI tuần 7 ngày theo Asia/Ho_Chi_Minh. |
 
 Proxy chỉ mở hai GET list mới, cookie access_token/private no-store; thiếu cookie trả 401 trước upstream. Strict query không cho chèn studentId, không proxy admin/private class detail/materials trong lần này. Schedule DTO strip field dư, calendar không có meeting URL và không suy ra attendance hoặc effective mentor theo Session. Buổi qua đêm hiện trên các ngày giao nhau theo startsAt < dayEnd && endsAt > dayStart; session CANCELLED có nhãn hủy. ReturnTo thêm đúng 5 path `/user`, `/user/profile`, `/user/orders`, `/user/schedule`, `/user/courses`; bỏ query/path lạ.
+
+## Admin tracking và payment reconciliation — 23/10/2026
+
+Đối chiếu backend mới ở `Mindy-BE` (source/controller/DTO tracking và reconciliation, Swagger live `/docs-json`). Hai nhóm endpoint chỉ mở trong allowlist FE2; backend vẫn thực thi role ADMIN.
+
+| Method/path                                   | Contract FE2                                                                                                                                                                                                                                                              |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET `/admin/tracking/events`                  | page/pageSize; filter source, actorId, entityId, classId, sessionId, action, from/to; strict query, UUIDv4/source enum, timestamp phải có offset và from < to. Response event gồm actor nullable, entity/class/session IDs nullable, version/reason nullable, occurredAt. |
+| GET `/admin/tracking/events/:source/:eventId` | source enum + UUIDv4; detail thêm `data: Record<string, unknown>` và `evidenceItems`. UI hiển thị JSON an toàn như text.                                                                                                                                                  |
+| GET `/admin/payments/reconciliation`          | page/pageSize; response items có providerOrderCode, referenceCode, amount/currency, nullable paymentId/reason/actorId, source và createdAt. UI chỉ đọc; không allowlist POST `:paymentId/reconcile`.                                                                      |
+
+Proxy kiểm tra duplicate/unsupported query, Zod response, cookie access_token và `private, no-store`. Query hooks được enable duy nhất với ADMIN ACTIVE; tracking filters/page và reconciliation page/pageSize nằm trong query key cùng user ID. Kiểm thử API/E2E dùng fixture giả lập đúng DTO, không gọi mutation hoặc coi mock là xác nhận tài khoản thật.

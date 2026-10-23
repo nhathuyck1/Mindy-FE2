@@ -7,6 +7,11 @@ const unitId = '55555555-5555-4555-8555-555555555555';
 const emptyUnitId = '66666666-6666-4666-8666-666666666666';
 const courseId = '33333333-3333-4333-8333-333333333333';
 const date = '2026-10-16T03:00:00Z';
+async function openInventory(page: Page) {
+  await page.getByRole('button', { name: 'Toàn bộ tài liệu', exact: true }).click();
+  await expect(page).toHaveURL('/manager/materials?view=inventory&reviewStatus=PENDING_REVIEW');
+  await expect(page.getByRole('region', { name: 'Kho tài liệu', exact: true })).toBeVisible();
+}
 async function mockManager(
   page: Page,
   options: {
@@ -14,8 +19,10 @@ async function mockManager(
     conflict?: boolean;
     ownDraft?: boolean;
     unitPaging?: boolean;
+    inventoryPaging?: boolean;
     fileMaterial?: boolean;
     scrollContent?: boolean;
+    articleHtml?: string;
   } = {},
 ) {
   await mockHomepageApi(page);
@@ -25,6 +32,7 @@ async function mockManager(
     method: string;
     body: Record<string, unknown> | null;
   }[] = [];
+  let deleted = false;
   let material: MaterialDetail = {
     id,
     courseUnitId: unitId,
@@ -32,6 +40,7 @@ async function mockManager(
     description: 'Tài liệu thực hành cho học viên',
     contentType: 'ARTICLE',
     contentHtml:
+      options.articleHtml ??
       '<h2>Biến và kiểu dữ liệu</h2><p>Nội dung học liệu cần kiểm duyệt.</p><script>parent.alert("unsafe")</script>',
     contentSchemaVersion: 1,
     inlineImages: [],
@@ -105,17 +114,24 @@ async function mockManager(
       const status = url.searchParams.get('reviewStatus');
       const type = url.searchParams.get('contentType');
       const matching =
+        !deleted &&
         (!unitList || unitList[1] === unitId) &&
         (!status || status === material.reviewStatus) &&
         (!type || type === material.contentType)
           ? [material]
           : [];
       const allItems =
-        matching.length && unitList && options.unitPaging
+        matching.length &&
+        ((unitList && options.unitPaging) || (!unitList && options.inventoryPaging))
           ? Array.from({ length: 21 }, (_, index) => ({
               ...material,
               id: index === 0 ? id : `99999999-9999-4999-8999-${String(index).padStart(12, '0')}`,
-              title: index === 20 ? 'Học liệu trang 2' : `${material.title} ${index + 1}`,
+              title:
+                index === 20
+                  ? options.inventoryPaging
+                    ? 'Tài liệu trang 2'
+                    : 'Học liệu trang 2'
+                  : `${material.title} ${index + 1}`,
             }))
           : matching;
       const pageNumber = Number(url.searchParams.get('page') ?? 1);
@@ -129,12 +145,29 @@ async function mockManager(
         },
       });
     }
-    if (options.unitPaging && method === 'GET' && /^manager\/materials\/99999999-/.test(path))
+    if (
+      (options.unitPaging || options.inventoryPaging) &&
+      method === 'GET' &&
+      /^manager\/materials\/99999999-/.test(path)
+    )
       return route.fulfill({
-        json: { ...material, id: path.split('/').at(-1), title: 'Học liệu trang 2' },
+        json: {
+          ...material,
+          id: path.split('/').at(-1),
+          title: options.inventoryPaging ? 'Tài liệu trang 2' : 'Học liệu trang 2',
+        },
       });
     if (path === `manager/materials/${id}` && method === 'GET')
-      return route.fulfill({ json: material });
+      return deleted
+        ? route.fulfill({
+            status: 404,
+            json: { code: 'MATERIAL_NOT_FOUND', message: 'Chưa tìm thấy tài liệu.' },
+          })
+        : route.fulfill({ json: material });
+    if (path === `manager/materials/${id}` && method === 'DELETE') {
+      deleted = true;
+      return route.fulfill({ status: 204 });
+    }
     if (path === `manager/course-units/${unitId}/materials` && method === 'POST') {
       material = {
         ...material,
@@ -237,19 +270,254 @@ async function mockManager(
   return { calls };
 }
 
+test('Manager pending queue paginates and opens the selected material by URL', async ({
+  page,
+}, info) => {
+  await mockManager(page, { inventoryPaging: true });
+  if (info.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto('/manager');
+  const queue = page.getByRole('region', { name: 'Tài liệu chờ duyệt', exact: true });
+  await expect(queue.locator('tbody tr')).toHaveCount(20);
+  await expect(queue).toContainText('21 tài liệu');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: info.outputPath('manager-review-dashboard.png'), fullPage: true });
+  await queue.getByRole('button', { name: 'Sau', exact: true }).click();
+  await expect(queue.locator('tbody tr')).toHaveCount(1);
+  await queue.getByRole('link', { name: 'Xem và duyệt', exact: true }).click();
+  const selectedId = '99999999-9999-4999-8999-000000000020';
+  await expect(page).toHaveURL(`/manager/materials/${selectedId}`);
+  await expect(page.getByRole('heading', { name: 'Tài liệu trang 2', exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Tài liệu trang 2', exact: true })).toBeVisible();
+  await page.screenshot({ path: info.outputPath('manager-review-detail.png'), fullPage: true });
+  await page.getByRole('link', { name: 'Về tổng quan', exact: true }).click();
+  await expect(page).toHaveURL('/manager');
+});
+
+test('Manager confirmations appear in the viewport above long chapter content and restore focus', async ({
+  page,
+}, info) => {
+  const { calls } = await mockManager(page, { scrollContent: true });
+  if (info.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto('/manager/materials');
+  await page
+    .getByRole('region', { name: 'Danh sách khóa học', exact: true })
+    .getByRole('button', { name: /Khóa học kiểm thử/ })
+    .click();
+  const toolbar = page.getByRole('toolbar', { name: 'Thao tác tài liệu', exact: true });
+  for (const name of ['Duyệt tài liệu', 'Yêu cầu chỉnh sửa', 'Xóa tài liệu']) {
+    const trigger = toolbar.getByRole('button', { name, exact: true });
+    await trigger.click();
+    const confirmation = page.getByRole('dialog', { name, exact: true });
+    await expect(confirmation).toBeInViewport({ ratio: 1 });
+    await expect(
+      confirmation.getByRole('button', { name: 'Xác nhận', exact: true }),
+    ).toBeInViewport();
+    if (name === 'Duyệt tài liệu') {
+      await expect(confirmation).toContainText('Duyệt và xuất bản');
+      await page.screenshot({
+        path: info.outputPath('manager-review-confirmation.png'),
+        fullPage: false,
+      });
+    }
+    await page.keyboard.press('Escape');
+    await expect(confirmation).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+  }
+  expect(
+    calls.filter((call) => call.path.startsWith('manager/materials/') && call.method !== 'GET'),
+  ).toHaveLength(0);
+});
+
+test('Manager review approval sends one revision and refreshes the dashboard totals', async ({
+  page,
+}) => {
+  const { calls } = await mockManager(page);
+  let release = () => {};
+  const responseGate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let requests = 0;
+  await page.route(`**/api/v1/manager/materials/${id}/approve`, async (route) => {
+    requests++;
+    await responseGate;
+    await route.fallback();
+  });
+  await page.goto(`/manager/materials/${id}`);
+  await page.getByRole('button', { name: 'Duyệt tài liệu', exact: true }).click();
+  const confirmation = page.getByRole('dialog', { name: 'Duyệt tài liệu', exact: true });
+  await expect(confirmation).toContainText('Phiên bản 3');
+  await confirmation.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(
+    confirmation.getByRole('button', { name: 'Đang xử lý…', exact: true }),
+  ).toBeDisabled();
+  await page.keyboard.press('Enter');
+  expect(requests).toBe(1);
+  release();
+  await expect(confirmation).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Ẩn tài liệu', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(`/manager/materials/${id}`);
+  expect(calls.filter((call) => call.path.endsWith('/approve'))).toHaveLength(1);
+  expect(calls.find((call) => call.path.endsWith('/approve'))?.body).toEqual({
+    expectedRevision: 3,
+  });
+  await page.getByRole('link', { name: 'Về tổng quan', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Tài liệu chờ duyệt', exact: true })).toContainText(
+    'Không có tài liệu chờ duyệt.',
+  );
+  await expect(page.getByRole('link', { name: 'Chờ duyệt: 0', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Đã duyệt: 1', exact: true })).toBeVisible();
+});
+
+test('Manager review rejection requires a reason and deletion waits for explicit confirmation', async ({
+  page,
+}) => {
+  const { calls } = await mockManager(page);
+  await page.goto(`/manager/materials/${id}`);
+  await page.getByRole('button', { name: 'Yêu cầu chỉnh sửa', exact: true }).click();
+  const rejection = page.getByRole('dialog', { name: 'Yêu cầu chỉnh sửa', exact: true });
+  const confirm = rejection.getByRole('button', { name: 'Xác nhận', exact: true });
+  await expect(confirm).toBeDisabled();
+  await rejection.getByLabel('Lý do chỉnh sửa').fill('   ');
+  await expect(confirm).toBeDisabled();
+  await rejection.getByLabel('Lý do chỉnh sửa').fill('  Cần bổ sung ví dụ.  ');
+  await confirm.click();
+  await expect(rejection).toHaveCount(0);
+  await expect(page.getByText('Cần chỉnh sửa', { exact: true })).toBeVisible();
+  expect(calls.find((call) => call.path.endsWith('/reject'))?.body).toEqual({
+    expectedRevision: 3,
+    reason: 'Cần bổ sung ví dụ.',
+  });
+  const deleteButton = page.getByRole('button', { name: 'Xóa tài liệu', exact: true });
+  await deleteButton.click();
+  let deletion = page.getByRole('dialog', { name: 'Xóa tài liệu', exact: true });
+  await deletion.getByRole('button', { name: 'Hủy', exact: true }).click();
+  await expect(deleteButton).toBeFocused();
+  expect(calls.filter((call) => call.method === 'DELETE')).toHaveLength(0);
+  await deleteButton.click();
+  deletion = page.getByRole('dialog', { name: 'Xóa tài liệu', exact: true });
+  await deletion.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(page).toHaveURL('/manager');
+  await expect(page.getByRole('region', { name: 'Tài liệu chờ duyệt', exact: true })).toContainText(
+    'Không có tài liệu chờ duyệt.',
+  );
+  expect(calls.filter((call) => call.method === 'DELETE')).toHaveLength(1);
+  expect(calls.find((call) => call.method === 'DELETE')?.search).toBe('?expectedRevision=3');
+  await page.goto(`/manager/materials/${id}`);
+  await expect(page.getByRole('main').getByRole('alert')).toContainText('Chưa tìm thấy tài liệu');
+});
+
+test('Manager review conflict reloads a newer version without replaying the command', async ({
+  page,
+}) => {
+  const { calls } = await mockManager(page, { conflict: true });
+  await page.goto(`/manager/materials/${id}`);
+  await page.getByRole('button', { name: 'Duyệt tài liệu', exact: true }).click();
+  const confirmation = page.getByRole('dialog', { name: 'Duyệt tài liệu', exact: true });
+  await confirmation.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(confirmation.getByRole('alert')).toContainText('Tài liệu đã thay đổi');
+  await expect(confirmation.getByRole('button', { name: 'Xác nhận', exact: true })).toBeDisabled();
+  await confirmation.getByRole('button', { name: 'Tải lại tài liệu', exact: true }).click();
+  await expect(confirmation).toHaveCount(0);
+  await expect(page.getByText('Bài viết · Phiên bản 4', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Duyệt tài liệu', exact: true }).click();
+  await expect(confirmation).toContainText('Phiên bản 4');
+  expect(calls.filter((call) => call.path.endsWith('/approve'))).toHaveLength(1);
+});
+
+test('Manager review network errors require reading the material before another command', async ({
+  page,
+}) => {
+  await mockManager(page);
+  let requests = 0;
+  await page.route(`**/api/v1/manager/materials/${id}/approve`, (route) => {
+    requests++;
+    return route.abort('failed');
+  });
+  await page.goto(`/manager/materials/${id}`);
+  await page.getByRole('button', { name: 'Duyệt tài liệu', exact: true }).click();
+  const confirmation = page.getByRole('dialog', { name: 'Duyệt tài liệu', exact: true });
+  await confirmation.getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await expect(confirmation.getByRole('alert')).toBeVisible();
+  await expect(confirmation.getByRole('button', { name: 'Xác nhận', exact: true })).toBeDisabled();
+  await confirmation.getByRole('button', { name: 'Tải lại tài liệu', exact: true }).click();
+  await expect(confirmation).toHaveCount(0);
+  expect(requests).toBe(1);
+});
+
+test('Manager pending queue retries failed reads and handles invalid review links safely', async ({
+  page,
+}) => {
+  const { calls } = await mockManager(page);
+  let unavailable = true;
+  await page.route('**/api/v1/manager/materials?**', (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    if (params.get('reviewStatus') !== 'PENDING_REVIEW') return route.fallback();
+    return unavailable
+      ? route.fulfill({ status: 503, json: { message: 'Tạm thời không tải được danh sách.' } })
+      : route.fulfill({
+          json: { items: [], page: 1, pageSize: Number(params.get('pageSize')), total: 0 },
+        });
+  });
+  await page.goto('/manager');
+  const queue = page.getByRole('region', { name: 'Tài liệu chờ duyệt', exact: true });
+  await expect(queue.getByRole('alert')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Chờ duyệt: 0', exact: true })).toHaveCount(0);
+  unavailable = false;
+  await queue.getByRole('button', { name: 'Thử lại', exact: true }).click();
+  await expect(queue).toContainText('Không có tài liệu chờ duyệt.');
+  await queue.getByRole('button', { name: 'Làm mới', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Chờ duyệt: 0', exact: true })).toBeVisible();
+  await page.goto('/manager/materials/invalid-id');
+  await expect(page.getByRole('main').getByRole('alert')).toContainText(
+    'Đường dẫn tài liệu không hợp lệ.',
+  );
+  expect(calls.some((call) => call.path.endsWith('/invalid-id'))).toBe(false);
+});
+
+test('Student cannot mount the Manager material review query', async ({ page }) => {
+  const { calls } = await mockManager(page, { role: 'STUDENT' });
+  await page.goto(`/manager/materials/${id}`);
+  await expect(
+    page.getByRole('heading', { name: 'Tài khoản chưa có quyền Manager', exact: true }),
+  ).toBeVisible();
+  expect(calls.some((call) => call.path === `manager/materials/${id}`)).toBe(false);
+});
+
+test('Manager review editing preserves CKEditor and removes approval for a never approved Mentor draft', async ({
+  page,
+}) => {
+  const { calls } = await mockManager(page);
+  await page.goto(`/manager/materials/${id}`);
+  await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'Nội dung bài viết', exact: true })).toBeVisible();
+  await page.getByLabel('Tiêu đề', { exact: true }).fill('Tài liệu đã được chỉnh sửa');
+  await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Tài liệu đã được chỉnh sửa', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText('Bản nháp', { exact: true })).toBeVisible();
+  await expect(page.getByText('Bài viết · Phiên bản 4', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Duyệt tài liệu', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Yêu cầu chỉnh sửa', exact: true })).toHaveCount(0);
+  expect(calls.find((call) => call.method === 'PATCH')?.body?.expectedRevision).toBe(3);
+});
+
 test('manager reviews a material, controls publication and has a responsive workspace', async ({
   page,
 }, info) => {
   const { calls } = await mockManager(page);
-  await page.goto('/manager');
-  await expect(page).toHaveURL(/\/manager\/materials$/);
+  await page.goto('/manager/materials');
   await expect(page.getByRole('heading', { name: 'Quản lý tài liệu', exact: true })).toBeVisible();
   await page.screenshot({
     path: `test-results/manager-materials-${info.project.name}.png`,
     fullPage: true,
   });
-  await page.getByRole('button', { name: 'Toàn bộ tài liệu', exact: true }).click();
-  await page.getByRole('button', { name: 'Xem chi tiết' }).click();
+  await openInventory(page);
+  await expect(page).toHaveURL('/manager/materials?view=inventory&reviewStatus=PENDING_REVIEW');
+  const inventory = page.getByRole('region', { name: 'Kho tài liệu' });
+  await expect(inventory.getByRole('button', { name: 'Xem chi tiết' })).toBeVisible();
+  await inventory.getByRole('button', { name: 'Xem chi tiết' }).click();
   await expect(page.getByRole('dialog')).toContainText('Phiên bản 3');
   await expect(
     page
@@ -281,10 +549,54 @@ test('manager reviews a material, controls publication and has a responsive work
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
+test('Manager overview counts API totals and keeps inventory state through reload and history', async ({
+  page,
+}, info) => {
+  const { calls } = await mockManager(page);
+  if (info.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 780 });
+  await page.goto('/manager');
+  await expect(page.getByRole('heading', { name: 'Tổng quan Manager', exact: true })).toBeVisible();
+  await expect(page.locator('article').filter({ hasText: 'Chờ duyệt' })).toContainText('1');
+  await expect(page.locator('article').filter({ hasText: 'Đã duyệt' })).toContainText('0');
+  await page.screenshot({
+    path: `test-results/manager-overview-${info.project.name}.png`,
+    fullPage: true,
+  });
+  await page.getByRole('link', { name: 'Chờ duyệt', exact: true }).click();
+  await expect(page).toHaveURL('/manager/materials?view=inventory&reviewStatus=PENDING_REVIEW');
+  await expect(page.getByRole('heading', { name: 'Quản lý tài liệu', exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page).toHaveURL('/manager/materials?view=inventory&reviewStatus=PENDING_REVIEW');
+  await page.goBack();
+  await expect(page).toHaveURL('/manager');
+  await page.goForward();
+  await expect(page).toHaveURL('/manager/materials?view=inventory&reviewStatus=PENDING_REVIEW');
+  expect(
+    calls.some(
+      (call) =>
+        call.path === 'manager/materials' && call.search.includes('reviewStatus=PENDING_REVIEW'),
+    ),
+  ).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('Manager account menu links to its dashboard and hides Student links', async ({ page }) => {
+  await mockManager(page);
+  await page.goto('/manager');
+  await page.getByRole('button', { name: /Tài khoản của Quản lý Minh/ }).click();
+  const menu = page.getByRole('region', { name: 'Thông tin tài khoản' });
+  await expect(menu.getByRole('link', { name: 'Tổng quan Manager' })).toHaveAttribute(
+    'href',
+    '/manager',
+  );
+  await expect(menu.getByRole('link', { name: 'Lịch học', exact: true })).toHaveCount(0);
+  await expect(menu.getByRole('link', { name: 'Thông tin cá nhân', exact: true })).toHaveCount(0);
+});
+
 test('manager rejects with a reason and never retries a revision conflict', async ({ page }) => {
   const { calls } = await mockManager(page, { conflict: true });
   await page.goto('/manager/materials');
-  await page.getByRole('button', { name: 'Toàn bộ tài liệu', exact: true }).click();
+  await openInventory(page);
   await page.getByRole('button', { name: 'Xem chi tiết' }).click();
   await page.getByRole('button', { name: 'Yêu cầu chỉnh sửa', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Xác nhận', exact: true })).toBeDisabled();
@@ -304,7 +616,7 @@ test('manager creates an article in a real course unit and edits a draft', async
 }, info) => {
   const { calls } = await mockManager(page);
   await page.goto('/manager/materials');
-  await page.getByRole('button', { name: 'Toàn bộ tài liệu', exact: true }).click();
+  await openInventory(page);
   await page.getByRole('button', { name: 'Tạo tài liệu', exact: true }).click();
   await page.getByLabel('Khóa học', { exact: true }).selectOption(courseId);
   await page.getByLabel('Học phần', { exact: true }).selectOption(unitId);
@@ -313,12 +625,33 @@ test('manager creates an article in a real course unit and edits a draft', async
     fullPage: true,
   });
   await page.getByLabel('Tiêu đề', { exact: true }).fill('Bài viết mới');
-  await page.getByLabel('Nội dung bài viết (HTML)', { exact: false }).fill('<p>Nội dung mới</p>');
+  const editor = page.getByRole('textbox', { name: 'Nội dung bài viết', exact: true });
+  await expect(editor).toBeVisible();
+  await page.getByRole('button', { name: 'Đậm', exact: true }).click();
+  await editor.pressSequentially('Nội dung mới');
+  await expect(editor.locator('b,strong').filter({ hasText: 'Nội dung mới' })).toHaveText(
+    'Nội dung mới',
+  );
+  const linkTool = page.getByRole('button', { name: 'Chèn liên kết', exact: true });
+  if (!(await linkTool.isVisible()))
+    await page.getByRole('button', { name: 'Xem thêm', exact: true }).click();
+  await linkTool.click();
+  await page
+    .getByRole('textbox', { name: 'Đường dẫn liên kết', exact: true })
+    .fill('https://example.com/lesson');
+  await page.getByRole('button', { name: 'Chèn', exact: true }).click();
+  await page.screenshot({
+    path: `test-results/manager-ckeditor-${info.project.name}.png`,
+    fullPage: true,
+  });
   await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByLabel('Trạng thái duyệt', { exact: true }).selectOption('DRAFT');
   await page.getByRole('button', { name: 'Xem chi tiết' }).click();
   await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
+  await expect(editor.locator('b,strong').filter({ hasText: 'Nội dung mới' })).toHaveText(
+    'Nội dung mới',
+  );
   await page.getByLabel('Tiêu đề', { exact: true }).fill('Bài viết đã chỉnh sửa');
   await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Bài viết đã chỉnh sửa' })).toBeVisible();
@@ -328,8 +661,13 @@ test('manager creates an article in a real course unit and edits a draft', async
   ).toMatchObject({
     title: 'Bài viết mới',
     contentType: 'ARTICLE',
-    contentHtml: '<p>Nội dung mới</p>',
+    contentHtml: expect.stringContaining('<strong>Nội dung mới</strong>'),
+    contentSchemaVersion: 1,
   });
+  expect(
+    calls.find((call) => call.method === 'POST' && call.path.endsWith('/materials'))?.body
+      ?.contentHtml,
+  ).toContain('href="https://example.com/lesson"');
 });
 
 test('old local receipts remain readable and exportable without changing payments', async ({
@@ -458,7 +796,7 @@ test('manager uploads a primary file before saving a FILE material', async ({ pa
   const { calls: stageCalls } = await mockFileUpload(page);
   const fileId = '88888888-8888-4888-8888-888888888888';
   await page.goto('/manager/materials');
-  await page.getByRole('button', { name: 'Toàn bộ tài liệu', exact: true }).click();
+  await openInventory(page);
   await page.getByRole('button', { name: 'Tạo tài liệu', exact: true }).click();
   await page.getByLabel('Khóa học', { exact: true }).selectOption(courseId);
   await page.getByLabel('Học phần', { exact: true }).selectOption(unitId);
@@ -496,7 +834,7 @@ test('manager detects PDF metadata and polls automatically after complete', asyn
   if (info.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 780 });
   await page.clock.install();
   await page.goto('/manager/materials');
-  await page.getByRole('button', { name: 'Toàn bộ tài liệu', exact: true }).click();
+  await openInventory(page);
   await page.getByRole('button', { name: 'Tạo tài liệu', exact: true }).click();
   await page.getByLabel('Khóa học', { exact: true }).selectOption(courseId);
   await page.getByLabel('Học phần', { exact: true }).selectOption(unitId);
@@ -568,7 +906,7 @@ test('manager drops a file, sees a compact success card and adds or removes an a
   const upload = await mockFileUpload(page);
   if (info.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 780 });
   await page.goto('/manager/materials');
-  await page.getByRole('button', { name: 'Toàn bộ tài liệu', exact: true }).click();
+  await openInventory(page);
   await page.getByRole('button', { name: 'Tạo tài liệu', exact: true }).click();
   await page.getByLabel('Khóa học', { exact: true }).selectOption(courseId);
   await page.getByLabel('Học phần', { exact: true }).selectOption(unitId);
@@ -655,7 +993,7 @@ test('manager refreshes expired authentication during intent, complete and statu
   });
   await page.clock.install();
   await page.goto('/manager/materials');
-  await page.getByRole('button', { name: 'Toàn bộ tài liệu', exact: true }).click();
+  await openInventory(page);
   await page.getByRole('button', { name: 'Tạo tài liệu', exact: true }).click();
   await page.getByLabel('Khóa học', { exact: true }).selectOption(courseId);
   await page.getByLabel('Học phần', { exact: true }).selectOption(unitId);
@@ -689,7 +1027,7 @@ test('pending uploads can pause and check the existing file without sending it a
   const upload = await mockFileUpload(page, 'PROCESSING');
   await page.clock.install();
   await page.goto('/manager/materials');
-  await page.getByRole('button', { name: 'Toàn bộ tài liệu', exact: true }).click();
+  await openInventory(page);
   await page.getByRole('button', { name: 'Tạo tài liệu', exact: true }).click();
   await page.getByLabel('Khóa học', { exact: true }).selectOption(courseId);
   await page.getByLabel('Học phần', { exact: true }).selectOption(unitId);
@@ -732,7 +1070,7 @@ test('failed backend validation stops checks and keeps an unusable file out of t
   const upload = await mockFileUpload(page, 'FAILED');
   await page.clock.install();
   await page.goto('/manager/materials');
-  await page.getByRole('button', { name: 'Toàn bộ tài liệu', exact: true }).click();
+  await openInventory(page);
   await page.getByRole('button', { name: 'Tạo tài liệu', exact: true }).click();
   await page.getByLabel('Khóa học', { exact: true }).selectOption(courseId);
   await page.getByLabel('Học phần', { exact: true }).selectOption(unitId);
@@ -769,7 +1107,7 @@ test('the primary file can be replaced while backend validation is still running
   const upload = await mockFileUpload(page, 'PROCESSING');
   await page.clock.install();
   await page.goto('/manager/materials');
-  await page.getByRole('button', { name: 'Toàn bộ tài liệu', exact: true }).click();
+  await openInventory(page);
   await page.getByRole('button', { name: 'Tạo tài liệu', exact: true }).click();
   await page.getByLabel('Khóa học', { exact: true }).selectOption(courseId);
   await page.getByLabel('Học phần', { exact: true }).selectOption(unitId);
@@ -811,7 +1149,7 @@ test('attachments remain available while the primary file is being validated', a
   const upload = await mockFileUpload(page, 'PROCESSING');
   await page.clock.install();
   await page.goto('/manager/materials');
-  await page.getByRole('button', { name: 'Toàn bộ tài liệu', exact: true }).click();
+  await openInventory(page);
   await page.getByRole('button', { name: 'Tạo tài liệu', exact: true }).click();
   await page.getByLabel('Khóa học', { exact: true }).selectOption(courseId);
   await page.getByLabel('Học phần', { exact: true }).selectOption(unitId);
@@ -945,7 +1283,7 @@ test('manager edits and creates directly inside the selected chapter', async ({ 
   await expect(page.getByRole('heading', { name: 'Bài viết trong chương đã chọn' })).toBeVisible();
   expect(
     calls.find((call) => call.method === 'POST' && call.path.endsWith('/materials'))?.body,
-  ).toMatchObject({ contentText: 'Dòng một\nDòng hai', contentType: 'ARTICLE' });
+  ).toMatchObject({ contentHtml: '<p>Dòng một</p><p>Dòng hai</p>', contentType: 'ARTICLE' });
 });
 
 test('material approval refetches the selected chapter inline', async ({ page }) => {
@@ -1031,6 +1369,23 @@ test('manager keeps course headers still while scrolling each hidden-scrollbar p
   const sidebar = page.getByRole('region', { name: 'Nội dung khóa học - vùng cuộn', exact: true });
   const content = page.getByRole('region', { name: 'Nội dung chương - vùng cuộn', exact: true });
   const chapterTitle = page.getByRole('heading', { name: 'JavaScript căn bản', exact: true });
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  const waitForContentScroll = () =>
+    content.evaluate(
+      (element) =>
+        new Promise<void>((resolve) => {
+          let previous = element.scrollTop;
+          let stableFrames = 0;
+          const sample = () => {
+            const position = element.scrollTop;
+            stableFrames = position === previous ? stableFrames + 1 : 0;
+            previous = position;
+            if (stableFrames >= 5) resolve();
+            else requestAnimationFrame(sample);
+          };
+          requestAnimationFrame(sample);
+        }),
+    );
   await frame.scrollIntoViewIfNeeded();
   const initialFrame = await frame.boundingBox();
   const initialTitle = await chapterTitle.boundingBox();
@@ -1057,12 +1412,14 @@ test('manager keeps course headers still while scrolling each hidden-scrollbar p
   expect(await page.evaluate(() => scrollY)).toBe(initialPageY);
   await page.mouse.wheel(0, 500);
   await expect.poll(() => content.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  await waitForContentScroll();
   expect(await sidebar.evaluate((element) => element.scrollTop)).toBe(0);
   expect(await frame.boundingBox()).toEqual(initialFrame);
   expect(await chapterTitle.boundingBox()).toEqual(initialTitle);
   expect(await page.evaluate(() => scrollY)).toBe(initialPageY);
   await content.focus();
   await page.keyboard.press('End');
+  await waitForContentScroll();
   await expect
     .poll(() =>
       content.evaluate((element) =>
@@ -1252,4 +1609,69 @@ test('manager lists courses first and opens the workspace only after choosing on
   await expect(page.locator('[data-slot="course-content-frame"]')).toHaveCount(0);
   await page.setViewportSize({ width: 320, height: 800 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('article editor blocks empty and oversized UTF-8 content before calling the API', async ({
+  page,
+}) => {
+  const { calls } = await mockManager(page);
+  await page.goto('/manager/materials');
+  await page.getByRole('button', { name: 'Tạo tài liệu', exact: true }).click();
+  await page.getByLabel('Khóa học', { exact: true }).selectOption(courseId);
+  await page.getByLabel('Học phần', { exact: true }).selectOption(unitId);
+  await page.getByLabel('Tiêu đề', { exact: true }).fill('Kiểm tra nội dung');
+  const save = page.getByRole('button', { name: 'Lưu bản nháp', exact: true });
+  await expect(save).toBeEnabled();
+  await save.click();
+  await expect(page.getByRole('alert')).toContainText('Vui lòng nhập nội dung bài viết.');
+  const sourceTool = page.getByRole('button', { name: 'Nguồn', exact: true });
+  if (!(await sourceTool.isVisible()))
+    await page.getByRole('button', { name: 'Xem thêm', exact: true }).click();
+  await sourceTool.click();
+  const source = page.locator('.ck-source-editing-area textarea');
+  await source.fill('<p>' + 'ế'.repeat(17000) + '</p>');
+  // Saving while source mode is open must also use the current source text.
+  await save.click();
+  await expect(page.getByRole('alert').last()).toContainText('48 KiB');
+  expect(
+    calls.filter((call) => call.method === 'POST' && call.path.endsWith('/materials')),
+  ).toHaveLength(0);
+  await source.fill('<h2>Bài viết hợp lệ</h2><p>Nội dung đã sửa.</p>');
+  await save.click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(
+    calls.find((call) => call.method === 'POST' && call.path.endsWith('/materials'))?.body
+      ?.contentHtml,
+  ).toBe('<h2>Bài viết hợp lệ</h2><p>Nội dung đã sửa.</p>');
+});
+
+test('article edits preserve tables, links and verified inline image IDs', async ({ page }) => {
+  const imageId = '88888888-8888-4888-8888-888888888888';
+  const { calls } = await mockManager(page, {
+    ownDraft: true,
+    articleHtml: `<h6>Tiêu đề cũ</h6><p><a href="https://example.com" title="Tài liệu">Đọc thêm</a><img data-file-id="${imageId}" alt="Sơ đồ"></p><table><tbody><tr><td colspan="2">Ô đã gộp</td></tr></tbody></table>`,
+  });
+  await page.goto('/manager/materials');
+  await page
+    .getByRole('region', { name: 'Danh sách khóa học', exact: true })
+    .getByRole('button', { name: /Khóa học kiểm thử/ })
+    .click();
+  await page.getByRole('toolbar').getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
+  const editor = page.getByRole('textbox', { name: 'Nội dung bài viết', exact: true });
+  await expect(editor.getByRole('heading', { level: 6 })).toHaveText('Tiêu đề cũ');
+  await editor.press('ControlOrMeta+Home');
+  await editor.press('ArrowRight');
+  await editor.pressSequentially('Bổ sung ');
+  await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Hướng dẫn JavaScript cơ bản', exact: true }),
+  ).toBeVisible();
+  const payload = calls.find((call) => call.method === 'PATCH')?.body;
+  expect(payload?.expectedRevision).toBe(3);
+  expect(payload?.contentHtml).toContain('Bổ sung');
+  expect(payload?.contentHtml).toContain(`data-file-id="${imageId}"`);
+  expect(payload?.contentHtml).toContain('colspan="2"');
+  expect(payload?.contentHtml).toContain('href="https://example.com"');
+  expect(payload?.contentHtml).toContain('title="Tài liệu"');
+  expect(payload?.contentHtml).not.toContain('src=');
 });

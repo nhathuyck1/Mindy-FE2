@@ -1,5 +1,37 @@
 # Quy tắc giao diện Mindy
 
+## Duyệt đơn xin nghỉ Mentor của Manager — 23/10/2026
+
+- Bảng dashboard và trang danh sách có phân trang theo tổng backend; danh sách mặc định PENDING, lọc trạng thái/mentor/trang nằm trên URL. Bảng cuộn trong panel, vẫn dùng được ở viewport 320px.
+- Detail hiển thị lý do và lịch gốc → bù; lịch ảnh hưởng và xung đột có pagination độc lập. Tên phụ được tải theo ID; lỗi giữ ID và có retry. Loading, lỗi, rỗng, trạng thái và phản hồi đều có chữ rõ ràng.
+- Trước xác nhận, tải lại detail và chụp version hiện tại. Cả approve/reject cần lý do đã trim 1–1000 ký tự. Approve bị khóa khi không PENDING, hết hạn, nguồn stale hoặc nghỉ theo buổi có xung đột; stale vẫn cho reject và hướng dẫn mentor gửi đơn mới.
+- FULL_DAY có xung đột hiển thị danh sách/tổng số và checkbox bỏ chọn mặc định. Khóa thao tác trong lúc gửi. Lỗi mạng/5xx cho gửi lại đúng body/key; 409 hoặc mã version/state/stale/expired tải lại và đóng xác nhận để manager quyết định lại. Không tự bật xác nhận xung đột.
+
+## Hàng chờ và hộp thoại duyệt Manager — 23/10/2026
+
+- Bảng Tài liệu chờ duyệt nằm dưới ba thẻ thống kê tại `/manager`, có tên/loại/trạng thái/cập nhật UTC+7 và Xem và duyệt. Link tên và nút cùng mở trang chi tiết theo ID; bảng cuộn trong panel ở 320px, thao tác/bộ lọc dùng component và token hiện có.
+- Trang chi tiết có Về tổng quan và heading Xem và duyệt tài liệu. Giữ đủ nội dung/tệp/phiên bản, toolbar của workspace và editor CKEditor; lỗi ID/lỗi tải không hiển thị nội dung giả.
+- Bấm Duyệt tài liệu, Yêu cầu chỉnh sửa hoặc Xóa phải mở hộp thoại giữa viewport ngay cả khi tài liệu dài. Hộp thoại có tên/phiên bản, xác nhận duyệt ghi rõ đồng thời xuất bản; lý do từ chối bắt buộc. Escape/Hủy trả focus về nút mở; đang gửi khóa thao tác và đóng hộp thoại. Lỗi phiên bản/mạng có Tải lại tài liệu trước khi gửi lại.
+
+## Sidebar tài khoản nhân viên — 23/10/2026
+
+- Sidebar Admin, Manager và Mentor bỏ liên kết Xem website và thẻ giới thiệu Mindy ở cuối thanh điều hướng, bao gồm menu mobile và chế độ thu gọn. Giao diện Student giữ nguyên.
+
+## Manager overview, Student schedule và Admin read-only — 23/10/2026
+
+- Admin/Manager tiếp tục dùng Inter, Student dùng Nunito. Dùng shell, token, Button, NativeSelect, Table, Modal, badge và phân trang đang có; panel trắng trên nền soft, viền line và bo góc hiện hữu.
+- `/manager` dùng heading Tổng quan Manager và ba thẻ Chờ duyệt/Đã duyệt/Bản nháp. Mỗi số là total thật, không hiện 0 khi API lỗi. `/manager/materials` không có query vẫn là danh sách khóa học; inventory lưu view và reviewStatus trên URL.
+- Menu tài khoản phân theo role; profile/lịch Student không xuất hiện với staff. Hàng Khóa học của tôi ưu tiên Vào học hoặc Xem trước chương theo quyền API, Xem chi tiết vẫn mở thông tin đăng ký.
+- Lịch Student hiện “Có mặt”/“Vắng” chỉ với PRESENT/ABSENT. Trạng thái buổi hủy và điểm danh giữ riêng; null/UNMARKED không có badge điểm danh. Giảng viên nullable hiện “Chưa xác định giảng viên”.
+- `/admin/tracking` có lọc nhóm/thời gian, nút áp dụng/xóa/làm mới, phân trang 10/20/50 và modal detail có Escape/focus restore. `/admin/payments/reconciliation` chỉ đọc danh sách phân trang; không có nút xử lý thanh toán.
+- Bảng mới cuộn trong panel, không tràn trang từ 320px; bộ lọc và nút xuống hàng; ô lọc cao 48px, thao tác chính tối thiểu 44px. Có loading, error/retry và empty state. Tất cả trạng thái có chữ, không chỉ dùng màu.
+
+## Soạn bài bằng CKEditor — 23/10/2026
+
+- Thay nút Văn bản/HTML và textarea nội dung bằng CKEditor tiếng Việt cho cả Manager/Mentor, ở dialog và editor trong chương. Quy tắc chuyển chế độ Văn bản ngày 22/10 bên dưới được thay bằng giao diện mới này.
+- Toolbar có tiêu đề, đậm/nghiêng/gạch dưới/gạch ngang, danh sách, bảng, liên kết, trích dẫn, mã, đường ngang, hoàn tác và nguồn HTML. Các mục tự gom vào Xem thêm khi thiếu chiều ngang; vùng soạn có chiều cao giới hạn/cuộn riêng, font tiếng Việt và màu từ token hiện có.
+- Hiển thị dung lượng UTF-8 / 48 KiB, báo lỗi khi vượt giới hạn hoặc lưu nội dung rỗng. Giữ bản nháp khi lỗi API; chỉ gửi khi nhấn Lưu bản nháp. Nội dung HTML cũ được mở trực tiếp dưới dạng bài có định dạng.
+
 ## Gọn giao diện API Mentor và thanh tiến độ — 22/10/2026
 
 - Navigation lớp dùng tab biểu tượng, gạch dưới và cuộn ngang trên mobile; phạm vi phân công trình bày gọn, không thêm thẻ thống kê giả. Buổi học, chuyên cần và tiến độ có tiêu đề/mô tả, bộ lọc và danh sách riêng.

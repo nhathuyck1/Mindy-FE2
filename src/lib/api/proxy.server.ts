@@ -147,7 +147,10 @@ async function upstream(
   const userAgent = request.headers.get('user-agent');
   if (userAgent) headers.set('User-Agent', userAgent);
   if (body !== undefined) headers.set('Content-Type', 'application/json');
-  if (resolveMentorRule(request.method, path)?.idempotent) {
+  if (
+    resolveMentorRule(request.method, path)?.idempotent ||
+    resolveManagerRule(request.method, path)?.idempotent
+  ) {
     headers.set('Idempotency-Key', request.headers.get('idempotency-key')!);
   }
   return fetch(`${env.apiBaseUrl}/${path}${search}`, {

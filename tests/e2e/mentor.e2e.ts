@@ -281,8 +281,8 @@ test('mentor creates article, edits own draft and submits for manager review', a
   await page.getByRole('button', { name: 'Lưu bản nháp' }).click();
   await expect(page.getByRole('heading', { name: 'Bài viết đã tạo' })).toBeVisible();
   expect(
-    calls.find((c) => c.method === 'POST' && c.path.endsWith('/materials'))?.body?.contentText,
-  ).toBe('Học JavaScript\nNội dung thử nghiệm');
+    calls.find((c) => c.method === 'POST' && c.path.endsWith('/materials'))?.body?.contentHtml,
+  ).toBe('<p>Học JavaScript</p><p>Nội dung thử nghiệm</p>');
   await expect(
     page
       .frameLocator('iframe[title="Nội dung bài viết"]')
@@ -346,14 +346,10 @@ test('mentor workspace keeps chapters beside content, edit toolbar and creation 
     fullPage: true,
   });
   await toolbar.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
-  await expect(page.getByLabel('Nội dung bài viết (HTML)')).toHaveValue(
-    '<h2>Nội dung bài viết</h2>',
-  );
+  const editor = page.getByRole('textbox', { name: 'Nội dung bài viết', exact: true });
+  await expect(editor.getByRole('heading', { level: 2 })).toHaveText('Nội dung bài viết');
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Văn bản', exact: true }).click();
-  await expect(page.getByLabel('Nội dung bài viết', { exact: true })).toHaveValue(
-    'Nội dung bài viết',
-  );
+  await expect(page.getByRole('button', { name: 'Văn bản', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Đóng', exact: true }).click();
   if (await chapterSelect.isVisible()) await chapterSelect.selectOption(mentorIds.nextUnit);
   else await rail.getByRole('button', { name: /State, sự kiện/ }).click();

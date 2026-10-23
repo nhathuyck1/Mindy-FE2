@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ArticleEditor } from '@/components/ui/article-editor';
+import { articleContentError } from '@/lib/article-content';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
@@ -30,13 +32,8 @@ export function ManagerMaterialEditor(props: {
   const courses = useCourseCatalog({});
   const [courseId, setCourseId] = useState(props.courseId ?? '');
   const [unitId, setUnitId] = useState(material?.courseUnitId ?? props.unitId ?? '');
-  const [inputMode, setInputMode] = useState<'text' | 'html'>(
-    props.embedded && !material ? 'text' : 'html',
-  );
-  const [contentText, setContentText] = useState('');
-  const [contentHtml, setContentHtml] = useState(
-    material?.contentHtml ?? '<h2>Mục tiêu bài học</h2>\n<p></p>',
-  );
+  const [contentHtml, setContentHtml] = useState(material?.contentHtml ?? '');
+  const [editorReady, setEditorReady] = useState(false);
   const course = useManagerQuery(
     `courses/${courseId}`,
     courseDetailSchema,
@@ -85,6 +82,14 @@ export function ManagerMaterialEditor(props: {
         onSubmit={async (event) => {
           event.preventDefault();
           if (busy || conflict || primaryPending || attachmentPending) return;
+          if (type === 'ARTICLE') {
+            if (!editorReady) return;
+            const contentError = articleContentError(contentHtml);
+            if (contentError) {
+              setError(contentError);
+              return;
+            }
+          }
           const data = new FormData(event.currentTarget);
           const fields = {
             title: String(data.get('title') ?? ''),
@@ -92,11 +97,7 @@ export function ManagerMaterialEditor(props: {
             sortOrder: Number(data.get('sortOrder')),
             availableAt: data.get('availableAt') ? `${data.get('availableAt')}:00+07:00` : null,
             attachmentFileIds: attachments.map((item) => item.id),
-            ...(type === 'ARTICLE'
-              ? inputMode === 'text'
-                ? { contentText: String(data.get('contentText') ?? '') }
-                : { contentHtml: String(data.get('contentHtml') ?? '') }
-              : { fileId: file?.id }),
+            ...(type === 'ARTICLE' ? { contentHtml } : { fileId: file?.id }),
           };
           const parsed = material
             ? patchMaterialSchema.safeParse({ ...fields, expectedRevision: material.revision })
@@ -242,51 +243,12 @@ export function ManagerMaterialEditor(props: {
               />
             </label>
             {type === 'ARTICLE' && (
-              <>
-                {props.embedded && !material && (
-                  <div className="flex gap-2" role="group" aria-label="Cách nhập nội dung">
-                    <Button
-                      type="button"
-                      variant={inputMode === 'text' ? 'default' : 'outline'}
-                      aria-pressed={inputMode === 'text'}
-                      onClick={() => setInputMode('text')}
-                    >
-                      Văn bản
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={inputMode === 'html' ? 'default' : 'outline'}
-                      aria-pressed={inputMode === 'html'}
-                      onClick={() => setInputMode('html')}
-                    >
-                      HTML
-                    </Button>
-                  </div>
-                )}
-                <label className="block min-w-0 text-sm font-semibold">
-                  {inputMode === 'text' ? 'Nội dung bài viết' : 'Nội dung bài viết (HTML)'}
-                  <textarea
-                    key={inputMode}
-                    name={inputMode === 'text' ? 'contentText' : 'contentHtml'}
-                    aria-label={
-                      inputMode === 'text' ? 'Nội dung bài viết' : 'Nội dung bài viết (HTML)'
-                    }
-                    required
-                    value={inputMode === 'text' ? contentText : contentHtml}
-                    onChange={(event) =>
-                      inputMode === 'text'
-                        ? setContentText(event.target.value)
-                        : setContentHtml(event.target.value)
-                    }
-                    className="mt-2 min-h-56 w-full rounded-lg border border-line p-3 font-mono text-sm font-normal"
-                  />
-                  <span className="mt-2 block text-xs font-normal text-muted">
-                    {inputMode === 'text'
-                      ? 'Nhập nội dung trực tiếp, giữ nguyên các dòng xuống hàng. Tối đa 48 KiB.'
-                      : 'Hỗ trợ HTML cơ bản; tối đa 48 KiB. Nội dung được làm sạch khi lưu và có thể xem trước ở chi tiết tài liệu.'}
-                  </span>
-                </label>
-              </>
+              <ArticleEditor
+                value={contentHtml}
+                onChange={setContentHtml}
+                onReadyChange={setEditorReady}
+                disabled={busy || conflict}
+              />
             )}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <label className="block min-w-0 text-sm font-semibold">
@@ -427,6 +389,7 @@ export function ManagerMaterialEditor(props: {
               conflict ||
               primaryPending ||
               attachmentPending ||
+              (type === 'ARTICLE' && !editorReady) ||
               (type !== 'ARTICLE' && !file)
             }
           >

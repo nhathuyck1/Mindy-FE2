@@ -9,6 +9,34 @@ vi.mock('@/lib/env.server', () => ({
 import { proxyApi } from './proxy.server';
 
 const id = '11111111-1111-4111-8111-111111111111';
+const approvedMaterial = {
+  id,
+  courseUnitId: id,
+  contentType: 'ARTICLE',
+  title: 'Bài viết',
+  description: null,
+  sortOrder: 0,
+  availableAt: null,
+  sessionId: null,
+  createdBy: id,
+  createdInClassId: null,
+  revision: 3,
+  reviewStatus: 'APPROVED',
+  approvedRevision: 3,
+  reviewedBy: id,
+  reviewedAt: '2026-10-23T03:00:00Z',
+  firstApprovedAt: '2026-10-23T03:00:00Z',
+  rejectionReason: null,
+  publishedAt: '2026-10-23T03:00:00Z',
+  createdAt: '2026-10-23T03:00:00Z',
+  updatedAt: '2026-10-23T03:00:00Z',
+  canEdit: true,
+  file: null,
+  contentHtml: '<p>Nội dung</p>',
+  contentSchemaVersion: 1,
+  inlineImages: [],
+  attachments: [],
+};
 const fetchMock = vi.fn<typeof fetch>();
 function request(
   path: string,
@@ -32,6 +60,64 @@ describe('Manager material proxy', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     fetchMock.mockReset();
+  });
+  it.each(['approve', 'reject'] as const)(
+    'forwards a successful %s with the expected revision and validates its response',
+    async (action) => {
+      const path = `manager/materials/${id}/${action}`;
+      const result =
+        action === 'approve'
+          ? approvedMaterial
+          : {
+              ...approvedMaterial,
+              reviewStatus: 'REJECTED',
+              approvedRevision: null,
+              publishedAt: null,
+              rejectionReason: 'Thêm ví dụ.',
+            };
+      fetchMock.mockResolvedValueOnce(Response.json(result));
+      const body = {
+        expectedRevision: 3,
+        ...(action === 'reject' ? { reason: '  Thêm ví dụ.  ' } : {}),
+      };
+      const response = await proxyApi(request(path, 'POST', body), path);
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual(result);
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(String(url)).toBe(`https://api.example.test/api/v1/${path}`);
+      expect(init?.method).toBe('POST');
+      expect(JSON.parse(String(init?.body))).toEqual({
+        expectedRevision: 3,
+        ...(action === 'reject' ? { reason: 'Thêm ví dụ.' } : {}),
+      });
+      expect(new Headers(init?.headers).get('Cookie')).toBe('access_token=opaque');
+      expect(response.headers.get('cache-control')).toContain('private, no-store');
+    },
+  );
+  it('forwards a draft edit with its revision and a bodyless delete returning 204', async () => {
+    const path = `manager/materials/${id}`;
+    fetchMock.mockResolvedValueOnce(
+      Response.json({
+        ...approvedMaterial,
+        title: 'Tên mới',
+        revision: 4,
+        reviewStatus: 'DRAFT',
+        approvedRevision: null,
+        publishedAt: null,
+      }),
+    );
+    const edit = { title: 'Tên mới', expectedRevision: 3 };
+    expect((await proxyApi(request(path, 'PATCH', edit), path)).status).toBe(200);
+    expect(fetchMock.mock.calls[0][1]?.method).toBe('PATCH');
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toEqual(edit);
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+    const response = await proxyApi(request(`${path}?expectedRevision=4`, 'DELETE'), path);
+    expect(response.status).toBe(204);
+    expect(await response.text()).toBe('');
+    const [url, init] = fetchMock.mock.calls[1];
+    expect(String(url)).toBe(`https://api.example.test/api/v1/${path}?expectedRevision=4`);
+    expect(init?.method).toBe('DELETE');
+    expect(init?.body).toBeUndefined();
   });
   it('validates login, strict filters and mutation origin before contacting upstream', async () => {
     const path = 'manager/materials';

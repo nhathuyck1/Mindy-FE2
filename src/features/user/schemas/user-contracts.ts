@@ -3,6 +3,7 @@ import { orderStatusSchema } from '@/features/orders/schemas/order-contracts';
 
 const dateTime = z.iso.datetime({ offset: true });
 const mentor = z.object({ id: z.uuid(), displayName: z.string().nullable() });
+const scheduleMentor = mentor.nullable();
 const classStatus = z.enum(['DRAFT', 'OPEN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']);
 const deliveryMode = z.enum(['ONLINE', 'OFFLINE']);
 const pagination = {
@@ -98,9 +99,27 @@ export const scheduleEventSchema = z.object({
   classUnitId: z.uuid(),
   unitTitle: z.string(),
   deliveryMode,
-  mentor,
+  mentor: scheduleMentor,
+  assignmentType: z.enum(['PRIMARY', 'SUBSTITUTE']),
   enrollmentId: z.uuid(),
-  accessMode: z.enum(['FULL', 'CASH_PREVIEW']),
+  attendanceStatus: z.enum(['UNMARKED', 'PRESENT', 'ABSENT']).nullable(),
+  attendanceApplicability: z.enum([
+    'ELIGIBLE',
+    'NOT_STARTED',
+    'NOT_ELIGIBLE',
+    'PAYMENT_PENDING',
+    'LEGACY_NO_DATA',
+    'MAKEUP_PENDING',
+    'MAKEUP_CREDITED',
+  ]),
+  attendanceExcluded: z.boolean(),
+  creditedAttendanceStatus: z.enum(['PRESENT', 'ABSENT']).nullable(),
+  makeupForSessionId: z.uuid().nullable(),
+  makeupRootSessionId: z.uuid().nullable(),
+  sourceClassId: z.uuid().nullable(),
+  sourceSessionId: z.uuid().nullable(),
+  makeupPlacementId: z.uuid().nullable(),
+  accessMode: z.enum(['FULL', 'CASH_PREVIEW', 'SESSION_MAKEUP']),
 });
 export const mySchedulePageSchema = z.object({
   ...page,

@@ -28,7 +28,7 @@ export function ManagerCourseList(props: { courses: Course[]; onSelect: (id: str
                   <span className="mt-1 block text-sm break-words text-muted">{course.code}</span>
                 </span>
                 <span className="hidden shrink-0 text-sm font-medium text-mint sm:inline">
-                  Xem học liệu
+                  Xem chi tiết
                 </span>
                 <ArrowRight aria-hidden="true" className="size-5 shrink-0 text-mint" />
               </button>

@@ -202,8 +202,6 @@ describe('new mentor API contracts', () => {
     for (const [method, forbidden] of [
       ['PATCH', `mentor/classes/${id}/units/${other}/release`],
       ['PUT', `management/class-sessions/${id}/teaching-notes`],
-      ['POST', `management/mentor-leave-requests/${id}/approve`],
-      ['GET', 'admin/tracking/events'],
     ] as const)
       expect((await proxyApi(request(forbidden, method), forbidden)).status).toBe(404);
   });

@@ -130,4 +130,81 @@ export async function mockAdminApi(page: Page) {
       },
     });
   });
+  await page.route('**/api/v1/admin/tracking/events/**', (route) => {
+    const parts = new URL(route.request().url()).pathname.split('/');
+    const source = parts.at(-2);
+    const id = parts.at(-1);
+    return route.fulfill({
+      json: {
+        id,
+        source,
+        action: 'UPDATE',
+        actor: { id: testUser.id, displayName: 'Quản trị Mindy' },
+        entityType: 'attendance',
+        entityId: testUser.id,
+        classId: adminClasses[0].id,
+        sessionId: null,
+        version: 2,
+        reason: 'Điều chỉnh sau khi xác minh',
+        occurredAt: '2026-10-23T03:00:00Z',
+        data: { oldStatus: 'UNMARKED', newStatus: 'PRESENT' },
+        evidenceItems: [{ type: 'note', label: 'Biên bản xác nhận' }],
+      },
+    });
+  });
+  await page.route('**/api/v1/admin/tracking/events?**', (route) => {
+    const url = new URL(route.request().url());
+    const size = Number(url.searchParams.get('pageSize') ?? 20);
+    const pageNumber = Number(url.searchParams.get('page') ?? 1);
+    const filtered = Array.from({ length: 15 }, (_, index) => ({
+      id: `55555555-5555-4555-8555-${String(index + 1).padStart(12, '0')}`,
+      source: 'attendance_audits',
+      action: index % 2 ? 'MARK' : 'UPDATE',
+      actor: index % 3 ? { id: testUser.id, displayName: 'Quản trị Mindy' } : null,
+      entityType: 'attendance',
+      entityId: testUser.id,
+      classId: adminClasses[0].id,
+      sessionId: null,
+      version: index + 1,
+      reason: index % 2 ? null : 'Điều chỉnh sau khi xác minh',
+      occurredAt: `2026-10-${String(23 - (index % 10)).padStart(2, '0')}T03:00:00Z`,
+    }));
+    const items =
+      url.searchParams.get('source') && url.searchParams.get('source') !== 'attendance_audits'
+        ? []
+        : filtered;
+    return route.fulfill({
+      json: {
+        items: items.slice((pageNumber - 1) * size, pageNumber * size),
+        page: pageNumber,
+        pageSize: size,
+        total: items.length,
+      },
+    });
+  });
+  await page.route('**/api/v1/admin/payments/reconciliation?**', (route) => {
+    const url = new URL(route.request().url());
+    const size = Number(url.searchParams.get('pageSize') ?? 20);
+    const pageNumber = Number(url.searchParams.get('page') ?? 1);
+    const items = Array.from({ length: 12 }, (_, index) => ({
+      id: `66666666-6666-4666-8666-${String(index + 1).padStart(12, '0')}`,
+      paymentId: `77777777-7777-4777-8777-${String(index + 1).padStart(12, '0')}`,
+      providerOrderCode: 1000000000 + index,
+      referenceCode: `PAYOS-REF-${String(index + 1).padStart(3, '0')}`,
+      amount: 1250000 + index,
+      currency: 'VND',
+      reason: index % 2 ? null : 'Webhook không khớp trạng thái',
+      source: 'PAYOS_WEBHOOK',
+      actorId: null,
+      createdAt: '2026-10-23T03:00:00Z',
+    }));
+    return route.fulfill({
+      json: {
+        items: items.slice((pageNumber - 1) * size, pageNumber * size),
+        page: pageNumber,
+        pageSize: size,
+        total: items.length,
+      },
+    });
+  });
 }

@@ -31,9 +31,7 @@ test('Admin styles and portals do not change the public site after client naviga
   await expect(page).toHaveURL('/admin');
   await expect(page.getByLabel('Tổng người dùng: 23', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => getComputedStyle(document.body).fontFamily)).toContain('Inter');
-  if (testInfo.project.name === 'mobile')
-    await page.getByRole('button', { name: 'Mở menu quản trị', exact: true }).click();
-  await page.getByRole('link', { name: 'Xem website', exact: true }).click();
+  await page.goBack();
   await expect(page).toHaveURL('/');
   await expect(page.locator('[data-admin-root]')).toHaveCount(0);
   expect(await publicStyles(page)).toEqual(before);

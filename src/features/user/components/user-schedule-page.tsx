@@ -24,6 +24,7 @@ const statuses = {
   COMPLETED: 'Đã hoàn thành',
   CANCELLED: 'Đã hủy',
 };
+const attendanceLabels = { PRESENT: 'Có mặt', ABSENT: 'Vắng' } as const;
 export function UserSchedulePage() {
   const [selectedDate, setSelectedDate] = useState(() => vietnamToday());
   const [selected, setSelected] = useState<ScheduleEvent | null>(null);
@@ -173,7 +174,7 @@ export function UserSchedulePage() {
                             ) : (
                               events.map((event) => (
                                 <article
-                                  key={event.sessionId}
+                                  key={`${event.sessionId}:${event.enrollmentId}:${event.makeupPlacementId ?? 'regular'}`}
                                   aria-label={event.sessionTitle}
                                   className={
                                     'overflow-hidden rounded-xl border text-sm ' +
@@ -221,11 +222,17 @@ export function UserSchedulePage() {
                                       />
                                       <span
                                         className="truncate"
-                                        title={event.mentor.displayName || undefined}
+                                        title={event.mentor?.displayName || undefined}
                                       >
-                                        {event.mentor.displayName || 'Chưa cập nhật mentor'}
+                                        {event.mentor?.displayName || 'Chưa xác định giảng viên'}
                                       </span>
                                     </span>
+                                    {event.attendanceStatus &&
+                                      event.attendanceStatus !== 'UNMARKED' && (
+                                        <span className="mt-2 inline-flex rounded-lg bg-canvas px-2.5 py-1 text-xs font-bold">
+                                          Điểm danh: {attendanceLabels[event.attendanceStatus]}
+                                        </span>
+                                      )}
                                     {event.sessionStatus !== 'SCHEDULED' && (
                                       <span className="mt-2 block text-xs font-semibold">
                                         {statuses[event.sessionStatus]}
@@ -260,13 +267,18 @@ export function UserSchedulePage() {
             >
               {statuses[selected.sessionStatus]}
             </p>
+            {selected.attendanceStatus && selected.attendanceStatus !== 'UNMARKED' && (
+              <p className="mt-2 inline-flex rounded-lg bg-soft px-3 py-2 text-xs font-bold">
+                Điểm danh: {attendanceLabels[selected.attendanceStatus]}
+              </p>
+            )}
           </div>
           <dl className="grid gap-5 border-t border-line pt-5 text-sm sm:grid-cols-2">
             {[
               ['Buổi học', String(selected.sessionNumber)],
               ['Nội dung buổi học', selected.sessionTitle],
               ['Chương', selected.unitTitle],
-              ['Mentor', selected.mentor.displayName || 'Chưa cập nhật mentor'],
+              ['Giảng viên', selected.mentor?.displayName || 'Chưa xác định giảng viên'],
               ['Bắt đầu', formatDate(selected.startsAt) + ' · ' + formatTime(selected.startsAt)],
               ['Kết thúc', formatDate(selected.endsAt) + ' · ' + formatTime(selected.endsAt)],
               ['Hình thức', deliveryLabel(selected.deliveryMode)],

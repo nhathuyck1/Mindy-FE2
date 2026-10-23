@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Files, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
@@ -14,7 +15,14 @@ import { ManagerMaterialsInventory } from './manager-materials-inventory';
 import { ManagerState } from './manager-shared';
 
 export function ManagerMaterialsPage() {
-  const [inventory, setInventory] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const inventory = searchParams.get('view') === 'inventory';
+  const requestedStatus = searchParams.get('reviewStatus');
+  const reviewStatus = ['PENDING_REVIEW', 'APPROVED', 'DRAFT'].includes(requestedStatus ?? '')
+    ? (requestedStatus ?? 'PENDING_REVIEW')
+    : 'PENDING_REVIEW';
   const [courseId, setCourseId] = useState('');
   const [creating, setCreating] = useState(false);
   const courses = useCourseCatalog({});
@@ -49,11 +57,20 @@ export function ManagerMaterialsPage() {
   if (inventory)
     return (
       <div className="space-y-5">
-        <Button variant="outline" onClick={() => setInventory(false)}>
+        <Button variant="outline" onClick={() => router.push('/manager/materials')}>
           <ArrowLeft aria-hidden="true" className="size-4" />
           Khóa học
         </Button>
-        <ManagerMaterialsInventory />
+        <ManagerMaterialsInventory
+          reviewStatus={reviewStatus}
+          onReviewStatusChange={(status) => {
+            const query = new URLSearchParams(searchParams.toString());
+            query.set('view', 'inventory');
+            if (status) query.set('reviewStatus', status);
+            else query.delete('reviewStatus');
+            router.push(`${pathname}?${query.toString()}`);
+          }}
+        />
       </div>
     );
 
@@ -80,7 +97,12 @@ export function ManagerMaterialsPage() {
           </p>
         </div>
         <div className="ml-auto flex flex-wrap justify-end gap-2">
-          <Button variant="outline" onClick={() => setInventory(true)}>
+          <Button
+            variant="outline"
+            onClick={() =>
+              router.push('/manager/materials?view=inventory&reviewStatus=PENDING_REVIEW')
+            }
+          >
             <Files aria-hidden="true" className="size-4" />
             Toàn bộ tài liệu
           </Button>
