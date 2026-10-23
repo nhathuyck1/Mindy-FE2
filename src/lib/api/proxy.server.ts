@@ -1,4 +1,5 @@
 import 'server-only';
+import { resolveAssignmentRule } from '@/features/assignments/proxy-policy';
 import { resolveAdminCrudRule } from './admin-rules.server';
 import { resolveManagerRule } from './manager-rules.server';
 import {
@@ -85,6 +86,8 @@ type ApiRule = {
   idempotent?: boolean;
 };
 function resolveRule(method: string, path: string): ApiRule | undefined {
+  const assignmentRule = resolveAssignmentRule(method, path);
+  if (assignmentRule) return assignmentRule;
   const key = `${method} ${path}`;
   if (Object.hasOwn(rules, key)) return rules[key as keyof typeof rules];
   const managerRule = resolveManagerRule(method, path);
@@ -174,6 +177,7 @@ export async function proxyApi(request: Request, path: string) {
   if (rule.body) {
     const bodyLimit =
       path.startsWith('mentor/') ||
+      path.startsWith('me/assignment-submissions/') ||
       path.startsWith('class-sessions/') ||
       path.startsWith('admin/') ||
       path.startsWith('manager/')
@@ -186,6 +190,7 @@ export async function proxyApi(request: Request, path: string) {
     const raw = await request.text();
     const bodySize =
       path.startsWith('mentor/') ||
+      path.startsWith('me/assignment-submissions/') ||
       path.startsWith('class-sessions/') ||
       path.startsWith('admin/') ||
       path.startsWith('manager/')
@@ -208,7 +213,11 @@ export async function proxyApi(request: Request, path: string) {
   if (path === 'auth/refresh' && !requestCookies(request.headers.get('cookie'), ['refresh_token']))
     return error(401, 'AUTHENTICATION_REQUIRED', 'Phiên đăng nhập đã hết hạn.');
   let search = '';
-  if (resolveManagerRule(request.method, path) || resolveMentorRule(request.method, path)) {
+  if (
+    resolveAssignmentRule(request.method, path) ||
+    resolveManagerRule(request.method, path) ||
+    resolveMentorRule(request.method, path)
+  ) {
     if (!requestCookies(request.headers.get('cookie'), ['access_token']))
       return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập bằng tài khoản nhân viên.');
     const input = new URL(request.url).searchParams;

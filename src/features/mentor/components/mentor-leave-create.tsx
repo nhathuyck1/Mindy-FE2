@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { ArrowLeft, ArrowDown, Send, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Send, CheckCircle2 } from 'lucide-react';
 import { LeaveSteps, LeaveStepHeading } from './mentor-leave-ui';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,40 +15,36 @@ import {
   type LeavePreview,
   type LeaveSessionMapping,
 } from '../schemas/leave-contracts';
-import { localDate, leavePeriods } from '../lib/leave-display';
+import { leavePeriods } from '../lib/leave-display';
 import { mentorDate } from './mentor-shared';
 import { SessionMakeupSlot } from './mentor-leave-makeup-slot';
+import { LeaveSchedule } from './mentor-leave-schedule';
+import { vietnamDate } from '../lib/weekly-timetable';
+import { overlaps } from '../lib/leave-makeup';
 export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string) => void }) {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [period, setPeriod] = useState('FULL_DAY');
   const [reason, setReason] = useState('');
   const [preview, setPreview] = useState<LeavePreview | null>(null);
-  const [days, setDays] = useState<Record<string, string>>({});
   const [sessions, setSessions] = useState<Record<string, LeaveSessionMapping>>({});
   const [error, setError] = useState('');
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState(() => vietnamDate());
   const read = useMentorCommand(leavePreviewSchema);
   const create = useMentorCommand(leaveRequestSchema);
   const busy = read.isPending || create.isPending;
   const resetPreview = () => {
     setPreview(null);
-    setDays({});
     setSessions({});
     setError('');
     read.reset();
     create.reset();
   };
-  const sourceDays = [
-    ...new Set(
-      preview?.affectedSessions.map((item) => localDate(item.startsAt, preview.timeZone)) ?? [],
-    ),
-  ];
   const mappingsComplete =
     preview &&
     preview.affectedSessions.length > 0 &&
-    (period === 'FULL_DAY'
-      ? sourceDays.every((day) => days[day])
-      : preview.affectedSessions.every((item) => sessions[item.sessionId]));
+    preview.affectedSessions.every((item) => sessions[item.sessionId]);
   return (
     <section
       className="mx-auto mb-6 max-w-4xl space-y-6 rounded-2xl border border-line bg-canvas p-5 sm:p-8"
@@ -82,7 +78,6 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
           }
           setError('');
           setPreview(null);
-          setDays({});
           setSessions({});
           create.reset();
           try {
@@ -175,67 +170,61 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
                 <LeaveStepHeading
                   step={2}
                   title="Sắp xếp lịch dạy bù"
-                  description="Chọn ngày hoặc khung giờ bù cho từng buổi bị ảnh hưởng."
+                  description={
+                    period === 'FULL_DAY'
+                      ? 'Nghỉ cả ngày: chọn ngày khác và giờ bù cho từng buổi. Ưu tiên giờ cũ nếu còn trống.'
+                      : 'Chọn giờ bù cho từng buổi. Có thể bù cùng ngày, ngoài khoảng nghỉ và không trùng lịch.'
+                  }
                 />
               </div>
-              {period === 'FULL_DAY' ? (
-                <div className="space-y-3">
-                  {sourceDays.map((day) => (
-                    <div
-                      key={day}
-                      className="grid gap-4 rounded-xl border border-line p-4 sm:grid-cols-2 sm:gap-6"
-                    >
-                      <label className="order-2 block space-y-2 text-sm font-bold sm:order-2">
-                        Ngày dạy bù
-                        <Input
-                          className="h-12"
-                          aria-label={`Dạy bù cho ngày ${day}`}
-                          type="date"
-                          required
-                          value={days[day] ?? ''}
-                          disabled={busy}
-                          onChange={(e) => setDays({ ...days, [day]: e.target.value })}
-                        />
-                      </label>
-                      <div className="order-1 space-y-2 sm:order-1">
-                        <p className="text-sm font-bold">
-                          Buổi nghỉ · {mentorDate(`${day}T00:00:00+07:00`, false)}
-                        </p>
-                        <ul className="space-y-1 text-sm text-muted">
-                          {preview.affectedSessions
-                            .filter((item) => localDate(item.startsAt, preview.timeZone) === day)
-                            .map((item) => (
-                              <li key={item.sessionId}>
-                                {item.title} · {mentorDate(item.startsAt)}
-                              </li>
-                            ))}
-                        </ul>
-                        <p className="flex items-center gap-2 text-xs text-muted">
-                          <ArrowDown aria-hidden="true" className="size-3.5" />
-                          Giữ nguyên giờ và thời lượng dạy
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+              <Button
+                type="button"
+                variant="outline"
+                className="h-auto min-h-11 w-full whitespace-normal sm:w-auto"
+                aria-expanded={showSchedule}
+                aria-controls="leave-teaching-schedule"
+                onClick={() => setShowSchedule(!showSchedule)}
+              >
+                <CalendarDays aria-hidden="true" className="size-4" />
+                {showSchedule ? 'Ẩn lịch dạy' : 'Xem lịch dạy để chọn lịch bù'}
+              </Button>
+              {showSchedule && (
+                <div id="leave-teaching-schedule">
+                  <LeaveSchedule date={scheduleDate} onDateChange={setScheduleDate} />
                 </div>
-              ) : (
-                <fieldset disabled={busy} className="space-y-3">
-                  {preview.affectedSessions.map((source) => (
-                    <SessionMakeupSlot
-                      key={source.sessionId}
-                      source={source}
-                      onSelect={(mapping) =>
-                        setSessions((current) => {
-                          const next = { ...current };
-                          if (mapping) next[source.sessionId] = mapping;
-                          else delete next[source.sessionId];
-                          return next;
-                        })
-                      }
-                    />
-                  ))}
-                </fieldset>
               )}
+              <fieldset disabled={busy} className="space-y-3">
+                {preview.affectedSessions.map((source) => (
+                  <SessionMakeupSlot
+                    key={source.sessionId}
+                    source={source}
+                    leave={{ fromDate, toDate, period, timeZone: preview.timeZone }}
+                    mappings={sessions}
+                    onDateChange={setScheduleDate}
+                    onSelect={(mapping) =>
+                      setSessions((current) => {
+                        if (
+                          mapping &&
+                          Object.values(current).some(
+                            (other) =>
+                              other.sourceSessionId !== source.sessionId &&
+                              overlaps(other, mapping),
+                          )
+                        )
+                          return current;
+                        const next = { ...current };
+                        if (mapping) next[source.sessionId] = mapping;
+                        else delete next[source.sessionId];
+                        return next;
+                      })
+                    }
+                  />
+                ))}
+              </fieldset>
+              <p className="text-sm leading-6 text-muted">
+                Nếu tuần này đã kín, bạn có thể chọn ngày ở tuần tiếp theo. Thời lượng buổi học được
+                giữ nguyên; lịch sẽ được kiểm tra lại khi gửi và duyệt đơn.
+              </p>
               <div className="border-t border-line pt-6">
                 <LeaveStepHeading
                   step={3}
@@ -253,18 +242,9 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
                     period,
                     reason,
                     sourceVersions: preview.sourceVersions,
-                    ...(period === 'FULL_DAY'
-                      ? {
-                          dayMappings: sourceDays.map((sourceDate) => ({
-                            sourceDate,
-                            targetDate: days[sourceDate],
-                          })),
-                        }
-                      : {
-                          sessionMappings: preview.affectedSessions.map(
-                            (source) => sessions[source.sessionId],
-                          ),
-                        }),
+                    sessionMappings: preview.affectedSessions.map(
+                      (source) => sessions[source.sessionId],
+                    ),
                   });
                   if (!input.success || !mappingsComplete || !preview.noticeEligible) {
                     setError('Điền đủ lý do và lịch bù cho mọi buổi bị ảnh hưởng.');

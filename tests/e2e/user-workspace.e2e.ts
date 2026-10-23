@@ -4,9 +4,58 @@ import { testUser } from './api-fixtures';
 const classId = '44444444-4444-4444-8444-444444444444';
 const courseId = '33333333-3333-4333-8333-333333333333';
 const mentor = { id: '55555555-5555-4555-8555-555555555555', displayName: 'Mentor Mindy' };
-async function fixture(page: import('@playwright/test').Page) {
+async function fixture(
+  page: import('@playwright/test').Page,
+  attendanceStatus: 'PRESENT' | 'ABSENT' | null = null,
+  meetingUrl: string | null = 'https://meet.google.com/abc-defg-hij',
+  classMeetingUrl: string | null = null,
+) {
   const state = await mockCommerce(page);
   state.hasOrder = true;
+  await page.route('**/api/v1/me/classes/*/assignments?**', (route) =>
+    route.fulfill({ json: { items: [], page: 1, pageSize: 100, total: 0 } }),
+  );
+  await page.route(`**/api/v1/me/classes/${classId}`, (route) =>
+    route.fulfill({
+      json: {
+        id: classId,
+        courseId,
+        code: 'WEB-A',
+        name: 'Lớp Web buổi tối',
+        startDate: '2026-10-01',
+        endDate: '2026-12-01',
+        deliveryMode: 'ONLINE',
+        maxStudents: 20,
+        availableSeats: 5,
+        mentor,
+        classStatus: 'IN_PROGRESS',
+        enrollmentId: '77777777-7777-4777-8777-777777777777',
+        enrollmentStatus: 'ACTIVE',
+        enrolledAt: '2026-10-10T00:00:00Z',
+        accessMode: 'FULL',
+        meetingUrl: classMeetingUrl,
+        units: [
+          {
+            id: '66666666-6666-4666-8666-666666666666',
+            position: 1,
+            title: 'Unit Web',
+            sessions: [
+              {
+                id: '88888888-8888-4888-8888-888888888888',
+                sessionNumber: 1,
+                title: 'Thực hành Web',
+                startsAt: '2026-10-20T12:00:00Z',
+                endsAt: '2026-10-20T14:00:00Z',
+                roomName: null,
+                status: 'SCHEDULED',
+                meetingUrl,
+              },
+            ],
+          },
+        ],
+      },
+    }),
+  );
   await page.route('**/api/v1/me/classes?**', (route) =>
     route.fulfill({
       json: {
@@ -56,7 +105,9 @@ async function fixture(page: import('@playwright/test').Page) {
           : '99999999-9999-4999-8999-999999999999',
       sessionNumber: pageNumber,
       sessionTitle: pageNumber === 1 ? 'Thực hành Web' : 'Buổi đã hủy',
-      sessionStatus: pageNumber === 1 ? 'SCHEDULED' : 'CANCELLED',
+      sessionStatus:
+        pageNumber === 1 ? (attendanceStatus ? 'COMPLETED' : 'SCHEDULED') : 'CANCELLED',
+      attendanceStatus,
       startsAt: start.toISOString(),
       endsAt: new Date(start.getTime() + 7200000).toISOString(),
       dayOfWeek: 'Tuesday',
@@ -277,6 +328,46 @@ test('Compact orders include details for CASH and PAYOS without initiating a pay
   await expect(trigger).toBeFocused();
 });
 
+for (const [status, label] of [
+  ['PRESENT', 'Có mặt'],
+  ['ABSENT', 'Vắng'],
+] as const) {
+  test(`Schedule shows ${label} from attendance in tiles and details`, async ({ page }) => {
+    await fixture(page, status);
+    await page.goto('/user/schedule');
+    const tile = page.getByRole('article', { name: 'Thực hành Web', exact: true });
+    await expect(tile.getByText(label, { exact: true })).toBeVisible();
+    await expect(tile).not.toContainText('Đã hoàn thành');
+    await tile.getByRole('button').click();
+    const dialog = page.getByRole('dialog', { name: 'Chi tiết lớp học', exact: true });
+    await expect(dialog.getByText('Điểm danh', { exact: true })).toBeVisible();
+    await expect(dialog.getByText(label, { exact: true })).toBeVisible();
+    await expect(dialog).not.toContainText('Đã hoàn thành');
+  });
+}
+
+test('Online schedule uses class meeting fallback and explains missing links', async ({ page }) => {
+  let reads = 0;
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname === `/api/v1/me/classes/${classId}`) reads++;
+  });
+  await fixture(page, null, null, 'https://meet.google.com/class-link');
+  await page.goto('/user/schedule');
+  const tile = page.getByRole('article', { name: 'Thực hành Web', exact: true });
+  await expect(tile).toBeVisible();
+  expect(reads).toBe(0);
+  await tile.getByRole('button').click();
+  await expect(page.getByRole('link', { name: 'Tham gia buổi học online' })).toHaveAttribute(
+    'href',
+    'https://meet.google.com/class-link',
+  );
+  await fixture(page, null, null, null);
+  await page.reload();
+  await tile.getByRole('button').click();
+  await expect(page.getByText('Chưa có link học trực tuyến cho buổi học này.')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Tham gia buổi học online' })).toHaveCount(0);
+});
+
 test('Schedule tiles stay compact and open full class/session details in a modal', async ({
   page,
 }, testInfo) => {
@@ -287,18 +378,25 @@ test('Schedule tiles stay compact and open full class/session details in a modal
   await expect(tile).toBeVisible();
   await expect(tile).toContainText('Mentor Mindy');
   await expect(tile).toContainText('Online');
+  await expect(tile.getByText('Chưa bắt đầu', { exact: true })).toBeVisible();
+  await expect(tile).not.toContainText('Điểm danh:');
   await expect(tile).not.toContainText('Sắp diễn ra');
   await expect(tile).not.toContainText('Lớp Web buổi tối');
-  expect((await tile.boundingBox())!.height).toBeLessThan(150);
+  expect((await tile.boundingBox())!.height).toBeLessThan(200);
   await page.screenshot({ path: testInfo.outputPath('compact-schedule.png'), fullPage: true });
   const trigger = tile.getByRole('button', { name: 'Xem chi tiết Thực hành Web', exact: true });
   await trigger.click();
   const dialog = page.getByRole('dialog', { name: 'Chi tiết lớp học', exact: true });
   await expect(dialog).toContainText('Lớp Web buổi tối');
   await expect(dialog).toContainText('Thực hành Web');
+  await expect(dialog).toContainText('Chưa bắt đầu');
   await expect(dialog).toContainText('Mentor Mindy');
   await expect(dialog).toContainText('19:00');
   await expect(dialog).toContainText('21:00');
+  await expect(dialog.getByRole('link', { name: 'Tham gia buổi học online' })).toHaveAttribute(
+    'href',
+    'https://meet.google.com/abc-defg-hij',
+  );
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('schedule-class-details.png') });
   await page.keyboard.press('Escape');
@@ -306,4 +404,5 @@ test('Schedule tiles stay compact and open full class/session details in a modal
   await expect(trigger).toBeFocused();
   await page.getByRole('article', { name: 'Buổi đã hủy', exact: true }).getByRole('button').click();
   await expect(dialog).toContainText('Đã hủy');
+  await expect(dialog.getByRole('link', { name: 'Tham gia buổi học online' })).toHaveCount(0);
 });

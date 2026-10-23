@@ -1,4 +1,5 @@
 'use client';
+import { AssignmentList } from '@/features/assignments/assignment-list';
 
 import Link from 'next/link';
 import { useState } from 'react';
@@ -141,6 +142,11 @@ function UnitContent(props: { context: LearningClass; unit: LearningUnit; previe
                     }).format(new Date(session.startsAt))}
                   </p>
                   {session.roomName && <p className="mt-2">Phòng: {session.roomName}</p>}
+                  {!props.preview && !locked && session.status !== 'CANCELLED' && (
+                    <div className="mt-4">
+                      <AssignmentList classId={props.context.id} sessionId={session.id} />
+                    </div>
+                  )}
                   {!props.preview && session.status !== 'CANCELLED' && session.meetingUrl && (
                     <a
                       href={session.meetingUrl}

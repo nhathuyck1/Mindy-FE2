@@ -16,6 +16,8 @@ import { useMySchedule } from '../api/user-queries';
 import { scheduleWeek, shiftDate, vietnamToday } from '../lib/schedule-week';
 import { UserDataState } from './user-data-state';
 import { UserDetailsDialog } from './user-details-dialog';
+import { UserScheduleMeeting } from './user-schedule-meeting';
+import { AssignmentList } from '@/features/assignments/assignment-list';
 import type { ScheduleEvent } from '../schemas/user-contracts';
 const weekdays = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
 const statuses = {
@@ -24,6 +26,10 @@ const statuses = {
   COMPLETED: 'Đã hoàn thành',
   CANCELLED: 'Đã hủy',
 };
+const attendanceLabels = { PRESENT: 'Có mặt', ABSENT: 'Vắng' };
+function attendanceLabel(status: ScheduleEvent['attendanceStatus']) {
+  return status === null ? 'Chưa bắt đầu' : attendanceLabels[status];
+}
 export function UserSchedulePage() {
   const [selectedDate, setSelectedDate] = useState(() => vietnamToday());
   const [selected, setSelected] = useState<ScheduleEvent | null>(null);
@@ -226,11 +232,24 @@ export function UserSchedulePage() {
                                         {event.mentor.displayName || 'Chưa cập nhật mentor'}
                                       </span>
                                     </span>
-                                    {event.sessionStatus !== 'SCHEDULED' && (
-                                      <span className="mt-2 block text-xs font-semibold">
-                                        {statuses[event.sessionStatus]}
-                                      </span>
-                                    )}
+                                    <span
+                                      className={
+                                        'mt-2 inline-flex rounded-full px-2 py-1 text-xs font-semibold ' +
+                                        (event.attendanceStatus === 'PRESENT'
+                                          ? 'bg-green-100 text-green-800'
+                                          : event.attendanceStatus === 'ABSENT'
+                                            ? 'bg-red-100 text-red-800'
+                                            : 'bg-slate-100 text-slate-600')
+                                      }
+                                    >
+                                      {attendanceLabel(event.attendanceStatus)}
+                                    </span>
+                                    {event.sessionStatus !== 'SCHEDULED' &&
+                                      event.sessionStatus !== 'COMPLETED' && (
+                                        <span className="mt-2 block text-xs font-semibold">
+                                          {statuses[event.sessionStatus]}
+                                        </span>
+                                      )}
                                   </button>
                                 </article>
                               ))
@@ -252,19 +271,22 @@ export function UserSchedulePage() {
             <p className="text-sm font-bold text-mint">{selected.classCode}</p>
             <h3 className="mt-2 text-xl font-extrabold">{selected.className}</h3>
             <p className="mt-2 text-sm">{selected.courseTitle}</p>
-            <p
-              className={
-                'mt-3 inline-flex rounded-lg px-3 py-2 text-xs font-bold ' +
-                (selected.sessionStatus === 'CANCELLED' ? 'bg-peach' : 'bg-soft')
-              }
-            >
-              {statuses[selected.sessionStatus]}
-            </p>
+            {selected.sessionStatus !== 'COMPLETED' && (
+              <p
+                className={
+                  'mt-3 inline-flex rounded-lg px-3 py-2 text-xs font-bold ' +
+                  (selected.sessionStatus === 'CANCELLED' ? 'bg-peach' : 'bg-soft')
+                }
+              >
+                {statuses[selected.sessionStatus]}
+              </p>
+            )}
           </div>
           <dl className="grid gap-5 border-t border-line pt-5 text-sm sm:grid-cols-2">
             {[
               ['Buổi học', String(selected.sessionNumber)],
               ['Nội dung buổi học', selected.sessionTitle],
+              ['Điểm danh', attendanceLabel(selected.attendanceStatus)],
               ['Chương', selected.unitTitle],
               ['Mentor', selected.mentor.displayName || 'Chưa cập nhật mentor'],
               ['Bắt đầu', formatDate(selected.startsAt) + ' · ' + formatTime(selected.startsAt)],
@@ -283,8 +305,20 @@ export function UserSchedulePage() {
             ))}
           </dl>
           <p className="text-xs text-muted">Thời gian hiển thị theo giờ Việt Nam (UTC+7).</p>
+          {selected.deliveryMode === 'ONLINE' &&
+            selected.accessMode === 'FULL' &&
+            selected.sessionStatus !== 'CANCELLED' && (
+              <UserScheduleMeeting key={selected.sessionId} event={selected} />
+            )}
           {selected.accessMode === 'CASH_PREVIEW' && (
             <p className="rounded-xl bg-peach p-4 text-sm">Chờ xác nhận thanh toán tiền mặt.</p>
+          )}
+          {selected.accessMode === 'FULL' && selected.sessionStatus !== 'CANCELLED' && (
+            <AssignmentList
+              key={`assignments-${selected.sessionId}`}
+              classId={selected.classId}
+              sessionId={selected.sessionId}
+            />
           )}
         </UserDetailsDialog>
       )}

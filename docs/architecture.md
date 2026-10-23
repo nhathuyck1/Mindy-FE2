@@ -1,5 +1,21 @@
 # Kiến trúc Mindy FE2
 
+## Lịch bù linh hoạt — 23/10/2026
+
+- LeaveCreate dùng sessionMappings cho mọi khoảng nghỉ. SessionMakeupSlot tìm slot cả ngày hoặc theo buổi qua API hiện hữu, ưu tiên giờ gốc, giữ thời lượng. leave-makeup.ts kiểm giao khoảng nghỉ theo timeZone và giao các mapping trong cùng đơn; lựa chọn nằm ở LeaveCreate để tránh trùng và được xóa khi đổi ngày/buổi.
+- Backend mở targetPeriod=FULL_DAY và sessionMappings cho nghỉ cả ngày; giữ dayMappings để tương thích. Mọi student conflict chặn tạo/duyệt. Preview/slots không giữ chỗ, BE quyết định cuối. Cần deploy đồng bộ FE/BE.
+
+## Lịch đối chiếu trong đơn nghỉ — 23/10/2026
+
+- LeaveSchedule dùng useMentorWeek/fetchMentorWeek hiện hữu để đọc đủ các trang lịch, xem từng ngày và chuyển tuần. Chỉ mount query khi mở lịch.
+- LeaveCreate sở hữu ngày xem lịch riêng với mapping; input ngày ở cả hai chế độ cập nhật ngày xem. Duyệt lịch không sửa ngày bù, không thay contract hoặc validation nghiệp vụ BE.
+
+## Bài tập theo buổi học — 23/10/2026
+
+- features/assignments sở hữu Zod DTO, proxy policy và TanStack Query theo tài khoản. Proxy mở đúng API Mentor authoring và Student quiz, kiểm UUID, body/query, Origin, cookie và idempotency; DTO Student loại private questions/keys.
+- AssignmentList dùng chung theo sessionId ở trang buổi Mentor, nội dung buổi Student và chi tiết lịch học FULL. Mentor soạn nháp, lưu câu hỏi ABCD/đáp án đúng rồi phát hành; Student bắt đầu hoặc tiếp tục, lưu toàn bộ đáp án, nộp và tải kết quả từ server. Không tính điểm tại browser. Đồng hồ dùng expiresAt/serverNow, FINALIZING tải kết quả; mutation không retry tự động, giữ key cùng ý định khi lỗi mạng.
+- ZIP chưa có pipeline phát hành ở backend nên không cho tạo/giao bài ZIP. Không tự thêm file homework vào loại học liệu ARTICLE/FILE/VIDEO.
+
 ## UI Mentor và trực quan tiến độ — 22/10/2026
 
 - mentor-report-ui.tsx cung cấp presentation chung cho hàng học viên, heading/action và MentorProgressBar. Thanh nhận value nullable: số thật có role progressbar/aria-valuenow, unknown là track nét đứt không mang giá trị số. Không ghi tracking hoặc suy learning completion.

@@ -105,16 +105,23 @@ export function MentorSessionMaterials(props: {
                   {items.length} nội dung{props.filtered ? ' khớp bộ lọc' : ''}
                 </p>
                 {session.canReadContext && (
-                  <Button
-                    variant="outline"
-                    className="border-line bg-canvas text-forest shadow-none"
-                    asChild
-                  >
-                    <Link href={`/mentor/sessions/${session.id}`}>
-                      Điểm danh
-                      <ChevronRight aria-hidden="true" className="size-4" />
-                    </Link>
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" asChild>
+                      <Link href={`/mentor/sessions/${session.id}#assignments`}>
+                        Bài tập / BTVN
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="border-line bg-canvas text-forest shadow-none"
+                      asChild
+                    >
+                      <Link href={`/mentor/sessions/${session.id}`}>
+                        Điểm danh
+                        <ChevronRight aria-hidden="true" className="size-4" />
+                      </Link>
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>

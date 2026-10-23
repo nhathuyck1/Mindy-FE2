@@ -1,4 +1,5 @@
 'use client';
+import { AssignmentList } from '@/features/assignments/assignment-list';
 
 import Link from 'next/link';
 import { useState } from 'react';
@@ -117,7 +118,7 @@ export function MentorSessionPage(props: { sessionId: string }) {
       </Link>
       <MentorHeading
         title={context.data?.session.title ?? 'Thông tin buổi học'}
-        description="Theo dõi chuyên cần của học viên và cập nhật điểm danh cho buổi học."
+        description="Theo dõi điểm danh, ghi nhật ký và giao bài tập cho buổi học."
       />
       <MentorQueryState
         pending={
@@ -379,6 +380,17 @@ export function MentorSessionPage(props: { sessionId: string }) {
           />
         )}
       </MentorQueryState>
+      {context.data && (
+        <div id="assignments" className="mt-6 scroll-mt-6">
+          <AssignmentList
+            sessionId={props.sessionId}
+            author
+            readonly={
+              workspace.data?.readonly !== false || context.data.session.status === 'CANCELLED'
+            }
+          />
+        </div>
+      )}
       {meeting && session && (
         <MentorMeetingEditor
           sessionId={props.sessionId}

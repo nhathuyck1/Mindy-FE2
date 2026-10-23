@@ -1,5 +1,30 @@
 # Tiến độ
 
+## 23/10/2026 — Chọn giờ dạy bù linh hoạt
+
+- Nghỉ cả ngày và nghỉ theo buổi đều chọn lịch bù cho từng buổi học; tự ưu tiên/chọn giờ cũ nếu API còn trả khung đó, cho chọn giờ khác và ngày ở tuần sau. Thời lượng giữ nguyên. Nghỉ cả ngày chặn ngày trong khoảng nghỉ; nghỉ theo buổi loại mọi khung giao khoảng nghỉ, kể cả giao một phần.
+- Thẻ hiển thị lịch gốc, thời lượng, lịch bù; đổi ngày/buổi xóa lựa chọn cũ. Loại lịch trùng các buổi bù khác trong cùng đơn; BE kiểm lại mentor/lớp/học viên lúc tạo và duyệt.
+- Contract mới dùng sessionMappings với targetPeriod có FULL_DAY; BE vẫn nhận dayMappings cũ để giữ giờ. Cần triển khai BE mới cùng FE. Không còn cho phép staff bỏ qua trùng lịch học viên.
+
+## 23/10/2026 — Lịch đối chiếu khi chọn lịch dạy bù
+
+- Thêm nút mở/ẩn lịch dạy ngay bước chọn lịch bù, chuyển tuần và ngày xem. Nhập ngày bù ở cả hai chế độ cập nhật ngày đối chiếu; duyệt lịch không ghi đè mapping. Tái sử dụng API lịch Mentor lấy đủ trang, không suy lịch học viên hoặc bảo đảm giờ trống từ lịch dạy.
+- Bản đầu đã pass 8 ca E2E xin nghỉ tuần tự trên desktop/mobile. Sau thay đổi đồng thời ở luồng chọn giờ bù, build/TypeScript và 2 ca E2E lịch đối chiếu desktop/mobile vẫn pass; ESLint/Prettier phần lịch pass. Đã xem bố cục ở 1440px và 320px. Chưa xác nhận với phiên tài khoản thật.
+
+## 23/10/2026 — Kết nối bài tập / BTVN theo buổi học
+
+- Mentor vào buổi học hoặc nút Bài tập / BTVN từ danh sách nội dung: tạo nháp QUIZ, sửa thông tin/hạn nộp, soạn câu hỏi ABCD và đáp án đúng, lưu và phát hành. Trạng thái nháp nói rõ học viên chưa thấy; phát hành khóa đề.
+- Student mở bài từ buổi trong không gian học hoặc chi tiết lịch FULL; xem yêu cầu/hạn/thời lượng, bắt đầu hoặc tiếp tục, lưu đáp án, xác nhận nộp và xem điểm/đáp án sau khi backend trả kết quả. Giữ lựa chọn và idempotency key khi lưu lỗi, đồng hồ theo server và tải kết quả khi FINALIZING; không chấm ở browser.
+- Swagger live đã có endpoint. ZIP vẫn chưa có pipeline phát hành backend nên UI chỉ giao trắc nghiệm. Chưa kiểm chứng với phiên tài khoản thật, chưa deploy.
+- Validation: 158 unit tests pass; 60 ca E2E liên quan đã pass qua các lượt kiểm tra desktop/mobile (12 ca assignment/learning chạy lại sau bổ sung fixture API mới). Build, TypeScript, ESLint, Prettier pass; đã xem ảnh mentor mobile và học viên desktop.
+
+## 23/10/2026 — Trạng thái điểm danh trong lịch học Student
+
+- Đọc attendanceStatus từ API lịch học hiện có: null → Chưa bắt đầu (pill xám), PRESENT → Có mặt (pill xanh), ABSENT → Vắng (pill đỏ); bỏ tiền tố Điểm danh và nhãn Đã hoàn thành. Chi tiết vẫn có kết quả điểm danh.
+- Bấm buổi online FULL mới đọc API chi tiết lớp để lấy meetingUrl theo sessionId, dự phòng link lớp. Thêm nút tham gia, trạng thái tải/lỗi/thử lại và thông báo chưa có link; không mở link cho buổi hủy hoặc CASH_PREVIEW.
+- Đối chiếu DTO backend local; Swagger live timeout trong lượt kiểm tra này. Kiểm tra giao diện bằng API mock cho cả ba giá trị trên desktop/mobile.
+- Validation: TypeScript, ESLint, Prettier, build, 156 unit tests và 20 E2E workspace desktop/mobile pass; đã xem ảnh lịch desktop và chi tiết mobile 320px. Chưa xác minh bằng phiên học viên thật.
+
 ## 22/10/2026 — Làm gọn UI API mới và thêm thanh tiến độ Mentor
 
 - Thu gọn metadata lớp, tab có icon/gạch dưới; timetable/chuyên cần/tiến độ phân cấp heading, bộ lọc, hàng học viên và action rõ hơn. Chuyên cần có thanh rate BE và giữ unknown khác zero.

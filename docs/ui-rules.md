@@ -1,5 +1,14 @@
 # Quy tắc giao diện Mindy
 
+## Chọn giờ bù — 23/10/2026
+
+- Cả ngày và sáng/chiều/tối đều có thẻ từng buổi, gồm lịch gốc, thời lượng và lịch bù đã chọn. Giờ cũ đứng đầu, tự chọn khi còn trống; người dùng được đổi giờ. Tìm trong cả ngày mặc định hoặc lọc buổi.
+- Nghỉ cả ngày không chọn ngày đang nghỉ; nghỉ theo buổi có thể bù cùng ngày ngoài khoảng nghỉ. Không có giờ thì hướng dẫn chọn buổi khác hoặc ngày ở tuần tiếp theo; không giới hạn lịch bù trong tuần.
+
+## Đối chiếu lịch dạy bù — 23/10/2026
+
+- Bước lịch bù có nút mở/ẩn lịch dạy tại chỗ; thanh 7 ngày, chuyển tuần và danh sách buổi theo ngày UTC+7. Nhập ngày bù chuyển ngày xem để đối chiếu; xem lịch không tự thay mapping. Không gọi khoảng không có buổi dạy là giờ bù hợp lệ, vì còn lịch học viên và khoảng nghỉ.
+
 ## Gọn giao diện API Mentor và thanh tiến độ — 22/10/2026
 
 - Navigation lớp dùng tab biểu tượng, gạch dưới và cuộn ngang trên mobile; phạm vi phân công trình bày gọn, không thêm thẻ thống kê giả. Buổi học, chuyên cần và tiến độ có tiêu đề/mô tả, bộ lọc và danh sách riêng.

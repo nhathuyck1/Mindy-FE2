@@ -102,6 +102,8 @@ async function fixture(page: Page) {
   await page.route('**/api/v1/me/classes**', async (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname;
+    if (path.endsWith('/assignments'))
+      return route.fulfill({ json: { items: [], page: 1, pageSize: 100, total: 0 } });
     if (path === '/api/v1/me/classes')
       return route.fulfill({
         json: {

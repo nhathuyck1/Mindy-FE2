@@ -83,6 +83,7 @@ export const scheduleEventSchema = z.object({
   sessionNumber: z.number().int().positive(),
   sessionTitle: z.string(),
   sessionStatus: z.enum(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']),
+  attendanceStatus: z.enum(['PRESENT', 'ABSENT']).nullable(),
   startsAt: dateTime,
   endsAt: dateTime,
   dayOfWeek: z.enum(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']),
