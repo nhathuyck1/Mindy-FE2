@@ -1,5 +1,12 @@
 # Quy tắc giao diện Mindy
 
+## Chuẩn UI lấy Student làm mẫu — 26/10/2026
+
+- Tài liệu áp dụng: [student-ui-standard.md](student-ui-standard.md), gồm bản đồ màn hình/logic, token, typography, bo góc/kích thước, trạng thái, responsive, đối chiếu staff và checklist nghiệm thu. Có dẫn nguồn code và ảnh mới từ production build với API mock.
+- Theo quyết định người dùng ngày 26/10/2026, **Nunito Variable là font UI đích cho Student, Admin, Manager và Mentor**; code vẫn dùng monospace. Định hướng này thay thế các ghi chú lịch sử giữ Inter cho staff ở bên dưới. Chưa chuyển font hoặc sửa CSS/component staff trong lần tạo tài liệu này: staff hiện vẫn dùng Inter và thang chữ riêng.
+- Phân biệt hiện trạng với chuẩn đích/đề xuất được đánh dấu trong tài liệu. Đích đồng bộ gồm thang chữ Student, palette Mindy, control thông thường góc 8px, CTA lớn 12px, panel/dialog 16px và vùng tương tác chính tối thiểu 44px; giữ ngoại lệ public/thương mại/nghiệp vụ có mô tả. Không coi các mặc định shared hiện tại đã đồng nhất hoàn toàn.
+- Chỉ đồng bộ ngôn ngữ thị giác và pattern tương tác phù hợp; giữ menu, quyền, API, filter URL, draft, phiên bản/idempotency và workflow riêng từng role. Sidebar staff tiếp tục không có link Xem website/thẻ Mindy theo quyết định ngày 23/10/2026.
+
 ## Duyệt đơn xin nghỉ Mentor của Manager — 23/10/2026
 
 - Bảng dashboard và trang danh sách có phân trang theo tổng backend; danh sách mặc định PENDING, lọc trạng thái/mentor/trang nằm trên URL. Bảng cuộn trong panel, vẫn dùng được ở viewport 320px.

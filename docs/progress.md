@@ -1,5 +1,12 @@
 # Tiến độ
 
+## 26/10/2026 — Tài liệu chuẩn UI theo Student
+
+- Hoàn tất [student-ui-standard.md](student-ui-standard.md) bằng tiếng Việt: bản đồ 5 mục Student và luồng public/auth/cart/payment; quy tắc font, màu, bo góc, kích thước, spacing, bảng/dialog, lịch/học liệu, state, bàn phím và responsive. Có liên kết code, bảng đối chiếu staff, thứ tự áp dụng và checklist nghiệm thu.
+- Chốt Nunito cho UI mọi role; ghi rõ hiện staff vẫn dùng Inter/thang chữ riêng, component shared còn khác radius/height/border. Phân biệt hiện trạng, đề xuất chuẩn hóa và ngoại lệ; cập nhật định hướng mới ở ui-rules. Chỉ thay tài liệu và thêm 4 ảnh tham chiếu, không sửa UI, API hay nghiệp vụ.
+- Production build pass; 7 suite Playwright liên quan cho 133 pass, 3 skip có chủ đích ở desktop (các ca riêng cho mobile), gồm viewport 320px. Đã xem 4 ảnh mới desktop/mobile từ lượt chạy; phiên/dữ liệu/giao dịch dùng API mock, chưa nghiệm thu backend live. Chi tiết lệnh và giới hạn kiểm chứng ở mục 12 của tài liệu.
+- Đo computed style trên production xác nhận font/cỡ chữ/weight, góc nút 6px hiện tại, nav 8px, sidebar 228px và topbar 92px. ESLint, 168 unit tests, Prettier ba tài liệu và kiểm tra liên kết local/reference/anchor pass.
+
 ## 23/10/2026 — Manager duyệt đơn xin nghỉ Mentor
 
 - Đã nối proxy/schema cho danh sách, detail, approve/reject và các GET manager bổ trợ. Thêm menu, bảng PENDING ở dashboard, danh sách URL-driven và detail có lịch ảnh hưởng/xung đột phân trang riêng.
