@@ -1,19 +1,8 @@
 import Link from 'next/link';
-import {
-  CalendarDays,
-  ChevronRight,
-  FileText,
-  FolderOpen,
-  Paperclip,
-  Plus,
-  Video,
-} from 'lucide-react';
-import { z } from 'zod';
+import { CalendarDays, ChevronRight, FileText, FolderOpen, Paperclip, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { unitDetailSchema, type Material } from '../schemas/mentor-contracts';
+import type { ContentSession, Material } from '../schemas/mentor-contracts';
 import { MentorStatus, mentorDate, mentorLabels } from './mentor-shared';
-
-type UnitSession = z.infer<typeof unitDetailSchema>['sessions'][number];
 
 function ContentRows(props: {
   items: Material[];
@@ -65,11 +54,10 @@ function ContentRows(props: {
 }
 
 export function MentorSessionMaterials(props: {
-  sessions: UnitSession[];
+  sessions: ContentSession[];
   items: Material[];
   filtered: boolean;
   onSelect: (id: string) => void;
-  onCreate: (sessionId?: string) => void;
 }) {
   const sessions = [...props.sessions].sort((a, b) => a.sessionNumber - b.sessionNumber);
   const known = new Set(sessions.map((session) => session.id));
@@ -110,16 +98,13 @@ export function MentorSessionMaterials(props: {
                   <p className="mt-2 text-sm leading-6 text-muted">
                     {mentorDate(session.startsAt)} – {mentorDate(session.endsAt)}
                   </p>
-                  {session.roomName && (
-                    <p className="mt-1 text-sm text-muted">Phòng: {session.roomName}</p>
-                  )}
                 </div>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm text-muted">
                   {items.length} nội dung{props.filtered ? ' khớp bộ lọc' : ''}
                 </p>
-                <div className="flex flex-wrap gap-2">
+                {session.canReadContext && (
                   <Button
                     variant="outline"
                     className="border-line bg-canvas text-forest shadow-none"
@@ -130,14 +115,7 @@ export function MentorSessionMaterials(props: {
                       <ChevronRight aria-hidden="true" className="size-4" />
                     </Link>
                   </Button>
-                  <Button
-                    onClick={() => props.onCreate(session.id)}
-                    aria-label={`Thêm nội dung vào buổi ${session.sessionNumber}`}
-                  >
-                    <Plus aria-hidden="true" className="size-4" />
-                    Thêm nội dung
-                  </Button>
-                </div>
+                )}
               </div>
             </div>
             <ContentRows items={items} filtered={props.filtered} onSelect={props.onSelect} />
@@ -159,14 +137,6 @@ export function MentorSessionMaterials(props: {
               chung hoặc đang chờ phân buổi.
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => props.onCreate()}
-            aria-label="Thêm nội dung chưa gắn buổi"
-          >
-            <Plus aria-hidden="true" className="size-4" />
-            Thêm nội dung
-          </Button>
         </div>
         <ContentRows items={unassigned} filtered={props.filtered} onSelect={props.onSelect} />
       </section>

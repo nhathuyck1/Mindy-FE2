@@ -95,7 +95,7 @@ test('mentor chapter list and material body scroll independently at tablet width
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'This test uses a tablet viewport.');
-  await mockMentor(page);
+  await mockMentor(page, { sessionMaterials: true });
   await page.route('**/api/v1/mentor/classes/*/units?*', (route) =>
     route.fulfill({
       json: {

@@ -310,6 +310,89 @@ test('Overview and resource pages use real contract totals and stay within the v
   expect(errors).toEqual([]);
 });
 
+test('Admin activity history filters, paginates, loads escaped detail and restores focus', async ({
+  page,
+}, testInfo) => {
+  await mockAdminApi(page);
+  if (testInfo.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 800 });
+  const methods: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/api/v1/admin/tracking/events')) methods.push(request.method());
+  });
+  await page.goto('/admin/tracking');
+  await expect(page.getByRole('heading', { name: 'Lịch sử hoạt động', exact: true })).toBeVisible();
+  await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(15);
+  await page.screenshot({ path: testInfo.outputPath('admin-tracking.png'), fullPage: true });
+  await page.getByLabel('Nhóm hoạt động').selectOption('attendance_audits');
+  await page.getByLabel('Từ thời điểm').fill('2026-10-20T10:30');
+  await page.getByLabel('Đến thời điểm').fill('2026-10-23T10:30');
+  await page.getByRole('button', { name: 'Áp dụng', exact: true }).click();
+  await expect(page.getByRole('table')).toContainText('Điều chỉnh sau khi xác minh');
+  const first = page.getByRole('table').getByRole('button', { name: 'Xem chi tiết' }).first();
+  await first.click();
+  const dialog = page.getByRole('dialog', { name: 'Chi tiết hoạt động' });
+  await expect(dialog).toContainText('Dữ liệu sự kiện');
+  await expect(dialog).toContainText('UNMARKED');
+  await expect(dialog).toContainText('Biên bản xác nhận');
+  await page.keyboard.press('Escape');
+  await expect(dialog).not.toBeVisible();
+  await expect(first).toBeFocused();
+  await page.getByLabel('Số dòng mỗi trang').selectOption('10');
+  await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(10);
+  await page.getByRole('button', { name: 'Sau', exact: true }).click();
+  await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(5);
+  await page.getByRole('button', { name: 'Xóa lọc', exact: true }).click();
+  await expect(page.getByLabel('Nhóm hoạt động')).toHaveValue('');
+  expect(methods.every((method) => method === 'GET')).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('Reconciliation screen is paginated, read only and responsive at 320px', async ({
+  page,
+}, testInfo) => {
+  await mockAdminApi(page);
+  if (testInfo.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 800 });
+  const methods: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/api/v1/admin/payments/reconciliation'))
+      methods.push(request.method());
+  });
+  await page.goto('/admin/payments/reconciliation');
+  await expect(
+    page.getByRole('heading', { name: 'Cần đối soát thanh toán', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(12);
+  await expect(page.getByRole('table')).toContainText('PAYOS-REF-001');
+  await page.screenshot({ path: testInfo.outputPath('admin-reconciliation.png'), fullPage: true });
+  await page.getByLabel('Số dòng mỗi trang').selectOption('10');
+  await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(10);
+  await page.getByRole('button', { name: 'Sau', exact: true }).click();
+  await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(2);
+  expect(methods.length).toBeGreaterThan(0);
+  expect(methods.every((method) => method === 'GET')).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('Manager cannot mount Admin history or reconciliation queries and does not see those links', async ({
+  page,
+}) => {
+  await mockAdminApi(page);
+  await page.route('**/api/v1/auth/me', (route) =>
+    route.fulfill({ json: { ...testUser, role: 'MANAGER', displayName: 'Quản lý Mindy' } }),
+  );
+  const privateRequests: string[] = [];
+  page.on('request', (request) => {
+    if (/\/api\/v1\/admin\/(tracking|payments\/reconciliation)/.test(request.url()))
+      privateRequests.push(request.url());
+  });
+  await page.goto('/admin/tracking');
+  await expect(page.getByRole('heading', { name: 'Tài khoản chưa có quyền Admin' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Lịch sử hoạt động', exact: true })).toHaveCount(0);
+  await page.goto('/admin/payments/reconciliation');
+  await expect(page.getByRole('heading', { name: 'Tài khoản chưa có quyền Admin' })).toBeVisible();
+  expect(privateRequests).toEqual([]);
+});
+
 test('Admin navigation supports desktop collapse and a focus-managed mobile menu', async ({
   page,
   isMobile,

@@ -61,17 +61,23 @@ describe('Mentor adapter boundaries', () => {
     );
     for (const query of ['?page=0', '?pageSize=101', '?page=1&page=2', '?mentorId=' + id])
       expect((await proxyApi(request(path + query), path)).status).toBe(422);
-    const release = `mentor/classes/${id}/units/${key}/release`;
+    const release = `mentor/class-sessions/${id}/meeting-url`;
     expect(
       (
         await proxyApi(
-          request(release, 'PATCH', { status: 'OPEN' }, { Origin: 'https://evil.test' }),
+          request(
+            release,
+            'PATCH',
+            { expectedVersion: 1, meetingUrl: null },
+            { Origin: 'https://evil.test' },
+          ),
           release,
         )
       ).status,
     ).toBe(403);
     expect(
-      (await proxyApi(request(release, 'PATCH', { status: 'COMPLETED' }), release)).status,
+      (await proxyApi(request(release, 'PATCH', { expectedVersion: 0, meetingUrl: null }), release))
+        .status,
     ).toBe(422);
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -118,6 +124,35 @@ describe('Mentor adapter boundaries', () => {
     ).toBe(409);
     expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get('Idempotency-Key')).toBe(key);
     expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toEqual({ expectedVersion: 3 });
+  });
+  it('allows the chapter timetable with an explicit unit filter and preserves backend denials', async () => {
+    const path = `mentor/classes/${id}/sessions`;
+    for (const query of [
+      '?from=2026-10-22T00:00:00Z',
+      '?unitId=invalid',
+      `?unitId=${key}&unitId=${id}`,
+      `?unitId=${key}&mentorId=${id}`,
+    ])
+      expect((await proxyApi(request(path + query), path)).status).toBe(422);
+    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockResolvedValueOnce(
+      Response.json({ items: [], page: 1, pageSize: 100, total: 0, meetingUrl: 'hidden' }),
+    );
+    const response = await proxyApi(request(`${path}?unitId=${key}&pageSize=100`), path);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ items: [], page: 1, pageSize: 100, total: 0 });
+    expect(new URL(String(fetchMock.mock.calls[0][0])).searchParams.get('unitId')).toBe(key);
+    expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get('Cookie')).toBe(
+      'access_token=opaque',
+    );
+    expect(response.headers.get('cache-control')).toContain('no-store');
+    fetchMock.mockResolvedValueOnce(
+      Response.json(
+        { code: 'MENTOR_SCOPE_REQUIRED', message: 'Assignment required' },
+        { status: 403 },
+      ),
+    );
+    expect((await proxyApi(request(`${path}?unitId=${key}`), path)).status).toBe(403);
   });
   it('forwards delete revisions and rejects malformed material payloads', async () => {
     const path = `mentor/classes/${id}/materials/${key}`;

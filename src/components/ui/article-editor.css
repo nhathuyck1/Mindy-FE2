@@ -1,0 +1,68 @@
+.article-editor {
+  --ck-color-base-background: var(--color-canvas);
+  --ck-color-base-foreground: var(--color-soft);
+  --ck-color-base-border: var(--color-line);
+  --ck-color-text: var(--color-foreground);
+  --ck-color-toolbar-background: var(--color-soft);
+  --ck-color-toolbar-border: var(--color-line);
+  --ck-color-focus-border: var(--color-mint);
+  --ck-color-button-on-background: var(--color-soft);
+  --ck-color-button-on-color: var(--color-forest);
+  --ck-border-radius: 0.5rem;
+  --ck-font-face: var(--font-brand);
+  --ck-font-size-base: 14px;
+  --ck-ui-component-min-height: 44px;
+  min-width: 0;
+}
+
+/* Keep editor balloons above the existing dialog (z-index 50). */
+.article-editor,
+.ck-body-wrapper {
+  --ck-z-default: 100;
+  --ck-z-panel: 110;
+}
+
+.article-editor .ck-editor,
+.article-editor .ck-editor__main,
+.article-editor .ck-toolbar {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.article-editor .ck-content,
+.article-editor .ck-source-editing-area textarea {
+  min-height: 18rem;
+  max-height: 32rem;
+  overflow-y: auto;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.article-editor .ck-content ul {
+  list-style: disc;
+  padding-inline-start: 1.5rem;
+}
+
+.article-editor .ck-content ol {
+  list-style: decimal;
+  padding-inline-start: 1.5rem;
+}
+
+.article-editor .ck-source-editing-area {
+  max-height: 32rem;
+  overflow: hidden;
+}
+
+.article-editor .ck-content a {
+  color: var(--color-mint);
+  text-decoration: underline;
+}
+
+.article-editor .ck-content pre,
+.article-editor .ck-content .table {
+  max-width: 100%;
+  overflow-x: auto;
+}

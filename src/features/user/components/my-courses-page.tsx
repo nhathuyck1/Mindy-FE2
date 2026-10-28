@@ -110,9 +110,20 @@ export function MyCoursesPage() {
                         </span>
                       </td>
                       <td className="px-5 py-3 whitespace-nowrap">
-                        <Button variant="outline" onClick={() => setSelected(item)}>
-                          Xem chi tiết
-                        </Button>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {item.canViewClass && item.accessMode !== 'NONE' && (
+                            <Button asChild>
+                              <Link
+                                href={`/user/materials/${item.classId}${item.accessMode === 'CASH_PREVIEW' ? '?preview=true' : ''}`}
+                              >
+                                {item.accessMode === 'FULL' ? 'Vào học' : 'Xem trước chương'}
+                              </Link>
+                            </Button>
+                          )}
+                          <Button variant="outline" onClick={() => setSelected(item)}>
+                            Xem chi tiết
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}

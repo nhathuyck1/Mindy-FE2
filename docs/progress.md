@@ -1,5 +1,73 @@
 # Tiến độ
 
+## 26/10/2026 — Tài liệu chuẩn UI theo Student
+
+- Hoàn tất [student-ui-standard.md](student-ui-standard.md) bằng tiếng Việt: bản đồ 5 mục Student và luồng public/auth/cart/payment; quy tắc font, màu, bo góc, kích thước, spacing, bảng/dialog, lịch/học liệu, state, bàn phím và responsive. Có liên kết code, bảng đối chiếu staff, thứ tự áp dụng và checklist nghiệm thu.
+- Chốt Nunito cho UI mọi role; ghi rõ hiện staff vẫn dùng Inter/thang chữ riêng, component shared còn khác radius/height/border. Phân biệt hiện trạng, đề xuất chuẩn hóa và ngoại lệ; cập nhật định hướng mới ở ui-rules. Chỉ thay tài liệu và thêm 4 ảnh tham chiếu, không sửa UI, API hay nghiệp vụ.
+- Production build pass; 7 suite Playwright liên quan cho 133 pass, 3 skip có chủ đích ở desktop (các ca riêng cho mobile), gồm viewport 320px. Đã xem 4 ảnh mới desktop/mobile từ lượt chạy; phiên/dữ liệu/giao dịch dùng API mock, chưa nghiệm thu backend live. Chi tiết lệnh và giới hạn kiểm chứng ở mục 12 của tài liệu.
+- Đo computed style trên production xác nhận font/cỡ chữ/weight, góc nút 6px hiện tại, nav 8px, sidebar 228px và topbar 92px. ESLint, 168 unit tests, Prettier ba tài liệu và kiểm tra liên kết local/reference/anchor pass.
+
+## 23/10/2026 — Manager duyệt đơn xin nghỉ Mentor
+
+- Đã nối proxy/schema cho danh sách, detail, approve/reject và các GET manager bổ trợ. Thêm menu, bảng PENDING ở dashboard, danh sách URL-driven và detail có lịch ảnh hưởng/xung đột phân trang riêng.
+- Modal xử lý tải lại detail trước khi xác nhận, giữ version, bắt buộc lý do, yêu cầu manager tick xác nhận xung đột FULL_DAY và chặn duyệt nghỉ theo buổi khi có xung đột. Mutation không tự retry; lỗi mạng/5xx gửi lại cùng key/body; kết quả thành công cập nhật cache.
+- Local checks: lint, format:check, type-check và production build pass; 168/168 unit tests pass. Full Playwright desktop/mobile 339 pass, 5 skip; cả 16 E2E luồng xin nghỉ pass, gồm lọc/Back, stale/expired/version conflict, double-click lock, idempotency retry, Escape/focus và viewport 320px.
+- Unit/proxy và E2E dùng API mock theo contract; chưa nghiệm thu thao tác thật bằng tài khoản test hoặc xác nhận transaction trên backend live.
+
+## 23/10/2026 — Dashboard chờ duyệt và trang duyệt Manager
+
+- Bổ sung bảng chờ duyệt tại `/manager`, phân trang 20 dòng, làm mới và link đúng ID sang `/manager/materials/:materialId`. Trang chi tiết tái sử dụng nội dung/editor hiện có, có Về tổng quan, hỗ trợ reload/link trực tiếp và safeReturnPath; UUID sai không gửi request.
+- Đối chiếu source và Swagger live: API sửa/duyệt/từ chối/xóa đã có và đã nối. Sửa xác nhận nằm cuối bài thành Modal hiện ngay trong viewport, gồm tên/phiên bản, thông báo duyệt đồng thời xuất bản, lý do từ chối bắt buộc và Hủy/Escape trả focus. Thành công cập nhật chi tiết/danh sách/số liệu; xóa từ trang riêng trở về dashboard.
+- Chặn gửi trùng, giữ expectedRevision khi mở xác nhận và yêu cầu tải lại sau 409/lỗi mạng trước khi gửi một ý định mới. Chỉnh sửa dùng CKEditor/PATCH hiện có và về DRAFT; bản nháp Mentor chưa đủ điều kiện không hiện nút duyệt. Giữ working tree/CKEditor và không sửa backend/database.
+- Local: lint, format:check, TypeScript và production build riêng `.next-manager-review` pass; 162 unit tests và 78 E2E Manager/collections desktop/mobile pass, gồm 320px, viewport hộp thoại, focus, approve/reject/delete, lỗi/thử lại, revision, phân trang, workspace/upload/preview/CKEditor. Bài cuộn cũ chờ font và kết thúc chuyển động trước khi đo, giữ nguyên ngưỡng kiểm tra pixel.
+- Ảnh dashboard/trang chi tiết/hộp thoại có trong các thư mục test tương ứng dưới `test-results/` (`manager-review-dashboard.png`, `manager-review-detail.png`, `manager-review-confirmation.png`); bản bàn giao được sao lưu tại `output/manager-review-2026-10-23` ở workspace cha. Mutations được kiểm bằng API mock; chưa nghiệm thu ghi bằng tài khoản thật. Không commit/push/deploy.
+
+## 23/10/2026 — Bỏ phần cuối sidebar ngoài Student
+
+- Bỏ liên kết Xem website và thẻ giới thiệu Mindy trong sidebar Admin, Manager, Mentor. Menu mobile dùng cùng navigation nên cũng bỏ liên kết; giữ nguyên giao diện Student.
+- Cập nhật E2E chuyển từ Admin về trang chủ qua lịch sử trình duyệt.
+- Kiểm tra local: ESLint các file sửa, TypeScript, Prettier, production build riêng `.next-sidebar-review` và 10 E2E desktop/mobile pass (Admin, Manager, Mentor và hồi quy Student). Đã xem ảnh sidebar Manager; API mock, chưa deploy.
+
+## 23/10/2026 — Hoàn thiện 7 mục FE2 theo API hiện hành
+
+- Manager có dashboard Tổng quan lấy tổng từ API, lọc kho tài liệu đồng bộ URL, điều hướng theo role và nhãn tài liệu nhất quán. Student có đường vào lớp theo quyền/accessMode; lịch phân biệt trạng thái buổi với điểm danh, hỗ trợ mentor nullable và buổi học bù.
+- Admin có Lịch sử hoạt động và danh sách Cần đối soát thanh toán chỉ đọc. Proxy chỉ cho GET trên ba endpoint mới; query/response được kiểm bằng Zod, guard ADMIN ACTIVE chặn truy cập và hai màn không gọi mutation.
+- Dùng shell, token và component UI hiện có; thêm trạng thái tải/lỗi/rỗng/thử lại, phân trang, modal có quản lý focus và bố cục 320px. Cập nhật `architecture.md`, `api-contracts.md` và `ui-rules.md` theo hành vi mới.
+- Kiểm tra local: lint, format:check, TypeScript, 159 unit tests, production build riêng `.next-7-items-review` và 310 E2E desktop/mobile (305 pass, 5 skip có chủ đích). E2E dùng API mock theo contract; chưa kiểm bằng tài khoản thật hoặc xác nhận ghi dữ liệu trên backend. Build không thay thư mục preview đang chạy.
+- Ảnh E2E desktop/320px nằm trong `test-results/`: `manager-overview-{desktop,mobile}.png` và ảnh `admin-tracking.png`/`admin-reconciliation.png` trong thư mục kết quả của từng test. Không commit, push hoặc deploy.
+
+## 23/10/2026 — CKEditor cho nội dung học liệu
+
+- Đã tích hợp CKEditor 5 cho tạo/chỉnh sửa ARTICLE ở Manager `/manager/materials` và workspace Mentor; dùng tiếng Việt, toolbar định dạng, bảng, liên kết, mã và nguồn HTML.
+- Đã kiểm tra Swagger live/DTO/sanitizer; payload dùng contentHtml, version 1 khi tạo và expectedRevision khi sửa. Thêm validation bài rỗng, giới hạn 48 KiB UTF-8 và khóa lưu khi editor chưa sẵn sàng; giữ HTML, metadata, tệp đính kèm và luồng duyệt hiện có.
+- Cấu hình license public qua NEXT_PUBLIC_CKEDITOR_LICENSE_KEY (mặc định GPL); hướng dẫn khóa thương mại và điều kiện sử dụng ở architecture.md/.env.example.
+- Kiểm tra hoàn tất: lint, format:check, check:types và production build pass; 156/156 unit tests và 80/80 Playwright tests Manager/Mentor (desktop/mobile, API mock) pass. Đã xem giao diện, kiểm tra editor ở 320px và localhost hiện hữu không có lỗi JavaScript; chưa tạo/sửa dữ liệu kiểm thử trên backend live.
+
+## 22/10/2026 — Làm gọn UI API mới và thêm thanh tiến độ Mentor
+
+- Thu gọn metadata lớp, tab có icon/gạch dưới; timetable/chuyên cần/tiến độ phân cấp heading, bộ lọc, hàng học viên và action rõ hơn. Chuyên cần có thanh rate BE và giữ unknown khác zero.
+- Tổng quan học tập có thanh Chương đã có dữ liệu từ counts, không suy thành hoàn thành toàn khóa; chi tiết có bar phần trăm từng chương. Đủ các trạng thái 0%, 60%, 100%, chưa tracking và dữ liệu sai, nhãn tiếng Việt; bỏ tracking jargon khỏi thông báo chính.
+- Xin nghỉ tách danh sách và form, ba bước trực quan với aria-current, mapping buổi nghỉ/ngày bù, slot dễ chọn, status badge và lịch gốc/bù trong detail. Bulk và nhật ký buổi học thành nhóm riêng, giữ nghiệp vụ/version/idempotency/scope.
+- Lint, TypeScript/production build, 156 unit tests PASS. Toàn bộ 76 Mentor E2E: 74 PASS, 2 skip có chủ đích trong ma trận viewport. Bổ sung kiểm bar 0/60/100/unknown/invalid, độ phủ 4/5 không double-count invalid, không mutation khi đọc và ba bước form/gửi đơn. Đã xem ảnh desktop/320px, kiểm tràn ngang, dùng mock API theo contract; chưa deploy.
+
+## 22/10/2026 — Tích hợp toàn bộ nhóm API Mentor mới
+
+- Đọc lại source BE dev 36753cf, API flow/DTO và đối chiếu endpoint Swagger live. Bổ sung 18 method/path mới dành cho Mentor vào proxy và các màn tiêu thụ; không mở staff approval/correction hoặc Admin tracking.
+- Lớp đọc shell/capabilities trước khi mở các tab; có lọc PRIMARY/SUBSTITUTE/ANY, timetable phân trang/range, chuyên cần lớp/học viên và tiến độ lưu sẵn. Mentor dạy thay chỉ xem scope được phân công, không mount roster/report/authoring. Lớp hủy vào lịch sử, lớp hoàn thành vẫn cho sửa notes trong deadline theo BE.
+- Buổi học có candidates chỉ đọc trước start, snapshot sau start, bulk có xác nhận toàn roster/mọi trang, guestRecords dùng makeupPlacementId. Sửa link riêng/null fallback với session version. Notes có version riêng, draft giữ sau 409/lỗi tải lại, merge do người dùng quyết định và kiểm deadline lúc submit.
+- /mentor/leave-requests: danh sách/bộ lọc, preview, slots, FULL_DAY dayMappings hoặc sessionMappings, tạo/xem chi tiết/rút đơn bằng sourceVersions/expectedVersion/key hiện hành. Không giả giữ slot hoặc áp dụng lịch trước approval.
+- Gỡ UnitRelease và route proxy đã bị BE xóa; giữ CRUD/submit/upload/access tài liệu hiện hữu. Giữ cookie HttpOnly, same-origin, strict Zod, Origin, no-store; UUIDv4 key giữ nguyên cho retry cùng request sau lỗi mạng. Không thay BE, không thêm dependency hoặc lưu token/draft trong Web Storage.
+- Kiểm chứng local: lint PASS; 156 unit tests PASS; production build + TypeScript PASS. Ma trận Mentor desktop/mobile 66 PASS + 2 skip có chủ đích (hai test ma trận responsive tự chạy viewport); sau bổ sung case cancelled/completed và điều chỉnh guard, chạy lại 16 tests liên quan PASS, gồm 4 case mới. Tổng 70 scenario riêng biệt đã PASS, 2 skip. Kiểm ảnh 320px/desktop, ô ngày/buổi không chồng nhau; kiểm cả hồi quy material/upload/phân trang và lịch tuần.
+- Prettier các tệp thay đổi PASS; git diff --check PASS. Format toàn repo chưa PASS: 250 tệp có sẵn ngoài phạm vi dùng định dạng/line ending khác; không format lại các feature không liên quan. Các marker merge trong phần lịch sử progress đã có từ trước, giữ nguyên nội dung.
+- E2E dùng API/storage mock theo contract; chưa nghiệm thu thao tác ghi bằng tài khoản thật hoặc deploy FE. Swagger live chỉ xác nhận endpoint hiện diện.
+
+## 22/10/2026 — Khôi phục danh sách buổi học theo API workspace Mentor
+
+- Nguyên nhân: BE mới trả sessions rỗng trong chi tiết chương cho Mentor; FE vẫn dùng mảng này nên báo chưa có buổi và chuyển nội dung đã gắn buổi sang nhóm chưa xác định. Đã xác minh source BE và sự tồn tại/DTO của endpoint workspace trên Swagger live.
+- FE chuyển sang hai endpoint buổi được cấp quyền: danh sách theo chương để lấy số buổi và timetable lớp có unitId để lấy lịch/quyền, ghép theo ID sau khi tải đủ trang. Không dùng khoảng tuần hiện tại, không sửa BE hay dữ liệu buổi. Lỗi/thiếu trang/sai scope phải thử lại, không hiển thị danh sách rỗng giả.
+- Giữ một nút Thêm nội dung ở đầu chương, chọn buổi trong editor; link Điểm danh theo capabilities.readSessionContext. Fixture chi tiết chương đổi thành sessions rỗng đúng BE để bắt lỗi hồi quy.
+- Local: production build/TypeScript, ESLint/Prettier file sửa, 15 unit/adapter tests và 10 E2E desktop/mobile pass. Đã xem ảnh hai kích thước, kiểm 320px, chọn/gắn buổi, đổi chương, tải thiếu trang và loading chung bằng API mock. Chưa nghiệm thu với phiên Mentor thật hoặc deploy frontend.
+
 ## 22/10/2026 — Sắp xếp nội dung theo buổi học cho Mentor
 
 - Thay dãy nút tài liệu ngang và danh sách buổi tách rời bằng cấu trúc Chương → Buổi học → Nội dung. Mỗi buổi có lịch, trạng thái, danh sách bài viết/tài liệu/video và thao tác thêm/điểm danh; chưa gắn buổi và liên kết buổi không xác định hiển thị riêng.

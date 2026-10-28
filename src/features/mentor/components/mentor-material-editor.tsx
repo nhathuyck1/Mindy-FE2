@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { ArticleEditor } from '@/components/ui/article-editor';
+import { articleContentError } from '@/lib/article-content';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Modal } from '@/components/ui/modal';
@@ -22,15 +24,13 @@ import { minimumScheduleInput } from '../lib/schedule-time';
 export function MentorMaterialEditor(props: {
   unit: ContentUnit;
   material?: MaterialDetail;
-  initialSessionId?: string;
   onClose: () => void;
   embedded?: boolean;
   onSaved?: (material: MaterialDetail) => void;
 }) {
   const material = props.material;
-  const [inputMode, setInputMode] = useState<'text' | 'html'>(material ? 'html' : 'text');
+  const [editorReady, setEditorReady] = useState(false);
   const [html, setHtml] = useState(material?.contentHtml ?? '');
-  const [text, setText] = useState('');
   const [type, setType] = useState<'ARTICLE' | 'FILE' | 'VIDEO'>(
     material?.contentType ?? 'ARTICLE',
   );
@@ -53,7 +53,7 @@ export function MentorMaterialEditor(props: {
   const [uploadBusy, setUploadBusy] = useState(false);
   const [error, setError] = useState('');
   const [sessionPage, setSessionPage] = useState(1);
-  const [sessionId, setSessionId] = useState(material?.sessionId ?? props.initialSessionId ?? '');
+  const [sessionId, setSessionId] = useState(material?.sessionId ?? '');
   const [minimumTime, setMinimumTime] = useState(() => minimumScheduleInput(Date.now()));
   const refreshMinimumTime = () => setMinimumTime(minimumScheduleInput(Date.now()));
   const sessions = useMentorQuery(
@@ -76,6 +76,14 @@ export function MentorMaterialEditor(props: {
         onSubmit={async (e) => {
           e.preventDefault();
           if (busy) return;
+          if (type === 'ARTICLE') {
+            if (!editorReady) return;
+            const contentError = articleContentError(html);
+            if (contentError) {
+              setError(contentError);
+              return;
+            }
+          }
           const form = new FormData(e.currentTarget);
           const fields = {
             title: String(form.get('title') ?? ''),
@@ -83,11 +91,7 @@ export function MentorMaterialEditor(props: {
             sortOrder: Number(form.get('sortOrder')),
             sessionId: sessionId || null,
             availableAt: form.get('availableAt') ? `${form.get('availableAt')}:00+07:00` : null,
-            ...(type === 'ARTICLE'
-              ? inputMode === 'text'
-                ? { contentText: String(form.get('contentText') ?? '') }
-                : { contentHtml: String(form.get('contentHtml') ?? '') }
-              : { fileId: file?.id }),
+            ...(type === 'ARTICLE' ? { contentHtml: html } : { fileId: file?.id }),
             attachmentFileIds: attachments.map((f) => f.id),
           };
           const parsed = material
@@ -176,71 +180,12 @@ export function MentorMaterialEditor(props: {
             />
           </label>
           {type === 'ARTICLE' && (
-            <>
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Cách nhập nội dung">
-                <Button
-                  type="button"
-                  variant={inputMode === 'text' ? 'default' : 'outline'}
-                  aria-pressed={inputMode === 'text'}
-                  onClick={() => {
-                    if (inputMode === 'html') {
-                      const doc = new DOMParser().parseFromString(html, 'text/html');
-                      doc.querySelectorAll('script,style').forEach((node) => node.remove());
-                      doc.querySelectorAll('br').forEach((node) => node.replaceWith('\n'));
-                      doc
-                        .querySelectorAll('p,div,h1,h2,h3,h4,h5,h6,li,pre,blockquote,tr')
-                        .forEach((node) => node.append('\n'));
-                      setText(doc.body.textContent?.trim() ?? '');
-                    }
-                    setInputMode('text');
-                  }}
-                >
-                  Văn bản
-                </Button>
-                <Button
-                  type="button"
-                  variant={inputMode === 'html' ? 'default' : 'outline'}
-                  aria-pressed={inputMode === 'html'}
-                  onClick={() => {
-                    if (inputMode === 'text')
-                      setHtml(
-                        '<p>' +
-                          text
-                            .replaceAll('&', '&amp;')
-                            .replaceAll('<', '&lt;')
-                            .replaceAll('>', '&gt;')
-                            .replaceAll('\n', '<br>') +
-                          '</p>',
-                      );
-                    setInputMode('html');
-                  }}
-                >
-                  HTML
-                </Button>
-              </div>
-              <label className="block text-sm font-bold">
-                {inputMode === 'text' ? 'Nội dung bài viết' : 'Nội dung bài viết (HTML)'}
-                <textarea
-                  aria-label={
-                    inputMode === 'text' ? 'Nội dung bài viết' : 'Nội dung bài viết (HTML)'
-                  }
-                  className="mt-2 min-h-56 w-full rounded-xl border border-line bg-canvas p-3 font-mono text-sm font-normal"
-                  name={inputMode === 'text' ? 'contentText' : 'contentHtml'}
-                  required
-                  key={inputMode}
-                  value={inputMode === 'text' ? text : html}
-                  onChange={(e) =>
-                    inputMode === 'text' ? setText(e.target.value) : setHtml(e.target.value)
-                  }
-                />
-                <span className="mt-2 block text-xs font-normal text-muted">
-                  {inputMode === 'text'
-                    ? 'Nhập trực tiếp nội dung, giữ nguyên các dòng xuống hàng.'
-                    : 'Nội dung HTML giữ định dạng bài viết hiện tại.'}{' '}
-                  Tối đa 48 KiB.
-                </span>
-              </label>
-            </>
+            <ArticleEditor
+              value={html}
+              onChange={setHtml}
+              onReadyChange={setEditorReady}
+              disabled={busy}
+            />
           )}
           <div className="grid min-w-0 gap-4 @xl/mentor-editor:grid-cols-2">
             <label className="block min-w-0 text-sm font-bold">
@@ -382,7 +327,9 @@ export function MentorMaterialEditor(props: {
           >
             Đóng
           </Button>
-          <Button disabled={busy}>{command.isPending ? 'Đang lưu…' : 'Lưu bản nháp'}</Button>
+          <Button disabled={busy || (type === 'ARTICLE' && !editorReady)}>
+            {command.isPending ? 'Đang lưu…' : 'Lưu bản nháp'}
+          </Button>
         </div>
       </form>
     </Modal>

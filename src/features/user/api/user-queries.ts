@@ -56,12 +56,26 @@ export function useMySchedule(from: string, to: string) {
       const items = [...first.items];
       for (let page = 2; page <= Math.ceil(first.total / first.pageSize); page++) {
         const next = await readPage(page);
+        if (next.total !== first.total || next.page !== page || !next.items.length) {
+          throw new Error('Lịch đã thay đổi trong khi tải. Vui lòng thử lại.');
+        }
         items.push(...next.items);
       }
       return {
         ...first,
-        items: [...new Map(items.map((item) => [item.sessionId, item])).values()].sort(
-          (a, b) => a.startsAt.localeCompare(b.startsAt) || a.sessionId.localeCompare(b.sessionId),
+        items: [
+          ...new Map(
+            items.map((item) => [
+              `${item.sessionId}:${item.enrollmentId}:${item.makeupPlacementId ?? 'regular'}`,
+              item,
+            ]),
+          ).values(),
+        ].sort(
+          (a, b) =>
+            a.startsAt.localeCompare(b.startsAt) ||
+            `${a.sessionId}:${a.enrollmentId}:${a.makeupPlacementId ?? ''}`.localeCompare(
+              `${b.sessionId}:${b.enrollmentId}:${b.makeupPlacementId ?? ''}`,
+            ),
         ),
       };
     },

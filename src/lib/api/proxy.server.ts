@@ -147,7 +147,10 @@ async function upstream(
   const userAgent = request.headers.get('user-agent');
   if (userAgent) headers.set('User-Agent', userAgent);
   if (body !== undefined) headers.set('Content-Type', 'application/json');
-  if (resolveMentorRule(request.method, path)?.idempotent) {
+  if (
+    resolveMentorRule(request.method, path)?.idempotent ||
+    resolveManagerRule(request.method, path)?.idempotent
+  ) {
     headers.set('Idempotency-Key', request.headers.get('idempotency-key')!);
   }
   return fetch(`${env.apiBaseUrl}/${path}${search}`, {
@@ -164,7 +167,7 @@ export async function proxyApi(request: Request, path: string) {
   const env = getServerEnv();
   const rule = resolveRule(request.method, path);
   if (!rule) return error(404, 'ENDPOINT_NOT_ALLOWED', 'API không thuộc phạm vi được hỗ trợ.');
-  if (rule.idempotent && !z.uuid().safeParse(request.headers.get('idempotency-key')).success)
+  if (rule.idempotent && !z.uuidv4().safeParse(request.headers.get('idempotency-key')).success)
     return error(422, 'IDEMPOTENCY_KEY_REQUIRED', 'Thiếu mã thao tác hợp lệ.');
   if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(request.method)) {
     if (request.headers.get('origin') !== env.appOrigin)
@@ -173,7 +176,10 @@ export async function proxyApi(request: Request, path: string) {
   let body: unknown;
   if (rule.body) {
     const bodyLimit =
-      path.startsWith('mentor/') || path.startsWith('admin/') || path.startsWith('manager/')
+      path.startsWith('mentor/') ||
+      path.startsWith('class-sessions/') ||
+      path.startsWith('admin/') ||
+      path.startsWith('manager/')
         ? 65_536
         : 16_384;
     if (!request.headers.get('content-type')?.startsWith('application/json'))
@@ -182,7 +188,10 @@ export async function proxyApi(request: Request, path: string) {
       return error(413, 'PAYLOAD_TOO_LARGE', 'Dữ liệu quá lớn.');
     const raw = await request.text();
     const bodySize =
-      path.startsWith('mentor/') || path.startsWith('admin/') || path.startsWith('manager/')
+      path.startsWith('mentor/') ||
+      path.startsWith('class-sessions/') ||
+      path.startsWith('admin/') ||
+      path.startsWith('manager/')
         ? new TextEncoder().encode(raw).byteLength
         : raw.length;
     if (bodySize > bodyLimit) return error(413, 'PAYLOAD_TOO_LARGE', 'Dữ liệu quá lớn.');

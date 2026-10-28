@@ -1,9 +1,64 @@
 # Quy tắc giao diện Mindy
 
+## Chuẩn UI lấy Student làm mẫu — 26/10/2026
+
+- Tài liệu áp dụng: [student-ui-standard.md](student-ui-standard.md), gồm bản đồ màn hình/logic, token, typography, bo góc/kích thước, trạng thái, responsive, đối chiếu staff và checklist nghiệm thu. Có dẫn nguồn code và ảnh mới từ production build với API mock.
+- Theo quyết định người dùng ngày 26/10/2026, **Nunito Variable là font UI đích cho Student, Admin, Manager và Mentor**; code vẫn dùng monospace. Định hướng này thay thế các ghi chú lịch sử giữ Inter cho staff ở bên dưới. Chưa chuyển font hoặc sửa CSS/component staff trong lần tạo tài liệu này: staff hiện vẫn dùng Inter và thang chữ riêng.
+- Phân biệt hiện trạng với chuẩn đích/đề xuất được đánh dấu trong tài liệu. Đích đồng bộ gồm thang chữ Student, palette Mindy, control thông thường góc 8px, CTA lớn 12px, panel/dialog 16px và vùng tương tác chính tối thiểu 44px; giữ ngoại lệ public/thương mại/nghiệp vụ có mô tả. Không coi các mặc định shared hiện tại đã đồng nhất hoàn toàn.
+- Chỉ đồng bộ ngôn ngữ thị giác và pattern tương tác phù hợp; giữ menu, quyền, API, filter URL, draft, phiên bản/idempotency và workflow riêng từng role. Sidebar staff tiếp tục không có link Xem website/thẻ Mindy theo quyết định ngày 23/10/2026.
+
+## Duyệt đơn xin nghỉ Mentor của Manager — 23/10/2026
+
+- Bảng dashboard và trang danh sách có phân trang theo tổng backend; danh sách mặc định PENDING, lọc trạng thái/mentor/trang nằm trên URL. Bảng cuộn trong panel, vẫn dùng được ở viewport 320px.
+- Detail hiển thị lý do và lịch gốc → bù; lịch ảnh hưởng và xung đột có pagination độc lập. Tên phụ được tải theo ID; lỗi giữ ID và có retry. Loading, lỗi, rỗng, trạng thái và phản hồi đều có chữ rõ ràng.
+- Trước xác nhận, tải lại detail và chụp version hiện tại. Cả approve/reject cần lý do đã trim 1–1000 ký tự. Approve bị khóa khi không PENDING, hết hạn, nguồn stale hoặc nghỉ theo buổi có xung đột; stale vẫn cho reject và hướng dẫn mentor gửi đơn mới.
+- FULL_DAY có xung đột hiển thị danh sách/tổng số và checkbox bỏ chọn mặc định. Khóa thao tác trong lúc gửi. Lỗi mạng/5xx cho gửi lại đúng body/key; 409 hoặc mã version/state/stale/expired tải lại và đóng xác nhận để manager quyết định lại. Không tự bật xác nhận xung đột.
+
+## Hàng chờ và hộp thoại duyệt Manager — 23/10/2026
+
+- Bảng Tài liệu chờ duyệt nằm dưới ba thẻ thống kê tại `/manager`, có tên/loại/trạng thái/cập nhật UTC+7 và Xem và duyệt. Link tên và nút cùng mở trang chi tiết theo ID; bảng cuộn trong panel ở 320px, thao tác/bộ lọc dùng component và token hiện có.
+- Trang chi tiết có Về tổng quan và heading Xem và duyệt tài liệu. Giữ đủ nội dung/tệp/phiên bản, toolbar của workspace và editor CKEditor; lỗi ID/lỗi tải không hiển thị nội dung giả.
+- Bấm Duyệt tài liệu, Yêu cầu chỉnh sửa hoặc Xóa phải mở hộp thoại giữa viewport ngay cả khi tài liệu dài. Hộp thoại có tên/phiên bản, xác nhận duyệt ghi rõ đồng thời xuất bản; lý do từ chối bắt buộc. Escape/Hủy trả focus về nút mở; đang gửi khóa thao tác và đóng hộp thoại. Lỗi phiên bản/mạng có Tải lại tài liệu trước khi gửi lại.
+
+## Sidebar tài khoản nhân viên — 23/10/2026
+
+- Sidebar Admin, Manager và Mentor bỏ liên kết Xem website và thẻ giới thiệu Mindy ở cuối thanh điều hướng, bao gồm menu mobile và chế độ thu gọn. Giao diện Student giữ nguyên.
+
+## Manager overview, Student schedule và Admin read-only — 23/10/2026
+
+- Admin/Manager tiếp tục dùng Inter, Student dùng Nunito. Dùng shell, token, Button, NativeSelect, Table, Modal, badge và phân trang đang có; panel trắng trên nền soft, viền line và bo góc hiện hữu.
+- `/manager` dùng heading Tổng quan Manager và ba thẻ Chờ duyệt/Đã duyệt/Bản nháp. Mỗi số là total thật, không hiện 0 khi API lỗi. `/manager/materials` không có query vẫn là danh sách khóa học; inventory lưu view và reviewStatus trên URL.
+- Menu tài khoản phân theo role; profile/lịch Student không xuất hiện với staff. Hàng Khóa học của tôi ưu tiên Vào học hoặc Xem trước chương theo quyền API, Xem chi tiết vẫn mở thông tin đăng ký.
+- Lịch Student hiện “Có mặt”/“Vắng” chỉ với PRESENT/ABSENT. Trạng thái buổi hủy và điểm danh giữ riêng; null/UNMARKED không có badge điểm danh. Giảng viên nullable hiện “Chưa xác định giảng viên”.
+- `/admin/tracking` có lọc nhóm/thời gian, nút áp dụng/xóa/làm mới, phân trang 10/20/50 và modal detail có Escape/focus restore. `/admin/payments/reconciliation` chỉ đọc danh sách phân trang; không có nút xử lý thanh toán.
+- Bảng mới cuộn trong panel, không tràn trang từ 320px; bộ lọc và nút xuống hàng; ô lọc cao 48px, thao tác chính tối thiểu 44px. Có loading, error/retry và empty state. Tất cả trạng thái có chữ, không chỉ dùng màu.
+
+## Soạn bài bằng CKEditor — 23/10/2026
+
+- Thay nút Văn bản/HTML và textarea nội dung bằng CKEditor tiếng Việt cho cả Manager/Mentor, ở dialog và editor trong chương. Quy tắc chuyển chế độ Văn bản ngày 22/10 bên dưới được thay bằng giao diện mới này.
+- Toolbar có tiêu đề, đậm/nghiêng/gạch dưới/gạch ngang, danh sách, bảng, liên kết, trích dẫn, mã, đường ngang, hoàn tác và nguồn HTML. Các mục tự gom vào Xem thêm khi thiếu chiều ngang; vùng soạn có chiều cao giới hạn/cuộn riêng, font tiếng Việt và màu từ token hiện có.
+- Hiển thị dung lượng UTF-8 / 48 KiB, báo lỗi khi vượt giới hạn hoặc lưu nội dung rỗng. Giữ bản nháp khi lỗi API; chỉ gửi khi nhấn Lưu bản nháp. Nội dung HTML cũ được mở trực tiếp dưới dạng bài có định dạng.
+
+## Gọn giao diện API Mentor và thanh tiến độ — 22/10/2026
+
+- Navigation lớp dùng tab biểu tượng, gạch dưới và cuộn ngang trên mobile; phạm vi phân công trình bày gọn, không thêm thẻ thống kê giả. Buổi học, chuyên cần và tiến độ có tiêu đề/mô tả, bộ lọc và danh sách riêng.
+- Chuyên cần/tiến độ dùng hàng học viên có avatar, thông tin theo cột và Xem chi tiết. Thanh chuyên cần dùng rate BE; null giữ trạng thái chưa có dữ liệu.
+- Thanh tổng quan tiến độ ghi Chương đã có dữ liệu và số storedUnitCount/(storedUnitCount+untrackedUnitCount), không gọi là tỷ lệ hoàn thành. invalidStoredUnitCount là tập con của storedUnitCount, chỉ hiển thị badge cần kiểm tra, không cộng thêm vào mẫu số.
+- Chi tiết học viên có thanh phần trăm đã lưu của từng chương, bao gồm 0 và 100; UNTRACKED/INVALID_PERCENT hiển thị thanh nét đứt, không giả làm 0 hoặc loading. aria-valuenow chỉ xuất hiện với giá trị thật. Không tính trung bình toàn khóa.
+- Xin nghỉ tách chế độ tạo khỏi danh sách đơn; form có ba bước Khoảng nghỉ → Lịch dạy bù → Gửi đơn. Mapping ngày hiển thị buổi gốc cạnh ngày bù; slot dạng ô chọn, có dấu đã chọn. Giữ các field/version/key và bản nháp khi lỗi.
+- Bulk điểm danh đặt riêng dưới thống kê với phạm vi cả buổi; nhật ký giảng dạy có mô tả và action riêng. Giữ kích thước/hành vi hai nút điểm danh từng học viên.
+
+## Mentor workspace và xin nghỉ — 22/10/2026
+
+- Lớp hiển thị tên/mã thật, phạm vi chính/dạy thay và các tab theo capabilities. Bỏ nút/modal khóa/mở/hẹn giờ chương; không thay bằng quyền giả tại UI.
+- Chuyên cần hiển thị Chưa có dữ liệu với rate=null, kết quả điểm danh thực tế và credit học bù tách nhãn. Tiến độ ghi rõ dữ liệu lưu sẵn, không tự tính hoàn thành toàn khóa.
+- Trang buổi học giữ một loading chính, xem trước học viên trước start; đánh dấu học bù rõ. Hai nút bulk xác nhận toàn bộ roster qua mọi trang. Ghi chú giảng dạy là khối nội bộ riêng với hai trường đã dạy/việc tiếp theo, không thêm cột ghi chú điểm danh.
+- Menu Đơn xin nghỉ mở danh sách và form preview → lịch bù → gửi. Các ô ngày/buổi xếp một cột trên điện thoại, grid khi đủ chỗ; nút tối thiểu 44px, nhãn đọc đầy đủ và không đè nhau ở 320px. Conflict giữ dữ liệu người nhập, có hướng dẫn đọc lại và thao tác mới.
+
 ## Chương → Buổi học → Nội dung — 22/10/2026
 
 - Tham khảo cách Coursera gom video, readings và assignments theo module tại https://www.coursera.org/learn/learning-and-development; Mindy áp dụng thêm cấp buổi học phù hợp lớp có lịch dạy. Không sao chép màu sắc hoặc thêm loại nội dung chưa được API hỗ trợ.
-- Cột chương giữ nguyên. Vùng nội dung mặc định hiển thị từng buổi với tên, lịch UTC+7, phòng nếu có, trạng thái, số nội dung và nút Điểm danh/Thêm nội dung. Danh sách mỗi buổi có icon, tên, loại và trạng thái duyệt, nhấn để mở chi tiết và sửa/gửi duyệt khi có quyền.
+- Cột chương giữ nguyên. Vùng nội dung mặc định hiển thị từng buổi với tên, lịch UTC+7, trạng thái, số nội dung và nút Điểm danh khi được cấp quyền. Chỉ giữ một nút Thêm nội dung ở đầu chương, chọn buổi trong form; không lặp nút ở các thẻ bên dưới. Danh sách mỗi buổi có icon, tên, loại và trạng thái duyệt, nhấn để mở chi tiết và sửa/gửi duyệt khi có quyền.
 - Phân biệt tên gọi: Chương là nhóm ngoài; Bài viết/Tài liệu/Video là nội dung bên trong buổi. Thao tác Tạo chương cũ ở tài liệu được đổi thành Thêm nội dung, form dùng Loại nội dung và bộ lọc Trạng thái nội dung.
 - Chưa gắn buổi học là khu riêng cho nội dung dùng chung; buổi chưa xác định không bị giấu hoặc tự gán. Buổi trống và buổi không khớp bộ lọc có thông báo khác nhau. Màn hình tổng quan chờ cả chương và nội dung với một loading.
 - Chi tiết/form mở trong cùng vùng cuộn, có Về danh sách buổi học. Các hàng có tên 16px xuống dòng và focus bàn phím rõ, nút tối thiểu 44px; kiểm tra từ 320px đến desktop.

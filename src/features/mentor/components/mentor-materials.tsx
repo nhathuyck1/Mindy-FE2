@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { UseQueryResult } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/api/client';
 import {
   Plus,
@@ -11,7 +10,6 @@ import {
   Pencil,
   Trash2,
   CalendarDays,
-  LockKeyhole,
   ArrowLeft,
   ExternalLink,
   LoaderCircle,
@@ -25,12 +23,12 @@ import {
   useMentorCommand,
   useMentorQuery,
   useMentorUnitMaterials,
+  useMentorUnitSessions,
   mentorError,
 } from '../api/mentor-queries';
 import {
   materialDetailSchema,
   fileAccessSchema,
-  unitDetailSchema,
   type ContentUnit,
   type Material,
   type MaterialDetail,
@@ -39,7 +37,7 @@ import { MentorMaterialEditor } from './mentor-material-editor';
 import { MentorQueryState, MentorStatus, mentorDate } from './mentor-shared';
 import { MentorSessionMaterials } from './mentor-session-materials';
 
-type UnitContextQuery = UseQueryResult<z.infer<typeof unitDetailSchema>>;
+type UnitContextQuery = ReturnType<typeof useMentorUnitSessions>;
 
 const fileKindLabels = {
   PDF: 'PDF',
@@ -268,6 +266,7 @@ function MaterialDetail(props: {
   id: string;
   onClose: () => void;
   onEdit: (material: MaterialDetail) => void;
+  canAuthor: boolean;
   onAction: (action: 'submit' | 'delete', material: Material) => void;
 }) {
   const detail = useMentorQuery(
@@ -277,6 +276,7 @@ function MaterialDetail(props: {
   const session = useSession();
   const item = detail.data;
   const editable =
+    props.canAuthor &&
     item?.canEdit &&
     item.createdBy === session.data?.id &&
     !item.firstApprovedAt &&
@@ -402,18 +402,16 @@ function MaterialDetail(props: {
     </Modal>
   );
 }
-export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => void }) {
+export function MentorMaterials(props: { unit: ContentUnit; canAuthor: boolean }) {
   const [filter, setFilter] = useState('');
   const [detail, setDetail] = useState<string | null>(null);
-  const [editor, setEditor] = useState<{ material?: MaterialDetail; sessionId?: string } | null>(
-    null,
-  );
+  const [editor, setEditor] = useState<{ material?: MaterialDetail } | null>(null);
   const [confirm, setConfirm] = useState<{
     action: 'submit' | 'delete';
     material: Material;
   } | null>(null);
   const prefix = `mentor/classes/${props.unit.classId}`;
-  const unitContext = useMentorQuery(`${prefix}/units/${props.unit.id}`, unitDetailSchema);
+  const unitContext = useMentorUnitSessions(props.unit);
   const materials = useMentorUnitMaterials(props.unit, filter);
   const submit = useMentorCommand(materialDetailSchema);
   const remove = useMentorCommand(z.null());
@@ -434,25 +432,18 @@ export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => voi
           <h2 className="text-xl font-bold [overflow-wrap:anywhere]">{props.unit.title}</h2>
         </div>
         <div className="flex flex-wrap gap-2 [&>button]:grow">
-          <Button
-            variant="outline"
-            className="border-line bg-soft/50 text-forest shadow-none"
-            disabled={props.unit.status === 'COMPLETED'}
-            onClick={props.onRelease}
-          >
-            <LockKeyhole aria-hidden="true" className="size-4" />
-            Quyền truy cập
-          </Button>
-          <Button
-            disabled={Boolean(editor)}
-            onClick={() => {
-              setDetail(null);
-              setEditor({});
-            }}
-          >
-            <Plus className="size-4" />
-            Thêm nội dung
-          </Button>
+          {props.canAuthor && (
+            <Button
+              disabled={Boolean(editor)}
+              onClick={() => {
+                setDetail(null);
+                setEditor({});
+              }}
+            >
+              <Plus className="size-4" />
+              Thêm nội dung
+            </Button>
+          )}
         </div>
       </div>
       <div
@@ -468,8 +459,9 @@ export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => voi
               <div className="min-w-0 flex-[1_1_14rem]">
                 <h3 className="text-lg font-bold">Nội dung theo buổi học</h3>
                 <p className="mt-1 text-sm leading-6 text-muted">
-                  Chọn nội dung để xem, chỉnh sửa hoặc gửi duyệt. Thêm nội dung ngay tại buổi cần
-                  dạy.
+                  {props.canAuthor
+                    ? 'Chọn nội dung để xem, chỉnh sửa hoặc gửi duyệt. Nhấn Thêm nội dung ở đầu chương để tạo và chọn buổi học.'
+                    : 'Nội dung đã công bố trong phạm vi buổi học được phân công.'}
                 </p>
               </div>
               <NativeSelect
@@ -482,9 +474,13 @@ export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => voi
                 }}
               >
                 <NativeSelectOption value="">Mọi trạng thái nội dung</NativeSelectOption>
-                <NativeSelectOption value="DRAFT">Bản nháp</NativeSelectOption>
-                <NativeSelectOption value="PENDING_REVIEW">Chờ duyệt</NativeSelectOption>
-                <NativeSelectOption value="REJECTED">Cần chỉnh sửa</NativeSelectOption>
+                {props.canAuthor && <NativeSelectOption value="DRAFT">Bản nháp</NativeSelectOption>}
+                {props.canAuthor && (
+                  <NativeSelectOption value="PENDING_REVIEW">Chờ duyệt</NativeSelectOption>
+                )}
+                {props.canAuthor && (
+                  <NativeSelectOption value="REJECTED">Cần chỉnh sửa</NativeSelectOption>
+                )}
                 <NativeSelectOption value="APPROVED">Đã duyệt</NativeSelectOption>
               </NativeSelect>
             </div>
@@ -498,7 +494,6 @@ export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => voi
                 items={materials.data ?? []}
                 filtered={Boolean(filter)}
                 onSelect={setDetail}
-                onCreate={(sessionId) => setEditor({ sessionId })}
               />
             </MentorQueryState>
           </>
@@ -521,6 +516,7 @@ export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => voi
           <MaterialDetail
             key={detail}
             classId={props.unit.classId}
+            canAuthor={props.canAuthor}
             unitContext={unitContext}
             id={detail}
             onClose={() => setDetail(null)}
@@ -540,7 +536,6 @@ export function MentorMaterials(props: { unit: ContentUnit; onRelease: () => voi
             key={editor.material?.id ?? 'new'}
             unit={props.unit}
             material={editor.material}
-            initialSessionId={editor.sessionId}
             onSaved={(material) => {
               setDetail(material.id);
               setFilter('');

@@ -21,12 +21,51 @@ export function safeReturnPath(value: string | null | undefined): string {
         '/admin/courses',
         '/admin/classes',
         '/admin/workflow',
+        '/admin/tracking',
+        '/admin/payments/reconciliation',
         '/manager',
-        '/manager/materials',
         '/manager/collections',
       ].includes(url.pathname)
     )
       return url.pathname;
+    if (url.pathname === '/manager/leave-requests') {
+      const status = url.searchParams.get('status');
+      const page = url.searchParams.get('page');
+      const mentorId = url.searchParams.get('mentorId');
+      if (
+        [...url.searchParams.keys()].some((key) => url.searchParams.getAll(key).length !== 1) ||
+        [...url.searchParams.keys()].some((key) => !['status', 'page', 'mentorId'].includes(key))
+      )
+        return '/manager/leave-requests';
+      const statuses = ['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'WITHDRAWN', 'EXPIRED'];
+      const pageNumber = page === null ? 1 : Number(page);
+      if (
+        (status !== null && !statuses.includes(status)) ||
+        !Number.isSafeInteger(pageNumber) ||
+        pageNumber < 1 ||
+        (mentorId !== null && !z.uuid().safeParse(mentorId).success)
+      )
+        return '/manager/leave-requests';
+      const params = new URLSearchParams();
+      if (status) params.set('status', status);
+      if (pageNumber > 1) params.set('page', String(pageNumber));
+      if (mentorId) params.set('mentorId', mentorId);
+      return params.size ? `/manager/leave-requests?${params}` : '/manager/leave-requests';
+    }
+    if (url.pathname === '/manager/materials') {
+      const view = url.searchParams.get('view');
+      const reviewStatus = url.searchParams.get('reviewStatus');
+      if (
+        [...url.searchParams.keys()].some((key) => url.searchParams.getAll(key).length !== 1) ||
+        [...url.searchParams.keys()].some((key) => !['view', 'reviewStatus'].includes(key))
+      )
+        return '/manager/materials';
+      if (view !== 'inventory') return '/manager/materials';
+      const statuses = ['PENDING_REVIEW', 'APPROVED', 'DRAFT'];
+      return reviewStatus && !statuses.includes(reviewStatus)
+        ? '/manager/materials'
+        : `/manager/materials?view=inventory${reviewStatus ? `&reviewStatus=${reviewStatus}` : ''}`;
+    }
     if (url.pathname === '/courses') return '/courses';
     if (url.pathname === '/cart') return '/cart';
     if (url.pathname === '/payment/result') {
@@ -36,6 +75,20 @@ export function safeReturnPath(value: string | null | undefined): string {
         : '/';
     }
     const parts = url.pathname.split('/');
+    if (
+      parts.length === 4 &&
+      parts[1] === 'manager' &&
+      parts[2] === 'materials' &&
+      z.uuid().safeParse(parts[3]).success
+    )
+      return url.pathname;
+    if (
+      parts.length === 4 &&
+      parts[1] === 'manager' &&
+      parts[2] === 'leave-requests' &&
+      z.uuid().safeParse(parts[3]).success
+    )
+      return url.pathname;
     if (
       parts.length === 5 &&
       parts[1] === 'admin' &&
@@ -51,7 +104,8 @@ export function safeReturnPath(value: string | null | undefined): string {
       z.uuid().safeParse(parts[3]).success
     )
       return url.pathname + (url.searchParams.get('preview') === 'true' ? '?preview=true' : '');
-    if (['/mentor', '/mentor/classes'].includes(url.pathname)) return url.pathname;
+    if (['/mentor', '/mentor/classes', '/mentor/leave-requests'].includes(url.pathname))
+      return url.pathname;
     if (
       parts.length === 4 &&
       parts[1] === 'mentor' &&

@@ -97,27 +97,39 @@ export function SessionControls() {
               {(session.data.role === 'ADMIN' || session.data.role === 'MANAGER') &&
                 session.data.status === 'ACTIVE' && (
                   <Link
-                    href={session.data.role === 'MANAGER' ? '/manager/materials' : '/admin'}
+                    href={session.data.role === 'MANAGER' ? '/manager' : '/admin'}
                     onClick={() => setOpen(false)}
                     className="flex min-h-12 items-center gap-3 rounded-xl px-4 text-sm font-bold text-black transition-colors hover:bg-soft"
                   >
                     <Icon name="shield" className="size-5 text-mint" />{' '}
-                    {session.data.role === 'MANAGER' ? 'Trang Manager' : 'Trang quản trị'}
+                    {session.data.role === 'MANAGER' ? 'Tổng quan Manager' : 'Trang quản trị'}
                   </Link>
                 )}
-              {userNavigation
-                .filter((item) => item.href === '/user/profile' || item.href === '/user/schedule')
-                .map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className="flex min-h-12 items-center gap-3 rounded-xl px-4 text-sm font-bold text-black transition-colors hover:bg-soft"
-                  >
-                    <item.icon aria-hidden="true" className="size-5 text-mint" />
-                    {item.label}
-                  </Link>
-                ))}
+              {session.data.role === 'MENTOR' && session.data.status === 'ACTIVE' && (
+                <Link
+                  href="/mentor"
+                  onClick={() => setOpen(false)}
+                  className="flex min-h-12 items-center gap-3 rounded-xl px-4 text-sm font-bold text-black transition-colors hover:bg-soft"
+                >
+                  <Icon name="calendar" className="size-5 text-mint" /> Không gian Mentor
+                </Link>
+              )}
+              {(session.data.role === 'STUDENT'
+                ? userNavigation.filter(
+                    (item) => item.href === '/user/profile' || item.href === '/user/schedule',
+                  )
+                : []
+              ).map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="flex min-h-12 items-center gap-3 rounded-xl px-4 text-sm font-bold text-black transition-colors hover:bg-soft"
+                >
+                  <item.icon aria-hidden="true" className="size-5 text-mint" />
+                  {item.label}
+                </Link>
+              ))}
             </nav>
             <div className="mx-2 my-2 border-t border-line" />
             <button

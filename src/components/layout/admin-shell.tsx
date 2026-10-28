@@ -10,6 +10,7 @@ import { Icon } from '@/components/ui/icon';
 import { Modal } from '@/components/ui/modal';
 import { SessionControls } from '@/features/auth/components/session-controls';
 import { AdminAccess } from '@/features/admin/components/admin-access';
+import { useSession } from '@/features/auth/api/auth-queries';
 
 const navigation = [
   { href: '/admin', label: 'Tổng quan', icon: 'grid' },
@@ -24,9 +25,22 @@ function isNavActive(pathname: string, href: string) {
 
 function AdminNavigation(props: { collapsed?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
+  const session = useSession();
+  const items =
+    session.data?.role === 'ADMIN'
+      ? [
+          ...navigation,
+          { href: '/admin/tracking', label: 'Lịch sử hoạt động', icon: 'list' as const },
+          {
+            href: '/admin/payments/reconciliation',
+            label: 'Cần đối soát thanh toán',
+            icon: 'clock' as const,
+          },
+        ]
+      : navigation;
   return (
     <nav aria-label="Điều hướng quản trị" className="flex flex-1 flex-col gap-1 px-3 py-7">
-      {navigation.map((item) => (
+      {items.map((item) => (
         <Link
           key={item.href}
           href={item.href}
@@ -52,20 +66,6 @@ function AdminNavigation(props: { collapsed?: boolean; onNavigate?: () => void }
         <Icon name="layers" className="size-[19px] shrink-0" />
         {!props.collapsed && <span>Quy trình vận hành</span>}
       </Link>
-      <Link
-        href="/"
-        onClick={props.onNavigate}
-        aria-label="Xem website"
-        title={props.collapsed ? 'Xem website' : undefined}
-        className={`admin-nav-link mt-auto ${props.collapsed ? 'justify-center px-0' : ''}`}
-      >
-        <Icon name="monitor" className="size-[19px] shrink-0" />
-        {!props.collapsed && (
-          <span>
-            Xem website <span aria-hidden="true">↗</span>
-          </span>
-        )}
-      </Link>
     </nav>
   );
 }
@@ -74,8 +74,22 @@ export function AdminShell(props: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const session = useSession();
+  const adminNavigation =
+    session.data?.role === 'ADMIN'
+      ? [
+          ...navigation,
+          { href: '/admin/tracking', label: 'Lịch sử hoạt động', icon: 'list' as const },
+          {
+            href: '/admin/payments/reconciliation',
+            label: 'Cần đối soát thanh toán',
+            icon: 'clock' as const,
+          },
+        ]
+      : navigation;
   const title =
-    navigation.find((item) => isNavActive(pathname, item.href))?.label ?? 'Quy trình vận hành';
+    adminNavigation.find((item) => isNavActive(pathname, item.href))?.label ??
+    (pathname === '/admin/workflow' ? 'Quy trình vận hành' : 'Quản trị');
   const closeMobile = () => {
     setMobileOpen(false);
   };
@@ -106,17 +120,6 @@ export function AdminShell(props: { children: React.ReactNode }) {
             </Button>
           </div>
           <AdminNavigation collapsed={collapsed} />
-          {!collapsed && (
-            <div className="m-4 mt-0 rounded-xl border border-line bg-canvas p-4">
-              <div className="flex items-center gap-2 text-sm font-extrabold">
-                <Icon name="shield" className="size-4 text-mint" />
-                Mindy Admin
-              </div>
-              <p className="mt-2 text-[15px] leading-5 text-muted">
-                Một không gian cho mọi hoạt động đào tạo.
-              </p>
-            </div>
-          )}
         </aside>
         <div className="min-w-0">
           <header className="admin-topbar">

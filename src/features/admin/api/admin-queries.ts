@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest, ApiError } from '@/lib/api/client';
+import { useSession } from '@/features/auth/api/auth-queries';
 import {
   adminClassPageSchema,
   adminCoursePageSchema,
@@ -9,6 +10,12 @@ import {
   adminClassStudentsPageSchema,
   adminClassStudentDetailSchema,
 } from '../schemas/admin-contracts';
+import {
+  adminReconciliationPageSchema,
+  adminTrackingDetailSchema,
+  adminTrackingPageSchema,
+  type AdminTrackingQuery,
+} from '../schemas/admin-read-contracts';
 import {
   formatAdminDate,
   roleLabels,
@@ -42,6 +49,59 @@ export function useAdminClassStudent(classId: string, studentId: string) {
       apiRequest({
         path: `admin/classes/${classId}/students/${studentId}`,
         schema: adminClassStudentDetailSchema,
+        signal,
+      }),
+  });
+}
+
+export function useAdminTracking(filters: AdminTrackingQuery) {
+  const session = useSession();
+  const search = new URLSearchParams(
+    Object.entries(filters)
+      .filter(([, value]) => value !== undefined && value !== '')
+      .map(([key, value]) => [key, String(value)]),
+  );
+  return useQuery({
+    queryKey: ['admin', 'tracking', session.data?.id, filters],
+    enabled: session.data?.role === 'ADMIN' && session.data.status === 'ACTIVE',
+    staleTime: 0,
+    retry: retryRead,
+    queryFn: ({ signal }) =>
+      apiRequest({
+        path: `admin/tracking/events?${search}`,
+        schema: adminTrackingPageSchema,
+        signal,
+      }),
+  });
+}
+
+export function useAdminTrackingDetail(source: string, eventId: string, enabled: boolean) {
+  const session = useSession();
+  return useQuery({
+    queryKey: ['admin', 'tracking', session.data?.id, 'detail', source, eventId],
+    enabled: enabled && session.data?.role === 'ADMIN' && session.data.status === 'ACTIVE',
+    staleTime: 0,
+    retry: retryRead,
+    queryFn: ({ signal }) =>
+      apiRequest({
+        path: `admin/tracking/events/${source}/${eventId}`,
+        schema: adminTrackingDetailSchema,
+        signal,
+      }),
+  });
+}
+
+export function useAdminReconciliation(page: number, pageSize: number) {
+  const session = useSession();
+  return useQuery({
+    queryKey: ['admin', 'payments', 'reconciliation', session.data?.id, { page, pageSize }],
+    enabled: session.data?.role === 'ADMIN' && session.data.status === 'ACTIVE',
+    staleTime: 0,
+    retry: retryRead,
+    queryFn: ({ signal }) =>
+      apiRequest({
+        path: `admin/payments/reconciliation?page=${page}&pageSize=${pageSize}`,
+        schema: adminReconciliationPageSchema,
         signal,
       }),
   });

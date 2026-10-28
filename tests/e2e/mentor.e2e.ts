@@ -51,10 +51,10 @@ test('weekly timetable groups slots, stacks sessions and navigates whole weeks',
   ]);
   await expect(
     page.getByRole('row').filter({ has: page.getByRole('rowheader', { name: /^2\s*09:30/ }) }),
-  ).toContainText('JavaScript – Buổi sáng');
+  ).toContainText('JS101-A');
   await expect(
     page.getByRole('row').filter({ has: page.getByRole('rowheader', { name: /^3\s*13:00/ }) }),
-  ).toContainText('Workshop buổi chiều');
+  ).toContainText('JS101-A');
   if (testInfo.project.name === 'desktop') {
     const emptyDay = await page.getByRole('columnheader', { name: /Thứ Hai/ }).boundingBox();
     const teachingDay = await page.getByRole('columnheader', { name: /Thứ Ba/ }).boundingBox();
@@ -77,7 +77,7 @@ test('weekly timetable groups slots, stacks sessions and navigates whole weeks',
   await expect(page.getByText('Không có buổi dạy trong tuần này.')).toBeVisible();
   await expect(page.getByRole('columnheader', { name: /Thứ Hai/ })).toContainText('(19/10)');
   await page.getByRole('button', { name: 'Tuần trước', exact: true }).click();
-  await expect(page.getByRole('link', { name: /Workshop buổi chiều/ })).toHaveCount(1);
+  await expect(page.locator(`a[href="/mentor/sessions/${mentorIds.material}"]`)).toHaveCount(1);
   await expect(page.getByLabel('Chọn ngày (dd/mm/yyyy)', { exact: true })).toHaveValue(
     '12/10/2026',
   );
@@ -104,7 +104,7 @@ test('weekly timetable groups slots, stacks sessions and navigates whole weeks',
   await calendar.evaluate((node) => {
     node.scrollLeft = node.scrollWidth;
   });
-  await expect(page.getByRole('link', { name: /Ôn tập cuối tuần/ })).toBeInViewport();
+  await expect(page.locator(`a[href="/mentor/sessions/${mentorIds.file}"]`)).toBeInViewport();
   expect(
     calls.filter((call) => call.path === 'mentor/schedule').every((call) => call.method === 'GET'),
   ).toBe(true);
@@ -116,9 +116,10 @@ test('mentor attendance keeps student names readable and preserves the attendanc
   const { calls } = await mockMentor(page);
   await page.goto(`/mentor/sessions/${mentorIds.session}`);
   await expect(page.getByText('Phòng: Phòng 101', { exact: false })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Danh sách học viên dự kiến' })).toBeVisible();
+  await page.getByRole('button', { name: 'Bắt đầu buổi' }).click();
   const absentStat = page.getByText('Vắng mặt', { exact: true }).first().locator('..');
   await expect(absentStat).not.toHaveClass(/border-status-red/);
-  await page.getByRole('button', { name: 'Bắt đầu buổi' }).click();
   await page.getByRole('button', { name: 'Có mặt: Học viên An' }).click();
   await expect(page.getByRole('button', { name: 'Có mặt: Học viên An' })).toHaveAttribute(
     'aria-pressed',
@@ -193,7 +194,7 @@ test('mentor attendance keeps student names readable and preserves the attendanc
   expect(calls.some((c) => c.path.includes('cash-orders'))).toBe(false);
 });
 
-test('class roster is read only and unit release schedules in Vietnam time', async ({ page }) => {
+test('class roster is read only and removed unit release is absent', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-10-22T03:00:30Z'));
   const { calls } = await mockMentor(page);
   await page.goto('/mentor/classes');
@@ -202,15 +203,8 @@ test('class roster is read only and unit release schedules in Vietnam time', asy
   await expect(page.getByText('Học viên chờ kích hoạt')).toBeVisible();
   await expect(page.getByRole('button', { name: /thu tiền|xác nhận tiền/i })).toHaveCount(0);
   await page.getByRole('button', { name: 'Chương', exact: true }).click();
-  await page.getByRole('button', { name: 'Quyền truy cập', exact: true }).click();
-  await page.getByLabel('Hẹn giờ mở').check();
-  await page.getByLabel('Thời điểm mở (UTC+7)').fill('2026-11-01T09:30');
-  await page.getByRole('button', { name: 'Lưu quyền truy cập' }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
-  expect(calls.find((c) => c.path.endsWith('/release'))?.body).toEqual({
-    status: 'LOCKED',
-    unlockAt: '2026-11-01T09:30:00+07:00',
-  });
+  await expect(page.getByRole('button', { name: 'Quyền truy cập', exact: true })).toHaveCount(0);
+  expect(calls.some((call) => call.path.endsWith('/release'))).toBe(false);
   expect(calls.some((c) => c.path.includes('cash-orders'))).toBe(false);
 });
 
@@ -287,8 +281,8 @@ test('mentor creates article, edits own draft and submits for manager review', a
   await page.getByRole('button', { name: 'Lưu bản nháp' }).click();
   await expect(page.getByRole('heading', { name: 'Bài viết đã tạo' })).toBeVisible();
   expect(
-    calls.find((c) => c.method === 'POST' && c.path.endsWith('/materials'))?.body?.contentText,
-  ).toBe('Học JavaScript\nNội dung thử nghiệm');
+    calls.find((c) => c.method === 'POST' && c.path.endsWith('/materials'))?.body?.contentHtml,
+  ).toBe('<p>Học JavaScript</p><p>Nội dung thử nghiệm</p>');
   await expect(
     page
       .frameLocator('iframe[title="Nội dung bài viết"]')
@@ -352,14 +346,10 @@ test('mentor workspace keeps chapters beside content, edit toolbar and creation 
     fullPage: true,
   });
   await toolbar.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
-  await expect(page.getByLabel('Nội dung bài viết (HTML)')).toHaveValue(
-    '<h2>Nội dung bài viết</h2>',
-  );
+  const editor = page.getByRole('textbox', { name: 'Nội dung bài viết', exact: true });
+  await expect(editor.getByRole('heading', { level: 2 })).toHaveText('Nội dung bài viết');
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Văn bản', exact: true }).click();
-  await expect(page.getByLabel('Nội dung bài viết', { exact: true })).toHaveValue(
-    'Nội dung bài viết',
-  );
+  await expect(page.getByRole('button', { name: 'Văn bản', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Đóng', exact: true }).click();
   if (await chapterSelect.isVisible()) await chapterSelect.selectOption(mentorIds.nextUnit);
   else await rail.getByRole('button', { name: /State, sự kiện/ }).click();
@@ -373,7 +363,7 @@ test('mentor workspace keeps chapters beside content, edit toolbar and creation 
   await page.getByRole('button', { name: 'Thêm nội dung', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Thêm nội dung mới' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  expect(calls.some((c) => c.path.endsWith(`/units/${mentorIds.nextUnit}`))).toBe(true);
+  expect(calls.some((c) => c.path.endsWith(`/units/${mentorIds.nextUnit}/sessions`))).toBe(true);
 });
 
 test('mentor material shows its linked lesson and lets the author attach one', async ({

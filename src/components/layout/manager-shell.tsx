@@ -3,7 +3,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { FolderOpen, Wallet, Menu, PanelLeftClose, PanelLeftOpen, Globe } from 'lucide-react';
+import {
+  FolderOpen,
+  CalendarOff,
+  Wallet,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  LayoutDashboard,
+} from 'lucide-react';
 import { Brand } from '@/components/ui/brand';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
@@ -12,7 +20,9 @@ import { useSession } from '@/features/auth/api/auth-queries';
 import { SessionControls } from '@/features/auth/components/session-controls';
 
 const navigation = [
+  { href: '/manager', title: 'Tổng quan', icon: LayoutDashboard },
   { href: '/manager/materials', title: 'Quản lý tài liệu', icon: FolderOpen },
+  { href: '/manager/leave-requests', title: 'Đơn xin nghỉ', icon: CalendarOff },
   { href: '/manager/collections', title: 'Thu tiền', icon: Wallet },
 ];
 function ManagerAccess(props: { children: React.ReactNode }) {
@@ -79,10 +89,6 @@ export function ManagerShell(props: { children: React.ReactNode }) {
           {!compact && item.title}
         </Link>
       ))}
-      <Link href="/" className="admin-nav-link mt-auto" title="Xem website">
-        <Globe className="size-5 shrink-0" />
-        {!compact && 'Xem website'}
-      </Link>
     </nav>
   );
   return (
@@ -112,15 +118,6 @@ export function ManagerShell(props: { children: React.ReactNode }) {
             Không gian nhân viên
           </p>
           {links(collapsed)}
-          {!collapsed && (
-            <div className="m-4 rounded-2xl bg-soft p-4">
-              <Wallet className="mb-2 size-6 text-mint" />
-              <p className="font-bold">Mindy Manager</p>
-              <p className="mt-2 text-sm leading-6 text-muted">
-                Kiểm duyệt học liệu và quản lý công việc mỗi ngày.
-              </p>
-            </div>
-          )}
         </aside>
         <div className="min-w-0">
           <header className="admin-topbar">

@@ -9,7 +9,7 @@ import {
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
-  Globe,
+  CalendarOff,
 } from 'lucide-react';
 import { Brand } from '@/components/ui/brand';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import { SessionControls } from '@/features/auth/components/session-controls';
 const navigation = [
   { href: '/mentor', title: 'Lịch dạy', icon: CalendarDays },
   { href: '/mentor/classes', title: 'Lớp của tôi', icon: GraduationCap },
+  { href: '/mentor/leave-requests', title: 'Đơn xin nghỉ', icon: CalendarOff },
 ];
 function MentorAccess(props: { children: React.ReactNode }) {
   const session = useSession();
@@ -86,10 +87,6 @@ export function MentorShell(props: { children: React.ReactNode }) {
           {!compact && item.title}
         </Link>
       ))}
-      <Link href="/" className="admin-nav-link mt-auto" title="Xem website">
-        <Globe className="size-5 shrink-0" />
-        {!compact && 'Xem website'}
-      </Link>
     </nav>
   );
   return (
@@ -119,15 +116,6 @@ export function MentorShell(props: { children: React.ReactNode }) {
             Không gian giảng dạy
           </p>
           {links(collapsed)}
-          {!collapsed && (
-            <div className="m-4 rounded-2xl bg-soft p-4">
-              <GraduationCap className="mb-2 size-6 text-mint" />
-              <p className="font-bold">Mindy Mentor</p>
-              <p className="mt-2 text-sm leading-6 text-muted">
-                Đồng hành cùng từng bước tiến của học viên.
-              </p>
-            </div>
-          )}
         </aside>
         <div className="min-w-0">
           <header className="admin-topbar">

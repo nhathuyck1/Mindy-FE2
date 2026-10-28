@@ -93,6 +93,8 @@ export async function mockCollections(
               availableSeats: 10,
               mentor: { id: testUser.id, displayName: 'Mentor Minh' },
               status: 'IN_PROGRESS',
+              assignmentType: 'PRIMARY',
+              accessScope: 'CLASS',
             },
           ],
           page: 1,

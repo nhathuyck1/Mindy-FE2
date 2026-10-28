@@ -16,7 +16,7 @@ import type { attendanceSchema } from '../schemas/mentor-contracts';
 import { mentorLabels } from './mentor-shared';
 
 type AttendanceItem = z.infer<typeof attendanceSchema>['items'][number];
-type MarkAttendance = (enrollmentId: string, status: 'PRESENT' | 'ABSENT') => void;
+type MarkAttendance = (item: AttendanceItem, status: 'PRESENT' | 'ABSENT') => void;
 
 function StudentIdentity(props: { name: string }) {
   const initials = props.name
@@ -86,7 +86,7 @@ function AttendanceActions(props: {
             aria-pressed={selected}
             disabled={props.disabled}
             onClick={() => {
-              if (!selected) void props.onMark(props.item.enrollmentId, status);
+              if (!selected) void props.onMark(props.item, status);
             }}
             className={`h-11 min-w-0 rounded-lg border px-2 text-[15px] font-semibold disabled:opacity-100 ${
               selected
@@ -157,6 +157,9 @@ export function MentorAttendanceRoster(props: {
                 <TableRow key={item.attendanceId}>
                   <TableHead scope="row" className="px-5 py-5 whitespace-normal">
                     <StudentIdentity name={name} />
+                    {item.entryType === 'MAKEUP' && (
+                      <span className="mt-2 block text-sm text-mint">Học bù</span>
+                    )}
                   </TableHead>
                   <TableCell className="px-5 py-5">
                     <AttendanceStatus status={item.status} />

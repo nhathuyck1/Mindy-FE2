@@ -2,24 +2,64 @@ import 'server-only';
 import { z } from 'zod';
 import * as dto from '@/features/manager/schemas/manager-contracts';
 import * as collections from '@/features/manager/schemas/manager-collections-contracts';
+import * as leave from '@/features/manager/schemas/manager-leave-contracts';
 
 type ManagerRule = {
   response: z.ZodType;
   body?: z.ZodType;
   query: z.ZodType<Record<string, string | number>>;
   cookies: string[];
+  idempotent?: boolean;
 };
 function rule(
   response: z.ZodType,
-  options: Partial<Pick<ManagerRule, 'body' | 'query'>> = {},
+  options: Partial<Pick<ManagerRule, 'body' | 'query' | 'idempotent'>> = {},
 ): ManagerRule {
   return { response, cookies: ['access_token'], query: z.object({}).strict(), ...options };
 }
 export function resolveManagerRule(method: string, path: string): ManagerRule | undefined {
   const p = path.split('/');
+  if (method === 'GET' && path === 'management/mentor-leave-requests')
+    return rule(leave.managerLeavePageSchema, { query: leave.managerLeaveListQuerySchema });
+  if (
+    method === 'GET' &&
+    p[0] === 'management' &&
+    p[1] === 'mentor-leave-requests' &&
+    p.length === 3 &&
+    z.uuid().safeParse(p[2]).success
+  )
+    return rule(leave.managerLeaveDetailSchema, { query: leave.managerLeaveDetailQuerySchema });
+  if (
+    p[0] === 'management' &&
+    p[1] === 'mentor-leave-requests' &&
+    p.length === 4 &&
+    z.uuid().safeParse(p[2]).success &&
+    method === 'POST'
+  ) {
+    if (p[3] === 'approve')
+      return rule(leave.managerLeaveApprovalSchema, {
+        body: leave.approveManagerLeaveSchema,
+        idempotent: true,
+      });
+    if (p[3] === 'reject')
+      return rule(leave.managerLeaveRequestSchema, {
+        body: leave.rejectManagerLeaveSchema,
+        idempotent: true,
+      });
+  }
   if (path === 'files/upload-intents' && method === 'POST')
     return rule(dto.uploadIntentSchema, { body: dto.managerUploadSchema });
   if (p[0] !== 'manager') return;
+  if (method === 'GET' && path === 'manager/mentors')
+    return rule(leave.managerPeoplePageSchema, { query: leave.managerPeopleQuerySchema });
+  if (method === 'GET' && p.length === 3 && z.uuid().safeParse(p[2]).success) {
+    if (p[1] === 'mentors')
+      return rule(leave.managerMentorSchema.refine((person) => person.id === p[2]));
+    if (p[1] === 'students')
+      return rule(leave.managerStudentSchema.refine((person) => person.id === p[2]));
+  }
+  if (method === 'GET' && p[1] === 'classes' && p.length === 3 && z.uuid().safeParse(p[2]).success)
+    return rule(leave.managerClassLabelSchema.refine((classInfo) => classInfo.id === p[2]));
   if (method === 'GET' && path === 'manager/classes')
     return rule(collections.collectionClassesSchema, {
       query: collections.collectionClassesFiltersSchema,

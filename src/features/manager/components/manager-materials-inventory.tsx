@@ -28,8 +28,11 @@ import { ManagerMaterialDetail } from './manager-material-detail';
 import { ManagerMaterialEditor } from './manager-material-editor';
 import { ManagerCourseWorkspace } from './manager-course-workspace';
 
-export function ManagerMaterialsInventory() {
-  const [status, setStatus] = useState('PENDING_REVIEW');
+export function ManagerMaterialsInventory(props: {
+  reviewStatus: string;
+  onReviewStatusChange: (status: string) => void;
+}) {
+  const status = props.reviewStatus;
   const [type, setType] = useState('');
   const [page, setPage] = useState(1);
   const [detail, setDetail] = useState<string | null>(null);
@@ -140,7 +143,7 @@ export function ManagerMaterialsInventory() {
           </p>
           <h1 className="text-3xl font-bold tracking-tight">Quản lý tài liệu</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            Một nơi để biên soạn, kiểm duyệt và phát hành học liệu cho các khóa học.
+            Một nơi để biên soạn, kiểm duyệt và phát hành tài liệu cho các khóa học.
           </p>
         </div>
         <Button onClick={() => setCreate(true)}>
@@ -154,7 +157,7 @@ export function ManagerMaterialsInventory() {
             type="button"
             key={item.status}
             onClick={() => {
-              setStatus(item.status);
+              props.onReviewStatusChange(item.status);
               setPage(1);
             }}
             className={`flex cursor-pointer items-start gap-4 rounded-2xl border p-5 text-left transition-colors hover:border-mint ${status === item.status ? 'border-mint/50 bg-soft/60' : 'border-line bg-canvas'}`}
@@ -255,7 +258,7 @@ export function ManagerMaterialsInventory() {
               className="h-12 w-full py-2 text-base leading-6"
               value={status}
               onChange={(event) => {
-                setStatus(event.target.value);
+                props.onReviewStatusChange(event.target.value);
                 setPage(1);
               }}
             >
