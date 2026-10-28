@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Icon } from '@/components/ui/icon';
 import { userNavigation } from '@/features/user/lib/user-navigation';
 import { useLogout, useSession } from '../api/auth-queries';
 
 export function SessionControls() {
+  const router = useRouter();
   const session = useSession();
   const logout = useLogout();
   const [open, setOpen] = useState(false);
@@ -136,7 +138,14 @@ export function SessionControls() {
               type="button"
               className="flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-xl px-4 text-sm font-extrabold text-forest transition-colors hover:bg-peach disabled:cursor-wait disabled:opacity-50"
               disabled={logout.isPending}
-              onClick={() => logout.mutate(undefined, { onSuccess: () => setOpen(false) })}
+              onClick={() =>
+                logout.mutate(undefined, {
+                  onSuccess: () => {
+                    setOpen(false);
+                    router.replace('/');
+                  },
+                })
+              }
             >
               <Icon name="logout" className="size-5 text-mint" />
               {logout.isPending ? 'Đang đăng xuất…' : 'Đăng xuất'}

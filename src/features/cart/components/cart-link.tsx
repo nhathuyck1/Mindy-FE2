@@ -4,10 +4,14 @@ import Link from 'next/link';
 import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useSession } from '@/features/auth/api/auth-queries';
 import { useCart } from '../api/cart-queries';
 
 export function CartLink() {
+  const session = useSession();
   const cart = useCart();
+  if (session.data?.role !== 'STUDENT' || session.data.status !== 'ACTIVE') return null;
+
   const count = cart.isError ? undefined : cart.data?.items.length;
   return (
     <Button
