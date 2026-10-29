@@ -8,10 +8,17 @@ import { Brand } from '@/components/ui/brand';
 import { Icon } from '@/components/ui/icon';
 import { LoadingOverlay } from '@/components/ui/spinner';
 import { useSession } from '@/features/auth/api/auth-queries';
+import { RedirectLogin } from '@/features/auth/components/auth-guard';
+import { ApiError } from '@/lib/api/client';
 
 export function AdminAccess(props: { children: React.ReactNode }) {
   const session = useSession();
   const pathname = usePathname();
+  if (
+    (!session.isPending && !session.isError && !session.data) ||
+    (session.isError && session.error instanceof ApiError && session.error.status === 401)
+  )
+    return <RedirectLogin />;
   if (
     (session.data?.role === 'ADMIN' || session.data?.role === 'MANAGER') &&
     session.data.status === 'ACTIVE' &&

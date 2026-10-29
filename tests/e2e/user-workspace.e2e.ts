@@ -237,7 +237,7 @@ test('Workspace blocks guests before any private data request and handles errors
       requests.push(request.url());
   });
   await page.goto('/user/schedule');
-  await expect(page).toHaveURL('/');
+  await expect(page).toHaveURL('/login?returnTo=%2Fuser%2Fschedule');
   expect(requests).toEqual([]);
   state.loggedIn = true;
   await page.route('**/api/v1/me/schedule?**', (route) =>

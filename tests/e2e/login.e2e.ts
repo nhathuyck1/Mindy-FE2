@@ -98,7 +98,10 @@ test('Opens the account dropdown and handles dismissal and logout retry', async 
   }
   await page.screenshot({ path: testInfo.outputPath('account-dropdown.png') });
   await dropdown.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
-  await expect(dropdown.getByRole('alert')).toContainText('Chưa thể đăng xuất');
+  await expect(
+    page.getByText('Chưa thể đăng xuất. Vui lòng thử lại.', { exact: true }),
+  ).toBeVisible();
+  await trigger.click();
   await dropdown.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Đăng nhập', exact: true })).toBeVisible();
   await expect(dropdown).not.toBeVisible();

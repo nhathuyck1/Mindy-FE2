@@ -3,7 +3,7 @@ import { mockCommerce, orderId } from './commerce-fixtures';
 import { testUser } from './api-fixtures';
 
 for (const path of ['/cart', `/checkout/${orderId}`, '/payment/result?orderCode=1000000000']) {
-  test(`Guest is redirected home before accessing ${path}`, async ({ page }) => {
+  test(`Guest is redirected to login before accessing ${path}`, async ({ page }) => {
     const state = await mockCommerce(page);
     state.loggedIn = false;
     const privateRequests: string[] = [];
@@ -12,8 +12,8 @@ for (const path of ['/cart', `/checkout/${orderId}`, '/payment/result?orderCode=
         privateRequests.push(request.url());
     });
     await page.goto(path);
-    await expect(page).toHaveURL('/');
-    await expect(page.getByRole('link', { name: 'Đăng nhập', exact: true })).toBeVisible();
+    await expect(page).toHaveURL(`/login?returnTo=${encodeURIComponent(path)}`);
+    await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
     expect(privateRequests).toEqual([]);
   });
 }
@@ -76,11 +76,12 @@ test('Protected content waits for session validation and allows an active studen
 test('A refresh can restore the session before the guard decides access', async ({ page }) => {
   const state = await mockCommerce(page);
   state.loggedIn = false;
-  await page.route('**/api/v1/auth/refresh', (route) =>
-    route.fulfill({
+  await page.route('**/api/v1/auth/refresh', (route) => {
+    state.loggedIn = true;
+    return route.fulfill({
       json: { user: testUser, accessTokenExpiresAt: new Date(Date.now() + 60_000).toISOString() },
-    }),
-  );
+    });
+  });
   await page.goto('/cart');
   await expect(page.getByRole('heading', { name: 'Giỏ hàng của bạn' })).toBeVisible();
   await expect(page).toHaveURL('/cart');
@@ -107,7 +108,9 @@ for (const status of [401, 403]) {
     const state = await mockCommerce(page);
     state.orderReadStatus = status;
     await page.goto(`/checkout/${orderId}`);
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL(
+      status === 401 ? `/login?returnTo=${encodeURIComponent(`/checkout/${orderId}`)}` : '/',
+    );
     expect(state.creates).toBe(0);
     await expect(page.locator('svg title')).toHaveCount(0);
   });

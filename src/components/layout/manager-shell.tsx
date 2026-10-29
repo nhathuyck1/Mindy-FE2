@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { LoadingOverlay } from '@/components/ui/spinner';
 import { useSession } from '@/features/auth/api/auth-queries';
+import { RedirectLogin } from '@/features/auth/components/auth-guard';
+import { ApiError } from '@/lib/api/client';
 import { SessionControls } from '@/features/auth/components/session-controls';
 
 const navigation = [
@@ -28,6 +30,11 @@ const navigation = [
 function ManagerAccess(props: { children: React.ReactNode }) {
   const session = useSession();
   const pathname = usePathname();
+  if (
+    (!session.isPending && !session.isError && !session.data) ||
+    (session.isError && session.error instanceof ApiError && session.error.status === 401)
+  )
+    return <RedirectLogin />;
   if (session.isPending)
     return <LoadingOverlay scope="page" label="Đang kiểm tra phiên đăng nhập…" />;
   if (!session.isError && session.data?.role === 'MANAGER' && session.data.status === 'ACTIVE')

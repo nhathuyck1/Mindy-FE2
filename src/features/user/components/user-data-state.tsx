@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { RedirectHome } from '@/features/auth/components/auth-guard';
+import { RedirectHome, RedirectLogin } from '@/features/auth/components/auth-guard';
 import { ApiError } from '@/lib/api/client';
 export function UserDataState(props: {
   error?: unknown;
@@ -9,8 +9,8 @@ export function UserDataState(props: {
   retry?: () => void;
   empty?: string;
 }) {
-  if (props.error instanceof ApiError && [401, 403].includes(props.error.status))
-    return <RedirectHome />;
+  if (props.error instanceof ApiError && props.error.status === 401) return <RedirectLogin />;
+  if (props.error instanceof ApiError && props.error.status === 403) return <RedirectHome />;
   return (
     <div
       role={props.error ? 'alert' : 'status'}

@@ -1,10 +1,25 @@
 # Kiến trúc Mindy FE2
 
+## Trải nghiệm đăng xuất — 28/10/2026
+
+- `useLogout({ navigateHome: true })` dành cho thao tác người dùng ở menu tài khoản, dùng mutation key `auth/logout/navigate-home`; logout xử lý sai audience vẫn giữ form đăng nhập. Hủy/revert các query trước khi đổi AbortSignal phiên, tạm ngừng query session trong mọi logout để cancellation không xuất hiện thành lỗi dashboard.
+- `SessionExpiryHandler` bao quanh nội dung ứng dụng và theo dõi mutation logout. Ngay khi pending, gỡ dashboard khỏi DOM và hiện màn trung tính có logo/nhãn Đang đăng xuất, không spinner hoặc lỗi kỹ thuật. Giữ màn này đến khi API thành công và pathname về `/`; provider là nơi duy nhất điều hướng, không phụ thuộc callback của menu đã unmount.
+- Logout trả 401 được coi là đã kết thúc phiên. Lỗi mạng/server phục hồi nội dung, kiểm tra lại session và báo toast để thử lại; không giả lập đăng xuất thành công. Mutation điều hướng đã hoàn tất được gỡ khỏi cache sau khi về home để không ảnh hưởng lần login/logout tiếp theo.
+
+## Tự phục hồi phiên dùng chung — 28/10/2026
+
+- `lib/api/client.ts` sở hữu refresh/retry cho toàn bộ API cần session, gồm Student, Admin, Manager, Mentor và Files. Giữ `apiRequest<T>()`, fetch same-origin `/api/v1`, schema Zod và cookie HttpOnly. Gỡ `managerRequest` và nhánh refresh riêng trong `useSession`; không thêm Axios hoặc thay backend/mobile.
+- Request nhận HTTP 401 chờ chung một Promise phục hồi trong tab. `session-coordinator.ts` dùng hàng đợi và Web Lock `mindy-fe2-session` chung với login/logout/email verify. Dưới lock, GET auth/me kiểm tra cookie hiện tại; chỉ POST auth/refresh nếu vẫn 401, rồi gửi lại request gốc tối đa một lần với cùng query/body/idempotency key. Không recovery auth công khai/logout/refresh hoặc catalogue; không replay network/timeout/403/409/5xx hay signed storage PUT.
+- AbortSignal theo phiên chặn phản hồi cũ sau thay đổi tài khoản, logout hoặc hết phiên; hủy một caller không hủy refresh chung. Khi rotation đã gửi, auth lock được giữ tới khi nhận response/timeout trước khi cho login/logout tiếp tục. Không chờ cố định sau Set-Cookie. Web Locks phối hợp các tab cùng origin khi được hỗ trợ; fallback chỉ bảo đảm trong từng tab.
+- `SessionExpiryHandler` trong provider nhận hết phiên một lần khi refresh bị 401 hoặc replay vẫn 401. Hủy/xóa query riêng tư và mutation cache, giữ catalogue cùng query session đang được quan sát rồi đặt session về null. Không hủy query session vì explicit refetch cần nhận kết quả null. Kiểm signal phiên trước khi dọn cache để không ghi đè phiên đăng nhập mới.
+- Provider theo dõi session và pathname, là nơi duy nhất điều hướng hết phiên; guard chỉ chặn render dữ liệu riêng tư để tránh nhiều router.replace cạnh tranh và làm mất toast. Trang được bảo vệ chuyển về `/login` (Student) hoặc `/admin/login` (staff), giữ returnTo qua `safeReturnPath`; public ở nguyên. Toast chỉ xuất hiện nếu đã có session. 403 giữ xử lý phân quyền; lỗi refresh tạm thời giữ trạng thái để thử lại. Logout chủ động vẫn về trang chủ, trạng thái điều hướng logout được xác nhận khi trở về trang công khai.
+- Coordinator chỉ giữ trạng thái điều phối trong browser; user/server state vẫn thuộc QueryClient theo provider. Không đọc token trong JavaScript hoặc lưu token ở Redux/Query/Web Storage; không timer refresh chủ động. Sau hết phiên, chặn vòng refresh tiếp theo tới khi login/verify thành công hoặc tải lại trang.
+
 ## Manager duyệt đơn xin nghỉ Mentor — 23/10/2026
 
 - `/manager/leave-requests` và `/manager/leave-requests/:requestId` nằm sau guard MANAGER ACTIVE. Sidebar có mục riêng; tổng quan hiển thị bảng PENDING phân trang theo tổng backend. Trang danh sách giữ status/mentor/page trên URL, mặc định PENDING và hỗ trợ Back/Forward.
 - Trang chi tiết đọc cùng API detail theo trang độc lập cho lịch ảnh hưởng và xung đột học viên. Tên mentor, học viên, lớp được bổ sung từ các API manager hiện có theo ID; khi không tải được, ID vẫn hiển thị kèm retry.
-- Lệnh approve/reject dùng hook mutation riêng với `managerRequest`, không tự retry; lỗi mạng/5xx giữ nguyên body và UUID idempotency để gửi lại cùng ý định. Kết quả xác định invalidate dữ liệu Manager/Mentor/lịch; approve báo stale lịch lớp liên quan và không tự tạo buổi bù ở FE.
+- Lệnh approve/reject dùng hook mutation riêng với `apiRequest`, không tự retry; lỗi mạng/5xx giữ nguyên body và UUID idempotency để gửi lại cùng ý định. Kết quả xác định invalidate dữ liệu Manager/Mentor/lịch; approve báo stale lịch lớp liên quan và không tự tạo buổi bù ở FE.
 - Proxy chỉ mở bốn endpoint quản lý đơn và các GET phụ cần giao diện. Backend giữ transaction, quyền, phiên bản và thay đổi lịch; FE không thêm API hoặc quyền xử lý.
 
 ## Dashboard và trang duyệt Manager — 23/10/2026

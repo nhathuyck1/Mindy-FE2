@@ -1,5 +1,5 @@
 import { ApiError } from '@/lib/api/client';
-import { managerRequest } from './manager-request';
+import { apiRequest } from '@/lib/api/client';
 import type { z } from 'zod';
 import {
   managerUploadSchema,
@@ -31,7 +31,7 @@ function verifyFile(file: ManagerFileStatus, fileId: string, courseUnitId: strin
 
 export async function checkManagerFile(fileId: string, courseUnitId: string, signal: AbortSignal) {
   try {
-    const file = await managerRequest({
+    const file = await apiRequest({
       path: `files/${fileId}`,
       schema: fileStatusSchema,
       signal,
@@ -167,7 +167,7 @@ export async function uploadManagerFile(
   progress('Đang tạo phiên tải lên…');
   let intent;
   try {
-    intent = await managerRequest({
+    intent = await apiRequest({
       path: 'files/upload-intents',
       method: 'POST',
       body,
@@ -208,7 +208,7 @@ export async function uploadManagerFile(
   progress('Đã gửi tệp, đang xác nhận để máy chủ kiểm tra…');
   let status;
   try {
-    status = await managerRequest({
+    status = await apiRequest({
       path: `files/${intent.fileId}/complete`,
       method: 'POST',
       body: {},
@@ -220,7 +220,7 @@ export async function uploadManagerFile(
     if (error instanceof ApiError && [401, 403].includes(error.status))
       throw uploadApiError(error, 'Không xác nhận được tệp đã tải lên');
     try {
-      status = await managerRequest({
+      status = await apiRequest({
         path: `files/${intent.fileId}`,
         schema: fileStatusSchema,
         signal,

@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
 import { ApiError } from '@/lib/api/client';
-import { managerRequest } from './manager-request';
+import { apiRequest } from '@/lib/api/client';
 import { managerLeaveActionResultSchema } from '../schemas/manager-leave-contracts';
 
 type LeaveAction = {
@@ -25,7 +25,7 @@ export function useManagerLeaveCommand() {
           : crypto.randomUUID();
       unresolved.current = { fingerprint, key };
       try {
-        const result = await managerRequest({
+        const result = await apiRequest({
           path: input.path,
           method: 'POST',
           body: input.body,

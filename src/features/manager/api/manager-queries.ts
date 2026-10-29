@@ -3,14 +3,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { useSession } from '@/features/auth/api/auth-queries';
-import { ApiError } from '@/lib/api/client';
-import { managerRequest } from './manager-request';
+import { ApiError, apiRequest } from '@/lib/api/client';
 
 export function useManagerQuery<T>(path: string, schema: z.ZodType<T>, enabled = true) {
   const session = useSession();
   return useQuery({
     queryKey: ['manager', session.data?.id, path],
-    queryFn: ({ signal }) => managerRequest({ path, schema, signal }),
+    queryFn: ({ signal }) => apiRequest({ path, schema, signal }),
     enabled: enabled && session.data?.role === 'MANAGER' && session.data.status === 'ACTIVE',
     retry: false,
     staleTime: 30_000,
@@ -21,7 +20,7 @@ export function useManagerCommand<T>(schema: z.ZodType<T>) {
   return useMutation({
     retry: false,
     mutationFn: (input: { path: string; method?: 'POST' | 'PATCH' | 'DELETE'; body?: unknown }) =>
-      managerRequest({ ...input, method: input.method ?? 'POST', schema }),
+      apiRequest({ ...input, method: input.method ?? 'POST', schema }),
     onSettled: () => client.invalidateQueries({ queryKey: ['manager'] }),
   });
 }
