@@ -181,15 +181,10 @@ test('Admin entry denies guests and non-admin accounts before requesting private
     if (request.url().includes('/api/v1/admin/')) calls++;
   });
   await page.goto('/admin/users');
-  await expect(
-    page.getByRole('heading', { name: 'Đăng nhập để vào trang quản trị' }),
-  ).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Đăng nhập', exact: true })).toHaveAttribute(
-    'href',
-    '/admin/login?returnTo=%2Fadmin%2Fusers',
-  );
+  await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
+  await expect(page).toHaveURL('/admin/login?returnTo=%2Fadmin%2Fusers');
   await page.route('**/api/v1/auth/me', (route) => route.fulfill({ json: testUser }));
-  await page.reload();
+  await page.goto('/admin/users');
   await expect(
     page.getByRole('heading', { name: 'Tài khoản chưa có quyền quản trị' }),
   ).toBeVisible();
@@ -442,20 +437,17 @@ test('Admin list handles service failure, forbidden, expired session and empty d
   status = 200;
   await page.getByRole('button', { name: 'Thử lại', exact: true }).click();
   await expect(page.getByText('Chưa có người dùng', { exact: true })).toBeVisible();
-  for (const code of [403, 401]) {
-    status = code;
+  {
+    status = 403;
     await page.getByRole('button', { name: 'Làm mới', exact: true }).click();
     await expect(
-      page.getByText(
-        code === 403 ? 'Bạn không có quyền xem dữ liệu này' : 'Phiên đăng nhập đã hết hạn',
-        { exact: true },
-      ),
+      page.getByText('Bạn không có quyền xem dữ liệu này', { exact: true }),
     ).toBeVisible();
   }
-  await expect(page.getByRole('link', { name: 'Đăng nhập lại' })).toHaveAttribute(
-    'href',
-    '/admin/login?returnTo=%2Fadmin%2Fusers',
-  );
+  status = 401;
+  await page.getByRole('button', { name: 'Làm mới', exact: true }).click();
+  await expect(page).toHaveURL('/admin/login?returnTo=%2Fadmin%2Fusers');
+  await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
 });
 
 test('Admin login returns to the selected admin page and logout removes private UI', async ({
@@ -488,9 +480,7 @@ test('Admin login returns to the selected admin page and logout removes private 
   await expect(page.getByRole('table')).toBeVisible();
   await page.getByRole('button', { name: `Tài khoản của ${adminUser.displayName}` }).click();
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
-  await expect(
-    page.getByRole('heading', { name: 'Đăng nhập để vào trang quản trị' }),
-  ).toBeVisible();
+  await expect(page).toHaveURL('/');
   await expect(page.getByRole('table')).toHaveCount(0);
   expect(
     await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length })),

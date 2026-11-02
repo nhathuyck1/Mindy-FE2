@@ -1,5 +1,21 @@
 # Tiến độ
 
+## 28/10/2026 — Đăng xuất mượt, không hiện Session changed trên dashboard
+
+- Menu tài khoản dùng logout mutation có trạng thái điều hướng riêng. Khi bấm, ẩn dashboard ngay và hiện màn trung tính gồm logo/Đang đăng xuất; không hiển thị vòng xoay trên dashboard hoặc thông báo cancellation. Thành công/401 chuyển về trang chủ và dọn dữ liệu riêng tư, giữ màn chuyển tiếp đến khi route hoàn tất.
+- Hủy/revert query qua QueryClient trước khi đổi signal phiên và tạm ngừng auth/me khi logout đang chạy. Provider giữ quyền điều hướng sau khi menu unmount; logout sai audience tiếp tục giữ thông báo trên form login. API lỗi phục hồi màn trước, thông báo dễ hiểu và cho thử lại; không tự coi lỗi mạng là đăng xuất thành công.
+- Lint/format/TypeScript, production build và 198 unit tests pass. 70 E2E auth/login/guard/refresh/logout cùng 4 E2E logout từ Admin/checkout pass trên desktop/mobile, dùng API mock. Kiểm dashboard còn request đang chờ, màn chuyển tiếp giữ đến response, không lọt Session changed, lỗi 503/thử lại, logout 401 không refresh, và login sai audience sau logout.
+- Đã xem ảnh màn chuyển tiếp desktop và mobile 320px, không tràn ngang. Chỉ cập nhật FE2; chưa deploy, commit hoặc push.
+
+## 28/10/2026 — Tự động refresh token cho toàn bộ FE2
+
+- Gom recovery từ useSession/managerRequest về apiRequest chung cho Student, Admin, Manager, Mentor và Files. Sau 401, kiểm auth/me dưới khóa auth chung rồi POST auth/refresh khi cần; Promise dùng chung trong tab, Web Locks phối hợp nhiều tab, replay mỗi request tối đa một lần. Giữ query/body đã serialize/Idempotency-Key và schema Zod; không replay network/timeout/403/409/5xx hoặc signed storage PUT.
+- Login/logout/email verify dùng cùng hàng đợi cookie và đổi AbortSignal phiên để chặn kết quả cũ. Hủy caller không hủy rotation chung; khi đã gửi refresh, chờ response/timeout trước khi giải phóng auth lock. Không thêm Axios, timer refresh, raw token trong storage hoặc thay đổi backend/mobile/cookie policy.
+- Provider theo dõi session toàn ứng dụng, sở hữu điều hướng hết phiên và dọn cache riêng tư; guard chỉ chặn nội dung. Giữ query session đang được quan sát và để explicit refetch trả null, giữ catalogue, ngăn cleanup ghi đè login mới. Refresh 401/replay vẫn 401 chuyển đúng login Student/staff với returnTo an toàn, toast một lần nếu từng đăng nhập; public ở nguyên. Lỗi refresh tạm thời cho thử lại, 403 giữ xử lý quyền, logout chủ động về trang chủ.
+- ESLint, Prettier, TypeScript, production build và **198 unit tests** pass. **62 E2E auth/login/guard/refresh** pass trên desktop/mobile, gồm cookie HttpOnly mới ở replay, hai tab chỉ rotate một lần, hết phiên, lỗi tạm thời và trang public giữ vị trí. Các fixture header cart và Manager dashboard được bổ sung API mock còn thiếu để không rơi xuống backend thật rồi trả 401.
+- Lượt E2E mở rộng cuối: **342 pass, 5 skip có chủ đích, 1 ca focus modal Admin bị flaky**; chạy riêng lại ca đó pass. Sáu kịch bản Manager leave (12 biến thể desktop/mobile) được loại riêng khỏi lượt cuối sau khi **tái hiện cả sáu lỗi trên bản HEAD trước thay đổi** trong bản sao tách biệt; không sửa nghiệp vụ/selector của những ca này. Lượt mở rộng dùng `npm run test:e2e -- --workers=4 --grep-invert 'Manager confirms full-day conflicts|Manager can reject a partial-day|Manager can reject a stale-source|Manager must refresh and confirm again|Manager action locks while|Escape restores focus and detail has no horizontal'`.
+- Kiểm thử dùng API/storage mock; chưa nghiệm thu phiên thật trên môi trường deploy. Chưa deploy hoặc commit/push. Chỉ thay Mindy-FE2 trong lần triển khai này.
+
 ## 26/10/2026 — Tài liệu chuẩn UI theo Student
 
 - Hoàn tất [student-ui-standard.md](student-ui-standard.md) bằng tiếng Việt: bản đồ 5 mục Student và luồng public/auth/cart/payment; quy tắc font, màu, bo góc, kích thước, spacing, bảng/dialog, lịch/học liệu, state, bàn phím và responsive. Có liên kết code, bảng đối chiếu staff, thứ tự áp dụng và checklist nghiệm thu.

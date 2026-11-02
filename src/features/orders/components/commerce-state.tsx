@@ -3,7 +3,7 @@
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { RedirectHome } from '@/features/auth/components/auth-guard';
+import { RedirectHome, RedirectLogin } from '@/features/auth/components/auth-guard';
 import { ApiError } from '@/lib/api/client';
 
 export function CommerceLoading() {
@@ -18,7 +18,8 @@ export function CommerceLoading() {
 
 export function CommerceError(props: { error: unknown; retry?: () => void }) {
   const status = props.error instanceof ApiError ? props.error.status : undefined;
-  if (status === 401 || status === 403) return <RedirectHome />;
+  if (status === 401) return <RedirectLogin />;
+  if (status === 403) return <RedirectHome />;
   const message =
     status === 404
       ? 'Không tìm thấy giỏ hàng hoặc đơn hàng này.'

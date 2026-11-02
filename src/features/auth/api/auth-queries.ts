@@ -1,52 +1,34 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { z } from 'zod';
 import { ApiError, apiRequest } from '@/lib/api/client';
 import { authResponseSchema, loginSchema, userSchema } from '@/lib/api/contracts';
+import { withAuthChange } from '@/lib/api/session-coordinator';
 
 export const sessionKey = ['auth', 'session'] as const;
-
-let authQueue: Promise<unknown> = Promise.resolve();
-
-export function withAuthLock<T>(operation: () => Promise<T>): Promise<T> {
-  const result = authQueue.then(async (): Promise<T> => {
-    if (navigator.locks) return await navigator.locks.request('mindy-fe2-session', operation);
-    return await operation();
-  });
-  authQueue = result.catch(() => undefined);
-  return result;
-}
+const logoutKey = ['auth', 'logout'] as const;
+export const logoutNavigationKey = [...logoutKey, 'navigate-home'] as const;
 
 export function useSession() {
+  const loggingOut = useIsMutating({ mutationKey: logoutKey }) > 0;
   return useQuery({
     queryKey: sessionKey,
+    enabled: !loggingOut,
     retry: false,
     staleTime: 30_000,
     refetchOnWindowFocus: true,
-    queryFn: ({ signal }) =>
-      withAuthLock(async () => {
-        try {
-          return await apiRequest({ path: 'auth/me', schema: userSchema, signal });
-        } catch (error) {
-          if (error instanceof ApiError && error.status === 401) {
-            try {
-              return (
-                await apiRequest({
-                  path: 'auth/refresh',
-                  method: 'POST',
-                  schema: authResponseSchema,
-                  signal,
-                })
-              ).user;
-            } catch (refreshError) {
-              if (refreshError instanceof ApiError && refreshError.status === 401) return null;
-              throw refreshError;
-            }
-          }
-          throw error;
+    queryFn: async ({ signal }) => {
+      try {
+        return await apiRequest({ path: 'auth/me', schema: userSchema, signal });
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          return null;
         }
-      }),
+        throw error;
+      }
+    },
   });
 }
 
@@ -54,13 +36,15 @@ export function useLogin() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: z.infer<typeof loginSchema>) =>
-      withAuthLock(() =>
-        apiRequest({
-          path: 'auth/login',
-          method: 'POST',
-          body: loginSchema.parse(input),
-          schema: authResponseSchema,
-        }),
+      withAuthChange(
+        () =>
+          apiRequest({
+            path: 'auth/login',
+            method: 'POST',
+            body: loginSchema.parse(input),
+            schema: authResponseSchema,
+          }),
+        true,
       ),
     onSuccess: async (result) => {
       await queryClient.cancelQueries();
@@ -70,22 +54,31 @@ export function useLogin() {
   });
 }
 
-export function useLogout() {
+export function useLogout(options: { navigateHome?: boolean } = {}) {
   const queryClient = useQueryClient();
   return useMutation({
+    mutationKey: options.navigateHome ? logoutNavigationKey : logoutKey,
+    // Revert query observers before changing the transport's session signal.
+    // Intentional cancellation must never become a dashboard error.
+    onMutate: () => queryClient.cancelQueries(),
     mutationFn: () =>
-      withAuthLock(async () => {
+      withAuthChange(async () => {
         try {
           return await apiRequest({ path: 'auth/logout', method: 'POST', schema: z.null() });
         } catch (error) {
           if (error instanceof ApiError && error.status === 401) return null;
           throw error;
         }
-      }),
+      }, false),
     onSuccess: async () => {
       await queryClient.cancelQueries();
       queryClient.setQueryData(sessionKey, null);
       queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'auth' });
+    },
+    onError: async () => {
+      if (options.navigateHome)
+        toast.error('Chưa thể đăng xuất. Vui lòng thử lại.', { id: 'logout-failed' });
+      await queryClient.invalidateQueries({ queryKey: sessionKey });
     },
   });
 }

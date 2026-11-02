@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { useSession } from '@/features/auth/api/auth-queries';
 import { formatDate, formatTime } from '@/features/courses/lib/course-format';
-import { managerRequest } from '../api/manager-request';
+import { apiRequest } from '@/lib/api/client';
 import { useManagerQuery, useManagerCommand, managerError } from '../api/manager-queries';
 import {
   fileAccessSchema,
@@ -70,7 +70,7 @@ function FilePreview(props: {
             setError('');
             setSigned(null);
             try {
-              const result = await managerRequest({
+              const result = await apiRequest({
                 path: `manager/materials/${props.material.id}/files/${props.file.id}/access`,
                 method: 'POST',
                 schema: fileAccessSchema,

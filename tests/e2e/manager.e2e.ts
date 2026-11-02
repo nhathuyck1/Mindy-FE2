@@ -107,7 +107,10 @@ async function mockManager(
       return route.fulfill({
         json: { user: { ...testUser, role: 'MANAGER' }, accessTokenExpiresAt: date },
       });
-    if (method === 'GET' && ['manager/orders', 'manager/classes'].includes(path))
+    if (
+      method === 'GET' &&
+      ['manager/orders', 'manager/classes', 'management/mentor-leave-requests'].includes(path)
+    )
       return route.fulfill({ json: { items: [], page: 1, pageSize: 20, total: 0 } });
     const unitList = /^manager\/course-units\/([^/]+)\/materials$/.exec(path);
     if (method === 'GET' && (path === 'manager/materials' || unitList)) {

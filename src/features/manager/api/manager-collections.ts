@@ -7,7 +7,7 @@ import {
   collectionClassesSchema,
   type CollectionOrder,
 } from '../schemas/manager-collections-contracts';
-import { managerRequest } from './manager-request';
+import { apiRequest } from '@/lib/api/client';
 
 export function useCollectionClasses() {
   const session = useSession();
@@ -17,14 +17,14 @@ export function useCollectionClasses() {
     retry: false,
     staleTime: 60_000,
     queryFn: async ({ signal }) => {
-      const first = await managerRequest({
+      const first = await apiRequest({
         path: 'manager/classes?page=1&pageSize=100',
         schema: collectionClassesSchema,
         signal,
       });
       const items = [...first.items];
       for (let page = 2; (page - 1) * first.pageSize < first.total; page++) {
-        const next = await managerRequest({
+        const next = await apiRequest({
           path: `manager/classes?page=${page}&pageSize=100`,
           schema: collectionClassesSchema,
           signal,

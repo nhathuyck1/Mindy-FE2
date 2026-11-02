@@ -9,7 +9,8 @@ import {
   registrationAcceptedSchema,
   verifyEmailSchema,
 } from '../schemas/registration-contracts';
-import { sessionKey, withAuthLock } from './auth-queries';
+import { withAuthChange } from '@/lib/api/session-coordinator';
+import { sessionKey } from './auth-queries';
 
 export function useRegister() {
   return useMutation({
@@ -27,13 +28,15 @@ export function useVerifyEmail() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (token: string) =>
-      withAuthLock(() =>
-        apiRequest({
-          path: 'auth/email/verify',
-          method: 'POST',
-          body: verifyEmailSchema.parse({ token }),
-          schema: authResponseSchema,
-        }),
+      withAuthChange(
+        () =>
+          apiRequest({
+            path: 'auth/email/verify',
+            method: 'POST',
+            body: verifyEmailSchema.parse({ token }),
+            schema: authResponseSchema,
+          }),
+        true,
       ),
     onSuccess: (result) => {
       queryClient.clear();

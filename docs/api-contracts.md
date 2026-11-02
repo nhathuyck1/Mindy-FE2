@@ -1,5 +1,13 @@
 # API catalog, lớp học và tài khoản
 
+## Phục hồi phiên trên frontend — cập nhật 28/10/2026
+
+- HTTP client chung áp dụng cho API cần access cookie của mọi role. Backend đang trả 401 `AUTHENTICATION_REQUIRED` cho cookie thiếu/hết hạn/không hợp lệ; FE không giả định có mã `ACCESS_TOKEN_EXPIRED`.
+- Sau 401: chờ khóa auth chung → GET `/auth/me` trực tiếp → nếu còn 401 thì POST `/auth/refresh` trực tiếp → retry request gốc một lần. Browser luôn gọi same-origin `/api/v1`, credentials same-origin và cache no-store; refresh giữ contract `{user, accessTokenExpiresAt}` cùng cookie qua adapter hiện hữu.
+- Login/register/email verify/logout/refresh và GET catalogue không tự recovery. Request bị 403/409/5xx, timeout hoặc mất mạng không tự replay; signed storage PUT không tham gia cơ chế này. Retry sau 401 giữ body đã serialize và Idempotency-Key ban đầu.
+- Refresh 401 hoặc retry vẫn 401 kết thúc phiên phía FE, dọn cache riêng tư và chuyển trang được bảo vệ về login theo khu vực với returnTo an toàn. Trang công khai giữ nguyên. Guest không bị báo hết phiên; lỗi refresh mạng/timeout/5xx cho thử lại. 403 không xóa phiên hoặc gọi refresh.
+- Web Locks phối hợp rotation giữa các tab khi có hỗ trợ; fallback gom Promise trong từng tab. Không thay cookie name/path, thời hạn token, API backend hay đưa token vào JSON/store/Web Storage.
+
 ## Manager duyệt đơn xin nghỉ Mentor — 23/10/2026
 
 Đã đối chiếu contract Manager leave trong FE2 với backend/Swagger. Response là JSON trực tiếp, không bọc `data`.
@@ -74,7 +82,7 @@
 - POST `/manager/materials/:id/files/:fileId/access`: không body; kiểm materialId/fileId/revision/expiry trước khi hiện URL. URL chỉ HTTP(S), không userinfo; không vào Query cache/Web Storage. Primary PDF/audio/video có preview và liên kết tab mới.
 - Files: upload-intents → PUT raw File trực tiếp storage với credentials omit và nguyên requiredHeaders → complete với `{}` sau PUT thành công → tối đa 6 GET tự động sau 3/5/10/15/20/30 giây, không chồng request. Dừng READY/FAILED/DELETED/unmount/tab ẩn; còn PROCESSING thì giữ file và chuyển sang kiểm tra thủ công, mỗi lần bấm chỉ GET một lần, không tạo intent/PUT/complete mới. Manager chỉ gửi courseUnitId; DTO chung vẫn nhận đủ cặp classId/classUnitId cho Mentor. originalFilename lấy nguyên file.name, declaredSizeBytes lấy file.size theo bytes; không gửi kind. MIME dùng file.type nếu thuộc allowlist ứng với đuôi file; rỗng/sai thì fallback theo extension từ BE `file-upload-policy.ts` (gồm nhóm text/source chấp nhận chung 7 MIME). Giới hạn 25 MiB và MP4 200 MiB; chỉ READY đúng Course Unit và kind do BE trả mới gắn vào Material.
 - Manager body tối đa 64 KiB tính byte UTF-8; query strict, UUID, cookie access_token, Origin và private/no-store giữ qua adapter. Backend quyết định quyền cuối. Không gọi preview cũ, thu tiền Manager hoặc route planned.
-- managerRequest khôi phục khi Manager/Files trả HTTP 401: cùng khóa auth hiện có, kiểm auth/me để tránh refresh trùng, POST auth/refresh nếu còn 401, replay request một lần. Refresh cookie chỉ tới endpoint auth/refresh qua adapter; signed PUT không tham gia recovery. Không replay network/5xx/403/409; refresh thất bại thì dừng và hướng dẫn đăng nhập lại.
+- Manager/Files dùng `apiRequest` chung theo cơ chế phục hồi phiên ở đầu tài liệu; không còn wrapper refresh riêng.
 - Picker tạo mới và bộ lọc kho tài liệu dùng GET public `/courses` đủ trang và `/courses/:id` lấy units; chỉ khóa active. Chọn học phần gọi GET `/manager/course-units/:courseUnitId/materials` cho danh sách và thống kê theo trạng thái; gửi page/pageSize/reviewStatus/contentType, đổi bộ lọc quay về trang 1. Chưa chọn học phần thì không gọi danh sách theo học phần và không hiện nhầm danh sách toàn kho. Bỏ chọn khóa học trở về GET `/manager/materials`. Sau mutation refetch đúng danh sách đang xem.
 - Tài liệu khóa inactive vẫn hiện trong queue chung và sửa qua detail; chưa có API picker Manager cho khóa inactive.
 - `/manager/collections` dùng `ReceiptRepository` cục bộ theo tài khoản. Ghi nhận/hủy phiếu không xác nhận PAID, mở enrollment hoặc hoàn tiền. Adapter tách để nối API khi có contract MANAGER.
@@ -120,7 +128,7 @@ Origin kiểm cho POST và DELETE; proxy cookie access_token, UUID allowlist và
 
 Checkout không tự retry khi timeout. Giỏ/đơn chờ refetch để mở lại đơn đã tạo. Payment retry cùng ID, dừng khi PAID/hết hạn/hủy/review. Thử ngân hàng/payOS tiền thật cần môi trường được cấu hình; test QR decode chỉ chứng minh đúng payload render.
 
-Các trang cart/checkout/payment result dùng AuthGuard: chờ kiểm tra/refresh phiên, chỉ mount nội dung cho STUDENT có status ACTIVE. Guest hoặc thiếu quyền chuyển thẳng về `/`; lỗi 401/403 từ API commerce cũng chuyển về `/`. Lỗi mạng/5xx cho thử lại, 404 giữ thông báo không tìm thấy. Không đổi endpoint hay phân quyền backend; login returnTo vẫn áp dụng khi người dùng chủ động mở link đăng nhập.
+Các trang cart/checkout/payment result dùng AuthGuard: chờ kiểm tra/refresh phiên, chỉ mount nội dung cho STUDENT có status ACTIVE. Guest hoặc phiên hết hạn chuyển về `/login` với returnTo an toàn; thiếu quyền/403 tiếp tục về `/`. Lỗi 401 từ API commerce được client phục hồi một lần trước khi quyết định hết phiên. Lỗi mạng/5xx cho thử lại, 404 giữ thông báo không tìm thấy. Không đổi endpoint hay phân quyền backend; login returnTo vẫn áp dụng khi người dùng chủ động mở link đăng nhập.
 
 Cập nhật 15/10/2026. Swagger: https://api.quanh123.id.vn/docs#/. OpenAPI đọc từ `/docs-json`, lưu tại [openapi.snapshot.json](openapi.snapshot.json). Base URL đã xác minh bằng GET: `https://api.quanh123.id.vn/api/v1`. `/docs#/` là trang tài liệu, không phải base URL request.
 
@@ -139,14 +147,14 @@ APP_ORIGIN phải đúng origin người dùng mở app; cập nhật khi deploy
 
 ## Endpoint được gắn
 
-| API                      | Tác dụng                          | Request                                         | Response                                       |
-| ------------------------ | --------------------------------- | ----------------------------------------------- | ---------------------------------------------- |
-| GET `/courses`           | Khóa học nổi bật homepage         | `page=1&pageSize=4`, optional UUID `categoryId` | `{ items: Course[], page, pageSize, total }`   |
-| GET `/course-categories` | Bộ lọc danh mục homepage          | `page=1&pageSize=100`                           | `{ items: Category[], page, pageSize, total }` |
-| POST `/auth/login`       | Form `/login`                     | `{ email, password }`, optional `deviceName`    | `{ user, accessTokenExpiresAt }` và Set-Cookie |
-| GET `/auth/me`           | Tên người dùng trong header       | Cookie `access_token`                           | UserDto                                        |
-| POST `/auth/refresh`     | Khôi phục phiên khi `/me` trả 401 | Cookie `refresh_token`                          | AuthenticatedUserDto và cookie mới             |
-| POST `/auth/logout`      | Đăng xuất ở header                | Cookie `access_token`                           | 204 và clear cookie                            |
+| API                      | Tác dụng                                    | Request                                         | Response                                       |
+| ------------------------ | ------------------------------------------- | ----------------------------------------------- | ---------------------------------------------- |
+| GET `/courses`           | Khóa học nổi bật homepage                   | `page=1&pageSize=4`, optional UUID `categoryId` | `{ items: Course[], page, pageSize, total }`   |
+| GET `/course-categories` | Bộ lọc danh mục homepage                    | `page=1&pageSize=100`                           | `{ items: Category[], page, pageSize, total }` |
+| POST `/auth/login`       | Form `/login`                               | `{ email, password }`, optional `deviceName`    | `{ user, accessTokenExpiresAt }` và Set-Cookie |
+| GET `/auth/me`           | Tên người dùng trong header                 | Cookie `access_token`                           | UserDto                                        |
+| POST `/auth/refresh`     | Khôi phục phiên khi API cần session trả 401 | Cookie `refresh_token`                          | AuthenticatedUserDto và cookie mới             |
+| POST `/auth/logout`      | Đăng xuất ở header                          | Cookie `access_token`                           | 204 và clear cookie                            |
 
 Card khóa học dẫn thẳng `/courses/:courseId`, không yêu cầu đăng nhập. Code thực hành homepage là minh họa.
 

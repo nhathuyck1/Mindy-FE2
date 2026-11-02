@@ -8,6 +8,10 @@ import { ApiError } from '@/lib/api/client';
 import type { User } from '@/lib/api/contracts';
 import { useSession } from '../api/auth-queries';
 
+export function RedirectLogin() {
+  return <p role="status">Đang chuyển trang…</p>;
+}
+
 export function RedirectHome() {
   const router = useRouter();
   useEffect(() => {
@@ -20,8 +24,8 @@ export function AuthGuard(props: { children: React.ReactNode; role?: User['role'
   const session = useSession();
   if (session.isPending) return <p role="status">Đang kiểm tra phiên đăng nhập…</p>;
   if (session.isError) {
-    if (session.error instanceof ApiError && [401, 403].includes(session.error.status))
-      return <RedirectHome />;
+    if (session.error instanceof ApiError && session.error.status === 401) return <RedirectLogin />;
+    if (session.error instanceof ApiError && session.error.status === 403) return <RedirectHome />;
     return (
       <Alert className="border-coral/40 bg-peach" role="alert">
         <AlertTitle>Chưa thể kiểm tra phiên đăng nhập</AlertTitle>
@@ -38,11 +42,8 @@ export function AuthGuard(props: { children: React.ReactNode; role?: User['role'
       </Alert>
     );
   }
-  if (
-    !session.data ||
-    session.data.status !== 'ACTIVE' ||
-    (props.role && session.data.role !== props.role)
-  )
+  if (!session.data) return <RedirectLogin />;
+  if (session.data.status !== 'ACTIVE' || (props.role && session.data.role !== props.role))
     return <RedirectHome />;
   return <Fragment key={session.data.id}>{props.children}</Fragment>;
 }
