@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { countsSchema } from '@/features/assignments/schemas/assignment-contracts';
 import {
   mentorPaginationSchema,
   pageFields,
@@ -122,7 +123,10 @@ const progressMetadata = {
   ...pageFields,
   completionPolicy: z.literal('UNDEFINED'),
   policyVersion: z.null(),
-  assignmentSummary: z.object({ availability: z.literal('NOT_IMPLEMENTED'), counts: z.null() }),
+  assignmentSummary: z.discriminatedUnion('availability', [
+    z.object({ availability: z.literal('NOT_IMPLEMENTED'), counts: z.null() }),
+    z.object({ availability: z.literal('AVAILABLE'), counts: countsSchema }),
+  ]),
   readonly: z.literal(true),
   asOf: timestamp,
   timeZone: z.string(),

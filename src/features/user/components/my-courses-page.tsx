@@ -111,6 +111,13 @@ export function MyCoursesPage() {
                       </td>
                       <td className="px-5 py-3 whitespace-nowrap">
                         <div className="flex flex-wrap items-center gap-2">
+                          {item.canViewClass && item.accessMode === 'FULL' && (
+                            <Button asChild variant="outline">
+                              <Link href={`/user/classes/${item.classId}/assignments`}>
+                                Bài tập
+                              </Link>
+                            </Button>
+                          )}
                           {item.canViewClass && item.accessMode !== 'NONE' && (
                             <Button asChild>
                               <Link

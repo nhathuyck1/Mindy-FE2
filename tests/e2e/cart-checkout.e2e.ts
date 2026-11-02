@@ -54,6 +54,58 @@ test('Checkout once, render a decodable QR, reload the same order, then confirm 
   await expect(qr).toHaveCount(0);
 });
 
+for (const count of [1, 2]) {
+  test(`Student selects CASH and sees all ${count} pending orders without creating a QR`, async ({
+    page,
+  }, testInfo) => {
+    const state = await mockCommerce(page);
+    if (count === 2)
+      state.extraCashOrders.push({
+        ...state.order,
+        id: '88888888-8888-4888-8888-888888888888',
+        orderCode: 'MD-CASH-SECOND',
+        paymentType: 'CASH',
+      });
+    await page.setViewportSize({ width: 320, height: 740 });
+    await page.goto('/cart');
+    await expect(page.getByRole('radio', { name: /Chuyển khoản QR/ })).toBeChecked();
+    await page.getByRole('radio', { name: 'Tiền mặt', exact: true }).check();
+    await page.screenshot({
+      path: testInfo.outputPath('cart-payment-types-320.png'),
+      fullPage: true,
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    await page.getByRole('button', { name: 'Thanh toán', exact: true }).dblclick();
+    await expect(page).toHaveURL('/user/orders');
+    await expect(page.getByRole('cell', { name: 'Tiền mặt', exact: true })).toHaveCount(count);
+    await expect(page.getByRole('cell', { name: 'Chờ thanh toán', exact: true })).toHaveCount(
+      count,
+    );
+    await page.reload();
+    await expect(page.getByRole('cell', { name: 'Tiền mặt', exact: true })).toHaveCount(count);
+    expect(state.checkoutTypes).toEqual(['CASH']);
+    expect(state.checkouts).toBe(1);
+    expect(state.creates).toBe(0);
+  });
+}
+
+test('A lost CASH checkout response recovers the pending order without another checkout', async ({
+  page,
+}) => {
+  const state = await mockCommerce(page);
+  state.loseCheckoutResponse = true;
+  await page.goto('/cart');
+  await page.getByRole('radio', { name: 'Tiền mặt', exact: true }).check();
+  await page.getByRole('button', { name: 'Thanh toán', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Giỏ hàng đang trống' })).toBeVisible();
+  await expect(page.getByText('MDTESTCHECKOUT', { exact: true })).toBeVisible();
+  await expect(page.getByText('Tiền mặt', { exact: true })).toBeVisible();
+  expect(state.checkouts).toBe(1);
+  expect(state.creates).toBe(0);
+});
+
 test('A lost checkout response recovers through pending orders instead of creating another order', async ({
   page,
 }) => {

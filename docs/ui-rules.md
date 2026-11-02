@@ -1,5 +1,13 @@
 # Quy tắc giao diện Mindy
 
+## Bài tập Mentor / Student — 02/11/2026
+
+- Nội dung ngắn, thao tác theo trạng thái thật: Tạo bản nháp → Soạn câu hỏi/Tệp đề → Xuất bản; ZIP phân biệt Đang kiểm tra/Đã gắn tệp/Đã nộp. Lưu điểm và Trả điểm là hai nút riêng, xác nhận tác động trong dialog.
+- Assignment dùng Nunito/thang chữ Student ở cả Mentor và Student, scoped `.assignment-workspace`; control tối thiểu 44px, góc 8px, panel/dialog 16px. Không đổi typography toàn bộ staff. Màn 320px xuống hàng, tên dài wrap; vùng câu hỏi và bộ lọc không đẩy tràn trang.
+- Filter loại/mục đích/buổi/trạng thái/lượt/trang lưu URL. Tab lớp Mentor cũng theo URL để Back giữ trang Bài tập. Chọn buổi/học viên bằng tên khi API/scope cho phép; không yêu cầu người dùng nhập UUID. Học viên lịch sử không có tên trong roster hiện tại có mã rút gọn; không tự xin roster toàn lớp bằng quyền dạy thay.
+- Câu hỏi Mentor khi xem dùng details và đáp án đúng; ô nhập chỉ có trong trình sửa. Student chỉ thấy câu hỏi sau start, trạng thái tự lưu rõ ràng; phần chưa chọn có lối nhảy tới câu. Không render HTML từ đề/feedback.
+- Lỗi phiên bản giữ bản nhập và có thao tác đọc lại/xác nhận thay thế; không tự đè bản nháp. Tệp chỉ tải bằng liên kết mới tại click. Không hiển thị lỗi/missing/null thành số 0, không hứa kho lịch sử toàn tài khoản.
+
 ## Chuẩn UI lấy Student làm mẫu — 26/10/2026
 
 - Tài liệu áp dụng: [student-ui-standard.md](student-ui-standard.md), gồm bản đồ màn hình/logic, token, typography, bo góc/kích thước, trạng thái, responsive, đối chiếu staff và checklist nghiệm thu. Có dẫn nguồn code và ảnh mới từ production build với API mock.
@@ -315,6 +323,8 @@ Chữ chính dùng forest; chữ phụ dùng muted pha 90% forest. Theo ảnh m�
 - Cập nhật mới nhất 16/10: nền cụm ‹ Tuần này › dùng canvas trắng cùng nền lịch, thay nền soft nhẹ.
 
 - Bảng Đơn hàng của tôi có cột Khóa học sau mã đơn, lấy courseTitle từ các dòng đơn và gộp tên trùng, giới hạn hai dòng để giữ hàng gọn. Bỏ mô tả Theo dõi đơn hàng và trạng thái thanh toán dưới tiêu đề.
+- Xác nhận hủy đơn nằm giữa viewport, không chèn nội dung vào ô thao tác. Dùng native dialog ở top layer để mở được từ chi tiết đơn; ưu tiên focus Giữ đơn hàng, Escape chỉ đóng xác nhận và trả focus. Thông báo lỗi nằm trong xác nhận, nút bị khóa khi đang gửi.
+- Giỏ hàng có nhóm radio Hình thức thanh toán trong khối Tổng thanh toán: Chuyển khoản QR (mặc định) và Tiền mặt. Cả hai dùng nút Thanh toán; bỏ mô tả dưới lựa chọn và dưới nút theo yêu cầu 02/11. Tiền mặt chuyển danh sách đơn chờ thu, chỉ backend xác nhận đã thanh toán. Khóa lựa chọn trong lúc tạo đơn.
 
 ## Màu chữ catalog — 16/10/2026
 

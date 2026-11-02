@@ -1,4 +1,7 @@
+import { resolveWhiteboardRule } from './whiteboard-rules.server';
 import 'server-only';
+import { resolveAssignmentRule } from './assignment-rules.server';
+import { safeErrorSchema, validationFields, type ValidationField } from './validation-fields';
 import { resolveAdminCrudRule } from './admin-rules.server';
 import { resolveManagerRule } from './manager-rules.server';
 import {
@@ -14,6 +17,7 @@ import {
   orderFiltersSchema,
   orderPageSchema,
   orderPaymentSchema,
+  orderSchema,
 } from '@/features/orders/schemas/order-contracts';
 import {
   emptyPaymentSchema,
@@ -83,10 +87,16 @@ type ApiRule = {
   cookies: string[];
   query?: z.ZodType<Record<string, string | number>>;
   idempotent?: boolean;
+  bodyLimit?: number;
+  timeoutMs?: number;
 };
 function resolveRule(method: string, path: string): ApiRule | undefined {
   const key = `${method} ${path}`;
   if (Object.hasOwn(rules, key)) return rules[key as keyof typeof rules];
+  const whiteboardRule = resolveWhiteboardRule(method, path);
+  if (whiteboardRule) return whiteboardRule;
+  const assignmentRule = resolveAssignmentRule(method, path);
+  if (assignmentRule) return assignmentRule;
   const managerRule = resolveManagerRule(method, path);
   if (managerRule) return managerRule;
   const mentorRule = resolveMentorRule(method, path);
@@ -106,6 +116,8 @@ function resolveRule(method: string, path: string): ApiRule | undefined {
     )
       return { response: z.null(), cookies: ['access_token'] };
     if (parts[1] === 'orders' && z.uuid().safeParse(parts[2]).success) {
+      if (method === 'POST' && parts.length === 4 && parts[3] === 'cancel')
+        return { response: orderSchema, body: z.object({}).strict(), cookies: ['access_token'] };
       if (method === 'GET' && parts.length === 3)
         return { response: orderPaymentSchema, cookies: ['access_token'] };
       if (
@@ -129,8 +141,34 @@ function resolveRule(method: string, path: string): ApiRule | undefined {
   return undefined;
 }
 
-function error(status: number, code: string, message: string) {
-  return Response.json({ code, message }, { status, headers: privateHeaders });
+function error(status: number, code: string, message: string, fields?: ValidationField[]) {
+  return Response.json(
+    { code, message, ...(fields ? { details: [{ fields }] } : {}) },
+    { status, headers: privateHeaders },
+  );
+}
+
+async function readBody(request: Request, limit: number) {
+  const reader = request.body?.getReader();
+  if (!reader) return '';
+  const decoder = new TextDecoder();
+  let size = 0;
+  let raw = '';
+  try {
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      size += chunk.value.byteLength;
+      if (size > limit) {
+        await reader.cancel();
+        return null;
+      }
+      raw += decoder.decode(chunk.value, { stream: true });
+    }
+    return raw + decoder.decode();
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 async function upstream(
@@ -149,7 +187,9 @@ async function upstream(
   if (body !== undefined) headers.set('Content-Type', 'application/json');
   if (
     resolveMentorRule(request.method, path)?.idempotent ||
-    resolveManagerRule(request.method, path)?.idempotent
+    resolveManagerRule(request.method, path)?.idempotent ||
+    resolveAssignmentRule(request.method, path)?.idempotent ||
+    resolveWhiteboardRule(request.method, path)?.idempotent
   ) {
     headers.set('Idempotency-Key', request.headers.get('idempotency-key')!);
   }
@@ -159,7 +199,7 @@ async function upstream(
     body: body === undefined ? undefined : JSON.stringify(body),
     redirect: 'manual',
     cache: 'no-store',
-    signal: AbortSignal.timeout(10_000),
+    signal: AbortSignal.timeout(resolveAssignmentRule(request.method, path)?.timeoutMs ?? 10_000),
   });
 }
 
@@ -176,29 +216,28 @@ export async function proxyApi(request: Request, path: string) {
   let body: unknown;
   if (rule.body) {
     const bodyLimit =
-      path.startsWith('mentor/') ||
+      rule.bodyLimit ??
+      (path.startsWith('mentor/') ||
       path.startsWith('class-sessions/') ||
       path.startsWith('admin/') ||
       path.startsWith('manager/')
         ? 65_536
-        : 16_384;
+        : 16_384);
     if (!request.headers.get('content-type')?.startsWith('application/json'))
       return error(415, 'JSON_REQUIRED', 'Yêu cầu JSON.');
     if (Number(request.headers.get('content-length') ?? 0) > bodyLimit)
       return error(413, 'PAYLOAD_TOO_LARGE', 'Dữ liệu quá lớn.');
-    const raw = await request.text();
-    const bodySize =
-      path.startsWith('mentor/') ||
-      path.startsWith('class-sessions/') ||
-      path.startsWith('admin/') ||
-      path.startsWith('manager/')
-        ? new TextEncoder().encode(raw).byteLength
-        : raw.length;
-    if (bodySize > bodyLimit) return error(413, 'PAYLOAD_TOO_LARGE', 'Dữ liệu quá lớn.');
+    const raw = await readBody(request, bodyLimit);
+    if (raw === null) return error(413, 'PAYLOAD_TOO_LARGE', 'Dữ liệu quá lớn.');
     try {
       const parsed = rule.body.safeParse(JSON.parse(raw));
       if (!parsed.success)
-        return error(422, 'INVALID_INPUT', 'Vui lòng kiểm tra thông tin đã nhập.');
+        return error(
+          422,
+          'INVALID_INPUT',
+          'Vui lòng kiểm tra thông tin đã nhập.',
+          validationFields(parsed.error),
+        );
       body = parsed.data;
     } catch {
       return error(400, 'INVALID_JSON', 'Dữ liệu không hợp lệ.');
@@ -211,7 +250,12 @@ export async function proxyApi(request: Request, path: string) {
   if (path === 'auth/refresh' && !requestCookies(request.headers.get('cookie'), ['refresh_token']))
     return error(401, 'AUTHENTICATION_REQUIRED', 'Phiên đăng nhập đã hết hạn.');
   let search = '';
-  if (resolveManagerRule(request.method, path) || resolveMentorRule(request.method, path)) {
+  if (
+    resolveManagerRule(request.method, path) ||
+    resolveMentorRule(request.method, path) ||
+    resolveAssignmentRule(request.method, path) ||
+    resolveWhiteboardRule(request.method, path)
+  ) {
     if (!requestCookies(request.headers.get('cookie'), ['access_token']))
       return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập bằng tài khoản nhân viên.');
     const input = new URL(request.url).searchParams;
@@ -307,9 +351,7 @@ export async function proxyApi(request: Request, path: string) {
     if (response.status === 204) return new Response(null, { status: 204, headers });
     const payload: unknown = await response.json();
     if (!response.ok) {
-      const parsed = z
-        .object({ code: z.string(), message: z.union([z.string(), z.array(z.string())]) })
-        .safeParse(payload);
+      const parsed = safeErrorSchema.safeParse(payload);
       return Response.json(
         parsed.success
           ? parsed.data

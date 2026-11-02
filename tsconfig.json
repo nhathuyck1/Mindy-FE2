@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -13,8 +17,16 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "plugins": [{ "name": "next" }],
-    "paths": { "@/*": ["./src/*"] }
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
   },
   "include": [
     "next-env.d.ts",
@@ -68,7 +80,11 @@
     ".next-blue-dev/types/**/*.ts",
     ".next-blue-dev/dev/types/**/*.ts",
     ".next-learning/types/**/*.ts",
-    ".next-learning/dev/types/**/*.ts"
+    ".next-learning/dev/types/**/*.ts",
+    ".next-whiteboard-smoke/types/**/*.ts",
+    ".next-whiteboard-smoke/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

@@ -1,6 +1,30 @@
 @import 'tailwindcss';
 @import './admin/tokens.css';
 
+/* Assignment screens follow the Student scale inside either role shell. */
+.assignment-workspace {
+  --font-sans: var(--font-brand);
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  font-family: var(--font-brand);
+  font-size: 1rem;
+}
+.assignment-workspace :is(button, input:not([type='radio']):not([type='checkbox']), select) {
+  min-height: 44px;
+  border-radius: 8px;
+}
+.assignment-workspace [data-slot='native-select-wrapper'] {
+  max-width: 100%;
+}
+.assignment-workspace :is(p, h1, h2, h3, dd) {
+  overflow-wrap: anywhere;
+}
+
 /* Source of truth: docs/pallete.png. Keep brand colors here. */
 @theme {
   --color-mint: #338a85;

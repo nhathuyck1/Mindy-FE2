@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { usePendingOrders } from '@/features/orders/api/order-queries';
+import { CancelOrderButton } from '@/features/orders/components/cancel-order-button';
 import { CommerceError, CommerceLoading } from '@/features/orders/components/commerce-state';
 import { formatPrice, formatDate } from '@/features/courses/lib/course-format';
 
@@ -43,16 +44,19 @@ export function PendingOrders() {
                   {formatPrice(order.totalAmount)}
                 </p>
               </div>
-              {order.paymentType === 'PAYOS' ? (
-                <Button asChild variant="outline" className="min-h-11">
-                  <Link href={`/checkout/${order.id}`}>
-                    Tiếp tục thanh toán
-                    <ArrowRight aria-hidden="true" />
-                  </Link>
-                </Button>
-              ) : (
-                <Badge variant="secondary">Tiền mặt</Badge>
-              )}
+              <div className="flex flex-wrap items-start gap-2">
+                <CancelOrderButton order={order} />
+                {order.paymentType === 'PAYOS' ? (
+                  <Button asChild variant="outline" className="min-h-11">
+                    <Link href={`/checkout/${order.id}`}>
+                      Tiếp tục thanh toán
+                      <ArrowRight aria-hidden="true" />
+                    </Link>
+                  </Button>
+                ) : (
+                  <Badge variant="secondary">Tiền mặt</Badge>
+                )}
+              </div>
             </div>
           ))}
           {orders.data.total > 10 && (

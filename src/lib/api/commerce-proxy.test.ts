@@ -7,6 +7,7 @@ vi.mock('@/lib/env.server', () => ({
   }),
 }));
 import { proxyApi } from './proxy.server';
+import { checkoutResultSchema } from '@/features/orders/schemas/order-contracts';
 
 const id = '55555555-5555-4555-8555-555555555555';
 const fetchMock = vi.fn<typeof fetch>();
@@ -60,7 +61,7 @@ describe('Commerce proxy boundary', () => {
   });
   it('Validates checkout body and refuses client-owned amounts/student IDs', async () => {
     for (const body of [
-      { paymentType: 'CASH' },
+      { paymentType: 'CARD' },
       { paymentType: 'PAYOS', totalAmount: 1 },
       { paymentType: 'PAYOS', studentId: id },
     ])
@@ -68,6 +69,70 @@ describe('Commerce proxy boundary', () => {
         (await proxyApi(request('me/cart/checkout', 'POST', body), 'me/cart/checkout')).status,
       ).toBe(422);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+  it('Restricts cancellation to an authenticated same-origin POST with empty input', async () => {
+    const path = `me/orders/${id}/cancel`;
+    expect((await proxyApi(request(path, 'POST', {}, 'https://foreign.test'), path)).status).toBe(
+      403,
+    );
+    expect((await proxyApi(request(path, 'POST', { studentId: id }), path)).status).toBe(422);
+    expect(
+      (
+        await proxyApi(
+          new Request(`http://localhost:3003/api/v1/${path}`, {
+            method: 'POST',
+            headers: { Origin: 'http://localhost:3003', 'Content-Type': 'application/json' },
+            body: '{}',
+          }),
+          path,
+        )
+      ).status,
+    ).toBe(401);
+    expect(
+      (await proxyApi(request('me/orders/bad/cancel', 'POST', {}), 'me/orders/bad/cancel')).status,
+    ).toBe(404);
+    expect((await proxyApi(request(path, 'DELETE'), path)).status).toBe(404);
+    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockResolvedValueOnce(Response.json({ id, status: 'CANCELLED' }));
+    expect((await proxyApi(request(path, 'POST', {}), path)).status).toBe(502);
+    expect(fetchMock.mock.calls[0][1]?.method).toBe('POST');
+    expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get('Cookie')).toBe(
+      'access_token=opaque',
+    );
+  });
+  it('Forwards CASH checkout and accepts multiple cash orders, while rejecting mixed results', async () => {
+    const cash = {
+      id,
+      orderCode: 'MD-CASH-1',
+      paymentType: 'CASH',
+      status: 'PENDING',
+      totalAmount: 100000,
+      expiresAt: '2026-11-03T10:00:00Z',
+      paidAt: null,
+      mentorId: null,
+      createdAt: '2026-11-02T10:00:00Z',
+      details: [],
+    };
+    const second = { ...cash, id: '66666666-6666-4666-8666-666666666666', orderCode: 'MD-CASH-2' };
+    fetchMock.mockResolvedValueOnce(Response.json({ orders: [cash, second] }, { status: 201 }));
+    const response = await proxyApi(
+      request('me/cart/checkout', 'POST', { paymentType: 'CASH' }),
+      'me/cart/checkout',
+    );
+    expect(response.status).toBe(201);
+    expect((await response.json()).orders).toHaveLength(2);
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toEqual({ paymentType: 'CASH' });
+    for (const orders of [
+      [],
+      [cash, cash],
+      [cash, { ...second, paymentType: 'PAYOS' }],
+      [
+        { ...cash, paymentType: 'PAYOS' },
+        { ...second, paymentType: 'PAYOS' },
+      ],
+    ]) {
+      expect(checkoutResultSchema.safeParse({ orders }).success).toBe(false);
+    }
   });
   it('Validates mapping/pagination queries instead of forwarding redirect status', async () => {
     for (const query of ['orderCode=1e9', 'orderCode=1&status=PAID', 'orderCode=1&orderCode=2', ''])

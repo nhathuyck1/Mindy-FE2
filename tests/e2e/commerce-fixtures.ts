@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 import type { z } from 'zod';
 import type { cartSchema } from '@/features/cart/schemas/cart-contracts';
 import type { OrderPayment } from '@/features/orders/schemas/order-contracts';
+import { checkoutInputSchema } from '@/features/orders/schemas/order-contracts';
 import type { Payment } from '@/features/payments/schemas/payment-contracts';
 import { mockHomepageApi, testUser } from './api-fixtures';
 
@@ -71,6 +72,10 @@ export async function mockCommerce(page: Page) {
     hasOrder: false,
     loggedIn: true,
     checkouts: 0,
+    checkoutTypes: [] as string[],
+    extraCashOrders: [] as OrderPayment[],
+    cancellations: 0,
+    cancelFails: false,
     creates: 0,
     reads: 0,
     paymentFailures: 0,
@@ -113,24 +118,52 @@ export async function mockCommerce(page: Page) {
     }
     if (path === 'me/cart/checkout') {
       state.checkouts++;
-      if (JSON.stringify(request.postDataJSON()) !== JSON.stringify({ paymentType: 'PAYOS' }))
-        throw new Error('Unexpected checkout input');
+      const input = checkoutInputSchema.parse(request.postDataJSON());
+      state.checkoutTypes.push(input.paymentType);
+      state.order.paymentType = input.paymentType;
       state.hasOrder = true;
       state.cart = { items: [], totalAmount: 0 };
       if (state.loseCheckoutResponse) return route.abort('failed');
-      return route.fulfill({ status: 201, json: { orders: [state.order] } });
+      return route.fulfill({
+        status: 201,
+        json: {
+          orders: [state.order, ...(input.paymentType === 'CASH' ? state.extraCashOrders : [])],
+        },
+      });
     }
     if (path === 'me/orders')
       return route.fulfill({
         json: {
-          items: state.hasOrder && state.order.status === 'PENDING' ? [state.order] : [],
+          items:
+            state.hasOrder &&
+            (!url.searchParams.get('status') ||
+              state.order.status === url.searchParams.get('status'))
+              ? [state.order, ...state.extraCashOrders]
+              : [],
           page: Number(url.searchParams.get('page') ?? 1),
           pageSize: 10,
-          total: state.hasOrder && state.order.status === 'PENDING' ? 1 : 0,
+          total:
+            state.hasOrder &&
+            (!url.searchParams.get('status') ||
+              state.order.status === url.searchParams.get('status'))
+              ? 1 + state.extraCashOrders.length
+              : 0,
         },
       });
     if (path === 'me/orders/payment-result') {
       state.mappings.push(url.search);
+      return route.fulfill({ json: state.order });
+    }
+    if (path === `me/orders/${orderId}/cancel` && method === 'POST') {
+      state.cancellations++;
+      if (state.cancelFails)
+        return route.fulfill({ status: 503, json: { code: 'UNAVAILABLE', message: 'Try again' } });
+      if (state.order.status !== 'PENDING')
+        return route.fulfill({
+          status: 409,
+          json: { code: 'ORDER_NOT_CANCELLABLE', message: 'Order closed' },
+        });
+      state.order.status = 'CANCELLED';
       return route.fulfill({ json: state.order });
     }
     if (path === `me/orders/${orderId}`) {

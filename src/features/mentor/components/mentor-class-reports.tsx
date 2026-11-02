@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { AssignmentCounts } from '@/features/assignments/components/assignment-reports';
 import { Info, CircleAlert, BookOpen, CheckCircle2 } from 'lucide-react';
 import {
   MentorProgressBar,
@@ -263,6 +264,11 @@ function StudentProgress(props: {
           retry={query.refetch}
           empty={query.data?.total === 0}
         >
+          {query.data?.assignmentSummary.availability === 'AVAILABLE' ? (
+            <AssignmentCounts counts={query.data.assignmentSummary.counts} history />
+          ) : (
+            query.data && <p className="text-sm text-muted">Thống kê bài tập chưa khả dụng.</p>
+          )}
           <ul className="space-y-4">
             {query.data?.items.map((item) => {
               const unit = props.units.find((unit) => unit.id === item.classUnitId);
@@ -397,6 +403,11 @@ function ProgressList(props: { classId: string; unitId: string; units: ContentUn
         retry={query.refetch}
         empty={query.data?.total === 0}
       >
+        {query.data?.assignmentSummary.availability === 'AVAILABLE' ? (
+          <AssignmentCounts counts={query.data.assignmentSummary.counts} history />
+        ) : (
+          query.data && <p className="mb-4 text-sm text-muted">Thống kê bài tập chưa khả dụng.</p>
+        )}
         <div className="overflow-hidden rounded-2xl border border-line bg-canvas">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-soft/40 px-5 py-3 text-sm">
             <span className="font-bold">Theo dõi theo học viên</span>
