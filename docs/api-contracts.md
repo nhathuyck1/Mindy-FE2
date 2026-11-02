@@ -1,5 +1,13 @@
 # API catalog, lớp học và tài khoản
 
+## Chat Student / Mentor — 02/11/2026
+
+- Đối chiếu Swagger local `http://localhost:3000/docs-json`, `../Mindy-BE/docs/api_flow/PHASE_6_FLOW.md`, controller/DTO/service. Chưa xác nhận deploy upstream.
+- Consumer: GET `/chat/conversations`, POST `/chat/conversations/direct` với peerUserId, GET `/:id`, GET `/:id/members`, GET/POST `/:id/messages`, PATCH/DELETE `/:id/messages/:messageId`, PUT `/:id/read`, GET `/classes/:classId/chat`; attachments POST `/:id/attachments/upload-intents`, POST `/:id/attachments/:fileId/complete`, GET `/:id/attachments/:fileId`, POST `/:id/messages/:messageId/file-access`. Các suffix `/:id` thuộc `/chat/conversations`; không mở POST vào collection conversation.
+- Chat page dùng `{data,meta:{nextCursor,hasMore}}`; history trả chronological trong từng trang, trang đầu là mới nhất. Sequence là decimal string, không đổi sang Number. Message sender/peer có displayName, avatarUrl null; capability và accessMode do BE cấp. Mutation `{message,replayed}`; read `{conversationId,lastReadSequence,lastReadAt,unreadCount}`.
+- Send giữ clientMessageId UUIDv4 cho cùng ý định chưa rõ kết quả, body tối đa 4.000 ký tự/16 KiB, FILE/IMAGE dùng fileObjectId READY. Edit/delete có expectedVersion và Idempotency-Key UUIDv4. Proxy body tối đa 32 KiB, query strict/duplicate deny, private no-store, chỉ chuyển access_token. Session recovery dùng client chung.
+- Socket.IO namespace `/chat`, websocket `/socket.io`, conversation:join và message create/update/delete/read/access-changed dùng làm tín hiệu refetch. Full snapshot/polling phục hồi thay vì consumer event cursor. Inbox và typing chưa tích hợp UI.
+
 ## Student tự hủy đơn — 02/11/2026
 
 - `POST /me/orders/:orderId/cancel`, body `{}`, trả `200 OrderDto`. Đã bổ sung trong source BE local; chưa xác nhận deploy upstream.

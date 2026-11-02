@@ -7,6 +7,7 @@ import { makeStore } from '@/lib/store/store';
 import { Toaster } from '@/components/ui/sonner';
 import { ApiError } from '@/lib/api/client';
 import { SessionExpiryHandler } from '@/features/auth/components/session-expiry-handler';
+import { FloatingChat } from '@/features/chat/components/floating-chat';
 
 export function AppProviders(props: { children: React.ReactNode }) {
   const [store] = useState(makeStore);
@@ -28,7 +29,10 @@ export function AppProviders(props: { children: React.ReactNode }) {
   return (
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
-        <SessionExpiryHandler>{props.children}</SessionExpiryHandler>
+        <SessionExpiryHandler>
+          {props.children}
+          <FloatingChat />
+        </SessionExpiryHandler>
         <Toaster />
       </QueryClientProvider>
     </Provider>

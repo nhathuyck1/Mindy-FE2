@@ -1,5 +1,17 @@
 # Quy tắc giao diện Mindy
 
+## Cửa sổ chat nổi — 02/11/2026
+
+- Launcher hình tròn mint ở góc phải dưới, có safe-area, badge headsup `99+` khi vượt 99 tin chưa đọc. Cửa sổ phía trên nút, rộng tối đa 416px, cao theo viewport và không che phủ bằng backdrop; 320px vẫn nằm gọn trong màn hình.
+- Có nút thu gọn, về danh sách, mở trang đầy đủ; Escape đóng và trả focus về launcher. Chọn người/lớp ở trong khung, giữ URL trang hiện tại. Enter gửi, Shift + Enter xuống dòng, bộ gõ đang composition không gửi.
+- Mỗi bong bóng có nút trả lời nhỏ ở bên cạnh; tin do mình gửi có menu ba chấm chứa Sửa/Xóa bằng chữ. Không thêm nút cảm xúc. Nút có aria-label/title và vùng bấm 44px; menu hỗ trợ bàn phím, dialog xác nhận giữ phiên bản và trả focus về nút ba chấm.
+
+## Chat và avatar — 02/11/2026
+
+- Avatar người dùng dùng chữ đầu/cuối tên, ví dụ Đặng Nhật Huy → ĐH, bo tròn `rounded-full`; không cần ảnh đại diện. Dùng `NameAvatar` trong chat và menu tài khoản.
+- Tin nhắn dùng Nunito, token Mindy, panel bo 16px và control 44px. Desktop chia hội thoại/nội dung; mobile mở nội dung riêng với nút về danh sách. Nội dung xuống dòng, không render HTML, tên/file dài không đẩy tràn viewport. Lỗi/loading/empty/chỉ đọc có nội dung riêng và retry.
+- Chat lớp Student nằm trong chi tiết khóa học để giữ hàng bảng gọn; Mentor chính mở từ lớp. Nhắn riêng từ thành viên có tên, không nhập UUID. Chỉ BE quyết định quyền truy cập/gửi/đính kèm.
+
 ## Bài tập Mentor / Student — 02/11/2026
 
 - Nội dung ngắn, thao tác theo trạng thái thật: Tạo bản nháp → Soạn câu hỏi/Tệp đề → Xuất bản; ZIP phân biệt Đang kiểm tra/Đã gắn tệp/Đã nộp. Lưu điểm và Trả điểm là hai nút riêng, xác nhận tác động trong dialog.

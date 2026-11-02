@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
+        source: '/socket.io/:path*',
+        destination: new URL('/socket.io/:path*', readServerEnv().apiBaseUrl).toString(),
+      },
+      {
         source: '/ws/whiteboards',
         destination: new URL('/ws/whiteboards', readServerEnv().apiBaseUrl).toString(),
       },

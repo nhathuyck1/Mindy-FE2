@@ -1,6 +1,14 @@
-import { BookOpen, CalendarDays, FolderOpen, ReceiptText, UserRound } from 'lucide-react';
+import {
+  BookOpen,
+  CalendarDays,
+  FolderOpen,
+  ReceiptText,
+  UserRound,
+  MessageCircle,
+} from 'lucide-react';
 
 export const userNavigation = [
+  { href: '/user/messages', label: 'Tin nhắn', icon: MessageCircle },
   { href: '/user/profile', label: 'Thông tin cá nhân', icon: UserRound },
   { href: '/user/orders', label: 'Đơn hàng của tôi', icon: ReceiptText },
   { href: '/user/schedule', label: 'Lịch học', icon: CalendarDays },

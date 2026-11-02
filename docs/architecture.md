@@ -1,5 +1,17 @@
 # Kiến trúc Mindy FE2
 
+## Chat nổi — 02/11/2026
+
+- `FloatingChat` nằm trong `SessionExpiryHandler` của provider, chỉ mount inbox cho Student/Mentor ACTIVE và key theo user. Popover không khóa trang; cửa sổ dùng lại `ChatRoom compact`, callback chọn DM giữ người dùng trên trang hiện tại.
+- `useChatInbox` sở hữu query key `chat/userId/inbox`, đọc đủ trang GET conversations limit=100, dedupe IDs rồi cộng unreadCount ở UI. Poll 4s theo tab visibility; lỗi dừng polling và cho thử lại. Đóng popover không mount timeline nên không gửi read cho nội dung ẩn. Không thêm endpoint hoặc Redux state.
+
+## Chat Student / Mentor — 02/11/2026
+
+- `features/chat` sở hữu schema, query theo user/path, UI và socket lifecycle. Route messages chỉ compose trong shell có guard. `chat-rules.server.ts` mở đúng API tiêu thụ, kiểm UUIDv4/query/body/Origin/cookie và chuyển receipt cho edit/delete/upload intent.
+- Socket `/chat` dùng same-origin `/socket.io` rewrite đến BE; event chỉ invalidate snapshot HTTP có phân quyền. History infinite query refetch tuần tự theo cursor mới, gộp ID/version và sort sequence bằng BigInt. Polling 4s dừng khi lỗi; refocus/Thử lại cập nhật lại. Không bật connection recovery bỏ qua auth hoặc đưa token vào JS.
+- Read chỉ gửi khi đang ở cuối lịch sử, document visible và có focus; snapshot tải trước không tự xác nhận đọc ở tab nền. Thu hồi quyền socket gỡ cache của hội thoại và ẩn room; HTTP lỗi quyền ẩn lịch sử/composer. File PUT có signal phiên/lifetime và không gửi cookie; READY mới được gửi message. URL ký không lưu trong server-state cache.
+- `NameAvatar` là component chung cho chat/menu tài khoản, dùng chữ đầu/cuối tên, Unicode và token Mindy, hình tròn.
+
 ## Assignment QUIZ / ZIP — 02/11/2026
 
 - `features/assignments` chứa schema tách Mentor/Student, query theo user/role/path/filter, editor, bài làm, upload, chấm điểm và báo cáo. Sáu route mới chỉ kiểm UUIDv4, await params và compose feature; kế thừa guard ACTIVE của shell. Tab Bài tập nằm trong lớp Mentor; buổi học tải panel khi mở. Student đi từ khóa học hoặc không gian học FULL, không mount assignment trong CASH_PREVIEW.

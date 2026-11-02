@@ -189,6 +189,13 @@ export function MyCoursesPage() {
             </p>
           )}
           <div className="flex flex-wrap gap-3 border-t border-line pt-5">
+            {(selected.accessReason === 'ACTIVE_ENROLLMENT' ||
+              selected.accessReason === 'PENDING_CASH' ||
+              selected.accessReason === 'ENROLLMENT_COMPLETED') && (
+              <Button asChild variant="outline">
+                <Link href={`/user/messages?classId=${selected.classId}`}>Chat lớp</Link>
+              </Button>
+            )}
             {selected.canViewClass && selected.accessMode !== 'NONE' && (
               <Button asChild>
                 <Link
