@@ -1,5 +1,36 @@
 # Tiến độ
 
+## 02/11/2026 — Thao tác cạnh bong bóng chat
+
+- Chuyển Trả lời thành nút mũi tên bên cạnh bong bóng. Tin của mình gom Sửa/Xóa vào menu ba chấm, không có reaction; giữ quyền own/read-only, thời hạn sửa, expectedVersion và dialog xác nhận. Dùng cùng UI ở trang đầy đủ và cửa sổ nổi; hỗ trợ label, bàn phím và focus restore.
+- Production build/TypeScript và lint pass; 22/22 E2E chat và roster Mentor desktop/mobile pass, gồm reply, menu sửa/xóa, Enter, popup và badge. 8 E2E logout cũng pass sau khi thêm widget vào provider. Lượt hồi quy rộng đầu có một timeout vì launcher che nút phân trang Mentor mobile; đã nâng launcher mobile và giới hạn popup theo vùng trống thực tế, kiểm tra lại roster pass cả hai viewport.
+
+## 02/11/2026 — Chat nổi kiểu Messenger
+
+- Thêm nút chat tròn ở góc phải dưới cho Student/Mentor ACTIVE trên toàn ứng dụng. Bấm mở cửa sổ bên phải, chọn hội thoại và gửi ngay trên trang; có thu gọn, Escape, về danh sách và mở trang đầy đủ. Mobile 320px không tràn; avatar, gửi tệp và Enter/Shift+Enter dùng chung room hiện có.
+- Badge cộng unreadCount của toàn bộ hội thoại được cấp quyền, đọc đủ cursor pages bằng HTTP same-origin, cập nhật 4s khi tab hoạt động. Lỗi không giả thành số 0. Đóng khung gỡ history/read/socket observers; chỉ còn query inbox, không đánh dấu đã đọc vì tải danh sách. Widget gỡ khi logout/đổi tài khoản hoặc sai role/status.
+- Production build/TypeScript, lint và 270 unit tests pass. E2E chat, Student/Mentor và session refresh desktop/mobile đã kiểm tra thao tác nổi, badge khi đóng/đọc, tổng qua trang, Enter, thu gọn/Escape/focus restore; đã xem ảnh desktop và 320px. API/storage dùng mock; giới hạn proxy websocket local của mục trước vẫn giữ polling dự phòng.
+
+## 02/11/2026 — Enter gửi chat và cấu hình local
+
+- Ô soạn chat dùng Enter để gửi, Shift + Enter xuống dòng; IME đang composition không gửi. Giữ khóa gửi trùng và chặn khi tệp chưa READY. Có hướng dẫn phím cạnh ô soạn.
+- Đã bật chat/worker trong `.env` local và khởi động lại BE; trước khi tạo keyring xác nhận DB có 0 messages/receipts, không thay khóa của dữ liệu cũ. Worker đã tạo 3 hội thoại. Direct Socket.IO đã trả đúng 401 AUTHENTICATION_REQUIRED cho kết nối chưa đăng nhập; đường proxy websocket ở FE còn timeout trong probe, HTTP polling dự phòng vẫn được giữ. Không ghi khóa vào source/log hoặc commit env.
+
+## 02/11/2026 — Khắc phục reload liên tục ở local
+
+- Tái hiện `/admin/login`: 86 lần điều hướng trong 8 giây; WebSocket dev gửi `restart` và `reloadPage: HMR hash mismatch`. Đây là reload từ HMR, không phải polling API chat.
+- Dừng đúng tiến trình FE 3001, chuyển `.next/dev` sang `.next-dev-cache-backup-20261102` rồi chạy lại dev. Browser kiểm tra mới không nhận reloadPage, giữ nguyên email đang nhập và không tăng navigation/request trong 12 giây sau khi ổn định; không cần đổi auth/API source.
+- Theo yêu cầu người dùng, đã khởi động lại cả BE 3000 bằng `npm run start` với cấu hình hiện có. Nest báo started và `/docs-json` trả thành công. FE tiếp tục chạy ở 3001.
+
+## 02/11/2026 — Chat Student / Mentor
+
+- Thêm `/user/messages`, `/mentor/messages`, mục Tin nhắn ở sidebar, Chat lớp trong chi tiết khóa học Student và lớp Mentor chính. Nhóm/DM, thành viên phân trang, tìm trong hội thoại đã tải, lịch sử phân trang, trả lời, sửa trong 15 phút, xác nhận xóa, read/unread và quyền chỉ đọc lấy từ BE. Avatar tròn lấy chữ đầu/cuối tên, ví dụ Đặng Nhật Huy → ĐH; dùng chung cho menu tài khoản.
+- HTTP same-origin qua allowlist/Zod/cookie HttpOnly; đối chiếu Swagger local `/docs-json` và source Phase6. Socket.IO `/chat` qua rewrite `/socket.io` làm mới snapshot khi nhận event/reconnect; polling 4 giây khi trang hoạt động dự phòng khi socket lỗi. Lỗi quyền ẩn nội dung và composer. Gửi chưa rõ kết quả giữ nguyên body/clientMessageId khi thử lại; sửa/xóa lỗi cần mở lại sau refetch.
+- Ảnh JPG/PNG/WebP/PDF tối đa 10 MiB: intent → PUT storage credentials omit → complete → kiểm tra READY tối đa 15 lần, sau đó kiểm tra thủ công/bỏ tệp. Signed URL chỉ dùng tức thời, không vào Query/Mutation cache hoặc storage. Attachment chỉ bật theo canAttach.
+- Kiểm chứng: 270/270 unit test; 58/58 E2E desktop/mobile gồm 14 chat và 44 hồi quy Mentor/Student; lint, TypeScript trong production build `.next-chat-review` và diff check pass. Đã xem ảnh desktop/mobile. E2E dùng API/storage mock, chưa xác nhận hai tài khoản thật qua Socket.IO/MinIO. Format file thay đổi pass; format toàn repo còn cảnh báo hai script whiteboard có sẵn, ngoài phạm vi.
+- Không sửa source BE, thêm dependency, commit/push hoặc deploy. Inbox thông báo và typing indicator chưa thuộc giao diện lần này.
+- FE dev đã khởi động ở `http://localhost:3001`; probe REST chat qua proxy trả 401 đúng khi chưa đăng nhập. Runtime BE local hiện không mở `/socket.io` (direct probe trả 404), `.env` không có CHAT_ENABLED/CHAT_JOB_ENABLED/keyring; schema mặc định chat OFF. Chưa đổi cấu hình hoặc restart BE đang chạy công việc khác. Cần bật cấu hình chat/keyring/worker đúng môi trường trước khi nghiệm thu chat thật; attachment cần thêm flag/storage tương ứng.
+
 ## 02/11/2026 — Chọn hình thức thanh toán ở giỏ hàng
 
 - Student chọn Chuyển khoản QR hoặc Tiền mặt trong Tổng thanh toán; cả hai dùng nút Thanh toán. Đã bỏ mô tả dưới lựa chọn và dưới nút theo yêu cầu mới nhất. FE trước đó cố định PAYOS; đã mở schema/proxy/hook cho CASH có sẵn ở BE. PAYOS giữ luồng QR, CASH nhận đủ nhiều đơn và về `/user/orders` chờ thu tiền, không gọi tạo QR hoặc tự xác nhận PAID.

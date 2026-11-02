@@ -62,6 +62,11 @@ export function MentorClassPage(props: { classId: string }) {
           item ? `${item.code} · ${item.course.title}` : 'Theo dõi lớp và các buổi được phân công.'
         }
       />
+      {item?.accessScope === 'CLASS' && (
+        <Button asChild variant="outline" className="mb-5">
+          <Link href={`/mentor/messages?classId=${props.classId}`}>Chat lớp</Link>
+        </Button>
+      )}
       <MentorQueryState pending={query.isPending} error={query.error} retry={query.refetch}>
         {item && (
           <>

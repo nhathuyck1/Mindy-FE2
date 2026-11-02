@@ -19,6 +19,9 @@ const category = {
 };
 
 export async function mockHomepageApi(page: Page) {
+  await page.route('**/api/v1/chat/conversations?**', (route) =>
+    route.fulfill({ json: { data: [], meta: { hasMore: false, nextCursor: null } } }),
+  );
   // The header reads the cart once a test overrides auth/me with a signed-in user.
   await page.route('**/api/v1/me/cart', (route) =>
     route.fulfill({ json: { items: [], totalAmount: 0 } }),

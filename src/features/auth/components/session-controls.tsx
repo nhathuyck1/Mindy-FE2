@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Icon } from '@/components/ui/icon';
+import { NameAvatar } from '@/components/ui/name-avatar';
 import { userNavigation } from '@/features/user/lib/user-navigation';
 import { acknowledgeLogoutNavigation } from '@/lib/api/session-coordinator';
 import { sessionLoginTarget } from '../lib/session-login-target';
@@ -65,18 +66,7 @@ export function SessionControls() {
           onClick={() => setOpen(!open)}
           className={`inline-flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl border p-1.5 text-left transition-colors sm:pr-4 ${open ? 'border-mint bg-soft shadow-sm' : 'border-line bg-canvas hover:border-mint hover:bg-soft'}`}
         >
-          <span
-            aria-hidden="true"
-            className="grid size-10 shrink-0 place-items-center rounded-xl bg-mint text-sm font-extrabold text-canvas"
-          >
-            {session.data.displayName
-              .trim()
-              .split(/\s+/)
-              .slice(0, 2)
-              .map((part) => Array.from(part)[0])
-              .join('')
-              .toLocaleUpperCase('vi') || 'M'}
-          </span>
+          <NameAvatar name={session.data.displayName} className="size-10 bg-mint text-canvas" />
           <span className="hidden min-w-0 sm:block">
             <span className="block text-[11px] font-semibold text-black">Tài khoản của bạn</span>
             <span className="block max-w-32 truncate text-base font-extrabold text-black">

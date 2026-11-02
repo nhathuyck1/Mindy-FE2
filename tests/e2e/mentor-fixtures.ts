@@ -178,6 +178,8 @@ export async function mockMentor(
     const body = request.postData() ? (request.postDataJSON() as Record<string, unknown>) : null;
     calls.push({ path, method, body, key: request.headers()['idempotency-key'] });
     const ok = (json: unknown) => route.fulfill({ json });
+    if (path === 'chat/conversations')
+      return ok({ data: [], meta: { hasMore: false, nextCursor: null } });
     if (path === 'auth/me') return ok({ ...mentor, role: options.role ?? mentor.role });
     if (path === 'mentor/schedule' && options.timetable) {
       const items = [
