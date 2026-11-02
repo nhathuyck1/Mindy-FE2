@@ -96,8 +96,13 @@ export function UserShell(props: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const title =
-    userNavigation.find((item) => item.href === pathname || pathname.startsWith(item.href + '/'))
-      ?.label ?? 'Tài khoản';
+    /^\/user\/(assignments|assignment-submissions|zip-submissions|classes\/[^/]+\/assignments)(\/|$)/.test(
+      pathname,
+    )
+      ? 'Bài tập'
+      : (userNavigation.find(
+          (item) => item.href === pathname || pathname.startsWith(item.href + '/'),
+        )?.label ?? 'Tài khoản');
   return (
     <AuthGuard role="STUDENT">
       <div className={'user-workspace ' + (collapsed ? 'user-workspace-collapsed' : '')}>

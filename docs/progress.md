@@ -1,5 +1,34 @@
 # Tiến độ
 
+## 02/11/2026 — Chọn hình thức thanh toán ở giỏ hàng
+
+- Student chọn Chuyển khoản QR hoặc Tiền mặt trong Tổng thanh toán; cả hai dùng nút Thanh toán. Đã bỏ mô tả dưới lựa chọn và dưới nút theo yêu cầu mới nhất. FE trước đó cố định PAYOS; đã mở schema/proxy/hook cho CASH có sẵn ở BE. PAYOS giữ luồng QR, CASH nhận đủ nhiều đơn và về `/user/orders` chờ thu tiền, không gọi tạo QR hoặc tự xác nhận PAID.
+- Khóa lựa chọn khi gửi, chặn bấm đúp; mất phản hồi đọc lại giỏ/đơn chờ. Kiểm tra 1/2 đơn CASH, reload, mất phản hồi, payload đúng loại; ảnh mobile 320px không tràn ngang. 46 E2E cart/checkout/cancellation desktop/mobile và 261 unit tests pass; lint và production build (kèm TypeScript) pass. E2E dùng API mock; BE CASH đã có sẵn, không thay source BE trong lượt này. Chưa commit/push/deploy.
+
+## 02/11/2026 — Student chủ động hủy đơn
+
+- Thêm Hủy đơn hàng tại bảng `/user/orders`, dialog chi tiết, đơn chờ trong giỏ và màn checkout. Xác nhận ở giữa màn hình, không làm giãn hàng trong bảng; focus vào Giữ đơn hàng, Escape trả focus và giữ chi tiết bên dưới. Chặn bấm đúp, báo lỗi ngay trong xác nhận và cập nhật trạng thái từ backend; QR ẩn sau hủy thành công.
+- Nối API cancellation mới ở BE, kiểm quyền sở hữu/PENDING/deadline, giải phóng toàn bộ chỗ giữ trong transaction; bảo vệ trường hợp thanh toán đồng thời. Không hủy đơn PAID, không tự hoàn tiền.
+- Kiểm tra: FE lint/types/build; 6 proxy tests, 8 cancellation E2E desktop/mobile pass; 32 cart/checkout E2E hiện hữu pass. Đã xem screenshot xác nhận hủy ở 320px, kiểm tra vị trí giữa viewport và chiều cao hàng không đổi. BE build, 5 integration PostgreSQL và 17 HTTP tests pass trên database test riêng. Chưa deploy/commit/push.
+- Đã build và chạy lại BE local ở 3000: tiến trình cũ chưa nạp route cancellation nên trả 404. Probe qua FE 3001 đã tới đúng handler (UUID không tồn tại trả `ORDER_NOT_FOUND`); integration/HTTP kiểm tra hủy đơn thật trên dữ liệu test. FE tiếp tục gọi BE local qua same-origin proxy.
+
+## 02/11/2026 — Assignment FE và môi trường local
+
+- Đã triển khai consumer UI cho 35 API QUIZ/ZIP/file/grade/history/report, sáu route Mentor/Student và union assignmentSummary cho hai API tiến độ. Mentor tạo/soạn/xuất bản, Student làm/nộp, Mentor chấm/trả điểm, Student đọc kết quả và snapshot. Danh sách/filter/trang và tab Bài tập của lớp giữ URL/Back/Forward; UI Nunito, nhãn ngắn, xem câu hỏi dạng details, control 44px và bố cục 320px.
+- Proxy stream UTF-8 bounded (8 MiB riêng bulk questions; assignment khác 64 KiB), forward receipt UUIDv4, timeout bulk riêng và safe indexed errors. Student không nhận private question keys/grade version/storage metadata. QUIZ serialize autosave, khóa submit/chờ save, giữ lựa chọn sau conflict; cảnh báo rời trang/Back, timer từ BE và bounded result polling. ZIP tách READY/attach/submit; reload sau unknown attach hòa giải trước khi thay file. URL ký không vào Query/Mutation cache hoặc storage.
+- **259/259 unit tests**, **88/88 E2E liên quan** desktop/mobile pass: 30 assignment và 58 hồi quy auth refresh/logout, mentor workspace, learning. ESLint, TypeScript, production build `.next-assignments-review` và `git diff --check` pass. Format toàn repo pass với `npm run format:check -- --end-of-line auto` trên Windows; bare `format:check` còn báo CRLF của checkout có sẵn. Các file ngoài phạm vi đã giữ lại đúng line ending ban đầu, không sửa hàng loạt để che cảnh báo.
+- Smoke thật với hai browser context Mentor/Student, compiled BE, DB/bucket test riêng và MinIO thật pass 11 bước: instruction/ZIP PUT → worker READY → binding/attach → submit, QUIZ GRADED trong DB, điểm draft ẩn trước release, điểm released, flag OFF và snapshot/download sau class/enrollment đóng; không có lỗi JavaScript. Bằng chứng `../output/assignment-smoke-2026-11-02/result.json`, `quiz-result.png`, `zip-result.png`. Smoke đầu chạy FE 3003 với storage riêng cho origin đó; cấu hình cuối chuyển theo yêu cầu người dùng bên dưới.
+- **FE local đang ở http://localhost:3001**, `.env.local` trỏ **http://localhost:3000/api/v1**. BE local đang chạy ở 3000, CORS Origin 3001; MinIO test hiện có 19000 cho phép origin 3001, bucket `mindy-center-local` private/versioned; ZIP, file worker và timeout worker bật. Database dev localhost:5433/mindy_center được backup trước khi áp dụng 21 migration thiếu, tổng 33 và không còn pending. Probe môi trường cuối qua FE: login Mentor 200 → create QUIZ 201 → delete draft 204, storage preflight 204 cho Origin 3001. Cookie/tài khoản server không dùng chung local; cần đăng nhập lại và chọn lớp local.
+- Không commit/push/deploy. Không sửa source BE. Tổ hợp lỗi sâu chưa có đủ browser fixture riêng (worker dừng >60s, mọi TTL/429, tab ngủ dài, hai Mentor cùng sửa với pending correction) được ghi rõ ở [plan](assignment-integration-plan.md#9-triển-khai-và-bằng-chứng--02112026); không coi happy path là nghiệm thu mọi tổ hợp.
+
+## 02/11/2026 — Plan tích hợp Assignment QUIZ / ZIP
+
+- Tạo nhánh `codex/assignment-api-integration` từ main, fetch lại sau thông báo người dùng và fast-forward tới `origin/main` tại `e553fb3`, gồm refresh token/logout mới.
+- Thêm [assignment-integration-plan.md](assignment-integration-plan.md): ma trận 35 API assignment và hai API tiến độ hiện hữu, điểm gắn UI Mentor/Student, F0–F6, version/idempotency/autosave, upload/worker, chấm/trả điểm, metrics và smoke BE local.
+- Ghi rõ các thay đổi cần ở proxy: body limit riêng cho bulk, forward key cho resolver mới, query validation và giữ lỗi từng câu; tái sử dụng recovery client mới. Plan bao gồm giới hạn discovery lịch sử khi enrollment đã đóng.
+- Đây là bước lập plan; chưa viết runtime API/UI assignment, chưa chạy nghiệm thu tích hợp hoặc deploy.
+- Kiểm định tài liệu: đối chiếu tự động với controller BE đủ 35/35 method/path, không thừa/thiếu/trùng; 7 liên kết local trong plan hợp lệ. Prettier ba tài liệu và `git diff --check` pass; không chạy test runtime vì chỉ thay tài liệu.
+
 ## 28/10/2026 — Đăng xuất mượt, không hiện Session changed trên dashboard
 
 - Menu tài khoản dùng logout mutation có trạng thái điều hướng riêng. Khi bấm, ẩn dashboard ngay và hiện màn trung tính gồm logo/Đang đăng xuất; không hiển thị vòng xoay trên dashboard hoặc thông báo cancellation. Thành công/401 chuyển về trang chủ và dọn dữ liệu riêng tư, giữ màn chuyển tiếp đến khi route hoàn tất.

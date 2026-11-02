@@ -5,6 +5,7 @@ import { useState } from 'react';
 import type { z } from 'zod';
 import { useSession } from '@/features/auth/api/auth-queries';
 import { MentorTeachingNotes } from './mentor-teaching-notes';
+import { AssignmentList } from '@/features/assignments/components/assignment-list';
 import { MentorMeetingEditor } from './mentor-meeting-editor';
 import { attendanceCandidatesSchema, workspaceSchema } from '../schemas/workspace-contracts';
 import { Play, CheckCheck, RefreshCw, ExternalLink, Clock3 } from 'lucide-react';
@@ -26,6 +27,7 @@ import {
 } from './mentor-shared';
 
 export function MentorSessionPage(props: { sessionId: string }) {
+  const [showAssignments, setShowAssignments] = useState(false);
   const [page, setPage] = useState(1);
   const [confirm, setConfirm] = useState<'finalize' | 'present' | 'absent' | null>(null);
   const [notes, setNotes] = useState(false);
@@ -376,6 +378,27 @@ export function MentorSessionPage(props: { sessionId: string }) {
             sessionId={props.sessionId}
             canWrite={canWriteNote && !busy}
             editableUntil={session?.editableUntil ?? null}
+          />
+        )}
+        {context.data && workspace.data && (
+          <Button
+            variant="outline"
+            className="mt-6"
+            aria-expanded={showAssignments}
+            onClick={() => setShowAssignments((value) => !value)}
+          >
+            Bài tập của buổi
+          </Button>
+        )}
+        {showAssignments && context.data && workspace.data && (
+          <AssignmentList
+            sessionId={props.sessionId}
+            mentor
+            canCreate={
+              (teaching || workspace.data.accessScope === 'CLASS') &&
+              !workspace.data.readonly &&
+              ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED'].includes(context.data.session.status)
+            }
           />
         )}
       </MentorQueryState>

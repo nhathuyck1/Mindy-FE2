@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   API_BASE_URL: z.url().default('https://api.quanh123.id.vn/api/v1'),
-  APP_ORIGIN: z.url().default('http://localhost:3003'),
+  APP_ORIGIN: z.url().default('http://localhost:3001'),
 });
 
 export function getServerEnv() {

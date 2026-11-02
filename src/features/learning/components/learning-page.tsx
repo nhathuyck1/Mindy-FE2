@@ -179,6 +179,11 @@ function LearningWorkspace(props: { context: LearningClass }) {
           {props.context.code} · {preview ? 'Xem trước lớp học' : 'Không gian học tập'}
         </p>
         <h1 className="mt-3 text-2xl font-bold sm:text-3xl">{props.context.name}</h1>
+        {!preview && (
+          <Button asChild variant="outline" className="mt-4">
+            <Link href={`/user/classes/${props.context.id}/assignments`}>Bài tập của lớp</Link>
+          </Button>
+        )}
         <p className="mt-3 text-sm text-muted">
           {units.length} chương · Mentor: {props.context.mentor.displayName || 'Chưa cập nhật'}
         </p>

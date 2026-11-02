@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { useSession } from '@/features/auth/api/auth-queries';
 import { useOrder } from '@/features/orders/api/order-queries';
+import { CancelOrderButton } from '@/features/orders/components/cancel-order-button';
 import type { OrderPayment } from '@/features/orders/schemas/order-contracts';
 import { CommerceError, CommerceLoading } from '@/features/orders/components/commerce-state';
 import { formatPrice } from '@/features/courses/lib/course-format';
@@ -244,6 +245,7 @@ function PaymentContent(props: { orderId: string }) {
                 Chỉ chuyển đúng số tiền của đơn hàng. Kết quả sẽ tự cập nhật khi được xác nhận.
               </p>
             )}
+            <CancelOrderButton order={data} disabled={prepare.isPending} />
           </CardContent>
         </Card>
         <OrderSummary order={data} />

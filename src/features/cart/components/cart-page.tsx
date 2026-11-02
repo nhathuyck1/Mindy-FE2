@@ -2,16 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useRef } from 'react';
-import {
-  ArrowLeft,
-  ArrowRight,
-  BookOpen,
-  CalendarDays,
-  Trash2,
-  ShoppingBag,
-  ShieldCheck,
-} from 'lucide-react';
+import { useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, Trash2, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +12,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { CommerceError, CommerceLoading } from '@/features/orders/components/commerce-state';
 import { useCheckout } from '@/features/orders/api/order-queries';
+import type { Order } from '@/features/orders/schemas/order-contracts';
 import { formatPrice, formatDate, deliveryLabel } from '@/features/courses/lib/course-format';
 import { useCart, useRemoveCartItem } from '../api/cart-queries';
 import { PendingOrders } from './pending-orders';
@@ -38,6 +31,7 @@ function CartContent() {
   const checkout = useCheckout();
   const router = useRouter();
   const checkoutLock = useRef(false);
+  const [paymentType, setPaymentType] = useState<Order['paymentType']>('PAYOS');
   const unavailable = cart.data?.items.some((item) => !item.isPurchasable);
   const busy = checkout.isPending || remove.isPending;
   const pay = async () => {
@@ -45,8 +39,15 @@ function CartContent() {
       return;
     checkoutLock.current = true;
     try {
-      const result = await checkout.mutateAsync();
-      router.push(`/checkout/${result.orders[0].id}`);
+      const result = await checkout.mutateAsync(paymentType);
+      if (paymentType === 'CASH') {
+        toast.success(
+          `Đã tạo ${result.orders.length} đơn tiền mặt. Thanh toán tại trung tâm trước hạn ghi trên đơn.`,
+        );
+        router.push('/user/orders');
+      } else {
+        router.push(`/checkout/${result.orders[0].id}`);
+      }
     } catch {
       // Read refreshed cart/pending orders before the user decides whether to submit again.
       checkoutLock.current = false;
@@ -190,6 +191,34 @@ function CartContent() {
                 <span className="font-bold">{formatPrice(cart.data.totalAmount)}</span>
               </div>
               <Separator />
+              <fieldset disabled={busy} className="space-y-3">
+                <legend className="mb-3 text-sm font-bold">Hình thức thanh toán</legend>
+                {[
+                  {
+                    value: 'PAYOS',
+                    label: 'Chuyển khoản QR',
+                  },
+                  {
+                    value: 'CASH',
+                    label: 'Tiền mặt',
+                  },
+                ].map((option) => (
+                  <label
+                    key={option.value}
+                    className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border p-3 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-mint ${paymentType === option.value ? 'border-mint bg-soft' : 'border-line bg-canvas'} ${busy ? 'cursor-wait opacity-60' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentType"
+                      value={option.value}
+                      checked={paymentType === option.value}
+                      onChange={() => setPaymentType(option.value === 'CASH' ? 'CASH' : 'PAYOS')}
+                      className="size-4 shrink-0 accent-mint"
+                    />
+                    <span className="min-w-0 text-sm font-bold">{option.label}</span>
+                  </label>
+                ))}
+              </fieldset>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <span className="font-bold">Tổng cộng</span>
                 <strong className="text-xl font-semibold text-black sm:text-2xl">
@@ -209,10 +238,6 @@ function CartContent() {
                   Thanh toán QR yêu cầu tổng tiền lớn hơn 0. Vui lòng kiểm tra lại lớp đã chọn.
                 </p>
               )}
-              <p className="flex gap-2 text-sm leading-relaxed font-normal text-black">
-                <ShieldCheck className="mt-0.5 size-4 shrink-0 text-black" aria-hidden="true" />
-                Quét QR hoặc mở payOS ở bước tiếp theo. Chỗ học được giữ sau khi đơn được tạo.
-              </p>
             </CardContent>
           </Card>
         </div>
