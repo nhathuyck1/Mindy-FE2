@@ -1,6 +1,7 @@
 import 'server-only';
 import { z } from 'zod';
 import * as dto from '@/features/assignments/schemas/assignment-contracts';
+import { createCodeAssignmentInputSchema } from '@/features/code-assignments/schemas/code-contracts';
 
 function rule(
   response: z.ZodType,
@@ -40,7 +41,10 @@ export function resolveAssignmentRule(method: string, path: string) {
         dto.assignmentQuerySchema,
       );
     if (mentor && p[1] === 'class-sessions' && method === 'POST')
-      return rule(dto.mentorAssignmentSchema, dto.createInputSchema);
+      return rule(
+        dto.mentorAssignmentSchema,
+        z.union([dto.createInputSchema, createCodeAssignmentInputSchema]),
+      );
   }
   if (mentor && p[1] === 'classes' && action === 'assignment-metrics' && method === 'GET')
     return rule(dto.metricsSchema, undefined, dto.assignmentQuerySchema);

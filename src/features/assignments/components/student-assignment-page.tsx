@@ -1,4 +1,5 @@
 'use client';
+import { StudentCodePage } from '@/features/code-assignments/components/student-code-page';
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,7 @@ export function StudentAssignmentPage(props: { assignmentId: string }) {
   const classId = useSearchParams().get('classId');
   const a = query.data;
   if (!valid) return <p>Không tìm thấy bài tập.</p>;
+  if (a?.type === 'CODE') return <StudentCodePage assignmentId={props.assignmentId} />;
   return (
     <div className={assignmentRootClass}>
       <AssignmentHeading

@@ -74,6 +74,7 @@ export function AssignmentList(props: {
           <option value="">Mọi loại bài</option>
           <option value="QUIZ">Trắc nghiệm</option>
           <option value="ZIP">Bài nộp ZIP</option>
+          <option value="CODE">Bài tập lập trình</option>
         </NativeSelect>
         <NativeSelect
           aria-label="Mục đích"
@@ -154,8 +155,14 @@ export function AssignmentList(props: {
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap gap-2">
                               <span className="text-sm text-muted">
-                                {item.type === 'QUIZ' ? 'Trắc nghiệm' : 'Bài nộp ZIP'} ·{' '}
-                                {item.purpose === 'TEST' ? 'Kiểm tra' : 'Bài về nhà'}
+                                {
+                                  {
+                                    QUIZ: 'Trắc nghiệm',
+                                    ZIP: 'Bài nộp ZIP',
+                                    CODE: 'Bài tập lập trình',
+                                  }[item.type]
+                                }{' '}
+                                · {item.purpose === 'TEST' ? 'Kiểm tra' : 'Bài về nhà'}
                               </span>
                             </div>
                             <h2 className="mt-2 text-lg font-extrabold break-words group-hover:text-mint">

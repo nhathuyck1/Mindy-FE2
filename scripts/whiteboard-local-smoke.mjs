@@ -178,8 +178,17 @@ try {
     student.page.getByRole('button', { name: 'Thêm ghi chú', exact: true }),
   ).toBeDisabled();
   await mentor.page.getByRole('button', { name: 'Thêm ghi chú', exact: true }).click();
-  await expect.poll(async()=>{const [r]=await db.query('SELECT projection FROM whiteboards WHERE session_id=$1',[session.id]);return r.projection.length;}).toBe(1);
-  const [stored] = await db.query('SELECT projection FROM whiteboards WHERE session_id=$1', [session.id]);
+  await expect
+    .poll(async () => {
+      const [r] = await db.query('SELECT projection FROM whiteboards WHERE session_id=$1', [
+        session.id,
+      ]);
+      return r.projection.length;
+    })
+    .toBe(1);
+  const [stored] = await db.query('SELECT projection FROM whiteboards WHERE session_id=$1', [
+    session.id,
+  ]);
   const sticky = stored.projection.find((s) => s.type === 'sticky');
   const box = await mentor.page.locator('.whiteboard-canvas').boundingBox();
   await mentor.page.mouse.dblclick(box.x + sticky.x + 40, box.y + sticky.y + 40);
@@ -235,7 +244,7 @@ try {
   await mkdir(artifacts, { recursive: true });
   for (const width of [320, 375, 768, 1440]) {
     await mentor.page.setViewportSize({ width, height: 900 });
-    await mentor.page.getByRole('button',{name:'Vừa nội dung',exact:true}).click();
+    await mentor.page.getByRole('button', { name: 'Vừa nội dung', exact: true }).click();
     await expect
       .poll(() =>
         mentor.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
@@ -278,15 +287,31 @@ try {
   results.push(
     'Save checkpoint, reset, preview and restore work across open peers; old epoch is discarded.',
   );
-  for(const name of ['Hình tròn','Hình vuông','Văn bản / chú thích']){
-    await mentor.page.getByRole('button',{name:'Thêm hình và văn bản',exact:true}).click();
-    await mentor.page.getByRole('button',{name,exact:true}).click();
-    if(name==='Văn bản / chú thích'){const input=mentor.page.getByRole('textbox',{name:'Nội dung ghi chú'});await input.fill('Chú thích độc lập');await input.press('Control+Enter');}
-    await expect(mentor.page.getByText('Đã lưu',{exact:true})).toBeVisible();
+  for (const name of ['Hình tròn', 'Hình vuông', 'Văn bản / chú thích']) {
+    await mentor.page.getByRole('button', { name: 'Thêm hình và văn bản', exact: true }).click();
+    await mentor.page.getByRole('button', { name, exact: true }).click();
+    if (name === 'Văn bản / chú thích') {
+      const input = mentor.page.getByRole('textbox', { name: 'Nội dung ghi chú' });
+      await input.fill('Chú thích độc lập');
+      await input.press('Control+Enter');
+    }
+    await expect(mentor.page.getByText('Đã lưu', { exact: true })).toBeVisible();
   }
-  await expect.poll(async()=>{const[r]=await db.query('SELECT projection FROM whiteboards WHERE session_id=$1',[session.id]);return r.projection.filter(s=>['rectangle','ellipse','text'].includes(s.type)).length;}).toBe(3);
-  await mentor.page.screenshot({path:resolve(artifacts,'whiteboard-presets.png'),fullPage:true});
-  results.push('Preset circle/square and independent editable text persist; sticky opens on double-click without an Edit button.');
+  await expect
+    .poll(async () => {
+      const [r] = await db.query('SELECT projection FROM whiteboards WHERE session_id=$1', [
+        session.id,
+      ]);
+      return r.projection.filter((s) => ['rectangle', 'ellipse', 'text'].includes(s.type)).length;
+    })
+    .toBe(3);
+  await mentor.page.screenshot({
+    path: resolve(artifacts, 'whiteboard-presets.png'),
+    fullPage: true,
+  });
+  results.push(
+    'Preset circle/square and independent editable text persist; sticky opens on double-click without an Edit button.',
+  );
   await db.query("UPDATE enrollments SET status='CANCELLED' WHERE class_id=$1", [ready.classId]);
   await expect(student.page.getByText('Đã dừng truy cập', { exact: true })).toBeVisible({
     timeout: 10000,

@@ -96,7 +96,7 @@ export const instructionSchema = fileSchema.extend({ position: count });
 const assignmentFields = {
   id: uuid,
   sessionId: uuid,
-  type: z.enum(['QUIZ', 'ZIP']),
+  type: z.enum(['QUIZ', 'ZIP', 'CODE']),
   purpose: z.enum(['TEST', 'HOMEWORK']),
   title: z.string(),
   description: z.string(),
@@ -166,7 +166,7 @@ const pageQueryFields = {
 export const paginationSchema = z.object(pageQueryFields).strict();
 export const assignmentQuerySchema = paginationSchema
   .extend({
-    type: z.enum(['QUIZ', 'ZIP']).optional(),
+    type: z.enum(['QUIZ', 'ZIP', 'CODE']).optional(),
     purpose: z.enum(['TEST', 'HOMEWORK']).optional(),
     sessionId: uuid.optional(),
     status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),

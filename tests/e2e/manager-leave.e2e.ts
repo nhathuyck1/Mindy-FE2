@@ -60,6 +60,8 @@ export async function mockManagerLeave(
     holdAction?: boolean;
   } = {},
 ) {
+  // Keep the browser clock aligned with the fixture's asOf and approval deadline.
+  await page.clock.setFixedTime(new Date(asOf));
   const requests = Array.from({ length: 23 }, (_, index) => makeRequest(index));
   let uncertainResponseSent = false;
   let versionConflictSent = false;

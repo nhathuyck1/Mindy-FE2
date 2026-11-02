@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  Code2,
   CalendarDays,
   FolderOpen,
   ReceiptText,
@@ -14,4 +15,5 @@ export const userNavigation = [
   { href: '/user/schedule', label: 'Lịch học', icon: CalendarDays },
   { href: '/user/courses', label: 'Khóa học của tôi', icon: BookOpen },
   { href: '/user/materials', label: 'Tài liệu học tập', icon: FolderOpen },
+  { href: '/user/assignments', label: 'Bài tập lập trình', icon: Code2 },
 ] as const;

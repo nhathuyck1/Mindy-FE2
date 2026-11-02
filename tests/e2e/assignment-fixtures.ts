@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import * as dto from '../../src/features/assignments/schemas/assignment-contracts';
 import * as f from '../fixtures/assignment-data';
 import { mockMentor } from './mentor-fixtures';
-import { testUser } from './api-fixtures';
+import { mockHomepageApi, testUser } from './api-fixtures';
 
 export async function mockAssignments(
   page: Page,
@@ -20,6 +20,7 @@ export async function mockAssignments(
   } = {},
 ) {
   if (options.mentor) await mockMentor(page);
+  else await mockHomepageApi(page);
   const calls: {
     path: string;
     method: string;

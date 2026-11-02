@@ -5,6 +5,7 @@ import { resolveAssignmentRule } from './assignment-rules.server';
 import { safeErrorSchema, validationFields, type ValidationField } from './validation-fields';
 import { resolveAdminCrudRule } from './admin-rules.server';
 import { resolveManagerRule } from './manager-rules.server';
+import { codeProxyRule } from '@/features/code-assignments/api/code-proxy-policy';
 import {
   learningPaginationSchema,
   learningProxyRule,
@@ -100,6 +101,8 @@ function resolveRule(method: string, path: string): ApiRule | undefined {
   if (whiteboardRule) return whiteboardRule;
   const assignmentRule = resolveAssignmentRule(method, path);
   if (assignmentRule) return assignmentRule;
+  const codeRule = codeProxyRule(method, path);
+  if (codeRule) return codeRule;
   const managerRule = resolveManagerRule(method, path);
   if (managerRule) return managerRule;
   const mentorRule = resolveMentorRule(method, path);
@@ -180,6 +183,7 @@ async function upstream(
   cookies: readonly string[],
   search = '',
   body?: unknown,
+  timeoutMs = 10_000,
 ) {
   const env = getServerEnv();
   const headers = new Headers({ Accept: 'application/json', Origin: env.appOrigin });
@@ -193,6 +197,7 @@ async function upstream(
     resolveManagerRule(request.method, path)?.idempotent ||
     resolveAssignmentRule(request.method, path)?.idempotent ||
     resolveWhiteboardRule(request.method, path)?.idempotent ||
+    codeProxyRule(request.method, path)?.idempotent ||
     resolveChatRule(request.method, path)?.idempotent
   ) {
     headers.set('Idempotency-Key', request.headers.get('idempotency-key')!);
@@ -203,7 +208,7 @@ async function upstream(
     body: body === undefined ? undefined : JSON.stringify(body),
     redirect: 'manual',
     cache: 'no-store',
-    signal: AbortSignal.timeout(resolveAssignmentRule(request.method, path)?.timeoutMs ?? 10_000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
 }
 
@@ -259,7 +264,8 @@ export async function proxyApi(request: Request, path: string) {
     resolveMentorRule(request.method, path) ||
     resolveAssignmentRule(request.method, path) ||
     resolveWhiteboardRule(request.method, path) ||
-    resolveChatRule(request.method, path)
+    resolveChatRule(request.method, path) ||
+    codeProxyRule(request.method, path)
   ) {
     if (!requestCookies(request.headers.get('cookie'), ['access_token']))
       return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập bằng tài khoản nhân viên.');
@@ -338,7 +344,7 @@ export async function proxyApi(request: Request, path: string) {
     search = `?${new URLSearchParams(Object.entries(parsed.data).map(([key, value]) => [key, String(value)]))}`;
   }
   try {
-    const response = await upstream(request, path, rule.cookies, search, body);
+    const response = await upstream(request, path, rule.cookies, search, body, rule.timeoutMs);
     const headers = new Headers(privateHeaders);
     const cookies = responseCookies(
       response.headers.getSetCookie(),

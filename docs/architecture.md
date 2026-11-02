@@ -1,5 +1,12 @@
 # Kiến trúc Mindy FE2
 
+## CODE cùng QUIZ/ZIP, chat và Whiteboard — 03/11/2026
+
+- Nhánh `compiler` tích hợp trên `main` mới nhất. Giữ các module, route và proxy chat/Whiteboard/QUIZ/ZIP; CODE có rule riêng cho thao tác code, còn list/create/publish/archive dùng hợp đồng assignment chung.
+- Schema metadata/list nhận thêm `CODE`; tạo CODE dùng validation riêng (tối đa 50 lượt), không nới rule QUIZ/ZIP. Route `/mentor/assignments/:id` và `/user/assignments/:id` chọn trang CODE theo metadata, giữ giao diện QUIZ/ZIP hiện có. Bộ lọc và nhãn danh sách phân biệt đủ ba loại.
+- CODE mutations invalidate cả cache `code` và `assignments`, giúp danh sách dùng chung đọc lại dữ liệu. Giữ giới hạn đọc body theo stream và timeout bulk questions; chỉ thao tác runner dùng timeout riêng.
+- Panel tạo CODE trong buổi học dùng cùng điều kiện scope/trạng thái/readonly với panel assignment hiện có. API và Playwright dùng fixture; nghiệm thu browser nối backend thật ghi riêng.
+
 ## Chat nổi — 02/11/2026
 
 - `FloatingChat` nằm trong `SessionExpiryHandler` của provider, chỉ mount inbox cho Student/Mentor ACTIVE và key theo user. Popover không khóa trang; cửa sổ dùng lại `ChatRoom compact`, callback chọn DM giữ người dùng trên trang hiện tại.

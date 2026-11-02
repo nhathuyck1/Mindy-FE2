@@ -6,6 +6,7 @@ import type { z } from 'zod';
 import { useSession } from '@/features/auth/api/auth-queries';
 import { MentorTeachingNotes } from './mentor-teaching-notes';
 import { AssignmentList } from '@/features/assignments/components/assignment-list';
+import { MentorSessionAssignments } from '@/features/code-assignments/components/mentor-session-assignments';
 import { MentorMeetingEditor } from './mentor-meeting-editor';
 import { attendanceCandidatesSchema, workspaceSchema } from '../schemas/workspace-contracts';
 import { Play, CheckCheck, RefreshCw, ExternalLink, Clock3 } from 'lucide-react';
@@ -367,6 +368,18 @@ export function MentorSessionPage(props: { sessionId: string }) {
             )}
           </div>
         </section>
+        <div className="mt-6">
+          <MentorSessionAssignments
+            sessionId={props.sessionId}
+            readonly={
+              !context.data ||
+              !workspace.data ||
+              !(teaching || workspace.data.accessScope === 'CLASS') ||
+              workspace.data.readonly ||
+              !['SCHEDULED', 'IN_PROGRESS', 'COMPLETED'].includes(context.data.session.status)
+            }
+          />
+        </div>
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-canvas p-4">
           <div>
             <p className="text-sm font-bold">Nhật ký buổi học</p>

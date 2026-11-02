@@ -1,5 +1,13 @@
 # Tiến độ
 
+## 03/11/2026 — Tích hợp CODE trên main, chuẩn bị PR compiler
+
+- Cập nhật nhánh `compiler` lên `origin/main` có QUIZ/ZIP, chat và Whiteboard, sau đó gộp CODE; giữ các route và giao diện hiện có. Metadata/list nhận đủ ba loại; route assignment dùng metadata để chọn đúng trang CODE hoặc QUIZ/ZIP. Rule tạo CODE riêng giữ tối đa 50 lượt, không nới rule ZIP/QUIZ.
+- Giữ proxy chat/Whiteboard/assignment, đọc body theo stream, receipt và timeout bulk; thêm rule CODE cho runner. CODE mutations làm mới cả cache CODE và assignment. Bổ sung test proxy cho tạo cả ba loại và danh sách chung không lộ đáp án cho Student.
+- `npm ci` giữ lockfile. `npm run check` PASS: ESLint, Prettier, TypeScript, **292 unit tests / 37 suites**, production build và **429 Playwright pass / 5 skip** desktop/mobile. 36 test focused QUIZ/ZIP/CODE/materials cũng pass. Playwright dùng API/storage fixture; chưa nghiệm thu browser nối BE thật hoặc deploy.
+- Cập nhật fixture Student để mock chat mới, tránh HTTP auth thật làm hết phiên giả; assertion Materials chỉ kiểm không có nút bài tập trong từng buổi, vẫn giữ tab bài tập cấp lớp. Cố định clock Manager leave theo dữ liệu fixture. Hai script smoke Whiteboard chỉ format để full Prettier pass; không đổi nghiệp vụ.
+- Bản sao trước khi tích hợp nằm ngoài repo trong `.local-runtime/compiler-pr-validation/frontend-before-main-integration.tar.gz`; stash trước khi gộp vẫn giữ để phục hồi khi cần. Không thay Flutter hoặc deploy. Các mục ngày trước bên dưới giữ evidence cũ.
+
 ## 02/11/2026 — Thao tác cạnh bong bóng chat
 
 - Chuyển Trả lời thành nút mũi tên bên cạnh bong bóng. Tin của mình gom Sửa/Xóa vào menu ba chấm, không có reaction; giữ quyền own/read-only, thời hạn sửa, expectedVersion và dialog xác nhận. Dùng cùng UI ở trang đầy đủ và cửa sổ nổi; hỗ trợ label, bàn phím và focus restore.
@@ -59,6 +67,31 @@
 - Ghi rõ các thay đổi cần ở proxy: body limit riêng cho bulk, forward key cho resolver mới, query validation và giữ lỗi từng câu; tái sử dụng recovery client mới. Plan bao gồm giới hạn discovery lịch sử khi enrollment đã đóng.
 - Đây là bước lập plan; chưa viết runtime API/UI assignment, chưa chạy nghiệm thu tích hợp hoặc deploy.
 - Kiểm định tài liệu: đối chiếu tự động với controller BE đủ 35/35 method/path, không thừa/thiếu/trùng; 7 liên kết local trong plan hợp lệ. Prettier ba tài liệu và `git diff --check` pass; không chạy test runtime vì chỉ thay tài liệu.
+
+## 02/11/2026 — Soạn đề code dạng wizard (lời giải mẫu là chuẩn)
+
+- Trang soạn đề mentor (`/mentor/assignments/[id]`) chuyển thành 4 bước có thanh tiến độ: Đề bài (xem trước ngay) → Hàm cần viết (tên kiểu tiếng Việt, xem trước code khởi đầu, mặc định chỉ JavaScript, tuỳ chọn kỹ thuật gom vào "Nâng cao") → Lời giải & test → Giao đề (xem trước như học viên, checklist có nút "Sửa").
+- Test nhập dạng bảng: chuỗi gõ thẳng, mảng/ma trận dạng `[1, 2]`, dán nhiều dòng một lần. Mentor không tự nhập kết quả: "Chạy lời giải" gọi BE `code-tests/generate` để lời giải mẫu điền cột kết quả; "Lưu & kiểm tra" lưu lời giải, lưu cả bảng (`PUT code-tests`) rồi kiểm tra.
+- "Bắt đầu nhanh": 7 đề mẫu (`lib/code-templates.ts`) tự tạo đề, test và kiểm tra; hoặc dùng lại bài đã soạn (`GET code-library`, `POST code-import`).
+- Proxy thêm 4 route (generate có timeout 90 s). Logic thuần ở `lib/code-authoring.ts` có test.
+- Kiểm tra: TypeScript, ESLint, Prettier pass trên máy owner. `code-authoring.test.ts` 8/8 (gồm chạy lời giải 7 đề mẫu), `code-proxy.test.ts` 6/6 và các bộ proxy cũ pass (shim Vitest). Chưa chạy `npm run check` (Vitest thật, build, Playwright), chưa duyệt UI với BE thật. Chưa commit/push.
+
+## 02/11/2026 — Nghiệm thu compiler trên máy Mac
+
+- `npm run check` thật pass: ESLint, Prettier, TypeScript, 207 unit test, production build; Playwright 365 pass và 5 skip theo cấu hình.
+- Thêm `code-assignments.e2e.ts`: desktop/mobile 320px kiểm tra autosave, custom input, xác nhận nộp có Idempotency-Key, tự nhận điểm, bật lại nút nộp và cập nhật lịch sử. Đã xem ảnh ở hai kích thước.
+- Sửa polling assignment khi có bài đang chấm và polling lịch sử tới khi hết pending. Trước đó chi tiết đã có điểm nhưng lượt/điểm cao nhất/nút nộp/lịch sử vẫn có thể giữ dữ liệu cũ.
+- Đồng bộ clock browser với `asOf` trong fixture Manager leave: deadline cố định tháng 10 không phụ thuộc ngày thực trên máy. Ca mentor responsive từng fail ở lượt toàn bộ đầu; lượt toàn bộ cuối pass, không sửa code/test đó.
+- BE đã test HTTP với runner Docker thật; Playwright FE dùng API fixture. UAT browser nối backend thật và deploy vẫn chưa làm. Flutter checkout hiện tại thiếu code C6. Chi tiết: `../Mindy-BE/docs/PHASE_7_LOCAL_TESTING.md` tính từ thư mục repo.
+- Chưa commit/push.
+
+## 02/11/2026 — Bài tập lập trình (Phase 7 C5)
+
+- Thêm feature `code-assignments`: schema Zod cho mọi DTO CODE của BE, allowlist proxy riêng (`code-proxy-policy.ts`) với body tối đa 256 KB, timeout 90 giây cho chạy thử/validate, Idempotency-Key bắt buộc khi nộp bài, query review strict. Proxy chung nhận `bodyLimit`/`timeoutMs` theo rule; `apiRequest` nhận `timeoutMs`.
+- Student: menu "Bài tập lập trình" (`/user/assignments`) liệt kê bài theo lớp; trang làm bài có đề, ví dụ, chọn ngôn ngữ, editor, autosave nháp theo version (2 giây), chạy thử với test mẫu hoặc tham số tự nhập, nộp bài có xác nhận, lịch sử nộp, chi tiết kết quả tự refresh tới khi chấm xong. Test ẩn chỉ hiện trạng thái và thời gian.
+- Mentor: khối "Bài tập" trong trang buổi dạy (tạo bài CODE rồi chuyển sang trang soạn đề); trang soạn đề gồm đề bài, chữ ký hàm, ngôn ngữ, test (mẫu/ẩn, trọng số), lời giải mẫu và validate, publish, gia hạn có lý do, lưu trữ. Trang review có bảng điểm theo học viên, danh sách bài nộp (cờ trùng code), chi tiết bài nộp, chấm lại (FAILED) và huỷ bài nộp có lý do.
+- Editor là textarea tự viết (Tab, giữ thụt dòng, số dòng), chưa dùng Monaco vì không cài thêm dependency trong lượt này. Có thể thay bằng Monaco sau mà không đổi API của component.
+- Kiểm tra: TypeScript, ESLint và Prettier pass trên toàn bộ file mới/đổi. Proxy test `code-proxy.test.ts` (5 ca) và `code-format.test.ts` (4 ca) pass. Các suite proxy cũ (mentor, mentor-workspace, proxy.server, user, learning, manager×3, commerce, admin×2) vẫn pass. Unit test được chạy bằng shim Vitest trong môi trường không cài được npm, cần chạy lại `npm run test` chính thức. Chưa chạy production build/E2E và chưa nghiệm thu với BE thật. Chưa commit/push.
 
 ## 28/10/2026 — Đăng xuất mượt, không hiện Session changed trên dashboard
 
@@ -246,8 +279,6 @@
 - ESLint toàn repo, format các file code/test sửa, production build/TypeScript và 144 unit tests pass. E2E responsive và lớp/học liệu Mentor: 18 pass, 2 bản chạy mobile được bỏ qua vì hai test mới tự chạy ma trận viewport. Đã kiểm 320/390/768/834/1009/1024/1280/1440px và 1009x600, cuộn bằng bàn phím và giữ draft; xem ảnh 1009px/390px/form 320px từ production build.
 - Chạy toàn bộ Mentor cho 18 pass, 2 skip và 4 fail thuộc hai scenario lịch cũ đã ghi ngày 16/10: assertion tên buổi học/mẫu lịch không còn khớp UI mã lớp. Không sửa lịch trong lượt này. API dùng mock; chưa deploy lên Vercel.
 
-<<<<<<< Updated upstream
-
 ## 16/10/2026 — Màn đầu chỉ hiện danh sách khóa học
 
 - Thay rail khóa học/panel hướng dẫn trống bằng ManagerCourseList toàn chiều rộng, không hiện picker trùng ở bước đầu. Chỉ khi bấm một khóa mới mount workspace chương/tài liệu; nút Danh sách khóa học quay lại list, reload cũng về list.
@@ -313,7 +344,7 @@
 - Nút Tạo tài liệu đặt góc phải header chương; dùng sẵn courseId/courseUnitId hiện tại. Tạo văn bản/HTML hoặc upload FILE/VIDEO ngay trong panel, không phải chọn lại khóa học/học phần. Chi tiết có thanh Chỉnh sửa/duyệt/xuất bản/xóa và editor tại chỗ; giữ nguyên canEdit, revision, kiểm tra READY và xử lý xung đột.
 - Course catalogue không có lịch buổi học theo lớp nên không bịa số buổi hoặc gọi Student APIs bằng quyền Manager. Chỉ dùng APIs hiện hữu.
 - Production build/TypeScript, ESLint và format các file sửa pass; 137 unit tests và 34 E2E Manager desktop/mobile pass, gồm workspace hai cột, 320px, pagination/filter theo chương, sửa/tạo text tại chỗ, upload FILE đúng chương và duyệt/refetch.
-- Đã xem ảnh desktop/mobile test-results/manager-student-workspace-*.png. Dữ liệu test dùng mock, chưa nghiệm thu phiên Manager/storage thật hoặc deploy FE.
+- Đã xem ảnh desktop/mobile test-results/manager-student-workspace-\*.png. Dữ liệu test dùng mock, chưa nghiệm thu phiên Manager/storage thật hoặc deploy FE.
 
 ## 16/10/2026 — Không gian học liệu Mentor theo trang Student
 

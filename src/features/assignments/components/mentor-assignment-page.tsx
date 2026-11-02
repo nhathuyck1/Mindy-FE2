@@ -1,4 +1,5 @@
 'use client';
+import { MentorCodeAuthoringPage } from '@/features/code-assignments/components/mentor-code-authoring-page';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { workspaceSchema } from '@/features/mentor/schemas/workspace-contracts';
@@ -48,7 +49,7 @@ export function MentorAssignmentPage(props: { assignmentId: string }) {
   const context = useAssignmentQuery(
     `class-sessions/${a?.sessionId}/context`,
     sessionContextSchema,
-    !!a,
+    !!a && a.type !== 'CODE',
     'MENTOR',
   );
   const workspace = useAssignmentQuery(
@@ -68,6 +69,7 @@ export function MentorAssignmentPage(props: { assignmentId: string }) {
     }
   }
   if (!valid) return <p>Không tìm thấy bài tập.</p>;
+  if (a?.type === 'CODE') return <MentorCodeAuthoringPage assignmentId={props.assignmentId} />;
   return (
     <div className={assignmentRootClass}>
       <AssignmentHeading

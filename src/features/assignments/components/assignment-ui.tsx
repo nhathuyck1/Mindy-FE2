@@ -177,7 +177,7 @@ export function AssignmentMeta(props: { item: Assignment }) {
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <Status value={a.status} />
         <span className="text-sm text-muted">
-          {a.type === 'QUIZ' ? 'Trắc nghiệm' : 'Bài nộp ZIP'} ·{' '}
+          {{ QUIZ: 'Trắc nghiệm', ZIP: 'Bài nộp ZIP', CODE: 'Bài tập lập trình' }[a.type]} ·{' '}
           {a.purpose === 'TEST' ? 'Kiểm tra' : 'Bài về nhà'}
         </span>
       </div>

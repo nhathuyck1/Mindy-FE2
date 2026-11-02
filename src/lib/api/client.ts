@@ -22,6 +22,8 @@ export type ApiRequestOptions<T> = {
   body?: unknown;
   signal?: AbortSignal;
   idempotencyKey?: string;
+  /** Browser-side timeout; judge runs/validation (Phase 7) need longer than the 15s default. */
+  timeoutMs?: number;
 };
 
 function needsSession(props: ApiRequestOptions<unknown>) {
@@ -42,7 +44,7 @@ async function sendRequest<T>(
   signal?.throwIfAborted();
   const bulk = props.method === 'PUT' && /^mentor\/assignments\/[^/]+\/questions$/.test(props.path);
   const requestSignal = AbortSignal.any([
-    AbortSignal.timeout(bulk ? 60_000 : 15_000),
+    AbortSignal.timeout(props.timeoutMs ?? (bulk ? 60_000 : 15_000)),
     ...(signal ? [signal] : []),
   ]);
   const response = await fetch(`/api/v1/${props.path}`, {

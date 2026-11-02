@@ -21,7 +21,7 @@ test('mentor loads lessons independently of empty unit detail and creates from t
     'href',
     `/mentor/sessions/${mentorIds.session}`,
   );
-  await expect(page.getByRole('button', { name: /bài tập/i })).toHaveCount(0);
+  await expect(first.getByRole('button', { name: /bài tập/i })).toHaveCount(0);
   await expect(first).toContainText('10:00 16/10/26');
   expect(
     calls.some((call) => call.path === `mentor/classes/${mentorIds.class}/units/${mentorIds.unit}`),
