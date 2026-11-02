@@ -1,3 +1,4 @@
+import { resolveWhiteboardRule } from './whiteboard-rules.server';
 import 'server-only';
 import { resolveAssignmentRule } from './assignment-rules.server';
 import { safeErrorSchema, validationFields, type ValidationField } from './validation-fields';
@@ -92,6 +93,8 @@ type ApiRule = {
 function resolveRule(method: string, path: string): ApiRule | undefined {
   const key = `${method} ${path}`;
   if (Object.hasOwn(rules, key)) return rules[key as keyof typeof rules];
+  const whiteboardRule = resolveWhiteboardRule(method, path);
+  if (whiteboardRule) return whiteboardRule;
   const assignmentRule = resolveAssignmentRule(method, path);
   if (assignmentRule) return assignmentRule;
   const managerRule = resolveManagerRule(method, path);
@@ -185,7 +188,8 @@ async function upstream(
   if (
     resolveMentorRule(request.method, path)?.idempotent ||
     resolveManagerRule(request.method, path)?.idempotent ||
-    resolveAssignmentRule(request.method, path)?.idempotent
+    resolveAssignmentRule(request.method, path)?.idempotent ||
+    resolveWhiteboardRule(request.method, path)?.idempotent
   ) {
     headers.set('Idempotency-Key', request.headers.get('idempotency-key')!);
   }
@@ -249,7 +253,8 @@ export async function proxyApi(request: Request, path: string) {
   if (
     resolveManagerRule(request.method, path) ||
     resolveMentorRule(request.method, path) ||
-    resolveAssignmentRule(request.method, path)
+    resolveAssignmentRule(request.method, path) ||
+    resolveWhiteboardRule(request.method, path)
   ) {
     if (!requestCookies(request.headers.get('cookie'), ['access_token']))
       return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập bằng tài khoản nhân viên.');

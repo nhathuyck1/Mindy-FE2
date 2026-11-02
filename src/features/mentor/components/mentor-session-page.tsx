@@ -176,6 +176,11 @@ export function MentorSessionPage(props: { sessionId: string }) {
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
+            {context.data?.session.status !== 'CANCELLED' && (
+              <Button asChild variant="outline">
+                <Link href={`/whiteboards/${props.sessionId}?audience=mentor`}>Mở bảng vẽ</Link>
+              </Button>
+            )}
             {meetingAllowed && (
               <Button variant="outline" onClick={() => setMeeting(true)}>
                 Sửa link buổi học

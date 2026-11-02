@@ -141,6 +141,15 @@ function UnitContent(props: { context: LearningClass; unit: LearningUnit; previe
                     }).format(new Date(session.startsAt))}
                   </p>
                   {session.roomName && <p className="mt-2">Phòng: {session.roomName}</p>}
+                  {!props.preview && session.status !== 'CANCELLED' && (
+                    <Link
+                      href={`/whiteboards/${session.id}`}
+                      className="text-link mt-3 inline-flex min-h-11 items-center font-semibold"
+                    >
+                      Mở bảng vẽ
+                      <ArrowRight aria-hidden="true" className="size-4" />
+                    </Link>
+                  )}
                   {!props.preview && session.status !== 'CANCELLED' && session.meetingUrl && (
                     <a
                       href={session.meetingUrl}
