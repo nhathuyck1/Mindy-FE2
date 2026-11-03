@@ -1,5 +1,12 @@
 # Quy tắc giao diện Mindy
 
+## Dashboard ba vai trò — 03/11/2026
+
+- Phản hồi mới nhất: Manager chỉ giữ thẻ tổng quan, biểu đồ xu hướng và donut trạng thái, không hiển thị hai biểu đồ xếp hạng. Bỏ đoạn giải thích cách tính đăng ký/thời điểm cập nhật ở tất cả dashboard.
+
+- Dùng token Mindy và admin-table-panel hiện hữu; bốn thẻ số liệu, Recharts AreaChart theo ngày, PieChart dạng donut cho trạng thái và BarChart ngang cho top khóa/mentor/lớp. Tooltip hiển thị tên đầy đủ và số liệu; bảng xếp hạng mở bằng details để đọc các tên dài. 320px xếp một cột, desktop chia cột, nhãn trục rút gọn một dòng và giữ số liệu đọc được.
+- Mỗi thống kê ghi rõ tổng hiện tại hoặc trong kỳ; học viên distinct khác lượt đăng ký. Ngày/giờ hiển thị theo Việt Nam. Có loading/error/retry/empty độc lập, bảng ngày mở bằng details/summary, không animation hoặc số demo lấp chỗ.
+
 ## Chuẩn UI lấy Student làm mẫu — 26/10/2026
 
 - Tài liệu áp dụng: [student-ui-standard.md](student-ui-standard.md), gồm bản đồ màn hình/logic, token, typography, bo góc/kích thước, trạng thái, responsive, đối chiếu staff và checklist nghiệm thu. Có dẫn nguồn code và ảnh mới từ production build với API mock.

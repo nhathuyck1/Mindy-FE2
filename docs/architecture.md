@@ -1,5 +1,12 @@
 # Kiến trúc Mindy FE2
 
+## Dashboard theo vai trò — 03/11/2026
+
+- `features/dashboard` sở hữu schema Zod, query và UI thống kê dùng chung. Server state có key `dashboard/userId/audience/days`; `apiRequest` dùng recovery phiên tập trung của dev, không tạo cơ chế refresh riêng.
+- `/admin` chọn endpoint Admin/Manager theo phiên đã được shell kiểm; `/manager` nhúng analytics phía dưới heading và giữ hàng chờ công việc; `/mentor/dashboard` dành riêng Mentor. Lịch dạy vẫn ở `/mentor`; thêm đường dẫn dashboard vào safeReturnPath.
+- Backend tổng hợp toàn bộ dữ liệu trong một statement; FE không tải danh sách học viên để tự tính. Proxy chỉ mở ba GET dashboard và days enum 30/90/365, kiểm scope response, không nhận mentorId từ client. Số đăng ký/học viên là trong kỳ theo ngày xác nhận; lớp/khóa/trạng thái là tổng hiện tại. Mentor dùng phân công chính hiện tại, không gồm lịch dạy thay.
+- Bar ranking là top 10, trend có bảng dữ liệu đọc bằng bàn phím và không animation. Không biến lỗi thành số 0 hoặc dùng danh sách chưa tải đủ làm tổng.
+
 ## Trải nghiệm đăng xuất — 28/10/2026
 
 - `useLogout({ navigateHome: true })` dành cho thao tác người dùng ở menu tài khoản, dùng mutation key `auth/logout/navigate-home`; logout xử lý sai audience vẫn giữ form đăng nhập. Hủy/revert các query trước khi đổi AbortSignal phiên, tạm ngừng query session trong mọi logout để cancellation không xuất hiện thành lỗi dashboard.

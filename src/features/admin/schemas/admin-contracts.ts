@@ -37,6 +37,7 @@ export const adminClassSchema = publicClassSchema.extend({
 export const adminClassPageSchema = z.object({ items: z.array(adminClassSchema), ...pagination });
 export const adminUserFiltersSchema = paginationQuerySchema
   .extend({
+    q: z.string().trim().min(2).max(100).optional(),
     role: userSchema.shape.role.optional(),
     status: userSchema.shape.status.optional(),
   })

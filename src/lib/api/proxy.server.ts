@@ -1,4 +1,5 @@
 import 'server-only';
+import { resolveDashboardRule } from './dashboard-rules.server';
 import { resolveAdminCrudRule } from './admin-rules.server';
 import { resolveManagerRule } from './manager-rules.server';
 import {
@@ -85,6 +86,8 @@ type ApiRule = {
   idempotent?: boolean;
 };
 function resolveRule(method: string, path: string): ApiRule | undefined {
+  const dashboardRule = resolveDashboardRule(method, path);
+  if (dashboardRule) return dashboardRule;
   const key = `${method} ${path}`;
   if (Object.hasOwn(rules, key)) return rules[key as keyof typeof rules];
   const managerRule = resolveManagerRule(method, path);
@@ -211,6 +214,16 @@ export async function proxyApi(request: Request, path: string) {
   if (path === 'auth/refresh' && !requestCookies(request.headers.get('cookie'), ['refresh_token']))
     return error(401, 'AUTHENTICATION_REQUIRED', 'Phiên đăng nhập đã hết hạn.');
   let search = '';
+  if (resolveDashboardRule(request.method, path)) {
+    if (!requestCookies(request.headers.get('cookie'), ['access_token']))
+      return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập để xem dashboard.');
+    const input = new URL(request.url).searchParams;
+    if ([...input.keys()].some((key) => input.getAll(key).length !== 1))
+      return error(422, 'INVALID_QUERY', 'Tham số bị lặp.');
+    const parsed = rule.query!.safeParse(Object.fromEntries(input));
+    if (!parsed.success) return error(422, 'INVALID_QUERY', 'Khoảng thời gian không hợp lệ.');
+    search = `?${new URLSearchParams(Object.entries(parsed.data).map(([key, value]) => [key, String(value)]))}`;
+  }
   if (resolveManagerRule(request.method, path) || resolveMentorRule(request.method, path)) {
     if (!requestCookies(request.headers.get('cookie'), ['access_token']))
       return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập bằng tài khoản nhân viên.');

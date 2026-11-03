@@ -226,3 +226,13 @@ Proxy chỉ mở hai GET list mới, cookie access_token/private no-store; thi�
 | GET `/admin/payments/reconciliation`          | page/pageSize; response items có providerOrderCode, referenceCode, amount/currency, nullable paymentId/reason/actorId, source và createdAt. UI chỉ đọc; không allowlist POST `:paymentId/reconcile`.                                                                      |
 
 Proxy kiểm tra duplicate/unsupported query, Zod response, cookie access_token và `private, no-store`. Query hooks được enable duy nhất với ADMIN ACTIVE; tracking filters/page và reconciliation page/pageSize nằm trong query key cùng user ID. Kiểm thử API/E2E dùng fixture giả lập đúng DTO, không gọi mutation hoặc coi mock là xác nhận tài khoản thật.
+
+## Dashboard — 03/11/2026
+
+Contract mới triển khai đồng thời trong BE `codex/dashboard` từ `origin/dev`, chưa chứng minh đã deploy. Browser gọi same-origin `GET /api/v1/{admin|manager|mentor}/dashboard?days=30|90|365` (mặc định 90), chỉ role ACTIVE tương ứng; không body/mentorId. Backend giới hạn Mentor vào classes.mentor_id từ phiên, không gồm dạy thay.
+
+Tìm người dùng (03/11/2026): `GET /api/v1/admin/users` bổ sung query `q` tùy chọn, trim 2–100 ký tự, kết hợp page/pageSize/role/status. Tìm substring tên/email/điện thoại không phân biệt dấu/hoa thường; wildcard `%`, `_`, `\` được hiểu là ký tự literal. Total là toàn bộ kết quả phù hợp trước phân trang. Proxy validate q, bỏ q khi trống; FE debounce 250ms, bắt đầu từ 2 ký tự. Đã kiểm local; cần deploy BE mới trước khi dùng với upstream từ xa.
+
+Response trực tiếp có scope, timeZone Asia/Ho_Chi_Minh, generatedAt/from/to ISO UTC; summary `{courses,classes,openClasses,activeClasses,registrations,students}`; courses/mentors/classes top 10 `{id,name,registrations,students,classes}`; trend `{date,registrations}` theo ngày VN có zero-fill; classStatuses `{status,count}`. Mentor trả mentors `[]`. Chỉ ACTIVE/COMPLETED, enrolled_at trong [from,to) được tính đăng ký; học viên đếm distinct, không cộng số theo từng khóa/mentor. Course/class totals mô tả hiện tại.
+
+Proxy chuyển access cookie/private no-store, từ chối query lạ/lặp, validate role response bằng Zod. Session recovery dùng apiRequest chung; 403 không retry, 422 sửa filter, lỗi/503/502 có Thử lại và không hiện số 0 thay lỗi. Chi tiết đầy đủ trong BE `docs/api_flow/DASHBOARD_flow-api-breakdown.md`. Các bảng công việc Manager và lịch Mentor giữ nguyên contract.
