@@ -1,423 +1,637 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Play, Send } from 'lucide-react';
+import { useState } from 'react';
+import {
+  ArrowLeft,
+  ChevronDown,
+  Clock,
+  CloudUpload,
+  Code2,
+  FileText,
+  History,
+  Loader2,
+  Maximize2,
+  Minimize2,
+  Play,
+  RotateCcw,
+  Ticket,
+  Trophy,
+} from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { codeError, useCodeCommand, useCodeQuery } from '../api/code-queries';
+import { useUserShellFocus } from '@/components/layout/user-shell';
+import { cn } from '@/lib/utils';
+import { codeError, useCodeQuery } from '../api/code-queries';
+import { timeLeft } from '../lib/code-format';
 import {
-  formatValue,
-  isPending,
-  parseCustomArgs,
-  signatureText,
-  timeLeft,
-} from '../lib/code-format';
-import {
-  codeDraftSchema,
   type CodeLanguageKey,
-  runResultSchema,
-  type RunResult,
   type StudentCodeAssignment,
   studentCodeAssignmentSchema,
-  submissionListSchema,
-  submissionSchema,
-  type Submission,
 } from '../schemas/code-contracts';
 import { CodeEditor } from './code-editor';
-import { CodeBadge, CodeBlock, CodeMessage, CodeSection, Statement } from './code-ui';
+import { Kbd, Panel, PanelTabs, TabCount, ToolButton, type PanelTab } from './code-panel';
+import { DifficultyPill, ProblemDescription } from './code-problem-pane';
+import { SubmissionHistory } from './code-submissions';
+import { TestPanel, type TestTab } from './code-test-panel';
+import { type CodeThemeId, codeThemeScheme, CodeThemePicker, useCodeTheme } from './code-theme';
+import { CodeMessage } from './code-ui';
+import { ResizableSplit } from './resizable-split';
+import { type CodeWorkspace, type SaveState, useCodeWorkspace } from './use-code-workspace';
+
+/** Left panel tabs. A shared mentor whiteboard can be added here as another entry later. */
+type ProblemTab = 'problem' | 'history';
 
 export function StudentCodePage(props: { assignmentId: string }) {
+  useUserShellFocus();
   const base = `me/assignments/${props.assignmentId}`;
   const view = useCodeQuery('STUDENT', `${base}/code`, studentCodeAssignmentSchema, {
     refetchInterval: (query) => (query.state.data?.inFlightSubmissionId ? 1500 : false),
   });
   const [language, setLanguage] = useState<CodeLanguageKey | null>(null);
+  const [tab, setTab] = useState<ProblemTab>('problem');
+  const [selected, setSelected] = useState<string | null>(null);
+  const [mobileView, setMobileView] = useState<'problem' | 'code'>('problem');
+  const [theme, setTheme] = useCodeTheme();
   const lang = language ?? view.data?.languages[0]?.key ?? null;
-  if (view.isPending) return <p role="status">Đang tải bài tập…</p>;
+
+  if (view.isPending) return <IdeSkeleton />;
   if (view.error || !view.data)
     return (
-      <CodeMessage tone="error">{codeError(view.error, 'Không mở được bài tập.')}</CodeMessage>
-    );
-  const a = view.data;
-  return (
-    <div className="space-y-6">
-      <Link href="/user/assignments" className="text-link inline-flex items-center gap-1 text-sm">
-        <ArrowLeft className="size-4" aria-hidden="true" /> Bài tập lập trình
-      </Link>
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="space-y-1">
-          <p className="eyebrow">
-            {a.problem.difficulty ?? 'Bài tập'} · {signatureText(a.problem.signature)}
-          </p>
-          <h1 className="section-title">{a.title}</h1>
-        </div>
-        <dl className="grid grid-cols-3 gap-3 text-sm">
-          <Stat label="Hạn nộp" value={timeLeft(a.dueAt, new Date(a.serverNow))} />
-          <Stat label="Lượt còn" value={`${a.attemptsRemaining}/${a.maxAttempts}`} />
-          <Stat label="Điểm cao nhất" value={a.bestScore ? `${a.bestScore}/${a.maxScore}` : '—'} />
-        </dl>
-      </header>
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <CodeSection title="Đề bài">
-          <Statement text={a.problem.statementMd} />
-          {a.problem.constraintsMd && (
-            <div className="space-y-1">
-              <h3 className="font-semibold">Ràng buộc</h3>
-              <Statement text={a.problem.constraintsMd} />
-            </div>
-          )}
-          {a.samples.map((s) => (
-            <div key={s.position} className="space-y-2 rounded-xl bg-soft p-3 text-sm">
-              <p className="font-semibold">Ví dụ {s.position}</p>
-              <p className="font-mono text-xs">Input: {s.display}</p>
-              <p className="font-mono text-xs">Output: {formatValue(s.expected)}</p>
-              {s.explanationMd && <Statement text={s.explanationMd} />}
-            </div>
-          ))}
-          <p className="text-xs text-muted-foreground">
-            Có thêm {a.hiddenTestCount} test ẩn khi chấm. Giới hạn {a.problem.cpuTimeLimitMs} ms ·{' '}
-            {a.problem.memoryLimitMb} MB. Lỗi biên dịch không tính lượt; bài bị mentor huỷ vẫn tính
-            lượt.
-          </p>
-        </CodeSection>
-        {lang && (
-          <Workspace
-            key={lang}
-            base={base}
-            assignment={a}
-            language={lang}
-            onLanguage={setLanguage}
-            onChanged={() => view.refetch()}
-          />
-        )}
+      <div className="space-y-4 p-6">
+        <BackLink />
+        <CodeMessage tone="error">{codeError(view.error, 'Không mở được bài tập.')}</CodeMessage>
       </div>
-      <History base={base} inFlight={a.inFlightSubmissionId} />
-    </div>
-  );
-}
-
-function Stat(props: { label: string; value: string }) {
+    );
+  if (!lang) return null;
   return (
-    <div className="rounded-xl border border-line bg-canvas px-3 py-2">
-      <dt className="text-xs text-muted-foreground">{props.label}</dt>
-      <dd className="font-bold">{props.value}</dd>
-    </div>
+    <CodeIde
+      key={lang}
+      base={base}
+      assignment={view.data}
+      language={lang}
+      onLanguage={setLanguage}
+      onChanged={() => view.refetch()}
+      tab={tab}
+      onTab={setTab}
+      selected={selected}
+      onSelect={setSelected}
+      mobileView={mobileView}
+      onMobileView={setMobileView}
+      theme={theme}
+      onTheme={setTheme}
+    />
   );
 }
 
-function Workspace(props: {
+function BackLink() {
+  return (
+    <Link
+      href="/user/assignments"
+      aria-label="Về danh sách bài tập lập trình"
+      title="Bài tập lập trình"
+      className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-black transition-colors hover:bg-canvas hover:text-mint"
+    >
+      <ArrowLeft aria-hidden="true" className="size-4.5" />
+    </Link>
+  );
+}
+
+function CodeIde(props: {
   base: string;
   assignment: StudentCodeAssignment;
   language: CodeLanguageKey;
   onLanguage: (key: CodeLanguageKey) => void;
   onChanged: () => void;
+  tab: ProblemTab;
+  onTab: (tab: ProblemTab) => void;
+  selected: string | null;
+  onSelect: (id: string | null) => void;
+  mobileView: 'problem' | 'code';
+  onMobileView: (view: 'problem' | 'code') => void;
+  theme: CodeThemeId;
+  onTheme: (theme: CodeThemeId) => void;
 }) {
   const a = props.assignment;
-  const draftPath = `${props.base}/code-drafts/${props.language}`;
-  const draft = useCodeQuery('STUDENT', draftPath, codeDraftSchema);
-  const [source, setSource] = useState<string | null>(null);
-  const version = useRef<number | null>(null);
-  const [saveState, setSaveState] = useState('');
-  const [custom, setCustom] = useState<string[] | null>(null);
-  const [run, setRun] = useState<RunResult | null>(null);
-  const [message, setMessage] = useState<{ tone: 'error' | 'info'; text: string } | null>(null);
+  const [zen, setZen] = useState(false);
+  const [testOpen, setTestOpen] = useState(true);
+  const [testTab, setTestTab] = useState<TestTab>('cases');
   const [confirm, setConfirm] = useState(false);
-  const save = useCodeCommand(codeDraftSchema);
-  const runner = useCodeCommand(runResultSchema);
-  const submit = useCodeCommand(submissionSchema);
-  const code = source ?? draft.data?.sourceCode ?? '';
-
-  // Debounced autosave; conflicts ask for a reload instead of overwriting another tab's work.
-  useEffect(() => {
-    const expectedVersion = version.current ?? draft.data?.version;
-    if (source === null || expectedVersion === undefined) return;
-    const timer = setTimeout(async () => {
-      try {
-        setSaveState('Đang lưu…');
-        const saved = await save.mutateAsync({
-          path: draftPath,
-          method: 'PUT',
-          body: { sourceCode: source, expectedVersion },
-        });
-        version.current = saved.version;
-        setSaveState('Đã lưu nháp');
-      } catch (error) {
-        setSaveState(codeError(error, 'Chưa lưu được nháp'));
-      }
-    }, 2000);
-    return () => clearTimeout(timer);
-    // `save` is stable per component; re-run only when the code changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, draftPath]);
-
-  async function doRun() {
-    setMessage(null);
-    let customArgs: unknown[] | undefined;
-    if (custom) {
-      const parsed = parseCustomArgs(a.problem.signature, custom);
-      if ('error' in parsed) return setMessage({ tone: 'error', text: parsed.error });
-      customArgs = parsed.args;
-    }
-    try {
-      setRun(
-        await runner.mutateAsync({
-          path: `${props.base}/code-runs`,
-          body: {
-            languageKey: props.language,
-            sourceCode: code,
-            ...(customArgs ? { customArgs } : {}),
-          },
-          timeoutMs: 95_000,
-        }),
-      );
-    } catch (error) {
-      setMessage({ tone: 'error', text: codeError(error, 'Chưa chạy được code.') });
-    }
-  }
-
-  async function doSubmit() {
-    setConfirm(false);
-    setMessage(null);
-    try {
-      await submit.mutateAsync({
-        path: `${props.base}/code-submissions`,
-        body: { languageKey: props.language, sourceCode: code },
-        idempotent: true,
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [cursor, setCursor] = useState({ line: 1, column: 1 });
+  const ws = useCodeWorkspace({
+    base: props.base,
+    assignment: a,
+    language: props.language,
+    onSubmitted: (id) => {
+      toast.success('Đã nộp bài', {
+        description: 'Đang chấm với test ẩn, kết quả sẽ tự cập nhật.',
       });
-      setMessage({ tone: 'info', text: 'Đã nộp bài.' });
+      setZen(false);
+      props.onTab('history');
+      props.onSelect(id);
+      props.onMobileView('problem');
       props.onChanged();
-    } catch (error) {
-      setMessage({ tone: 'error', text: codeError(error, 'Chưa nộp được bài.') });
-    }
+    },
+    onSubmitError: (message) => toast.error(message),
+  });
+  const canSubmit = a.canSubmit && !ws.submitting && Boolean(ws.code.trim());
+  const blocked = a.canSubmit
+    ? null
+    : a.deadlinePassed
+      ? 'Đã quá hạn nộp'
+      : a.inFlightSubmissionId
+        ? null
+        : a.attemptsRemaining === 0
+          ? 'Đã hết lượt nộp'
+          : 'Bài tập đã đóng';
+
+  function runAndShow() {
+    setTestTab('result');
+    setTestOpen(true);
+    void ws.doRun();
   }
+  function onShortcut(event: React.KeyboardEvent) {
+    if (event.key !== 'Enter' || !(event.metaKey || event.ctrlKey)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.shiftKey) {
+      if (canSubmit) setConfirm(true);
+    } else runAndShow();
+  }
+
+  const problemTabs: PanelTab<ProblemTab>[] = [
+    { id: 'problem', label: 'Đề bài', icon: FileText, tone: 'text-mint' },
+    {
+      id: 'history',
+      label: 'Lịch sử nộp',
+      icon: History,
+      tone: 'text-coral',
+      badge: <TabCount value={a.attemptsUsed} />,
+    },
+  ];
 
   return (
-    <CodeSection
-      title="Bài làm"
-      actions={
-        <label className="flex items-center gap-2 text-sm font-semibold">
-          Ngôn ngữ
-          <NativeSelect
-            value={props.language}
-            onChange={(e) => props.onLanguage(e.target.value as CodeLanguageKey)}
-          >
-            {a.languages.map((l) => (
-              <NativeSelectOption key={l.key} value={l.key}>
-                {l.displayName} ({l.runtimeVersion})
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        </label>
-      }
+    <div
+      data-code-theme={props.theme}
+      className="code-ide flex min-h-dvh flex-col bg-soft/70 lg:h-dvh lg:min-h-0"
+      onKeyDownCapture={onShortcut}
     >
-      {draft.isPending ? (
-        <p role="status">Đang tải bản nháp…</p>
-      ) : (
-        <CodeEditor
-          label={`Code ${props.language}`}
-          value={code}
-          onChange={setSource}
-          indent={props.language === 'java21' ? '    ' : '  '}
-          rows={20}
-        />
-      )}
-      <p className="text-xs text-muted-foreground" role="status">
-        {saveState}
-      </p>
-      <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={custom !== null}
-            onChange={(e) =>
-              setCustom(e.target.checked ? a.problem.signature.params.map(() => '') : null)
+      <header className="flex flex-wrap items-center gap-x-3 gap-y-2 px-2.5 py-2 lg:grid lg:h-14 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:py-0">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <BackLink />
+          <span aria-hidden="true" className="h-5 w-px bg-line" />
+          <h1 className="min-w-0 truncate text-[15px] font-extrabold text-black">{a.title}</h1>
+          <span className="hidden shrink-0 sm:inline-flex">
+            <DifficultyPill value={a.problem.difficulty} />
+          </span>
+        </div>
+
+        <div className="order-last flex w-full items-center justify-between gap-2 lg:order-none lg:w-auto lg:justify-center">
+          <div className="flex items-center gap-1 rounded-xl bg-canvas p-1 shadow-[0_1px_2px] shadow-forest/10 ring-1 ring-line">
+            <button
+              type="button"
+              onClick={runAndShow}
+              disabled={ws.running || !ws.code.trim()}
+              title="Chạy thử với ví dụ (Ctrl/⌘ + Enter)"
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[13px] font-bold text-black transition-colors duration-150 outline-none hover:bg-soft focus-visible:ring-2 focus-visible:ring-mint disabled:opacity-50"
+            >
+              {ws.running ? (
+                <Loader2 aria-hidden="true" className="size-3.5 animate-spin text-mint" />
+              ) : (
+                <Play aria-hidden="true" className="size-3.5 fill-current text-mint" />
+              )}
+              {ws.running ? 'Đang chạy…' : 'Chạy thử'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirm(true)}
+              disabled={!canSubmit}
+              title={blocked ?? 'Nộp bài để chấm với test ẩn (Ctrl/⌘ + Shift + Enter)'}
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-forest px-3.5 text-[13px] font-bold text-canvas transition-[background-color,transform] duration-150 outline-none hover:bg-mint focus-visible:ring-2 focus-visible:ring-mint focus-visible:ring-offset-1 active:scale-[0.97] disabled:bg-forest/45"
+            >
+              {ws.submitting ? (
+                <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
+              ) : (
+                <CloudUpload aria-hidden="true" className="size-3.5" />
+              )}
+              Nộp bài
+            </button>
+          </div>
+          {a.inFlightSubmissionId ? (
+            <button
+              type="button"
+              onClick={() => {
+                props.onTab('history');
+                props.onSelect(a.inFlightSubmissionId);
+                props.onMobileView('problem');
+              }}
+              className="animate-in fade-in-0 slide-in-from-left-1 inline-flex h-7 items-center gap-1.5 rounded-full bg-canvas px-2.5 text-xs font-bold text-forest ring-1 ring-line duration-300"
+            >
+              <span aria-hidden="true" className="size-1.5 animate-pulse rounded-full bg-coral" />
+              Đang chấm…
+            </button>
+          ) : (
+            blocked && <span className="text-xs font-bold text-headsup">{blocked}</span>
+          )}
+        </div>
+
+        <dl className="flex flex-wrap items-center gap-1.5 lg:flex-nowrap lg:justify-end">
+          <Meta
+            icon={Clock}
+            label="Hạn nộp"
+            value={timeLeft(a.dueAt, new Date(a.serverNow))}
+            tone={
+              a.deadlinePassed
+                ? 'bad'
+                : new Date(a.dueAt).getTime() - new Date(a.serverNow).getTime() < 86_400_000
+                  ? 'warn'
+                  : null
             }
           />
-          Chạy với input tự nhập
-        </label>
-        {custom && (
-          <div className="grid gap-2 sm:grid-cols-2">
-            {a.problem.signature.params.map((p, i) => (
-              <label key={p.name} className="space-y-1 text-sm">
-                <span className="font-mono text-xs">
-                  {p.name}: {p.type}
-                </span>
-                <Input
-                  value={custom[i] ?? ''}
-                  onChange={(e) => setCustom(custom.map((v, j) => (j === i ? e.target.value : v)))}
-                  className="font-mono"
+          <Meta icon={Ticket} label="Lượt còn" value={`${a.attemptsRemaining}/${a.maxAttempts}`} />
+          <Meta
+            icon={Trophy}
+            label="Điểm cao nhất"
+            value={a.bestScore ? `${a.bestScore}/${a.maxScore}` : '—'}
+          />
+        </dl>
+      </header>
+
+      <MobileSwitch value={props.mobileView} onChange={props.onMobileView} />
+
+      <div className="flex min-h-0 flex-1 flex-col px-2 pb-2 lg:px-2.5 lg:pb-2.5">
+        <ResizableSplit
+          direction="horizontal"
+          storageKey="mindy.code.split.x"
+          defaultRatio={0.42}
+          minFirst={340}
+          minSecond={460}
+          collapse={zen ? 'first' : null}
+          label="Kéo để đổi độ rộng đề bài và code"
+          className="flex-1"
+          firstClassName={cn(props.mobileView !== 'problem' && 'max-lg:hidden')}
+          secondClassName={cn(props.mobileView !== 'code' && 'max-lg:hidden')}
+          first={
+            <Panel label="Đề bài và lịch sử nộp">
+              <PanelTabs
+                label="Nội dung bài"
+                idPrefix="code-problem"
+                tabs={problemTabs}
+                value={props.tab}
+                onChange={props.onTab}
+              />
+              <div
+                id="code-problem-panel"
+                role="tabpanel"
+                aria-labelledby={`code-problem-tab-${props.tab}`}
+                className="relative min-h-0 flex-1"
+              >
+                <div
+                  hidden={props.tab !== 'problem'}
+                  className="code-ide-scroll animate-in fade-in-0 h-full overflow-y-auto duration-200"
+                >
+                  <ProblemDescription assignment={a} />
+                </div>
+                <div
+                  hidden={props.tab !== 'history'}
+                  className="code-ide-scroll animate-in fade-in-0 h-full overflow-y-auto duration-200"
+                >
+                  <SubmissionHistory
+                    base={props.base}
+                    inFlight={a.inFlightSubmissionId}
+                    selected={props.selected}
+                    onSelect={props.onSelect}
+                  />
+                </div>
+              </div>
+            </Panel>
+          }
+          second={
+            <ResizableSplit
+              direction="vertical"
+              storageKey="mindy.code.split.y"
+              defaultRatio={0.64}
+              minFirst={180}
+              minSecond={150}
+              collapse={testOpen ? null : 'second'}
+              collapsedSize={40}
+              label="Kéo để đổi chiều cao khung code và kiểm thử"
+              className="h-full"
+              first={
+                <EditorPane
+                  assignment={a}
+                  ws={ws}
+                  language={props.language}
+                  onLanguage={props.onLanguage}
+                  zen={zen}
+                  onZen={() => setZen(!zen)}
+                  onReset={() => setConfirmReset(true)}
+                  cursor={cursor}
+                  onCursor={(line, column) => setCursor({ line, column })}
+                  theme={props.theme}
+                  onTheme={props.onTheme}
                 />
-              </label>
-            ))}
-          </div>
-        )}
+              }
+              second={
+                <TestPanel
+                  assignment={a}
+                  ws={ws}
+                  tab={testTab}
+                  onTab={setTestTab}
+                  open={testOpen}
+                  onToggle={() => setTestOpen(!testOpen)}
+                />
+              }
+            />
+          }
+        />
       </div>
-      <div className="flex flex-wrap gap-3">
-        <Button variant="outline" onClick={doRun} disabled={runner.isPending || !code.trim()}>
-          <Play aria-hidden="true" /> {runner.isPending ? 'Đang chạy…' : 'Chạy thử'}
-        </Button>
-        <Button
-          onClick={() => setConfirm(true)}
-          disabled={!a.canSubmit || submit.isPending || !code.trim()}
-        >
-          <Send aria-hidden="true" /> Nộp bài
-        </Button>
-        {!a.canSubmit && (
-          <span className="self-center text-sm text-muted-foreground">
-            {a.deadlinePassed
-              ? 'Đã quá hạn nộp.'
-              : a.inFlightSubmissionId
-                ? 'Bài trước đang được chấm.'
-                : a.attemptsRemaining === 0
-                  ? 'Đã hết lượt nộp.'
-                  : 'Bài tập đã đóng.'}
-          </span>
-        )}
-      </div>
-      {message && <CodeMessage tone={message.tone}>{message.text}</CodeMessage>}
-      {run && <RunPanel result={run} />}
+
       {confirm && (
-        <Modal title="Nộp bài?" onClose={() => setConfirm(false)}>
-          <div className="space-y-4">
-            <p>
-              Bài nộp dùng 1 lượt ({a.attemptsRemaining} lượt còn lại). Điểm của bài là lần nộp cao
-              nhất.
+        <Modal
+          title="Nộp bài?"
+          onClose={() => setConfirm(false)}
+          contentClassName="assignment-workspace font-sans max-w-md sm:max-w-md"
+        >
+          <div className="space-y-5 p-5">
+            <p className="text-[15px] leading-6">
+              Bài nộp dùng 1 lượt (còn <strong>{a.attemptsRemaining}</strong> lượt). Điểm của bài là
+              lần nộp cao nhất.
             </p>
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-wrap justify-end gap-3">
               <Button variant="outline" onClick={() => setConfirm(false)}>
                 Huỷ
               </Button>
-              <Button onClick={doSubmit}>Nộp bài</Button>
+              <Button
+                onClick={() => {
+                  setConfirm(false);
+                  void ws.doSubmit();
+                }}
+              >
+                <CloudUpload aria-hidden="true" /> Nộp bài
+              </Button>
             </div>
           </div>
         </Modal>
       )}
-    </CodeSection>
-  );
-}
-
-function RunPanel(props: { result: RunResult }) {
-  const r = props.result;
-  if (r.compileStatus !== 'OK')
-    return (
-      <CodeBlock
-        label={r.compileStatus === 'TIMEOUT' ? 'Biên dịch quá lâu' : 'Lỗi biên dịch'}
-        value={r.compileOutput}
-      />
-    );
-  return (
-    <div className="space-y-3">
-      {r.tests.map((t, i) => (
-        <div key={i} className="space-y-2 rounded-xl border border-line p-3 text-sm">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="font-semibold">
-              {t.kind === 'SAMPLE' ? `Ví dụ ${t.position}` : 'Input tự nhập'} · {t.timeMs} ms
-            </span>
-            <CodeBadge value={t.status} />
+      {confirmReset && (
+        <Modal
+          title="Khôi phục code mẫu?"
+          onClose={() => setConfirmReset(false)}
+          contentClassName="assignment-workspace font-sans max-w-md sm:max-w-md"
+        >
+          <div className="space-y-5 p-5">
+            <p className="text-[15px] leading-6">
+              Code hiện tại sẽ được thay bằng code mẫu ban đầu. Bạn vẫn có thể hoàn tác bằng Ctrl/⌘
+              + Z ngay sau đó.
+            </p>
+            <div className="flex flex-wrap justify-end gap-3">
+              <Button variant="outline" onClick={() => setConfirmReset(false)}>
+                Huỷ
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  setConfirmReset(false);
+                  ws.resetToStarter();
+                }}
+              >
+                Khôi phục
+              </Button>
+            </div>
           </div>
-          <p className="font-mono text-xs">Input: {t.display}</p>
-          {t.kind === 'SAMPLE' && (
-            <p className="font-mono text-xs">Mong đợi: {formatValue(t.expected)}</p>
-          )}
-          <p className="font-mono text-xs">Kết quả: {formatValue(t.actual)}</p>
-          {t.console && <CodeBlock label="Console" value={t.console} />}
-          {t.stderr && <CodeBlock label="Lỗi" value={t.stderr} />}
-        </div>
-      ))}
+        </Modal>
+      )}
     </div>
   );
 }
 
-function History(props: { base: string; inFlight: string | null }) {
-  const [selected, setSelected] = useState<string | null>(null);
-  const list = useCodeQuery('STUDENT', `${props.base}/code-submissions`, submissionListSchema, {
-    refetchInterval: (query) =>
-      props.inFlight || query.state.data?.items.some((s) => isPending(s.status)) ? 1500 : false,
-  });
-  const id = selected ?? props.inFlight ?? list.data?.items[0]?.id ?? null;
+function Meta(props: {
+  icon: typeof Clock;
+  label: string;
+  value: string;
+  tone?: 'warn' | 'bad' | null;
+}) {
   return (
-    <CodeSection title="Lịch sử nộp bài">
-      {list.error && <CodeMessage tone="error">{codeError(list.error)}</CodeMessage>}
-      {list.data && !list.data.items.length && (
-        <p className="text-sm text-muted-foreground">Chưa nộp lần nào.</p>
+    <div
+      title={props.label}
+      className={cn(
+        'flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] ring-1 transition-colors',
+        props.tone === 'bad'
+          ? 'bg-peach text-headsup ring-headsup/25'
+          : props.tone === 'warn'
+            ? 'bg-peach text-black ring-coral/30'
+            : 'bg-canvas text-black ring-line',
       )}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <ul className="space-y-2">
-          {list.data?.items.map((s) => (
-            <li key={s.id}>
-              <button
-                type="button"
-                onClick={() => setSelected(s.id)}
-                aria-current={s.id === id}
-                className="flex w-full flex-wrap items-center justify-between gap-2 rounded-xl border border-line p-3 text-left text-sm hover:bg-soft aria-[current=true]:bg-soft"
-              >
-                <span>
-                  Lần {s.attemptNumber} · {new Date(s.submittedAt).toLocaleString('vi-VN')}
-                </span>
-                <span className="flex items-center gap-2">
-                  {s.score && <span className="font-bold">{s.score}</span>}
-                  <CodeBadge value={s.status === 'GRADED' ? s.verdict : s.status} />
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-        {id && <SubmissionDetail id={id} />}
-      </div>
-    </CodeSection>
+    >
+      <dt className="sr-only">{props.label}</dt>
+      <props.icon
+        aria-hidden="true"
+        className={cn('size-3.5', props.tone ? 'text-current' : 'text-muted/60')}
+      />
+      <dd className="font-bold whitespace-nowrap tabular-nums">{props.value}</dd>
+    </div>
   );
 }
 
-function SubmissionDetail(props: { id: string }) {
-  const [pending, setPending] = useState(true);
-  const detail = useCodeQuery('STUDENT', `me/code-submissions/${props.id}`, submissionSchema, {
-    refetchInterval: pending ? 1500 : false,
-  });
-  const s: Submission | undefined = detail.data;
-  if (s && pending !== isPending(s.status)) setPending(isPending(s.status));
-  if (!s) return <p role="status">Đang tải bài nộp…</p>;
+function MobileSwitch(props: {
+  value: 'problem' | 'code';
+  onChange: (value: 'problem' | 'code') => void;
+}) {
   return (
-    <div className="space-y-3 text-sm">
-      <div className="flex flex-wrap items-center gap-3">
-        <CodeBadge value={s.status} kind="status" />
-        {s.verdict && <CodeBadge value={s.verdict} />}
-        {s.score && (
-          <span className="font-bold">
-            {s.score}/{s.maxScore} điểm
-          </span>
-        )}
-        {s.passedCount !== null && s.totalCount !== null && (
-          <span>
-            Đạt {s.passedCount}/{s.totalCount} test
-          </span>
-        )}
-        {!s.countsAsAttempt && <span className="text-muted-foreground">Không tính lượt</span>}
+    <div className="px-2 pb-2 lg:hidden">
+      <div
+        role="tablist"
+        aria-label="Chế độ xem"
+        className="relative grid grid-cols-2 rounded-xl bg-canvas p-1 ring-1 ring-line"
+      >
+        <span
+          aria-hidden="true"
+          className={cn(
+            'absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-lg bg-forest transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
+            props.value === 'code' && 'translate-x-full',
+          )}
+        />
+        {(
+          [
+            ['problem', 'Đề bài', FileText],
+            ['code', 'Code', Code2],
+          ] as const
+        ).map(([id, label, Icon]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={props.value === id}
+            onClick={() => props.onChange(id)}
+            className={cn(
+              'relative z-10 inline-flex h-9 items-center justify-center gap-1.5 rounded-lg text-sm font-bold transition-colors duration-300',
+              props.value === id ? 'text-canvas' : 'text-muted/80',
+            )}
+          >
+            <Icon aria-hidden="true" className="size-4" /> {label}
+          </button>
+        ))}
       </div>
-      {isPending(s.status) && <p role="status">Đang chấm, kết quả sẽ tự cập nhật…</p>}
-      {s.status === 'FAILED' && (
-        <CodeMessage tone="error">Lỗi hệ thống khi chấm. Mentor sẽ chấm lại.</CodeMessage>
+    </div>
+  );
+}
+
+function SaveIndicator(props: { state: SaveState }) {
+  const s = props.state;
+  return (
+    <span
+      role="status"
+      className={cn(
+        'inline-flex items-center gap-1.5 text-xs transition-opacity duration-300',
+        s.kind === 'error' ? 'text-syn-literal' : 'text-ide-muted',
+        s.kind === 'idle' && 'opacity-0',
       )}
-      {s.voidedReason && <CodeMessage tone="error">Bài bị huỷ: {s.voidedReason}</CodeMessage>}
-      {s.compileOutput && s.verdict === 'COMPILE_ERROR' && (
-        <CodeBlock label="Lỗi biên dịch" value={s.compileOutput} />
+    >
+      {s.kind === 'saving' && (
+        <>
+          <Loader2 aria-hidden="true" className="size-3 animate-spin" />
+          Đang lưu…
+        </>
       )}
-      {s.tests?.map((t) => (
-        <div
-          key={t.position}
-          className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-soft px-3 py-2"
+      {s.kind === 'saved' && (
+        <>
+          <span aria-hidden="true" className="size-1.5 rounded-full bg-syn-string" />
+          <span>Đã lưu nháp</span>
+        </>
+      )}
+      {s.kind === 'error' && s.text}
+    </span>
+  );
+}
+
+function EditorPane(props: {
+  assignment: StudentCodeAssignment;
+  ws: CodeWorkspace;
+  language: CodeLanguageKey;
+  onLanguage: (key: CodeLanguageKey) => void;
+  zen: boolean;
+  onZen: () => void;
+  onReset: () => void;
+  cursor: { line: number; column: number };
+  onCursor: (line: number, column: number) => void;
+  theme: CodeThemeId;
+  onTheme: (theme: CodeThemeId) => void;
+}) {
+  const a = props.assignment;
+  const current = a.languages.find((l) => l.key === props.language);
+  const indent = props.language === 'java21' ? '    ' : '  ';
+  return (
+    <section
+      aria-label="Bài làm"
+      style={{ colorScheme: codeThemeScheme(props.theme) }}
+      className="flex h-[min(70dvh,36rem)] min-h-0 flex-col overflow-hidden rounded-xl bg-ide shadow-[0_1px_3px] shadow-forest/20 ring-1 ring-ide-line lg:h-full"
+    >
+      <div className="flex h-10 shrink-0 items-center gap-2 border-b border-ide-line bg-ide-deep pr-1.5 pl-3">
+        <Code2 aria-hidden="true" className="size-4 text-syn-string" />
+        <span className="text-[13px] font-bold text-ide-text">Code</span>
+        <span aria-hidden="true" className="mx-1 h-4 w-px bg-ide-line" />
+        <label className="relative inline-flex items-center">
+          <span className="sr-only">Ngôn ngữ</span>
+          <select
+            value={props.language}
+            onChange={(e) => props.onLanguage(e.target.value as CodeLanguageKey)}
+            className="h-7 cursor-pointer appearance-none rounded-md bg-transparent py-0 pr-7 pl-2 text-[13px] font-bold text-ide-text transition-colors outline-none hover:bg-ide-raised focus-visible:ring-2 focus-visible:ring-mint"
+          >
+            {a.languages.map((l) => (
+              <option key={l.key} value={l.key} className="bg-ide-deep text-ide-text">
+                {l.displayName} ({l.runtimeVersion})
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            aria-hidden="true"
+            className="pointer-events-none absolute right-2 size-3.5 text-ide-muted"
+          />
+        </label>
+        <span className="ml-auto" />
+        <SaveIndicator state={props.ws.saveState} />
+        <CodeThemePicker value={props.theme} onChange={props.onTheme} />
+        <ToolButton
+          dark
+          label="Khôi phục code mẫu"
+          onClick={props.onReset}
+          disabled={!props.ws.canReset}
         >
-          <span>
-            {t.visibility === 'SAMPLE' ? `Ví dụ ${t.position}` : `Test ẩn ${t.position}`} ·{' '}
-            {t.timeMs} ms
-            {t.visibility === 'SAMPLE' && ` · kết quả ${formatValue(t.actual)}`}
-          </span>
-          <CodeBadge value={t.status} />
+          <RotateCcw aria-hidden="true" />
+        </ToolButton>
+        <span className="hidden lg:inline-flex">
+          <ToolButton
+            dark
+            label={props.zen ? 'Thu nhỏ khung code' : 'Phóng to khung code'}
+            pressed={props.zen}
+            onClick={props.onZen}
+          >
+            {props.zen ? <Minimize2 aria-hidden="true" /> : <Maximize2 aria-hidden="true" />}
+          </ToolButton>
+        </span>
+      </div>
+      <div className="min-h-0 flex-1">
+        {props.ws.draftLoading ? (
+          <div role="status" className="space-y-2.5 px-14 py-4">
+            <span className="sr-only">Đang tải bản nháp…</span>
+            {[48, 64, 36, 56].map((w) => (
+              <div
+                key={w}
+                className="h-3 animate-pulse rounded bg-ide-raised"
+                style={{ width: `${w}%` }}
+              />
+            ))}
+          </div>
+        ) : (
+          <CodeEditor
+            fill
+            label={`Code ${props.language}`}
+            value={props.ws.code}
+            onChange={props.ws.setCode}
+            language={props.language}
+            indent={indent}
+            onCursor={props.onCursor}
+          />
+        )}
+      </div>
+      <div className="flex h-7 shrink-0 items-center gap-4 border-t border-ide-line bg-ide-deep px-3 text-[11.5px] text-ide-muted">
+        <span className="tabular-nums">
+          Dòng {props.cursor.line}, Cột {props.cursor.column}
+        </span>
+        <span className="hidden sm:inline">Thụt lề: {indent.length} dấu cách</span>
+        <span className="ml-auto hidden items-center gap-1.5 md:inline-flex">
+          <Kbd>Ctrl</Kbd>
+          <Kbd>↵</Kbd> chạy thử
+          <span className="mx-1 opacity-40">·</span>
+          <Kbd>Ctrl</Kbd>
+          <Kbd>/</Kbd> chú thích
+        </span>
+        <span className="hidden xl:inline">{current?.runtimeVersion}</span>
+      </div>
+    </section>
+  );
+}
+
+function IdeSkeleton() {
+  return (
+    <div role="status" className="flex min-h-dvh flex-col gap-2 bg-soft/70 p-2.5 lg:h-dvh">
+      <span className="sr-only">Đang tải bài tập…</span>
+      <div className="flex h-11 items-center gap-3">
+        <div className="size-9 animate-pulse rounded-lg bg-canvas" />
+        <div className="h-4 w-48 animate-pulse rounded bg-canvas" />
+        <div className="mx-auto h-9 w-48 animate-pulse rounded-xl bg-canvas" />
+        <div className="hidden h-8 w-64 animate-pulse rounded-lg bg-canvas lg:block" />
+      </div>
+      <div className="grid min-h-0 flex-1 gap-2 lg:grid-cols-[42%_1fr]">
+        <div className="animate-pulse rounded-xl bg-canvas" />
+        <div className="grid min-h-0 gap-2 lg:grid-rows-[64%_1fr]">
+          <div className="min-h-64 animate-pulse rounded-xl bg-ide" />
+          <div className="hidden animate-pulse rounded-xl bg-canvas lg:block" />
         </div>
-      ))}
-      {s.sourceCode && <CodeBlock label="Code đã nộp" value={s.sourceCode} />}
+      </div>
     </div>
   );
 }

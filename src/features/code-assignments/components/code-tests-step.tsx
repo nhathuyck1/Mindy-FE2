@@ -271,6 +271,8 @@ export function CodeTestsStep(props: {
           <CodeEditor
             label={`Lời giải mẫu ${primary === 'java21' ? 'Java' : 'JavaScript'}`}
             value={sources[primary] ?? ''}
+            language={primary}
+            indent={primary === 'java21' ? '    ' : '  '}
             onChange={(value) => {
               setSources((s) => ({ ...s, [primary]: value }));
               setRows((all) => all.map((r) => (r.expected ? { ...r, stale: true } : r)));

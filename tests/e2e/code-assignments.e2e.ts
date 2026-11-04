@@ -192,16 +192,29 @@ test('student saves, runs custom input, submits and receives the grade without r
   });
   await page.goto(`/user/assignments/${assignmentId}`);
   await expect(page.getByRole('heading', { name: 'Cộng hai số' })).toBeVisible();
+  // Full-height workspace: the account top bar steps aside.
+  await expect(page.getByRole('banner').getByText('Tài khoản của tôi')).toBeHidden();
+  if (testInfo.project.name === 'mobile') {
+    await expect(page.getByText('Trả về tổng của a và b.')).toBeVisible();
+    await page.getByRole('tab', { name: 'Code', exact: true }).click();
+  }
   await page.getByRole('textbox', { name: 'Code javascript' }).fill(solution);
   await expect(page.getByText('Đã lưu nháp', { exact: true })).toBeVisible();
   expect(draft.sourceCode).toBe(solution);
-  await page.getByRole('checkbox', { name: 'Chạy với input tự nhập' }).check();
+  await page.getByRole('button', { name: 'Tự nhập', exact: true }).click();
   await page.getByLabel('a: int', { exact: true }).fill('4');
   await page.getByLabel('b: int', { exact: true }).fill('5');
   await page.getByRole('button', { name: 'Chạy thử', exact: true }).click();
-  await expect(page.getByText('Kết quả: 9', { exact: true })).toBeVisible();
+  const result = page.getByRole('region', { name: 'Kết quả chạy thử' });
+  await expect(result).toContainText('Đã chạy');
+  await expect(result).toContainText('9');
   await page.getByRole('button', { name: 'Nộp bài', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Nộp bài', exact: true }).click();
+  // After submitting, the left panel switches to the submission history and follows the grading.
+  await expect(page.getByRole('tab', { name: /Lịch sử nộp/ })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
   await expect(page.getByText('10.00/10.00 điểm', { exact: true })).toBeVisible();
   expect(idempotencyKey).toMatch(/^[\da-f-]{36}$/);
   await expect(page.getByRole('button', { name: 'Nộp bài', exact: true })).toBeEnabled();

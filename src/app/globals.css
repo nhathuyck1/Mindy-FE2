@@ -65,6 +65,90 @@
   --font-sans: var(--font-brand);
 }
 
+/* Code editor colours resolve per element so `data-code-theme` can switch them at runtime. */
+@theme inline {
+  --color-ide: var(--ide-bg);
+  --color-ide-deep: var(--ide-deep);
+  --color-ide-raised: var(--ide-raised);
+  --color-ide-line: var(--ide-line);
+  --color-ide-active: var(--ide-active);
+  --color-ide-text: var(--ide-text);
+  --color-ide-muted: var(--ide-muted);
+  --color-syn-keyword: var(--syn-keyword);
+  --color-syn-control: var(--syn-control);
+  --color-syn-string: var(--syn-string);
+  --color-syn-number: var(--syn-number);
+  --color-syn-literal: var(--syn-literal);
+  --color-syn-function: var(--syn-function);
+  --color-syn-type: var(--syn-type);
+  --color-syn-property: var(--syn-property);
+  --color-syn-operator: var(--syn-operator);
+  --color-syn-comment: var(--syn-comment);
+}
+
+/* Editor themes. Syntax hues are the only colours allowed outside the palette: an IDE needs
+   distinct token colours to stay readable. Every theme defines every variable. */
+@layer base {
+  :root,
+  [data-code-theme='mindy'] {
+    --ide-bg: color-mix(in oklab, var(--color-forest) 26%, oklch(18% 0.006 200));
+    --ide-deep: color-mix(in oklab, var(--color-forest) 20%, oklch(14.5% 0.006 200));
+    --ide-raised: color-mix(in oklab, var(--color-forest) 30%, oklch(25% 0.006 200));
+    --ide-line: color-mix(in oklab, var(--color-forest) 30%, oklch(30% 0.006 200));
+    --ide-active: oklch(100% 0 0 / 0.045);
+    --ide-text: oklch(92% 0.012 190);
+    --ide-muted: oklch(64% 0.022 190);
+    --syn-keyword: color-mix(in oklab, var(--color-coral) 88%, var(--color-canvas));
+    --syn-control: oklch(76% 0.12 335);
+    --syn-string: color-mix(in oklab, var(--color-mint) 35%, oklch(90% 0.11 160));
+    --syn-number: var(--color-sunshine);
+    --syn-literal: color-mix(in oklab, var(--color-headsup) 70%, var(--color-canvas));
+    --syn-function: oklch(82% 0.1 235);
+    --syn-type: oklch(84% 0.1 188);
+    --syn-property: oklch(87% 0.045 220);
+    --syn-operator: oklch(80% 0.035 200);
+    --syn-comment: oklch(60% 0.03 190);
+  }
+  [data-code-theme='night'] {
+    --ide-bg: oklch(21.5% 0.012 265);
+    --ide-deep: oklch(18.5% 0.012 265);
+    --ide-raised: oklch(27% 0.014 265);
+    --ide-line: oklch(30% 0.014 265);
+    --ide-active: oklch(100% 0 0 / 0.04);
+    --ide-text: oklch(88% 0.012 255);
+    --ide-muted: oklch(58% 0.02 260);
+    --syn-keyword: oklch(73% 0.14 300);
+    --syn-control: oklch(73% 0.14 330);
+    --syn-string: oklch(80% 0.13 135);
+    --syn-number: oklch(80% 0.12 60);
+    --syn-literal: oklch(76% 0.13 40);
+    --syn-function: oklch(78% 0.12 245);
+    --syn-type: oklch(85% 0.11 88);
+    --syn-property: oklch(78% 0.09 20);
+    --syn-operator: oklch(78% 0.04 220);
+    --syn-comment: oklch(56% 0.025 255);
+  }
+  [data-code-theme='light'] {
+    --ide-bg: var(--color-canvas);
+    --ide-deep: color-mix(in oklab, var(--color-mint) 6%, var(--color-canvas));
+    --ide-raised: color-mix(in oklab, var(--color-mint) 12%, var(--color-canvas));
+    --ide-line: color-mix(in oklab, var(--color-mint) 20%, var(--color-canvas));
+    --ide-active: color-mix(in oklab, var(--color-mint) 7%, transparent);
+    --ide-text: oklch(27% 0.02 200);
+    --ide-muted: oklch(55% 0.02 200);
+    --syn-keyword: oklch(54% 0.19 30);
+    --syn-control: oklch(50% 0.2 345);
+    --syn-string: oklch(50% 0.12 160);
+    --syn-number: oklch(52% 0.16 255);
+    --syn-literal: oklch(56% 0.17 50);
+    --syn-function: oklch(48% 0.18 290);
+    --syn-type: var(--color-forest);
+    --syn-property: oklch(45% 0.11 240);
+    --syn-operator: oklch(42% 0.03 220);
+    --syn-comment: oklch(60% 0.02 200);
+  }
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
@@ -153,6 +237,12 @@
   .user-workspace-collapsed {
     @apply lg:grid-cols-[76px_minmax(0,1fr)];
   }
+  .user-workspace {
+    transition: grid-template-columns 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .user-main-focus {
+    @apply min-h-dvh w-full lg:h-dvh lg:overflow-hidden;
+  }
   .user-sidebar {
     @apply sticky top-0 hidden h-dvh flex-col border-r border-line bg-canvas lg:flex;
   }
@@ -197,5 +287,41 @@
   }
   .learning-article :is(th, td) {
     @apply border border-line px-4 py-2;
+  }
+}
+
+@layer components {
+  /* Smooth panel resizing; disabled while the user drags a handle. */
+  .code-split {
+    transition:
+      grid-template-columns 260ms cubic-bezier(0.22, 1, 0.36, 1),
+      grid-template-rows 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .code-split[data-dragging='true'] {
+    transition: none;
+  }
+  @keyframes code-progress {
+    from {
+      left: -33%;
+    }
+    to {
+      left: 100%;
+    }
+  }
+  .code-ide-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--color-mint) 30%, transparent) transparent;
+  }
+  .code-ide-dark-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ide-line) transparent;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .code-ide *,
+    .code-ide *::before,
+    .code-ide *::after {
+      animation-duration: 1ms !important;
+      transition-duration: 1ms !important;
+    }
   }
 }

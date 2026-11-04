@@ -252,7 +252,13 @@ export function MentorCodeSubmissionPage(props: { submissionId: string }) {
       </div>
       {notice && <CodeMessage tone={notice.tone}>{notice.text}</CodeMessage>}
       <CodeSection title="Code">
-        <CodeEditor label="Code học viên" value={s.sourceCode ?? ''} readOnly rows={18} />
+        <CodeEditor
+          label="Code học viên"
+          value={s.sourceCode ?? ''}
+          language={s.languageKey}
+          readOnly
+          rows={18}
+        />
         {s.compileOutput && <CodeBlock label="Output biên dịch" value={s.compileOutput} />}
       </CodeSection>
       <CodeSection title="Kết quả từng test">
