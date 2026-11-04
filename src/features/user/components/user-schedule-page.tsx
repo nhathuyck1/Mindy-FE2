@@ -1,23 +1,23 @@
 'use client';
-
 import { useState } from 'react';
-import {
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  UserRound,
-  Monitor,
-  MapPin,
-} from 'lucide-react';
+import { BookOpen, CalendarDays, Clock, UserRound, Video, MapPin, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ScheduleWeekControls } from '@/components/ui/schedule-week-controls';
+import { WeeklyTimetable } from '@/components/ui/weekly-timetable';
+import {
+  calendarDate,
+  shortClassCode,
+  shortDate,
+  shiftDate,
+  weekStart,
+  vietnamDate,
+} from '@/lib/weekly-timetable';
 import { formatDate, formatTime, deliveryLabel } from '@/features/courses/lib/course-format';
 import { useMySchedule } from '../api/user-queries';
-import { scheduleWeek, shiftDate, vietnamToday } from '../lib/schedule-week';
+import { scheduleWeek } from '../lib/schedule-week';
 import { UserDataState } from './user-data-state';
 import { UserDetailsDialog } from './user-details-dialog';
 import type { ScheduleEvent } from '../schemas/user-contracts';
-const weekdays = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
 const statuses = {
   SCHEDULED: 'Sắp diễn ra',
   IN_PROGRESS: 'Đang diễn ra',
@@ -25,233 +25,165 @@ const statuses = {
   CANCELLED: 'Đã hủy',
 };
 const attendanceLabels = { PRESENT: 'Có mặt', ABSENT: 'Vắng' } as const;
+function StudentTimetableSession(props: {
+  event: ScheduleEvent;
+  day: string;
+  onSelect: () => void;
+}) {
+  const { event } = props;
+  const starts = vietnamDate(event.startsAt);
+  const ends = vietnamDate(event.endsAt);
+  return (
+    <button
+      type="button"
+      aria-label={'Xem chi tiết ' + event.sessionTitle}
+      onClick={props.onSelect}
+      className="grid min-h-26 w-full cursor-pointer content-start gap-1 rounded-md p-1 text-left transition-colors hover:bg-mint/8 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint"
+    >
+      <span className="flex min-w-0 items-center gap-1 text-[13px] leading-4 font-extrabold text-mint">
+        <BookOpen aria-hidden="true" className="size-3.5 shrink-0" />
+        <span
+          className={
+            'min-w-0 truncate ' + (event.sessionStatus === 'CANCELLED' ? 'line-through' : '')
+          }
+          title={event.classCode + ' · ' + event.courseTitle}
+        >
+          {shortClassCode(event.classCode)}
+        </span>
+      </span>
+      <span className="flex min-w-0 items-center gap-1 text-[11px] leading-4 font-bold text-status-yellow">
+        <Clock aria-hidden="true" className="size-3 shrink-0" />
+        <span
+          className="truncate"
+          title={
+            formatDate(event.startsAt) +
+            ' ' +
+            formatTime(event.startsAt) +
+            ' – ' +
+            formatDate(event.endsAt) +
+            ' ' +
+            formatTime(event.endsAt)
+          }
+        >
+          {starts !== props.day ? shortDate(starts) + ' ' : ''}
+          {formatTime(event.startsAt)} – {ends !== props.day ? shortDate(ends) + ' ' : ''}
+          {formatTime(event.endsAt)}
+        </span>
+      </span>
+      <span
+        className={
+          'flex min-w-0 items-center gap-1 text-[11px] leading-4 font-bold ' +
+          (event.deliveryMode === 'ONLINE' ? 'text-status-green' : 'text-forest')
+        }
+      >
+        {event.deliveryMode === 'ONLINE' ? (
+          <Video aria-hidden="true" className="size-3 shrink-0" />
+        ) : (
+          <MapPin aria-hidden="true" className="size-3 shrink-0" />
+        )}
+        {event.deliveryMode === 'ONLINE' ? 'Online' : 'Offline'}
+      </span>
+      <span className="flex min-w-0 items-center gap-1 text-[11px] leading-4 text-muted">
+        <UserRound aria-hidden="true" className="size-3 shrink-0" />
+        <span className="min-w-0 truncate" title={event.mentor?.displayName || undefined}>
+          {event.mentor?.displayName || 'Chưa xác định giảng viên'}
+        </span>
+      </span>
+      {event.attendanceStatus && event.attendanceStatus !== 'UNMARKED' && (
+        <span className="text-xs font-bold">
+          Điểm danh: {attendanceLabels[event.attendanceStatus]}
+        </span>
+      )}
+      {event.sessionStatus !== 'SCHEDULED' && (
+        <span
+          className={
+            'text-xs font-bold ' + (event.sessionStatus === 'CANCELLED' ? 'text-status-red' : '')
+          }
+        >
+          {statuses[event.sessionStatus]}
+        </span>
+      )}
+    </button>
+  );
+}
 export function UserSchedulePage() {
-  const [selectedDate, setSelectedDate] = useState(() => vietnamToday());
+  const [monday, setMonday] = useState(() => weekStart(vietnamDate()));
   const [selected, setSelected] = useState<ScheduleEvent | null>(null);
-  const { from, to } = scheduleWeek(selectedDate);
+  const { from, to } = scheduleWeek(monday);
   const query = useMySchedule(from, to);
-  const monday = vietnamToday(new Date(from));
-  const days = weekdays.map((label, index) => ({ label, date: shiftDate(monday, index) }));
+  const sunday = shiftDate(monday, 6);
   return (
     <>
       <div className="mb-7">
         <h1 className="text-2xl font-extrabold sm:text-3xl">Lịch học</h1>
         <p className="mt-2 text-sm sm:text-base">
-          Theo dõi thời khóa biểu của bạn từ Thứ 2 đến Chủ nhật.
+          Theo dõi thời khóa biểu của bạn từ Thứ Hai đến Chủ nhật. Chọn một buổi để xem chi tiết.
         </p>
       </div>
+      <ScheduleWeekControls
+        monday={monday}
+        onSelect={(date) => {
+          setMonday(date);
+          setSelected(null);
+        }}
+      />
       <section
-        aria-label="Thời khóa biểu tuần"
+        aria-labelledby="weekly-timetable-title"
         className="min-w-0 overflow-hidden rounded-2xl border border-line bg-canvas"
       >
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line p-4 sm:p-5">
-          <div>
-            <h2 className="flex items-center gap-2 text-base font-extrabold">
-              <CalendarDays aria-hidden="true" className="size-5 text-mint" />
-              {formatDate(from)} – {formatDate(days[6].date)}
-            </h2>
-            <p className="mt-1 text-xs">Giờ Việt Nam (UTC+7)</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div
-              role="group"
-              aria-label="Chuyển tuần"
-              className="inline-flex items-center rounded-xl bg-canvas p-0.5"
-            >
-              <Button
-                variant="ghost"
-                size="icon-lg"
-                className="size-11 rounded-lg border-0 shadow-none"
-                aria-label="Tuần trước"
-                onClick={() => {
-                  setSelectedDate(shiftDate(selectedDate, -7));
-                  setSelected(null);
-                }}
-              >
-                <ChevronLeft aria-hidden="true" />
-              </Button>
-              <Button
-                variant="ghost"
-                className="min-h-11 rounded-lg border-0 px-4 text-base font-semibold shadow-none"
-                onClick={() => {
-                  setSelectedDate(vietnamToday());
-                  setSelected(null);
-                }}
-              >
-                Tuần này
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-lg"
-                className="size-11 rounded-lg border-0 shadow-none"
-                aria-label="Tuần sau"
-                onClick={() => {
-                  setSelectedDate(shiftDate(selectedDate, 7));
-                  setSelected(null);
-                }}
-              >
-                <ChevronRight aria-hidden="true" />
-              </Button>
-            </div>
-            <label className="sr-only" htmlFor="schedule-date">
-              Chọn ngày xem lịch
-            </label>
-            <input
-              id="schedule-date"
-              type="date"
-              value={selectedDate}
-              onChange={(e) => {
-                if (/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)) {
-                  setSelectedDate(e.target.value);
-                  setSelected(null);
-                }
-              }}
-              className="min-h-11 min-w-0 rounded-lg border border-line/50 bg-canvas px-2 text-sm"
-            />
-          </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-soft/40 px-3 py-2">
+          <h2
+            id="weekly-timetable-title"
+            className="flex items-center gap-2 text-base font-extrabold"
+          >
+            <CalendarDays aria-hidden="true" className="size-5 text-mint" />
+            Thời khóa biểu tuần
+          </h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Làm mới lịch tuần"
+            disabled={query.isFetching}
+            onClick={() => void query.refetch()}
+          >
+            <RefreshCw className={query.isFetching ? 'motion-safe:animate-spin' : ''} />
+          </Button>
         </div>
-        {query.isPending ? (
-          <div className="p-5">
+        <div className="p-3">
+          <div className="mb-2">
+            <p className="text-sm font-bold">
+              Tuần {calendarDate(monday)} – {calendarDate(sunday)}
+            </p>
+            <p className="mt-0.5 text-[12px] text-muted">Giờ Việt Nam (UTC+7)</p>
+          </div>
+          {query.isPending ? (
             <UserDataState loading />
-          </div>
-        ) : query.isError ? (
-          <div className="p-5">
+          ) : query.isError ? (
             <UserDataState error={query.error} retry={() => void query.refetch()} />
-          </div>
-        ) : (
-          <>
-            <p className="px-5 pt-4 text-xs lg:hidden">Vuốt ngang để xem đủ 7 ngày trong tuần.</p>
-            {query.data.items.length === 0 && (
-              <p role="status" className="px-5 pt-4 text-sm">
-                Tuần này bạn chưa có lịch học.
-              </p>
-            )}
-            <div
-              role="region"
-              aria-label="Bảng lịch học từ Thứ 2 đến Chủ nhật"
-              tabIndex={0}
-              className="mt-4 max-w-full overflow-x-auto overscroll-x-contain"
-            >
-              <table className="w-full min-w-[980px] table-fixed border-collapse text-left">
-                <thead>
-                  <tr>
-                    {days.map((day) => (
-                      <th
-                        key={day.date}
-                        scope="col"
-                        className={
-                          'border-y border-r border-line p-4 text-center last:border-r-0 ' +
-                          (day.date === vietnamToday() ? 'bg-mint text-canvas' : 'bg-soft')
-                        }
-                      >
-                        <span className="block text-sm font-extrabold">{day.label}</span>
-                        <span className="mt-1 block text-xs font-normal">
-                          {formatDate(day.date)}
-                        </span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    {days.map((day) => {
-                      const dayStart = Date.parse(day.date + 'T00:00:00+07:00');
-                      const events = query.data.items.filter(
-                        (event) =>
-                          Date.parse(event.startsAt) < dayStart + 86400000 &&
-                          Date.parse(event.endsAt) > dayStart,
-                      );
-                      return (
-                        <td
-                          key={day.date}
-                          className="h-96 border-r border-line p-2 align-top last:border-r-0"
-                        >
-                          <div className="space-y-3">
-                            {events.length === 0 ? (
-                              <p className="py-6 text-center text-xs text-muted">
-                                Không có buổi học
-                              </p>
-                            ) : (
-                              events.map((event) => (
-                                <article
-                                  key={`${event.sessionId}:${event.enrollmentId}:${event.makeupPlacementId ?? 'regular'}`}
-                                  aria-label={event.sessionTitle}
-                                  className={
-                                    'overflow-hidden rounded-xl border text-sm ' +
-                                    (event.sessionStatus === 'CANCELLED'
-                                      ? 'border-coral/40 bg-peach/50'
-                                      : 'border-line bg-soft/70')
-                                  }
-                                >
-                                  <button
-                                    type="button"
-                                    aria-label={'Xem chi tiết ' + event.sessionTitle}
-                                    onClick={() => setSelected(event)}
-                                    className="block min-h-24 w-full cursor-pointer p-3 text-left transition-colors hover:bg-mint/10 focus-visible:-outline-offset-4"
-                                  >
-                                    <span className="mb-2 flex items-center gap-1.5 text-xs font-extrabold text-forest">
-                                      <Clock aria-hidden="true" className="size-3.5 shrink-0" />
-                                      {formatTime(event.startsAt)} – {formatTime(event.endsAt)}
-                                    </span>
-                                    <span
-                                      className={
-                                        'block line-clamp-2 text-sm leading-relaxed font-extrabold ' +
-                                        (event.sessionStatus === 'CANCELLED' ? 'line-through' : '')
-                                      }
-                                    >
-                                      {event.courseTitle}
-                                    </span>
-                                    <span className="mt-2 flex items-center gap-1.5 text-xs">
-                                      {event.deliveryMode === 'ONLINE' ? (
-                                        <Monitor
-                                          aria-hidden="true"
-                                          className="size-3.5 shrink-0 text-mint"
-                                        />
-                                      ) : (
-                                        <MapPin
-                                          aria-hidden="true"
-                                          className="size-3.5 shrink-0 text-mint"
-                                        />
-                                      )}
-                                      {event.deliveryMode === 'ONLINE' ? 'Online' : 'Offline'}
-                                    </span>
-                                    <span className="mt-2 flex min-w-0 items-center gap-1.5 text-xs">
-                                      <UserRound
-                                        aria-hidden="true"
-                                        className="size-3.5 shrink-0 text-mint"
-                                      />
-                                      <span
-                                        className="truncate"
-                                        title={event.mentor?.displayName || undefined}
-                                      >
-                                        {event.mentor?.displayName || 'Chưa xác định giảng viên'}
-                                      </span>
-                                    </span>
-                                    {event.attendanceStatus &&
-                                      event.attendanceStatus !== 'UNMARKED' && (
-                                        <span className="mt-2 inline-flex rounded-lg bg-canvas px-2.5 py-1 text-xs font-bold">
-                                          Điểm danh: {attendanceLabels[event.attendanceStatus]}
-                                        </span>
-                                      )}
-                                    {event.sessionStatus !== 'SCHEDULED' && (
-                                      <span className="mt-2 block text-xs font-semibold">
-                                        {statuses[event.sessionStatus]}
-                                      </span>
-                                    )}
-                                  </button>
-                                </article>
-                              ))
-                            )}
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
+          ) : (
+            <WeeklyTimetable
+              monday={monday}
+              sessions={query.data.items}
+              label="Bảng lịch học từ Thứ Hai đến Chủ nhật"
+              emptyLabel="Tuần này bạn chưa có lịch học."
+              summaryLabel="buổi học trong tuần · Bấm vào buổi học để xem chi tiết."
+              sessionKey={(event) =>
+                [event.sessionId, event.enrollmentId, event.makeupPlacementId ?? 'regular'].join(
+                  ':',
+                )
+              }
+              renderSession={(event, day) => (
+                <article aria-label={event.sessionTitle}>
+                  <StudentTimetableSession
+                    event={event}
+                    day={day}
+                    onSelect={() => setSelected(event)}
+                  />
+                </article>
+              )}
+            />
+          )}
+        </div>
       </section>
       {selected && (
         <UserDetailsDialog title="Chi tiết lớp học" onClose={() => setSelected(null)}>

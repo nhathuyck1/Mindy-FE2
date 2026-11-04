@@ -1,5 +1,10 @@
 # Tiến độ
 
+## 04/11/2026 — Gộp thay đổi để đưa lên GitHub
+
+- Gộp lịch Student/menu theo role từ codex/schedule-role-ui vào codex/portable-backend, giữ dashboard hiện có cùng chat/Whiteboard/CODE và giao diện buổi học mới. Logic lịch dùng chung ở lib/weekly-timetable, cấu hình bảy ca chuyển về lib/teaching-slots để cả Student/Mentor và chọn giờ dạy bù dùng cùng nguồn. Giữ các mục lịch sử bên dưới làm evidence của từng giai đoạn.
+- TypeScript và lint các tệp xử lý conflict được kiểm tra lại; không chạy thêm test trong lượt commit. Các thay đổi đã được commit theo yêu cầu; hướng dẫn realtime vẫn yêu cầu deploy BE trước FE.
+
 ## 04/11/2026 — Đồng bộ bảy ca học và lịch dạy bù
 
 - Theo xác nhận của người dùng, thêm 12:00–14:00 thành ca 3, giữ sáu ca cũ và đánh số tổng bảy ca. Lịch tuần dùng cùng cấu hình teaching-slots với bộ lọc giờ dạy bù trong đơn xin nghỉ. Ca 13:00–15:30 vẫn có hàng riêng khi giao với ca trưa.
@@ -110,6 +115,39 @@
 - Mentor: khối "Bài tập" trong trang buổi dạy (tạo bài CODE rồi chuyển sang trang soạn đề); trang soạn đề gồm đề bài, chữ ký hàm, ngôn ngữ, test (mẫu/ẩn, trọng số), lời giải mẫu và validate, publish, gia hạn có lý do, lưu trữ. Trang review có bảng điểm theo học viên, danh sách bài nộp (cờ trùng code), chi tiết bài nộp, chấm lại (FAILED) và huỷ bài nộp có lý do.
 - Editor là textarea tự viết (Tab, giữ thụt dòng, số dòng), chưa dùng Monaco vì không cài thêm dependency trong lượt này. Có thể thay bằng Monaco sau mà không đổi API của component.
 - Kiểm tra: TypeScript, ESLint và Prettier pass trên toàn bộ file mới/đổi. Proxy test `code-proxy.test.ts` (5 ca) và `code-format.test.ts` (4 ca) pass. Các suite proxy cũ (mentor, mentor-workspace, proxy.server, user, learning, manager×3, commerce, admin×2) vẫn pass. Unit test được chạy bằng shim Vitest trong môi trường không cài được npm, cần chạy lại `npm run test` chính thức. Chưa chạy production build/E2E và chưa nghiệm thu với BE thật. Chưa commit/push.
+
+## 04/11/2026 — Lịch Student và menu theo vai trò
+
+- Student dùng chung bộ chọn tuần/ngày và bảng sáu ca với Mentor: giờ Việt Nam, cột ca cố định, ngày hiện tại, cuộn ngang và làm mới. Giữ API /me/schedule, đọc đủ trang, định danh enrollment/makeup, trạng thái điểm danh và dialog chi tiết. Logic nhóm ca chuyển về lib/weekly-timetable; Mentor dùng lại cùng bảng.
+- Menu Student có Thông tin cá nhân, Lịch học, Khóa học của tôi và Tài liệu học tập. Mentor có Thông tin cá nhân, Lịch dạy và Lớp của tôi; thêm /mentor/profile dùng hồ sơ session và nhãn vai trò Mentor, nằm trong guard Mentor hiện hữu. Sidebar Mentor và returnTo nhận route mới.
+- BE: nhánh checkout Feat/Miro chưa có dashboard; sau fetch, origin/dev commit b6b6976 đã có GET /api/v1/admin/dashboard, /manager/dashboard, /mentor/dashboard. Mentor chỉ thấy lớp phụ trách chính, bộ lọc 30/90/365 ngày; FE đã tích hợp /mentor/dashboard. Chỉ đọc source BE, không merge/chuyển nhánh hoặc xác nhận deploy.
+- Kiểm chứng: lint các tệp sửa, production build riêng `.next-role-sync`, 17 unit tests lịch/ca/returnTo và 12 E2E desktop/mobile PASS. E2E dùng API fixture, kiểm menu đúng role, hồ sơ Mentor, đủ trang lịch, sáu ca, chuyển tuần/ngày, điểm danh/hủy, dialog/focus, lỗi/retry và chặn guest. Đã xem ảnh lịch desktop và menu Mentor 320px, không tràn ngang. Lượt build đầu vướng `.next/dev/types/validator.ts` cũ tham chiếu route nhánh khác; đổi tên riêng file sinh tự động thành `.ts.stale` rồi build PASS. Không deploy/commit/push.
+
+## 03/11/2026 — Tìm người dùng qua API
+
+- `/admin/users` gửi `q` tới GET `/admin/users` thay vì lọc trang hiện tại. Bắt đầu từ 2 ký tự, debounce 250ms sau mỗi lần dừng gõ; hỗ trợ composition tiếng Việt, trim, tối đa 100 ký tự. Một ký tự không gửi search và có hướng dẫn; xóa hết trở về danh sách. Đổi từ khóa về trang 1/xóa selection, phân trang và role/status giữ từ khóa. Query key có q; request cũ dùng AbortSignal hiện hữu.
+- BE local trước đó chưa hỗ trợ q, đã bổ sung tìm tên/email/điện thoại không phân biệt hoa thường/dấu, escape ký tự wildcard và đếm total trước phân trang. Không thay search local của khóa/lớp. Đã kiểm tra UI thật với API local: `me` rồi `mentor.frontend`, tên không dấu, wildcard literal và xóa search PASS. BE build/type-check/3 unit tests và FE build/type-check/lint tệp sửa PASS.
+- E2E desktop/mobile kiểm đúng ngưỡng 2 ký tự, debounce 250ms, không gửi các từ khóa trung gian, reset trang 1 và tìm tài khoản ở trang khác: 2 PASS. Hồi quy bảng quản trị/CSV/bộ lọc: 2 PASS. Không mock trong lượt kiểm UI + API local nói trên; E2E kiểm chính xác thời gian dùng API fixture và đồng hồ kiểm thử.
+
+## 03/11/2026 — Tinh gọn dashboard theo phản hồi
+
+- Bỏ hai biểu đồ xếp hạng khóa học/mentor khỏi Manager, kể cả khi Manager mở `/admin`. Admin và Mentor giữ biểu đồ so sánh của mình. Xóa đoạn mô tả cách tính đăng ký và thời điểm cập nhật trên cả ba dashboard. API và cách tính số liệu giữ nguyên.
+- Lint các tệp sửa và kiểm tra trình duyệt với API local PASS: Manager còn 2 biểu đồ, Admin/Mentor giữ 4; đoạn mô tả không còn ở cả ba vai trò. Số liệu UI vẫn khớp API ở 30/90/365 ngày; desktop/320px không tràn ngang. FE và BE tiếp tục chạy local để người dùng kiểm tra.
+
+## 03/11/2026 — Recharts và kiểm tra FE với API local
+
+- Theo yêu cầu tiếp theo, chuyển thanh HTML so sánh thành Recharts BarChart thật cho khóa/mentor/lớp; PieChart donut trạng thái có tổng và phần trăm; AreaChart gradient theo ngày. Dùng thư viện/component ChartContainer đã cài, có tooltip, giá trị trên cột, nhãn trục một dòng, bảng ngày/ranking thay thế và trạng thái empty.
+- FE `.env.local` (ignored) trỏ `http://localhost:3000/api/v1`, APP_ORIGIN `http://localhost:3003`. BE chạy local với database `mindy_center` hiện có; apply 26 migration còn thiếu, tổng 36, không reset hay seed lại khóa/lớp/roster. Tạo một tài khoản Manager local để kiểm thử vai trò còn thiếu. Các jobs/email/payment provider tắt trong process kiểm thử.
+- Kiểm thử không mock: đăng nhập qua UI thật cho Admin/Manager/Mentor, đối chiếu 4 thẻ số liệu với response API ở 30/90/365 ngày, kiểm 4 biểu đồ được render, không lỗi trình duyệt hoặc tràn ngang 320px. Truy vấn PostgreSQL độc lập xác nhận API tổng lượt/học viên/lớp và tổng trend; Mentor bị 403 khi gọi endpoint Admin.
+- Dữ liệu local: Admin/Manager 6 khóa, 7 lớp, 44 đăng ký/44 học viên; mentor.frontend 4 khóa, 4 lớp, 20 đăng ký/20 học viên. Top JavaScript 24, HTML/CSS 20; Mentor Trần Quốc Bảo 24, Nguyễn Minh Anh 20. Đây là dữ liệu dev có sẵn, không phải giao dịch production. Ảnh kiểm tra trong `.next-local/screenshots/` (ignored).
+
+## 03/11/2026 — Dashboard Admin, Manager và Mentor
+
+- Nhánh `codex/dashboard` tách từ `origin/dev` cho cả FE2 và BE theo yêu cầu. `/admin` dùng dashboard mới; `/manager` bổ sung dashboard và giữ nguyên hàng chờ học liệu/đơn nghỉ; `/mentor/dashboard` thêm menu Tổng quan, giữ lịch dạy ở `/mentor`.
+- API tổng hợp mới `GET /admin/dashboard`, `/manager/dashboard`, `/mentor/dashboard`, cùng prefix `/api/v1`, lọc 30/90/365 ngày (mặc định 90). Hiển thị khóa/lớp hiện tại, đăng ký đã xác nhận và học viên riêng biệt trong kỳ, xu hướng ngày, trạng thái lớp, top 10 khóa theo lượt đăng ký và mentor theo học viên. Mentor chỉ thấy course/class được phụ trách chính; không nhận bảng mentor khác.
+- TanStack Query có key theo tài khoản/vai trò/kỳ, dùng phục hồi phiên chung từ dev; Zod đối chiếu response scope. Proxy chỉ GET, access cookie, strict query, chống lặp/đổi phạm vi, private/no-store. Không thêm dependency, dữ liệu demo trong UI, localStorage hoặc token JSON.
+- Kiểm chứng: 207 unit tests PASS; lint, TypeScript và production build PASS; Prettier các file code/test thay đổi PASS. Format toàn repo còn báo 332 file chưa chuẩn, không format lan sang các feature khác. 32 E2E dashboard/admin desktop+mobile đã PASS (28 lượt đầu và 4 ca sửa kỳ vọng cũ chạy lại PASS). Bao gồm ba vai trò, lọc kỳ, read-only, bảng số liệu, lỗi/retry, empty, sidebar và hồi quy quản trị. Đã xem ảnh desktop/320px; không tràn ngang. E2E dùng mock API theo contract.
+- BE: query PostgreSQL thật và HTTP controller đã kiểm riêng; chi tiết ở `../Mindy/docs/api_flow/DASHBOARD_flow-api-breakdown.md` và progress BE. Chưa deploy hoặc nghiệm thu tài khoản production; cần deploy BE mới trước khi FE trỏ upstream sử dụng endpoint mới. Không commit/push.
 
 ## 28/10/2026 — Đăng xuất mượt, không hiện Session changed trên dashboard
 

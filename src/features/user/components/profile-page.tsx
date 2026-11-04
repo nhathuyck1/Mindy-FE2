@@ -11,7 +11,7 @@ export function ProfilePage() {
     ['Họ và tên', user.displayName],
     ['Email', user.email],
     ['Số điện thoại', user.phone || 'Chưa cập nhật'],
-    ['Vai trò', 'Học viên'],
+    ['Vai trò', user.role === 'MENTOR' ? 'Mentor' : 'Học viên'],
     ['Trạng thái', 'Đang hoạt động'],
     ['Ngày tham gia', formatDate(user.createdAt)],
   ];

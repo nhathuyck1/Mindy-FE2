@@ -17,12 +17,7 @@ test('Shows shared skeletons while overview, table and class students load', asy
   });
   try {
     await page.goto('/admin');
-    await expect(
-      page.getByRole('status', { name: 'Đang tải tổng người dùng', exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('status', { name: 'Đang tải dữ liệu…', exact: true }),
-    ).toBeVisible();
+    await expect(page.getByText('Đang tải số liệu dashboard…', { exact: true })).toBeVisible();
     await expect(page.getByText('Chưa thể tải dữ liệu', { exact: true })).toHaveCount(0);
     await page.screenshot({
       path: testInfo.outputPath('admin-skeletons.png'),
@@ -31,7 +26,9 @@ test('Shows shared skeletons while overview, table and class students load', asy
   } finally {
     release();
   }
-  await expect(page.getByLabel('Tổng người dùng: 23', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Học viên riêng biệt', exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole('status', { name: 'Đang tải dữ liệu…', exact: true })).toHaveCount(0);
   await page.goto('/admin/classes');
   await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(2);
@@ -119,7 +116,9 @@ test('Opens a class student page from the class list and views student details',
     }),
   );
   await page.goto('/admin');
-  await expect(page.getByRole('table')).toContainText(adminClasses[0].name);
+  await expect(
+    page.getByRole('heading', { name: 'Khóa học được đăng ký nhiều nhất' }),
+  ).toBeVisible();
   await expect(page.getByRole('link', { name: /^Danh sách học viên:/ })).toHaveCount(0);
   await page.goto('/admin/classes');
   const firstClass = page.getByRole('link', {
@@ -221,8 +220,8 @@ test('Reusable admin table supports filters, pagination, CSV, columns and access
   await expect(page.getByRole('table')).not.toContainText('Học viên');
   await page.getByRole('combobox', { name: 'Tất cả vai trò' }).selectOption('');
   await page.getByRole('button', { name: 'Tất cả', exact: true }).click();
-  await page.getByRole('textbox', { name: 'Tìm người dùng trong trang' }).fill('nguyen an');
-  await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(1);
+  await page.getByRole('textbox', { name: 'Tìm người dùng', exact: true }).fill('nguyen an');
+  await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(3);
   await page.getByRole('checkbox', { name: 'Chọn Nguyễn An', exact: true }).check();
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Xuất CSV' }).click();
@@ -244,7 +243,7 @@ test('Reusable admin table supports filters, pagination, CSV, columns and access
   await page.keyboard.press('Escape');
   await expect(dialog).not.toBeVisible();
   await expect(detailsButton).toBeFocused();
-  await page.getByRole('textbox', { name: 'Tìm người dùng trong trang' }).fill('khong co ket qua');
+  await page.getByRole('textbox', { name: 'Tìm người dùng', exact: true }).fill('khong co ket qua');
   await expect(page.getByText('Không có kết quả phù hợp', { exact: true })).toBeVisible();
 });
 
@@ -260,7 +259,9 @@ test('Overview and resource pages use real contract totals and stay within the v
     await page.goto(route);
     await expect(page.locator('#admin-main')).toBeVisible();
     if (route === '/admin')
-      await expect(page.getByLabel('Tổng người dùng: 23', { exact: true })).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: 'Học viên riêng biệt', exact: true }),
+      ).toBeVisible();
     if (route === '/admin/courses') {
       await expect(page.getByRole('table')).toContainText('2.500.000');
       await page.getByRole('button', { name: 'Chưa kích hoạt', exact: true }).click();
@@ -275,7 +276,7 @@ test('Overview and resource pages use real contract totals and stay within the v
     }
     if (route === '/admin')
       await expect(page.getByRole('table').getByRole('button')).toHaveCount(0);
-    if (route !== '/admin/workflow') {
+    if (route !== '/admin/workflow' && route !== '/admin') {
       if (route !== '/admin') {
         const actions = page.getByRole('table').locator('tbody tr').first().locator('td').last();
         await expect(actions.getByRole('button')).toHaveCount(route === '/admin/users' ? 3 : 2);

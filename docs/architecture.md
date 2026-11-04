@@ -40,6 +40,18 @@
 - Tiến độ nhận union AVAILABLE/NOT_IMPLEMENTED, giữ null và completionPolicy UNDEFINED. Metrics dùng counts BE, không tạo tỷ lệ submitted/eligible hoặc cộng các tập điểm sửa chờ trả với bản đã release thành một tổng.
 - FE dev/start chuyển sang **3001**, origin local `http://localhost:3001`; API local trong `.env.local` là `http://localhost:3000/api/v1`. E2E mock vẫn production port 3103. `scripts/assignment-local-smoke.mjs` yêu cầu 3001 trống, tạo DB/bucket test riêng; dùng MinIO test 19000 hiện có và compiled BE HTTP fixture, không gọi merchant thật.
 
+## Lịch dùng chung và hồ sơ Mentor — 04/11/2026
+
+- components/ui/schedule-week-controls, schedule-date-picker và weekly-timetable dùng chung giữa Student/Mentor; lib/weekly-timetable nhóm sự kiện có timestamp theo sáu ca và ca ngoài giờ, giữ buổi qua đêm. Bảng nhận renderer và key từ từng feature; không sở hữu API hoặc quyền. Module Mentor cũ re-export utility để giữ consumer hiện có.
+- /mentor/profile dùng lại ProfilePage đọc session dưới MentorShell/guard MENTOR ACTIVE. /user giữ guard STUDENT; menu theo role dẫn tới route riêng.
+
+## Dashboard theo vai trò — 03/11/2026
+
+- `features/dashboard` sở hữu schema Zod, query và UI thống kê dùng chung. Server state có key `dashboard/userId/audience/days`; `apiRequest` dùng recovery phiên tập trung của dev, không tạo cơ chế refresh riêng.
+- `/admin` chọn endpoint Admin/Manager theo phiên đã được shell kiểm; `/manager` nhúng analytics phía dưới heading và giữ hàng chờ công việc; `/mentor/dashboard` dành riêng Mentor. Lịch dạy vẫn ở `/mentor`; thêm đường dẫn dashboard vào safeReturnPath.
+- Backend tổng hợp toàn bộ dữ liệu trong một statement; FE không tải danh sách học viên để tự tính. Proxy chỉ mở ba GET dashboard và days enum 30/90/365, kiểm scope response, không nhận mentorId từ client. Số đăng ký/học viên là trong kỳ theo ngày xác nhận; lớp/khóa/trạng thái là tổng hiện tại. Mentor dùng phân công chính hiện tại, không gồm lịch dạy thay.
+- Bar ranking là top 10, trend có bảng dữ liệu đọc bằng bàn phím và không animation. Không biến lỗi thành số 0 hoặc dùng danh sách chưa tải đủ làm tổng.
+
 ## Trải nghiệm đăng xuất — 28/10/2026
 
 - `useLogout({ navigateHome: true })` dành cho thao tác người dùng ở menu tài khoản, dùng mutation key `auth/logout/navigate-home`; logout xử lý sai audience vẫn giữ form đăng nhập. Hủy/revert các query trước khi đổi AbortSignal phiên, tạm ngừng query session trong mọi logout để cancellation không xuất hiện thành lỗi dashboard.

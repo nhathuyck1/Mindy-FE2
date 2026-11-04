@@ -11,7 +11,7 @@ import {
   type LeaveSessionMapping,
 } from '../schemas/leave-contracts';
 import { leavePeriods } from '../lib/leave-display';
-import { isTeachingSlot } from '../lib/teaching-slots';
+import { isTeachingSlot } from '@/lib/teaching-slots';
 import { mentorDate } from './mentor-shared';
 export function SessionMakeupSlot(props: {
   source: LeavePreview['affectedSessions'][number];

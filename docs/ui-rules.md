@@ -32,6 +32,18 @@
 - Câu hỏi Mentor khi xem dùng details và đáp án đúng; ô nhập chỉ có trong trình sửa. Student chỉ thấy câu hỏi sau start, trạng thái tự lưu rõ ràng; phần chưa chọn có lối nhảy tới câu. Không render HTML từ đề/feedback.
 - Lỗi phiên bản giữ bản nhập và có thao tác đọc lại/xác nhận thay thế; không tự đè bản nháp. Tệp chỉ tải bằng liên kết mới tại click. Không hiển thị lỗi/missing/null thành số 0, không hứa kho lịch sử toàn tài khoản.
 
+## Đồng bộ lịch Student với Mentor — 04/11/2026
+
+- Lịch Student dùng cùng bộ chọn ngày dd/mm/yyyy, nút tuần trước/hiện tại/sau, toolbar làm mới, bảng sáu ca, màu và kích thước ô như Mentor. Cột Ca học cố định khi cuộn ngang; buổi ngoài ca có hàng Khác. Mỗi buổi Student mở dialog cũ, giữ điểm danh thật và trạng thái hủy.
+- Menu tài khoản Student gồm hồ sơ/lịch/khóa học/tài liệu. Mentor gồm hồ sơ/lịch dạy/lớp của tôi; hồ sơ có cùng bố cục Student và nhãn vai trò Mentor. Các quy tắc này thay bố cục lịch và giới hạn menu Student cũ bên dưới.
+
+## Dashboard ba vai trò — 03/11/2026
+
+- Phản hồi mới nhất: Manager chỉ giữ thẻ tổng quan, biểu đồ xu hướng và donut trạng thái, không hiển thị hai biểu đồ xếp hạng. Bỏ đoạn giải thích cách tính đăng ký/thời điểm cập nhật ở tất cả dashboard.
+
+- Dùng token Mindy và admin-table-panel hiện hữu; bốn thẻ số liệu, Recharts AreaChart theo ngày, PieChart dạng donut cho trạng thái và BarChart ngang cho top khóa/mentor/lớp. Tooltip hiển thị tên đầy đủ và số liệu; bảng xếp hạng mở bằng details để đọc các tên dài. 320px xếp một cột, desktop chia cột, nhãn trục rút gọn một dòng và giữ số liệu đọc được.
+- Mỗi thống kê ghi rõ tổng hiện tại hoặc trong kỳ; học viên distinct khác lượt đăng ký. Ngày/giờ hiển thị theo Việt Nam. Có loading/error/retry/empty độc lập, bảng ngày mở bằng details/summary, không animation hoặc số demo lấp chỗ.
+
 ## Chuẩn UI lấy Student làm mẫu — 26/10/2026
 
 - Tài liệu áp dụng: [student-ui-standard.md](student-ui-standard.md), gồm bản đồ màn hình/logic, token, typography, bo góc/kích thước, trạng thái, responsive, đối chiếu staff và checklist nghiệm thu. Có dẫn nguồn code và ảnh mới từ production build với API mock.

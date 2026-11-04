@@ -130,7 +130,10 @@ describe('Admin read API adapter', () => {
       '?role=ROOT',
       '?status=BAD',
       '?pageSize=101',
-      '?q=unsupported',
+      '?q=a',
+      `?q=${'a'.repeat(101)}`,
+      '?q=an&q=binh',
+      '?unknown=unsupported',
       '?page=1&page=2',
       '?role=STUDENT&role=ADMIN',
     ])
@@ -140,13 +143,18 @@ describe('Admin read API adapter', () => {
       Response.json({ items: [user], page: 2, pageSize: 10, total: 12 }),
     );
     const response = await proxyApi(
-      request('?page=2&pageSize=10&role=STUDENT&status=ACTIVE'),
+      request('?page=2&pageSize=10&role=STUDENT&status=ACTIVE&q=%20Nguyen%20'),
       'admin/users',
     );
     expect(response.status).toBe(200);
-    expect(String(fetchMock.mock.calls[0][0])).toContain(
-      'admin/users?page=2&pageSize=10&role=STUDENT&status=ACTIVE',
-    );
+    const forwarded = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(Object.fromEntries(forwarded.searchParams)).toEqual({
+      page: '2',
+      pageSize: '10',
+      role: 'STUDENT',
+      status: 'ACTIVE',
+      q: 'Nguyen',
+    });
     expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get('Cookie')).toBe(
       'access_token=opaque',
     );

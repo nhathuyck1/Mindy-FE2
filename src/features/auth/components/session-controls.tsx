@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
+import { CalendarDays, GraduationCap, UserRound } from 'lucide-react';
 import { Icon } from '@/components/ui/icon';
 import { NameAvatar } from '@/components/ui/name-avatar';
 import { userNavigation } from '@/features/user/lib/user-navigation';
@@ -106,20 +107,15 @@ export function SessionControls() {
                     {session.data.role === 'MANAGER' ? 'Tổng quan Manager' : 'Trang quản trị'}
                   </Link>
                 )}
-              {session.data.role === 'MENTOR' && session.data.status === 'ACTIVE' && (
-                <Link
-                  href="/mentor"
-                  onClick={() => setOpen(false)}
-                  className="flex min-h-12 items-center gap-3 rounded-xl px-4 text-sm font-bold text-black transition-colors hover:bg-soft"
-                >
-                  <Icon name="calendar" className="size-5 text-mint" /> Không gian Mentor
-                </Link>
-              )}
               {(session.data.role === 'STUDENT'
-                ? userNavigation.filter(
-                    (item) => item.href === '/user/profile' || item.href === '/user/schedule',
-                  )
-                : []
+                ? userNavigation.filter((item) => item.href !== '/user/orders')
+                : session.data.role === 'MENTOR' && session.data.status === 'ACTIVE'
+                  ? [
+                      { href: '/mentor/profile', label: 'Thông tin cá nhân', icon: UserRound },
+                      { href: '/mentor', label: 'Lịch dạy', icon: CalendarDays },
+                      { href: '/mentor/classes', label: 'Lớp của tôi', icon: GraduationCap },
+                    ]
+                  : []
               ).map((item) => (
                 <Link
                   key={item.href}
