@@ -1,0 +1,61 @@
+
+[WebServer] (node:4152) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 38 tests using 2 workers
+
+
+(node:32360) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+(node:34276) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/38] [desktop] › tests\e2e\admin-crud.e2e.ts:185:1 › Creates a user, validates password, confirms status changes and restores menu focus
+[2/38] [desktop] › tests\e2e\admin-crud.e2e.ts:24:1 › Table icon actions open centered blurred modals without duplicate action buttons
+[3/38] [desktop] › tests\e2e\admin-crud.e2e.ts:231:1 › Creates a course, adds and reorders units, activates and handles rejected edits
+[4/38] [desktop] › tests\e2e\admin-crud.e2e.ts:288:1 › Creates and edits a class, schedules in Vietnam time and confirms lifecycle actions
+[5/38] [desktop] › tests\e2e\admin-integration.e2e.ts:20:1 › Admin styles and portals do not change the public site after client navigation
+[6/38] [desktop] › tests\e2e\admin-overview.e2e.ts:4:1 › Overview charts use every page and allow changing the month range
+[7/38] [desktop] › tests\e2e\admin-overview.e2e.ts:51:1 › Overview shows retry on failed data rather than a zero count
+[8/38] [desktop] › tests\e2e\admin-overview.e2e.ts:70:1 › Empty overview keeps real zero values and descriptive chart empty states
+[9/38] [desktop] › tests\e2e\admin.e2e.ts:6:1 › Shows shared skeletons while overview, table and class students load
+[10/38] [desktop] › tests\e2e\admin.e2e.ts:74:1 › Opens a class student page from the class list and views student details
+[11/38] [desktop] › tests\e2e\admin.e2e.ts:175:1 › Admin entry denies guests and non-admin accounts before requesting private lists
+[12/38] [desktop] › tests\e2e\admin.e2e.ts:202:1 › Reusable admin table supports filters, pagination, CSV, columns and accessible details
+[13/38] [desktop] › tests\e2e\admin.e2e.ts:251:1 › Overview and resource pages use real contract totals and stay within the viewport
+[14/38] [desktop] › tests\e2e\admin.e2e.ts:308:1 › Admin activity history filters, paginates, loads escaped detail and restores focus
+[15/38] [desktop] › tests\e2e\admin.e2e.ts:345:1 › Reconciliation screen is paginated, read only and responsive at 320px
+[16/38] [desktop] › tests\e2e\admin.e2e.ts:371:1 › Manager cannot mount Admin history or reconciliation queries and does not see those links
+[17/38] [desktop] › tests\e2e\admin.e2e.ts:391:1 › Admin navigation supports desktop collapse and a focus-managed mobile menu
+[18/38] [desktop] › tests\e2e\admin.e2e.ts:421:1 › Admin list handles service failure, forbidden, expired session and empty data
+[19/38] [desktop] › tests\e2e\admin.e2e.ts:453:1 › Admin login returns to the selected admin page and logout removes private UI
+(node:36604) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[20/38] [mobile] › tests\e2e\admin-crud.e2e.ts:24:1 › Table icon actions open centered blurred modals without duplicate action buttons
+
+(node:37760) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[21/38] [mobile] › tests\e2e\admin-crud.e2e.ts:185:1 › Creates a user, validates password, confirms status changes and restores menu focus
+[22/38] [mobile] › tests\e2e\admin-crud.e2e.ts:231:1 › Creates a course, adds and reorders units, activates and handles rejected edits
+[23/38] [mobile] › tests\e2e\admin-crud.e2e.ts:288:1 › Creates and edits a class, schedules in Vietnam time and confirms lifecycle actions
+[24/38] [mobile] › tests\e2e\admin-integration.e2e.ts:20:1 › Admin styles and portals do not change the public site after client navigation
+[25/38] [mobile] › tests\e2e\admin-overview.e2e.ts:4:1 › Overview charts use every page and allow changing the month range
+[26/38] [mobile] › tests\e2e\admin-overview.e2e.ts:51:1 › Overview shows retry on failed data rather than a zero count
+[27/38] [mobile] › tests\e2e\admin-overview.e2e.ts:70:1 › Empty overview keeps real zero values and descriptive chart empty states
+[28/38] [mobile] › tests\e2e\admin.e2e.ts:6:1 › Shows shared skeletons while overview, table and class students load
+[29/38] [mobile] › tests\e2e\admin.e2e.ts:74:1 › Opens a class student page from the class list and views student details
+[30/38] [mobile] › tests\e2e\admin.e2e.ts:175:1 › Admin entry denies guests and non-admin accounts before requesting private lists
+[31/38] [mobile] › tests\e2e\admin.e2e.ts:202:1 › Reusable admin table supports filters, pagination, CSV, columns and accessible details
+[32/38] [mobile] › tests\e2e\admin.e2e.ts:251:1 › Overview and resource pages use real contract totals and stay within the viewport
+[33/38] [mobile] › tests\e2e\admin.e2e.ts:308:1 › Admin activity history filters, paginates, loads escaped detail and restores focus
+[34/38] [mobile] › tests\e2e\admin.e2e.ts:345:1 › Reconciliation screen is paginated, read only and responsive at 320px
+[35/38] [mobile] › tests\e2e\admin.e2e.ts:371:1 › Manager cannot mount Admin history or reconciliation queries and does not see those links
+[36/38] [mobile] › tests\e2e\admin.e2e.ts:391:1 › Admin navigation supports desktop collapse and a focus-managed mobile menu
+[37/38] [mobile] › tests\e2e\admin.e2e.ts:421:1 › Admin list handles service failure, forbidden, expired session and empty data
+[38/38] [mobile] › tests\e2e\admin.e2e.ts:453:1 › Admin login returns to the selected admin page and logout removes private UI
+  38 passed (37.1s)

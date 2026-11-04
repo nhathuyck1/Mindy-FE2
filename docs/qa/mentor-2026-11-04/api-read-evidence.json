@@ -1,0 +1,466 @@
+{
+  "date": "2026-11-04",
+  "environment": "localhost:3001 -> configured deployed backend",
+  "evidence": [
+    {
+      "path": "auth/me",
+      "status": 200
+    },
+    {
+      "path": "mentor/classes?page=1&pageSize=100&assignment=ANY",
+      "status": 200,
+      "total": 6,
+      "count": 6
+    },
+    {
+      "path": "mentor/schedule?from=2026-11-01T17%3A00%3A00Z&to=2026-11-08T17%3A00%3A00Z&page=1&pageSize=100",
+      "status": 200,
+      "total": 9,
+      "count": 9
+    },
+    {
+      "path": "mentor/leave-requests?page=1&pageSize=20",
+      "status": 200,
+      "total": 2,
+      "count": 2
+    },
+    {
+      "path": "mentor/classes/8542ebe1-6a27-42d2-9d75-8f52168fed09",
+      "status": 200,
+      "code": "HTML-CSS-101-10S-20261013"
+    },
+    {
+      "path": "mentor/classes/8542ebe1-6a27-42d2-9d75-8f52168fed09/units?page=1&pageSize=100",
+      "status": 200,
+      "total": 5,
+      "count": 5
+    },
+    {
+      "path": "mentor/classes/8542ebe1-6a27-42d2-9d75-8f52168fed09/sessions?page=1&pageSize=100",
+      "status": 200,
+      "total": 10,
+      "count": 10
+    },
+    {
+      "path": "mentor/classes/8542ebe1-6a27-42d2-9d75-8f52168fed09/students?page=1&pageSize=20",
+      "status": 200,
+      "total": 1,
+      "count": 1
+    },
+    {
+      "path": "mentor/classes/8542ebe1-6a27-42d2-9d75-8f52168fed09/attendance-summary?page=1&pageSize=20",
+      "status": 200,
+      "total": 5,
+      "count": 5
+    },
+    {
+      "path": "mentor/classes/8542ebe1-6a27-42d2-9d75-8f52168fed09/progress?page=1&pageSize=20",
+      "status": 200,
+      "total": 5,
+      "count": 5
+    },
+    {
+      "path": "mentor/classes/8542ebe1-6a27-42d2-9d75-8f52168fed09/assignments?page=1&pageSize=20",
+      "status": 200,
+      "total": 1,
+      "count": 1
+    },
+    {
+      "path": "mentor/classes/8542ebe1-6a27-42d2-9d75-8f52168fed09/units/a55171d4-b6b9-4e3c-b433-5cb637ca82f9/materials?page=1&pageSize=100",
+      "status": 200,
+      "total": 6,
+      "count": 6
+    },
+    {
+      "path": "mentor/classes/8542ebe1-6a27-42d2-9d75-8f52168fed09/units/a55171d4-b6b9-4e3c-b433-5cb637ca82f9/sessions?page=1&pageSize=100",
+      "status": 200,
+      "total": 2,
+      "count": 2
+    },
+    {
+      "path": "class-sessions/db0d5dd7-ddfd-4d86-8adc-ef4e9db76388/context",
+      "status": 200
+    },
+    {
+      "path": "class-sessions/db0d5dd7-ddfd-4d86-8adc-ef4e9db76388/attendance?page=1&pageSize=20",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "class-sessions/db0d5dd7-ddfd-4d86-8adc-ef4e9db76388/teaching-notes",
+      "status": 200
+    },
+    {
+      "path": "class-sessions/db0d5dd7-ddfd-4d86-8adc-ef4e9db76388/attendance-candidates?page=1&pageSize=20",
+      "status": 200,
+      "total": 1,
+      "count": 1
+    },
+    {
+      "path": "mentor/classes/a894278d-27df-44e7-9f3b-5202fa0507f0",
+      "status": 200,
+      "code": "PY-101-10S-20261013"
+    },
+    {
+      "path": "mentor/classes/a894278d-27df-44e7-9f3b-5202fa0507f0/units?page=1&pageSize=100",
+      "status": 200,
+      "total": 4,
+      "count": 4
+    },
+    {
+      "path": "mentor/classes/a894278d-27df-44e7-9f3b-5202fa0507f0/sessions?page=1&pageSize=100",
+      "status": 200,
+      "total": 11,
+      "count": 11
+    },
+    {
+      "path": "mentor/classes/a894278d-27df-44e7-9f3b-5202fa0507f0/students?page=1&pageSize=20",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "mentor/classes/a894278d-27df-44e7-9f3b-5202fa0507f0/attendance-summary?page=1&pageSize=20",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "mentor/classes/a894278d-27df-44e7-9f3b-5202fa0507f0/progress?page=1&pageSize=20",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "mentor/classes/a894278d-27df-44e7-9f3b-5202fa0507f0/assignments?page=1&pageSize=20",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "mentor/classes/a894278d-27df-44e7-9f3b-5202fa0507f0/units/544d5df2-abbe-4dc9-bc41-7cdb43092e06/materials?page=1&pageSize=100",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "mentor/classes/a894278d-27df-44e7-9f3b-5202fa0507f0/units/544d5df2-abbe-4dc9-bc41-7cdb43092e06/sessions?page=1&pageSize=100",
+      "status": 200,
+      "total": 2,
+      "count": 2
+    },
+    {
+      "path": "class-sessions/08db8ada-2a08-461c-ab4b-aa867b2ee52e/context",
+      "status": 200
+    },
+    {
+      "path": "class-sessions/08db8ada-2a08-461c-ab4b-aa867b2ee52e/attendance?page=1&pageSize=20",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "class-sessions/08db8ada-2a08-461c-ab4b-aa867b2ee52e/teaching-notes",
+      "status": 200
+    },
+    {
+      "path": "class-sessions/08db8ada-2a08-461c-ab4b-aa867b2ee52e/attendance-candidates?page=1&pageSize=20",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "mentor/classes/43b8948a-8c5a-4985-a6dd-dca3436209a2",
+      "status": 200,
+      "code": "JS-101-OFF1"
+    },
+    {
+      "path": "mentor/classes/43b8948a-8c5a-4985-a6dd-dca3436209a2/units?page=1&pageSize=100",
+      "status": 200,
+      "total": 6,
+      "count": 6
+    },
+    {
+      "path": "mentor/classes/43b8948a-8c5a-4985-a6dd-dca3436209a2/sessions?page=1&pageSize=100",
+      "status": 200,
+      "total": 6,
+      "count": 6
+    },
+    {
+      "path": "mentor/classes/43b8948a-8c5a-4985-a6dd-dca3436209a2/students?page=1&pageSize=20",
+      "status": 200,
+      "total": 1,
+      "count": 1
+    },
+    {
+      "path": "mentor/classes/43b8948a-8c5a-4985-a6dd-dca3436209a2/attendance-summary?page=1&pageSize=20",
+      "status": 200,
+      "total": 5,
+      "count": 5
+    },
+    {
+      "path": "mentor/classes/43b8948a-8c5a-4985-a6dd-dca3436209a2/progress?page=1&pageSize=20",
+      "status": 200,
+      "total": 5,
+      "count": 5
+    },
+    {
+      "path": "mentor/classes/43b8948a-8c5a-4985-a6dd-dca3436209a2/assignments?page=1&pageSize=20",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "mentor/classes/43b8948a-8c5a-4985-a6dd-dca3436209a2/units/e1c00934-a218-4faf-a132-abd14f8a2023/materials?page=1&pageSize=100",
+      "status": 200,
+      "total": 3,
+      "count": 3
+    },
+    {
+      "path": "mentor/classes/43b8948a-8c5a-4985-a6dd-dca3436209a2/units/e1c00934-a218-4faf-a132-abd14f8a2023/sessions?page=1&pageSize=100",
+      "status": 200,
+      "total": 1,
+      "count": 1
+    },
+    {
+      "path": "class-sessions/d9209ac3-030f-4e43-b0fa-f05aa7a40b68/context",
+      "status": 200
+    },
+    {
+      "path": "class-sessions/d9209ac3-030f-4e43-b0fa-f05aa7a40b68/attendance?page=1&pageSize=20",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "class-sessions/d9209ac3-030f-4e43-b0fa-f05aa7a40b68/teaching-notes",
+      "status": 200
+    },
+    {
+      "path": "class-sessions/d9209ac3-030f-4e43-b0fa-f05aa7a40b68/attendance-candidates?page=1&pageSize=20",
+      "status": 200,
+      "total": 1,
+      "count": 1
+    },
+    {
+      "path": "mentor/classes/4c675201-feab-48d7-96bb-f5df89cb4274",
+      "status": 200,
+      "code": "PY-101-ON1"
+    },
+    {
+      "path": "mentor/classes/4c675201-feab-48d7-96bb-f5df89cb4274/units?page=1&pageSize=100",
+      "status": 200,
+      "total": 4,
+      "count": 4
+    },
+    {
+      "path": "mentor/classes/4c675201-feab-48d7-96bb-f5df89cb4274/sessions?page=1&pageSize=100",
+      "status": 200,
+      "total": 4,
+      "count": 4
+    },
+    {
+      "path": "mentor/classes/4c675201-feab-48d7-96bb-f5df89cb4274/students?page=1&pageSize=20",
+      "status": 200,
+      "total": 1,
+      "count": 1
+    },
+    {
+      "path": "mentor/classes/4c675201-feab-48d7-96bb-f5df89cb4274/attendance-summary?page=1&pageSize=20",
+      "status": 200,
+      "total": 2,
+      "count": 2
+    },
+    {
+      "path": "mentor/classes/4c675201-feab-48d7-96bb-f5df89cb4274/progress?page=1&pageSize=20",
+      "status": 200,
+      "total": 2,
+      "count": 2
+    },
+    {
+      "path": "mentor/classes/4c675201-feab-48d7-96bb-f5df89cb4274/assignments?page=1&pageSize=20",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "mentor/classes/4c675201-feab-48d7-96bb-f5df89cb4274/units/a6ba1b74-174e-46f8-8e68-d034dc20d07e/materials?page=1&pageSize=100",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "mentor/classes/4c675201-feab-48d7-96bb-f5df89cb4274/units/a6ba1b74-174e-46f8-8e68-d034dc20d07e/sessions?page=1&pageSize=100",
+      "status": 200,
+      "total": 1,
+      "count": 1
+    },
+    {
+      "path": "class-sessions/15f1f596-9404-4f05-8fee-4b0fa17febcc/context",
+      "status": 200
+    },
+    {
+      "path": "class-sessions/15f1f596-9404-4f05-8fee-4b0fa17febcc/attendance?page=1&pageSize=20",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "class-sessions/15f1f596-9404-4f05-8fee-4b0fa17febcc/teaching-notes",
+      "status": 200
+    },
+    {
+      "path": "class-sessions/15f1f596-9404-4f05-8fee-4b0fa17febcc/attendance-candidates?page=1&pageSize=20",
+      "status": 200,
+      "total": 1,
+      "count": 1
+    },
+    {
+      "path": "mentor/classes/56bbe5b7-502d-47fc-8a31-dcc25cf5bd30",
+      "status": 200,
+      "code": "HTML-CSS-101-ON1"
+    },
+    {
+      "path": "mentor/classes/56bbe5b7-502d-47fc-8a31-dcc25cf5bd30/units?page=1&pageSize=100",
+      "status": 200,
+      "total": 5,
+      "count": 5
+    },
+    {
+      "path": "mentor/classes/56bbe5b7-502d-47fc-8a31-dcc25cf5bd30/sessions?page=1&pageSize=100",
+      "status": 200,
+      "total": 10,
+      "count": 10
+    },
+    {
+      "path": "mentor/classes/56bbe5b7-502d-47fc-8a31-dcc25cf5bd30/students?page=1&pageSize=20",
+      "status": 200,
+      "total": 1,
+      "count": 1
+    },
+    {
+      "path": "mentor/classes/56bbe5b7-502d-47fc-8a31-dcc25cf5bd30/attendance-summary?page=1&pageSize=20",
+      "status": 200,
+      "total": 7,
+      "count": 7
+    },
+    {
+      "path": "mentor/classes/56bbe5b7-502d-47fc-8a31-dcc25cf5bd30/progress?page=1&pageSize=20",
+      "status": 200,
+      "total": 7,
+      "count": 7
+    },
+    {
+      "path": "mentor/classes/56bbe5b7-502d-47fc-8a31-dcc25cf5bd30/assignments?page=1&pageSize=20",
+      "status": 200,
+      "total": 2,
+      "count": 2
+    },
+    {
+      "path": "mentor/classes/56bbe5b7-502d-47fc-8a31-dcc25cf5bd30/units/3b0f4758-440d-4191-a7dd-f418dc3ffb4b/materials?page=1&pageSize=100",
+      "status": 200,
+      "total": 6,
+      "count": 6
+    },
+    {
+      "path": "mentor/classes/56bbe5b7-502d-47fc-8a31-dcc25cf5bd30/units/3b0f4758-440d-4191-a7dd-f418dc3ffb4b/sessions?page=1&pageSize=100",
+      "status": 200,
+      "total": 2,
+      "count": 2
+    },
+    {
+      "path": "class-sessions/c6c77b4c-48f0-49ad-9af1-58a8d76b4f8f/context",
+      "status": 200
+    },
+    {
+      "path": "class-sessions/c6c77b4c-48f0-49ad-9af1-58a8d76b4f8f/attendance?page=1&pageSize=20",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "class-sessions/c6c77b4c-48f0-49ad-9af1-58a8d76b4f8f/teaching-notes",
+      "status": 200
+    },
+    {
+      "path": "class-sessions/c6c77b4c-48f0-49ad-9af1-58a8d76b4f8f/attendance-candidates?page=1&pageSize=20",
+      "status": 200,
+      "total": 1,
+      "count": 1
+    },
+    {
+      "path": "mentor/classes/f5db2595-9252-439f-be7a-115ec7351608",
+      "status": 200,
+      "code": "REACT-201-ON1"
+    },
+    {
+      "path": "mentor/classes/f5db2595-9252-439f-be7a-115ec7351608/units?page=1&pageSize=100",
+      "status": 200,
+      "total": 5,
+      "count": 5
+    },
+    {
+      "path": "mentor/classes/f5db2595-9252-439f-be7a-115ec7351608/sessions?page=1&pageSize=100",
+      "status": 200,
+      "total": 5,
+      "count": 5
+    },
+    {
+      "path": "mentor/classes/f5db2595-9252-439f-be7a-115ec7351608/students?page=1&pageSize=20",
+      "status": 200,
+      "total": 2,
+      "count": 2
+    },
+    {
+      "path": "mentor/classes/f5db2595-9252-439f-be7a-115ec7351608/attendance-summary?page=1&pageSize=20",
+      "status": 200,
+      "total": 3,
+      "count": 3
+    },
+    {
+      "path": "mentor/classes/f5db2595-9252-439f-be7a-115ec7351608/progress?page=1&pageSize=20",
+      "status": 200,
+      "total": 3,
+      "count": 3
+    },
+    {
+      "path": "mentor/classes/f5db2595-9252-439f-be7a-115ec7351608/assignments?page=1&pageSize=20",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "mentor/classes/f5db2595-9252-439f-be7a-115ec7351608/units/ff48223c-48a9-47b4-b7d6-80ae4ef886a3/materials?page=1&pageSize=100",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "mentor/classes/f5db2595-9252-439f-be7a-115ec7351608/units/ff48223c-48a9-47b4-b7d6-80ae4ef886a3/sessions?page=1&pageSize=100",
+      "status": 200,
+      "total": 1,
+      "count": 1
+    },
+    {
+      "path": "class-sessions/da092dd8-6444-4113-9670-32f76dc74d39/context",
+      "status": 200
+    },
+    {
+      "path": "class-sessions/da092dd8-6444-4113-9670-32f76dc74d39/attendance?page=1&pageSize=20",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "class-sessions/da092dd8-6444-4113-9670-32f76dc74d39/teaching-notes",
+      "status": 200
+    },
+    {
+      "path": "class-sessions/da092dd8-6444-4113-9670-32f76dc74d39/attendance-candidates?page=1&pageSize=20",
+      "status": 200,
+      "total": 2,
+      "count": 2
+    }
+  ]
+}

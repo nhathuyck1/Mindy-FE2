@@ -1,0 +1,183 @@
+
+[WebServer] (node:37108) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 76 tests using 2 workers
+
+
+(node:15216) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:23132) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[1/76] [desktop] › tests\e2e\mentor-date-time.e2e.ts:4:1 › mentor cannot create a chapter with a past availability or a time that elapsed while editing
+[2/76] [desktop] › tests\e2e\mentor-loading.e2e.ts:5:3 › mentor session shows one loading when context resolves first
+[3/76] [desktop] › tests\e2e\mentor-loading.e2e.ts:5:3 › mentor session shows one loading when attendance resolves first
+[4/76] [desktop] › tests\e2e\mentor-loading.e2e.ts:49:1 › mentor session retries both reads after a single loading error
+[5/76] [desktop] › tests\e2e\mentor-loading.e2e.ts:72:1 › mentor chapter keeps one loading across content, editor and session reads
+[6/76] [desktop] › tests\e2e\mentor-responsive.e2e.ts:4:1 › mentor chapters adapt to available space and keep drafts while resizing
+[7/76] [desktop] › tests\e2e\mentor-responsive.e2e.ts:94:1 › mentor chapter list and material body scroll independently at tablet width
+[8/76] [desktop] › tests\e2e\mentor-session-materials.e2e.ts:4:1 › mentor loads lessons independently of empty unit detail and creates from the header
+[9/76] [desktop] › tests\e2e\mentor-session-materials.e2e.ts:71:1 › mentor includes later API pages when grouping session content and retries failed reads
+[10/76] [desktop] › tests\e2e\mentor-ui.e2e.ts:6:1 › mentor progress bars distinguish zero, partial, full and unknown data
+[11/76] [desktop] › tests\e2e\mentor-ui.e2e.ts:111:1 › leave creation focuses on three steps and keeps the list separate
+[12/76] [desktop] › tests\e2e\mentor-workspace.e2e.ts:8:1 › mentor assignment filters, class shell and timetable use the new contracts
+[13/76] [desktop] › tests\e2e\mentor-workspace.e2e.ts:42:1 › substitute sees assigned teaching content without class roster, reports or authoring
+  1) [desktop] › tests\e2e\mentor-session-materials.e2e.ts:4:1 › mentor loads lessons independently of empty unit detail and creates from the header 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByRole('button', { name: /bài tập/i })
+    Expected: 0
+    Received: 1
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByRole('button', { name: /bài tập/i }) with timeout 5000ms
+      - waiting for getByRole('button', { name: /bài tập/i })
+        14 × locator resolved to 1 element
+           - unexpected value "1"
+
+
+      22 |     `/mentor/sessions/${mentorIds.session}`,
+      23 |   );
+    > 24 |   await expect(page.getByRole('button', { name: /bài tập/i })).toHaveCount(0);
+         |                                                                ^
+      25 |   await expect(first).toContainText('10:00 16/10/26');
+      26 |   expect(
+      27 |     calls.some((call) => call.path === `mentor/classes/${mentorIds.class}/units/${mentorIds.unit}`),
+        at E:\Ki 8\MinDy\Mindy-FE2\tests\e2e\mentor-session-materials.e2e.ts:24:64
+
+    Error Context: test-results\mentor-session-materials.e-74181-and-creates-from-the-header-desktop\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\mentor-session-materials.e-74181-and-creates-from-the-header-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\mentor-session-materials.e-74181-and-creates-from-the-header-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[14/76] [desktop] › tests\e2e\mentor-workspace.e2e.ts:75:1 › cancelled class opens history and prevents teaching mutations
+
+(node:32460) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[15/76] [desktop] › tests\e2e\mentor-workspace.e2e.ts:61:1 › attendance reports distinguish no data, physical status and makeup credit
+[16/76] [desktop] › tests\e2e\mentor-workspace.e2e.ts:89:1 › completed class allows internal notes within the editing window
+[17/76] [desktop] › tests\e2e\mentor-workspace.e2e.ts:97:1 › stored progress preserves zero, missing data and invalid values without writes
+[18/76] [desktop] › tests\e2e\mentor-workspace.e2e.ts:124:1 › preview is read only and bulk attendance includes guests across all pages
+[19/76] [desktop] › tests\e2e\mentor-workspace.e2e.ts:161:1 › teaching note conflicts preserve drafts and require an explicit merge decision
+[20/76] [desktop] › tests\e2e\mentor-workspace.e2e.ts:183:1 › network retry keeps note idempotency key and meeting edits can clear the override
+[21/76] [desktop] › tests\e2e\mentor-workspace.e2e.ts:206:1 › note drafts survive a failed conflict refresh and the edit window is checked on submit
+[22/76] [desktop] › tests\e2e\mentor-workspace.e2e.ts:247:1 › stale leave creation keeps the proposed dates and reason without retrying automatically
+[23/76] [desktop] › tests\e2e\mentor-workspace.e2e.ts:269:3 › leave FULL_DAY preview, mapping, create, detail and withdrawal use current versions
+[24/76] [desktop] › tests\e2e\mentor-workspace.e2e.ts:269:3 › leave MORNING preview, mapping, create, detail and withdrawal use current versions
+[25/76] [desktop] › tests\e2e\mentor.e2e.ts:5:1 › mentor saved attachments show readable metadata and request access on demand
+[26/76] [desktop] › tests\e2e\mentor.e2e.ts:30:1 › weekly timetable groups slots, stacks sessions and navigates whole weeks
+[27/76] [desktop] › tests\e2e\mentor.e2e.ts:113:1 › mentor attendance keeps student names readable and preserves the attendance lifecycle
+[28/76] [desktop] › tests\e2e\mentor.e2e.ts:197:1 › class roster is read only and removed unit release is absent
+[29/76] [desktop] › tests\e2e\mentor.e2e.ts:211:1 › mentor student table matches admin layout and supports scoped search, filters and pagination
+[30/76] [desktop] › tests\e2e\mentor.e2e.ts:263:1 › mentor creates article, edits own draft and submits for manager review
+[31/76] [desktop] › tests\e2e\mentor.e2e.ts:311:1 › mentor workspace keeps chapters beside content, edit toolbar and creation at the right
+[32/76] [desktop] › tests\e2e\mentor.e2e.ts:369:1 › mentor material shows its linked lesson and lets the author attach one
+[33/76] [desktop] › tests\e2e\mentor.e2e.ts:402:1 › mentor cannot edit reviewed materials and preserves unsaved text on conflict
+[34/76] [desktop] › tests\e2e\mentor.e2e.ts:424:1 › mentor waits for validated upload before saving FILE
+[35/76] [desktop] › tests\e2e\mentor.e2e.ts:475:1 › failed upload cannot be attached to a draft
+[36/76] [desktop] › tests\e2e\mentor.e2e.ts:498:1 › mentor can drop, cancel and retry a pending document upload
+[37/76] [desktop] › tests\e2e\mentor.e2e.ts:528:1 › mentor shows validated attachments as removable green file cards
+[38/76] [desktop] › tests\e2e\mentor.e2e.ts:550:1 › mentor guard, expired attendance, conflict and narrow viewport
+
+(node:36452) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:26952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[39/76] [mobile] › tests\e2e\mentor-date-time.e2e.ts:4:1 › mentor cannot create a chapter with a past availability or a time that elapsed while editing
+[40/76] [mobile] › tests\e2e\mentor-loading.e2e.ts:5:3 › mentor session shows one loading when context resolves first
+[41/76] [mobile] › tests\e2e\mentor-loading.e2e.ts:5:3 › mentor session shows one loading when attendance resolves first
+[42/76] [mobile] › tests\e2e\mentor-loading.e2e.ts:49:1 › mentor session retries both reads after a single loading error
+[43/76] [mobile] › tests\e2e\mentor-loading.e2e.ts:72:1 › mentor chapter keeps one loading across content, editor and session reads
+[44/76] [mobile] › tests\e2e\mentor-responsive.e2e.ts:4:1 › mentor chapters adapt to available space and keep drafts while resizing
+[45/76] [mobile] › tests\e2e\mentor-responsive.e2e.ts:94:1 › mentor chapter list and material body scroll independently at tablet width
+[46/76] [mobile] › tests\e2e\mentor-session-materials.e2e.ts:4:1 › mentor loads lessons independently of empty unit detail and creates from the header
+[47/76] [mobile] › tests\e2e\mentor-session-materials.e2e.ts:71:1 › mentor includes later API pages when grouping session content and retries failed reads
+[48/76] [mobile] › tests\e2e\mentor-ui.e2e.ts:6:1 › mentor progress bars distinguish zero, partial, full and unknown data
+[49/76] [mobile] › tests\e2e\mentor-ui.e2e.ts:111:1 › leave creation focuses on three steps and keeps the list separate
+  2) [mobile] › tests\e2e\mentor-session-materials.e2e.ts:4:1 › mentor loads lessons independently of empty unit detail and creates from the header 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByRole('button', { name: /bài tập/i })
+    Expected: 0
+    Received: 1
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByRole('button', { name: /bài tập/i }) with timeout 5000ms
+      - waiting for getByRole('button', { name: /bài tập/i })
+        14 × locator resolved to 1 element
+           - unexpected value "1"
+
+
+      22 |     `/mentor/sessions/${mentorIds.session}`,
+      23 |   );
+    > 24 |   await expect(page.getByRole('button', { name: /bài tập/i })).toHaveCount(0);
+         |                                                                ^
+      25 |   await expect(first).toContainText('10:00 16/10/26');
+      26 |   expect(
+      27 |     calls.some((call) => call.path === `mentor/classes/${mentorIds.class}/units/${mentorIds.unit}`),
+        at E:\Ki 8\MinDy\Mindy-FE2\tests\e2e\mentor-session-materials.e2e.ts:24:64
+
+    Error Context: test-results\mentor-session-materials.e-74181-and-creates-from-the-header-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\mentor-session-materials.e-74181-and-creates-from-the-header-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\mentor-session-materials.e-74181-and-creates-from-the-header-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+(node:36524) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[50/76] [mobile] › tests\e2e\mentor-workspace.e2e.ts:42:1 › substitute sees assigned teaching content without class roster, reports or authoring
+[51/76] [mobile] › tests\e2e\mentor-workspace.e2e.ts:8:1 › mentor assignment filters, class shell and timetable use the new contracts
+[52/76] [mobile] › tests\e2e\mentor-workspace.e2e.ts:61:1 › attendance reports distinguish no data, physical status and makeup credit
+[53/76] [mobile] › tests\e2e\mentor-workspace.e2e.ts:75:1 › cancelled class opens history and prevents teaching mutations
+[54/76] [mobile] › tests\e2e\mentor-workspace.e2e.ts:89:1 › completed class allows internal notes within the editing window
+[55/76] [mobile] › tests\e2e\mentor-workspace.e2e.ts:97:1 › stored progress preserves zero, missing data and invalid values without writes
+[56/76] [mobile] › tests\e2e\mentor-workspace.e2e.ts:124:1 › preview is read only and bulk attendance includes guests across all pages
+[57/76] [mobile] › tests\e2e\mentor-workspace.e2e.ts:161:1 › teaching note conflicts preserve drafts and require an explicit merge decision
+[58/76] [mobile] › tests\e2e\mentor-workspace.e2e.ts:183:1 › network retry keeps note idempotency key and meeting edits can clear the override
+[59/76] [mobile] › tests\e2e\mentor-workspace.e2e.ts:206:1 › note drafts survive a failed conflict refresh and the edit window is checked on submit
+[60/76] [mobile] › tests\e2e\mentor-workspace.e2e.ts:247:1 › stale leave creation keeps the proposed dates and reason without retrying automatically
+[61/76] [mobile] › tests\e2e\mentor-workspace.e2e.ts:269:3 › leave FULL_DAY preview, mapping, create, detail and withdrawal use current versions
+[62/76] [mobile] › tests\e2e\mentor-workspace.e2e.ts:269:3 › leave MORNING preview, mapping, create, detail and withdrawal use current versions
+[63/76] [mobile] › tests\e2e\mentor.e2e.ts:5:1 › mentor saved attachments show readable metadata and request access on demand
+[64/76] [mobile] › tests\e2e\mentor.e2e.ts:30:1 › weekly timetable groups slots, stacks sessions and navigates whole weeks
+[65/76] [mobile] › tests\e2e\mentor.e2e.ts:113:1 › mentor attendance keeps student names readable and preserves the attendance lifecycle
+[66/76] [mobile] › tests\e2e\mentor.e2e.ts:197:1 › class roster is read only and removed unit release is absent
+[67/76] [mobile] › tests\e2e\mentor.e2e.ts:211:1 › mentor student table matches admin layout and supports scoped search, filters and pagination
+[68/76] [mobile] › tests\e2e\mentor.e2e.ts:263:1 › mentor creates article, edits own draft and submits for manager review
+[69/76] [mobile] › tests\e2e\mentor.e2e.ts:311:1 › mentor workspace keeps chapters beside content, edit toolbar and creation at the right
+[70/76] [mobile] › tests\e2e\mentor.e2e.ts:369:1 › mentor material shows its linked lesson and lets the author attach one
+[71/76] [mobile] › tests\e2e\mentor.e2e.ts:402:1 › mentor cannot edit reviewed materials and preserves unsaved text on conflict
+[72/76] [mobile] › tests\e2e\mentor.e2e.ts:424:1 › mentor waits for validated upload before saving FILE
+[73/76] [mobile] › tests\e2e\mentor.e2e.ts:475:1 › failed upload cannot be attached to a draft
+[74/76] [mobile] › tests\e2e\mentor.e2e.ts:498:1 › mentor can drop, cancel and retry a pending document upload
+[75/76] [mobile] › tests\e2e\mentor.e2e.ts:528:1 › mentor shows validated attachments as removable green file cards
+[76/76] [mobile] › tests\e2e\mentor.e2e.ts:550:1 › mentor guard, expired attendance, conflict and narrow viewport
+  2 failed
+    [desktop] › tests\e2e\mentor-session-materials.e2e.ts:4:1 › mentor loads lessons independently of empty unit detail and creates from the header 
+    [mobile] › tests\e2e\mentor-session-materials.e2e.ts:4:1 › mentor loads lessons independently of empty unit detail and creates from the header 
+  2 skipped
+  72 passed (2.0m)

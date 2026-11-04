@@ -1,0 +1,546 @@
+
+[WebServer] (node:37132) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 94 tests using 2 workers
+
+
+(node:18140) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:36176) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[1/94] [desktop] › tests\e2e\manager-collections.e2e.ts:8:1 › cash collection uses server orders, filters, pagination and page CSV
+[2/94] [desktop] › tests\e2e\manager-collections.e2e.ts:55:1 › manager confirms the full multi-class order only after checking received cash
+[3/94] [desktop] › tests\e2e\manager-collections.e2e.ts:116:1 › closed orders, permission revocation and conflicts never auto-confirm or retry
+[4/94] [desktop] › tests\e2e\manager-collections.e2e.ts:150:1 › a lost confirmation response is resolved by reading the order without repeating collection
+[5/94] [desktop] › tests\e2e\manager-collections.e2e.ts:175:1 › only active managers can use collection and a denied command stops the form
+[6/94] [desktop] › tests\e2e\manager-leave.e2e.ts:274:1 › Manager leave queue filters mentors and pages without losing its URL state
+[7/94] [desktop] › tests\e2e\manager-leave.e2e.ts:302:1 › Manager confirms full-day conflicts and retries an uncertain approval with the same idempotency key
+[8/94] [desktop] › tests\e2e\manager-leave.e2e.ts:337:1 › Manager can reject a partial-day request when student conflicts block approval
+  1) [desktop] › tests\e2e\manager-leave.e2e.ts:337:1 › Manager can reject a partial-day request when student conflicts block approval 
+
+    Error: expect(locator).toBeDisabled() failed
+
+    Locator: getByRole('button', { name: 'Duyệt đơn' })
+    Expected: disabled
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeDisabled" getByRole('button', { name: 'Duyệt đơn' }) with timeout 5000ms
+      - waiting for getByRole('button', { name: 'Duyệt đơn' })
+
+
+      340 |   const { calls } = await mockManagerLeave(page, { period: 'MORNING' });
+      341 |   await page.goto(`/manager/leave-requests/${ids.request}`);
+    > 342 |   await expect(page.getByRole('button', { name: 'Duyệt đơn' })).toBeDisabled();
+          |                                                                 ^
+      343 |   await page.getByRole('button', { name: 'Từ chối đơn' }).click();
+      344 |   const dialog = page.getByRole('dialog', { name: 'Xác nhận từ chối đơn' });
+      345 |   await dialog.getByLabel('Lý do xử lý').fill('Lịch học viên bị trùng');
+        at E:\Ki 8\MinDy\Mindy-FE2\tests\e2e\manager-leave.e2e.ts:342:65
+
+    Error Context: test-results\manager-leave.e2e.ts-Manag-4f983-nt-conflicts-block-approval-desktop\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\manager-leave.e2e.ts-Manag-4f983-nt-conflicts-block-approval-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\manager-leave.e2e.ts-Manag-4f983-nt-conflicts-block-approval-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+(node:31512) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[9/94] [desktop] › tests\e2e\manager-leave.e2e.ts:353:1 › Manager can reject a stale-source request but cannot approve it
+  2) [desktop] › tests\e2e\manager-leave.e2e.ts:353:1 › Manager can reject a stale-source request but cannot approve it 
+
+    Error: expect(locator).toBeDisabled() failed
+
+    Locator: getByRole('button', { name: 'Duyệt đơn' })
+    Expected: disabled
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeDisabled" getByRole('button', { name: 'Duyệt đơn' }) with timeout 5000ms
+      - waiting for getByRole('button', { name: 'Duyệt đơn' })
+
+
+      355 |   await page.goto(`/manager/leave-requests/${ids.request}`);
+      356 |   await expect(page.getByText('Buổi nguồn đã thay đổi. Không thể duyệt đơn này')).toBeVisible();
+    > 357 |   await expect(page.getByRole('button', { name: 'Duyệt đơn' })).toBeDisabled();
+          |                                                                 ^
+      358 |   await page.getByRole('button', { name: 'Từ chối đơn' }).click();
+      359 |   const dialog = page.getByRole('dialog', { name: 'Xác nhận từ chối đơn' });
+      360 |   await dialog.getByLabel('Lý do xử lý').fill('Mentor cần gửi đơn mới');
+        at E:\Ki 8\MinDy\Mindy-FE2\tests\e2e\manager-leave.e2e.ts:357:65
+
+    Error Context: test-results\manager-leave.e2e.ts-Manag-6c374-quest-but-cannot-approve-it-desktop\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\manager-leave.e2e.ts-Manag-6c374-quest-but-cannot-approve-it-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\manager-leave.e2e.ts-Manag-6c374-quest-but-cannot-approve-it-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+(node:19284) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[10/94] [desktop] › tests\e2e\manager-leave.e2e.ts:367:1 › Manager must refresh and confirm again after a version conflict
+  3) [desktop] › tests\e2e\manager-leave.e2e.ts:302:1 › Manager confirms full-day conflicts and retries an uncertain approval with the same idempotency key 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: 'Duyệt đơn' })
+
+
+      309 |     'Nguyễn Học Viên',
+      310 |   );
+    > 311 |   await page.getByRole('button', { name: 'Duyệt đơn' }).click();
+          |                                                         ^
+      312 |   const dialog = page.getByRole('dialog', { name: 'Xác nhận duyệt đơn' });
+      313 |   await expect(dialog.getByRole('button', { name: 'Xác nhận duyệt' })).toBeDisabled();
+      314 |   await dialog.getByRole('checkbox', { name: 'Xác nhận đã xem xung đột lịch học viên' }).check();
+        at E:\Ki 8\MinDy\Mindy-FE2\tests\e2e\manager-leave.e2e.ts:311:57
+
+    Error Context: test-results\manager-leave.e2e.ts-Manag-01d51-th-the-same-idempotency-key-desktop\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\manager-leave.e2e.ts-Manag-01d51-th-the-same-idempotency-key-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\manager-leave.e2e.ts-Manag-01d51-th-the-same-idempotency-key-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+(node:19392) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[11/94] [desktop] › tests\e2e\manager-leave.e2e.ts:391:1 › Manager action locks while the decision is being submitted
+  4) [desktop] › tests\e2e\manager-leave.e2e.ts:367:1 › Manager must refresh and confirm again after a version conflict 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: 'Duyệt đơn' })
+
+
+      368 |   const { calls } = await mockManagerLeave(page, { versionConflictFirstResponse: true });
+      369 |   await page.goto(`/manager/leave-requests/${ids.request}`);
+    > 370 |   await page.getByRole('button', { name: 'Duyệt đơn' }).click();
+          |                                                         ^
+      371 |   let dialog = page.getByRole('dialog', { name: 'Xác nhận duyệt đơn' });
+      372 |   await dialog.getByLabel('Lý do xử lý').fill('Xác nhận lần đầu');
+      373 |   await dialog.getByRole('checkbox', { name: 'Xác nhận đã xem xung đột lịch học viên' }).check();
+        at E:\Ki 8\MinDy\Mindy-FE2\tests\e2e\manager-leave.e2e.ts:370:57
+
+    Error Context: test-results\manager-leave.e2e.ts-Manag-55086-in-after-a-version-conflict-desktop\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\manager-leave.e2e.ts-Manag-55086-in-after-a-version-conflict-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\manager-leave.e2e.ts-Manag-55086-in-after-a-version-conflict-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+(node:26328) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[12/94] [desktop] › tests\e2e\manager-leave.e2e.ts:412:1 › Expired requests are not actionable
+[13/94] [desktop] › tests\e2e\manager-leave.e2e.ts:420:1 › Escape restores focus and detail has no horizontal overflow at 320px
+  5) [desktop] › tests\e2e\manager-leave.e2e.ts:391:1 › Manager action locks while the decision is being submitted 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: 'Duyệt đơn' })
+
+
+      392 |   const { calls, releaseAction } = await mockManagerLeave(page, { holdAction: true });
+      393 |   await page.goto(`/manager/leave-requests/${ids.request}`);
+    > 394 |   await page.getByRole('button', { name: 'Duyệt đơn' }).click();
+          |                                                         ^
+      395 |   const dialog = page.getByRole('dialog', { name: 'Xác nhận duyệt đơn' });
+      396 |   await dialog.getByLabel('Lý do xử lý').fill('Không có lịch trùng');
+      397 |   await dialog.getByRole('checkbox', { name: 'Xác nhận đã xem xung đột lịch học viên' }).check();
+        at E:\Ki 8\MinDy\Mindy-FE2\tests\e2e\manager-leave.e2e.ts:394:57
+
+    Error Context: test-results\manager-leave.e2e.ts-Manag-08339-decision-is-being-submitted-desktop\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\manager-leave.e2e.ts-Manag-08339-decision-is-being-submitted-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\manager-leave.e2e.ts-Manag-08339-decision-is-being-submitted-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+(node:35856) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[14/94] [desktop] › tests\e2e\manager.e2e.ts:276:1 › Manager pending queue paginates and opens the selected material by URL
+[15/94] [desktop] › tests\e2e\manager.e2e.ts:300:1 › Manager confirmations appear in the viewport above long chapter content and restore focus
+[16/94] [desktop] › tests\e2e\manager.e2e.ts:335:1 › Manager review approval sends one revision and refreshes the dashboard totals
+[17/94] [desktop] › tests\e2e\manager.e2e.ts:375:1 › Manager review rejection requires a reason and deletion waits for explicit confirmation
+[18/94] [desktop] › tests\e2e\manager.e2e.ts:413:1 › Manager review conflict reloads a newer version without replaying the command
+[19/94] [desktop] › tests\e2e\manager.e2e.ts:431:1 › Manager review network errors require reading the material before another command
+[20/94] [desktop] › tests\e2e\manager.e2e.ts:451:1 › Manager pending queue retries failed reads and handles invalid review links safely
+[21/94] [desktop] › tests\e2e\manager.e2e.ts:481:1 › Student cannot mount the Manager material review query
+[22/94] [desktop] › tests\e2e\manager.e2e.ts:490:1 › Manager review editing preserves CKEditor and removes approval for a never approved Mentor draft
+[23/94] [desktop] › tests\e2e\manager.e2e.ts:509:1 › manager reviews a material, controls publication and has a responsive workspace
+  6) [desktop] › tests\e2e\manager-leave.e2e.ts:420:1 › Escape restores focus and detail has no horizontal overflow at 320px 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: 'Duyệt đơn' })
+
+
+      423 |   await page.goto(`/manager/leave-requests/${ids.request}`);
+      424 |   const approve = page.getByRole('button', { name: 'Duyệt đơn' });
+    > 425 |   await approve.click();
+          |                 ^
+      426 |   await expect(page.getByRole('dialog', { name: 'Xác nhận duyệt đơn' })).toBeVisible();
+      427 |   await page.keyboard.press('Escape');
+      428 |   await expect(page.getByRole('dialog', { name: 'Xác nhận duyệt đơn' })).toBeHidden();
+        at E:\Ki 8\MinDy\Mindy-FE2\tests\e2e\manager-leave.e2e.ts:425:17
+
+    Error Context: test-results\manager-leave.e2e.ts-Escap-62f4d-orizontal-overflow-at-320px-desktop\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\manager-leave.e2e.ts-Escap-62f4d-orizontal-overflow-at-320px-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\manager-leave.e2e.ts-Escap-62f4d-orizontal-overflow-at-320px-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+(node:20544) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[24/94] [desktop] › tests\e2e\manager.e2e.ts:555:1 › Manager overview counts API totals and keeps inventory state through reload and history
+[25/94] [desktop] › tests\e2e\manager.e2e.ts:586:1 › Manager account menu links to its dashboard and hides Student links
+[26/94] [desktop] › tests\e2e\manager.e2e.ts:599:1 › manager rejects with a reason and never retries a revision conflict
+[27/94] [desktop] › tests\e2e\manager.e2e.ts:617:1 › manager creates an article in a real course unit and edits a draft
+[28/94] [desktop] › tests\e2e\manager.e2e.ts:676:1 › old local receipts remain readable and exportable without changing payments
+[29/94] [desktop] › tests\e2e\manager.e2e.ts:711:1 › student cannot mount manager data
+[30/94] [desktop] › tests\e2e\manager.e2e.ts:797:1 › manager uploads a primary file before saving a FILE material
+[31/94] [desktop] › tests\e2e\manager.e2e.ts:832:1 › manager detects PDF metadata and polls automatically after complete
+[32/94] [desktop] › tests\e2e\manager.e2e.ts:905:1 › manager drops a file, sees a compact success card and adds or removes an attachment
+[33/94] [desktop] › tests\e2e\manager.e2e.ts:958:1 › manager refreshes expired authentication during intent, complete and status polling
+[34/94] [desktop] › tests\e2e\manager.e2e.ts:1026:1 › pending uploads can pause and check the existing file without sending it again
+[35/94] [desktop] › tests\e2e\manager.e2e.ts:1069:1 › failed backend validation stops checks and keeps an unusable file out of the draft
+[36/94] [desktop] › tests\e2e\manager.e2e.ts:1106:1 › the primary file can be replaced while backend validation is still running
+[37/94] [desktop] › tests\e2e\manager.e2e.ts:1150:1 › attachments remain available while the primary file is being validated
+[38/94] [desktop] › tests\e2e\manager.e2e.ts:1183:1 › manager course workspace matches student chapters and keeps pagination scoped
+[39/94] [desktop] › tests\e2e\manager.e2e.ts:1265:1 › manager edits and creates directly inside the selected chapter
+[40/94] [desktop] › tests\e2e\manager.e2e.ts:1292:1 › material approval refetches the selected chapter inline
+[41/94] [desktop] › tests\e2e\manager.e2e.ts:1321:1 › manager uploads a file inline using the selected chapter context
+[42/94] [desktop] › tests\e2e\manager.e2e.ts:1356:1 › manager keeps course headers still while scrolling each hidden-scrollbar panel
+[43/94] [desktop] › tests\e2e\manager.e2e.ts:1455:1 › manager shows one clear file detail with grouped actions and readable dates
+[44/94] [desktop] › tests\e2e\manager.e2e.ts:1506:1 › manager keeps spacious filters on small screens without course search
+[45/94] [desktop] › tests\e2e\manager.e2e.ts:1571:1 › manager lists courses first and opens the workspace only after choosing one
+[46/94] [desktop] › tests\e2e\manager.e2e.ts:1617:1 › article editor blocks empty and oversized UTF-8 content before calling the API
+[47/94] [desktop] › tests\e2e\manager.e2e.ts:1651:1 › article edits preserve tables, links and verified inline image IDs
+(node:37536) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:37436) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[48/94] [mobile] › tests\e2e\manager-collections.e2e.ts:8:1 › cash collection uses server orders, filters, pagination and page CSV
+[49/94] [mobile] › tests\e2e\manager-collections.e2e.ts:55:1 › manager confirms the full multi-class order only after checking received cash
+[50/94] [mobile] › tests\e2e\manager-collections.e2e.ts:116:1 › closed orders, permission revocation and conflicts never auto-confirm or retry
+[51/94] [mobile] › tests\e2e\manager-collections.e2e.ts:150:1 › a lost confirmation response is resolved by reading the order without repeating collection
+[52/94] [mobile] › tests\e2e\manager-collections.e2e.ts:175:1 › only active managers can use collection and a denied command stops the form
+[53/94] [mobile] › tests\e2e\manager-leave.e2e.ts:274:1 › Manager leave queue filters mentors and pages without losing its URL state
+[54/94] [mobile] › tests\e2e\manager-leave.e2e.ts:302:1 › Manager confirms full-day conflicts and retries an uncertain approval with the same idempotency key
+[55/94] [mobile] › tests\e2e\manager-leave.e2e.ts:337:1 › Manager can reject a partial-day request when student conflicts block approval
+  7) [mobile] › tests\e2e\manager-leave.e2e.ts:337:1 › Manager can reject a partial-day request when student conflicts block approval 
+
+    Error: expect(locator).toBeDisabled() failed
+
+    Locator: getByRole('button', { name: 'Duyệt đơn' })
+    Expected: disabled
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeDisabled" getByRole('button', { name: 'Duyệt đơn' }) with timeout 5000ms
+      - waiting for getByRole('button', { name: 'Duyệt đơn' })
+
+
+      340 |   const { calls } = await mockManagerLeave(page, { period: 'MORNING' });
+      341 |   await page.goto(`/manager/leave-requests/${ids.request}`);
+    > 342 |   await expect(page.getByRole('button', { name: 'Duyệt đơn' })).toBeDisabled();
+          |                                                                 ^
+      343 |   await page.getByRole('button', { name: 'Từ chối đơn' }).click();
+      344 |   const dialog = page.getByRole('dialog', { name: 'Xác nhận từ chối đơn' });
+      345 |   await dialog.getByLabel('Lý do xử lý').fill('Lịch học viên bị trùng');
+        at E:\Ki 8\MinDy\Mindy-FE2\tests\e2e\manager-leave.e2e.ts:342:65
+
+    Error Context: test-results\manager-leave.e2e.ts-Manag-4f983-nt-conflicts-block-approval-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\manager-leave.e2e.ts-Manag-4f983-nt-conflicts-block-approval-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\manager-leave.e2e.ts-Manag-4f983-nt-conflicts-block-approval-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+(node:17912) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[56/94] [mobile] › tests\e2e\manager-leave.e2e.ts:353:1 › Manager can reject a stale-source request but cannot approve it
+  8) [mobile] › tests\e2e\manager-leave.e2e.ts:353:1 › Manager can reject a stale-source request but cannot approve it 
+
+    Error: expect(locator).toBeDisabled() failed
+
+    Locator: getByRole('button', { name: 'Duyệt đơn' })
+    Expected: disabled
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeDisabled" getByRole('button', { name: 'Duyệt đơn' }) with timeout 5000ms
+      - waiting for getByRole('button', { name: 'Duyệt đơn' })
+
+
+      355 |   await page.goto(`/manager/leave-requests/${ids.request}`);
+      356 |   await expect(page.getByText('Buổi nguồn đã thay đổi. Không thể duyệt đơn này')).toBeVisible();
+    > 357 |   await expect(page.getByRole('button', { name: 'Duyệt đơn' })).toBeDisabled();
+          |                                                                 ^
+      358 |   await page.getByRole('button', { name: 'Từ chối đơn' }).click();
+      359 |   const dialog = page.getByRole('dialog', { name: 'Xác nhận từ chối đơn' });
+      360 |   await dialog.getByLabel('Lý do xử lý').fill('Mentor cần gửi đơn mới');
+        at E:\Ki 8\MinDy\Mindy-FE2\tests\e2e\manager-leave.e2e.ts:357:65
+
+    Error Context: test-results\manager-leave.e2e.ts-Manag-6c374-quest-but-cannot-approve-it-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\manager-leave.e2e.ts-Manag-6c374-quest-but-cannot-approve-it-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\manager-leave.e2e.ts-Manag-6c374-quest-but-cannot-approve-it-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+(node:30640) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[57/94] [mobile] › tests\e2e\manager-leave.e2e.ts:367:1 › Manager must refresh and confirm again after a version conflict
+  9) [mobile] › tests\e2e\manager-leave.e2e.ts:302:1 › Manager confirms full-day conflicts and retries an uncertain approval with the same idempotency key 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: 'Duyệt đơn' })
+
+
+      309 |     'Nguyễn Học Viên',
+      310 |   );
+    > 311 |   await page.getByRole('button', { name: 'Duyệt đơn' }).click();
+          |                                                         ^
+      312 |   const dialog = page.getByRole('dialog', { name: 'Xác nhận duyệt đơn' });
+      313 |   await expect(dialog.getByRole('button', { name: 'Xác nhận duyệt' })).toBeDisabled();
+      314 |   await dialog.getByRole('checkbox', { name: 'Xác nhận đã xem xung đột lịch học viên' }).check();
+        at E:\Ki 8\MinDy\Mindy-FE2\tests\e2e\manager-leave.e2e.ts:311:57
+
+    Error Context: test-results\manager-leave.e2e.ts-Manag-01d51-th-the-same-idempotency-key-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\manager-leave.e2e.ts-Manag-01d51-th-the-same-idempotency-key-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\manager-leave.e2e.ts-Manag-01d51-th-the-same-idempotency-key-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+
+(node:1276) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[58/94] [mobile] › tests\e2e\manager-leave.e2e.ts:391:1 › Manager action locks while the decision is being submitted
+  10) [mobile] › tests\e2e\manager-leave.e2e.ts:367:1 › Manager must refresh and confirm again after a version conflict 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: 'Duyệt đơn' })
+
+
+      368 |   const { calls } = await mockManagerLeave(page, { versionConflictFirstResponse: true });
+      369 |   await page.goto(`/manager/leave-requests/${ids.request}`);
+    > 370 |   await page.getByRole('button', { name: 'Duyệt đơn' }).click();
+          |                                                         ^
+      371 |   let dialog = page.getByRole('dialog', { name: 'Xác nhận duyệt đơn' });
+      372 |   await dialog.getByLabel('Lý do xử lý').fill('Xác nhận lần đầu');
+      373 |   await dialog.getByRole('checkbox', { name: 'Xác nhận đã xem xung đột lịch học viên' }).check();
+        at E:\Ki 8\MinDy\Mindy-FE2\tests\e2e\manager-leave.e2e.ts:370:57
+
+    Error Context: test-results\manager-leave.e2e.ts-Manag-55086-in-after-a-version-conflict-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\manager-leave.e2e.ts-Manag-55086-in-after-a-version-conflict-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\manager-leave.e2e.ts-Manag-55086-in-after-a-version-conflict-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+(node:19604) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+[59/94] [mobile] › tests\e2e\manager-leave.e2e.ts:412:1 › Expired requests are not actionable
+[60/94] [mobile] › tests\e2e\manager-leave.e2e.ts:420:1 › Escape restores focus and detail has no horizontal overflow at 320px
+  11) [mobile] › tests\e2e\manager-leave.e2e.ts:391:1 › Manager action locks while the decision is being submitted 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: 'Duyệt đơn' })
+
+
+      392 |   const { calls, releaseAction } = await mockManagerLeave(page, { holdAction: true });
+      393 |   await page.goto(`/manager/leave-requests/${ids.request}`);
+    > 394 |   await page.getByRole('button', { name: 'Duyệt đơn' }).click();
+          |                                                         ^
+      395 |   const dialog = page.getByRole('dialog', { name: 'Xác nhận duyệt đơn' });
+      396 |   await dialog.getByLabel('Lý do xử lý').fill('Không có lịch trùng');
+      397 |   await dialog.getByRole('checkbox', { name: 'Xác nhận đã xem xung đột lịch học viên' }).check();
+        at E:\Ki 8\MinDy\Mindy-FE2\tests\e2e\manager-leave.e2e.ts:394:57
+
+    Error Context: test-results\manager-leave.e2e.ts-Manag-08339-decision-is-being-submitted-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\manager-leave.e2e.ts-Manag-08339-decision-is-being-submitted-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\manager-leave.e2e.ts-Manag-08339-decision-is-being-submitted-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+(node:4180) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[61/94] [mobile] › tests\e2e\manager.e2e.ts:276:1 › Manager pending queue paginates and opens the selected material by URL
+[62/94] [mobile] › tests\e2e\manager.e2e.ts:300:1 › Manager confirmations appear in the viewport above long chapter content and restore focus
+[63/94] [mobile] › tests\e2e\manager.e2e.ts:335:1 › Manager review approval sends one revision and refreshes the dashboard totals
+[64/94] [mobile] › tests\e2e\manager.e2e.ts:375:1 › Manager review rejection requires a reason and deletion waits for explicit confirmation
+[65/94] [mobile] › tests\e2e\manager.e2e.ts:413:1 › Manager review conflict reloads a newer version without replaying the command
+[66/94] [mobile] › tests\e2e\manager.e2e.ts:431:1 › Manager review network errors require reading the material before another command
+[67/94] [mobile] › tests\e2e\manager.e2e.ts:451:1 › Manager pending queue retries failed reads and handles invalid review links safely
+[68/94] [mobile] › tests\e2e\manager.e2e.ts:481:1 › Student cannot mount the Manager material review query
+[69/94] [mobile] › tests\e2e\manager.e2e.ts:490:1 › Manager review editing preserves CKEditor and removes approval for a never approved Mentor draft
+[70/94] [mobile] › tests\e2e\manager.e2e.ts:509:1 › manager reviews a material, controls publication and has a responsive workspace
+[71/94] [mobile] › tests\e2e\manager.e2e.ts:555:1 › Manager overview counts API totals and keeps inventory state through reload and history
+[72/94] [mobile] › tests\e2e\manager.e2e.ts:586:1 › Manager account menu links to its dashboard and hides Student links
+[73/94] [mobile] › tests\e2e\manager.e2e.ts:599:1 › manager rejects with a reason and never retries a revision conflict
+[74/94] [mobile] › tests\e2e\manager.e2e.ts:617:1 › manager creates an article in a real course unit and edits a draft
+[75/94] [mobile] › tests\e2e\manager.e2e.ts:676:1 › old local receipts remain readable and exportable without changing payments
+[76/94] [mobile] › tests\e2e\manager.e2e.ts:711:1 › student cannot mount manager data
+  12) [mobile] › tests\e2e\manager-leave.e2e.ts:420:1 › Escape restores focus and detail has no horizontal overflow at 320px 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: 'Duyệt đơn' })
+
+
+      423 |   await page.goto(`/manager/leave-requests/${ids.request}`);
+      424 |   const approve = page.getByRole('button', { name: 'Duyệt đơn' });
+    > 425 |   await approve.click();
+          |                 ^
+      426 |   await expect(page.getByRole('dialog', { name: 'Xác nhận duyệt đơn' })).toBeVisible();
+      427 |   await page.keyboard.press('Escape');
+      428 |   await expect(page.getByRole('dialog', { name: 'Xác nhận duyệt đơn' })).toBeHidden();
+        at E:\Ki 8\MinDy\Mindy-FE2\tests\e2e\manager-leave.e2e.ts:425:17
+
+    Error Context: test-results\manager-leave.e2e.ts-Escap-62f4d-orizontal-overflow-at-320px-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\manager-leave.e2e.ts-Escap-62f4d-orizontal-overflow-at-320px-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\manager-leave.e2e.ts-Escap-62f4d-orizontal-overflow-at-320px-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[77/94] [mobile] › tests\e2e\manager.e2e.ts:832:1 › manager detects PDF metadata and polls automatically after complete
+
+(node:36256) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[78/94] [mobile] › tests\e2e\manager.e2e.ts:797:1 › manager uploads a primary file before saving a FILE material
+[79/94] [mobile] › tests\e2e\manager.e2e.ts:905:1 › manager drops a file, sees a compact success card and adds or removes an attachment
+[80/94] [mobile] › tests\e2e\manager.e2e.ts:958:1 › manager refreshes expired authentication during intent, complete and status polling
+[81/94] [mobile] › tests\e2e\manager.e2e.ts:1026:1 › pending uploads can pause and check the existing file without sending it again
+[82/94] [mobile] › tests\e2e\manager.e2e.ts:1069:1 › failed backend validation stops checks and keeps an unusable file out of the draft
+[83/94] [mobile] › tests\e2e\manager.e2e.ts:1106:1 › the primary file can be replaced while backend validation is still running
+[84/94] [mobile] › tests\e2e\manager.e2e.ts:1150:1 › attachments remain available while the primary file is being validated
+[85/94] [mobile] › tests\e2e\manager.e2e.ts:1183:1 › manager course workspace matches student chapters and keeps pagination scoped
+[86/94] [mobile] › tests\e2e\manager.e2e.ts:1265:1 › manager edits and creates directly inside the selected chapter
+[87/94] [mobile] › tests\e2e\manager.e2e.ts:1292:1 › material approval refetches the selected chapter inline
+[88/94] [mobile] › tests\e2e\manager.e2e.ts:1321:1 › manager uploads a file inline using the selected chapter context
+[89/94] [mobile] › tests\e2e\manager.e2e.ts:1356:1 › manager keeps course headers still while scrolling each hidden-scrollbar panel
+[90/94] [mobile] › tests\e2e\manager.e2e.ts:1455:1 › manager shows one clear file detail with grouped actions and readable dates
+[91/94] [mobile] › tests\e2e\manager.e2e.ts:1506:1 › manager keeps spacious filters on small screens without course search
+[92/94] [mobile] › tests\e2e\manager.e2e.ts:1571:1 › manager lists courses first and opens the workspace only after choosing one
+[93/94] [mobile] › tests\e2e\manager.e2e.ts:1617:1 › article editor blocks empty and oversized UTF-8 content before calling the API
+[94/94] [mobile] › tests\e2e\manager.e2e.ts:1651:1 › article edits preserve tables, links and verified inline image IDs
+  12 failed
+    [desktop] › tests\e2e\manager-leave.e2e.ts:302:1 › Manager confirms full-day conflicts and retries an uncertain approval with the same idempotency key 
+    [desktop] › tests\e2e\manager-leave.e2e.ts:337:1 › Manager can reject a partial-day request when student conflicts block approval 
+    [desktop] › tests\e2e\manager-leave.e2e.ts:353:1 › Manager can reject a stale-source request but cannot approve it 
+    [desktop] › tests\e2e\manager-leave.e2e.ts:367:1 › Manager must refresh and confirm again after a version conflict 
+    [desktop] › tests\e2e\manager-leave.e2e.ts:391:1 › Manager action locks while the decision is being submitted 
+    [desktop] › tests\e2e\manager-leave.e2e.ts:420:1 › Escape restores focus and detail has no horizontal overflow at 320px 
+    [mobile] › tests\e2e\manager-leave.e2e.ts:302:1 › Manager confirms full-day conflicts and retries an uncertain approval with the same idempotency key 
+    [mobile] › tests\e2e\manager-leave.e2e.ts:337:1 › Manager can reject a partial-day request when student conflicts block approval 
+    [mobile] › tests\e2e\manager-leave.e2e.ts:353:1 › Manager can reject a stale-source request but cannot approve it 
+    [mobile] › tests\e2e\manager-leave.e2e.ts:367:1 › Manager must refresh and confirm again after a version conflict 
+    [mobile] › tests\e2e\manager-leave.e2e.ts:391:1 › Manager action locks while the decision is being submitted 
+    [mobile] › tests\e2e\manager-leave.e2e.ts:420:1 › Escape restores focus and detail has no horizontal overflow at 320px 
+  82 passed (3.6m)

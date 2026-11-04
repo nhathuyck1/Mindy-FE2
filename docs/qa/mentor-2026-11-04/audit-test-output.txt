@@ -1,0 +1,125 @@
+
+Running 8 tests using 1 worker
+
+
+
+(node:32524) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1/8] [desktop] › tests\e2e\mentor-audit.e2e.ts:5:1 › audit live mentor login and read-only workspace
+[desktop] › tests\e2e\mentor-audit.e2e.ts:5:1 › audit live mentor login and read-only workspace
+LIVE_LOGIN_STATUS 200
+
+LIVE_TAB Học viên ["HTML & CSS — Online 10 buổi chiều thứ 3-7"]
+
+LIVE_TAB Chuyên cần ["HTML & CSS — Online 10 buổi chiều thứ 3-7"]
+
+LIVE_TAB Tiến độ ["HTML & CSS — Online 10 buổi chiều thứ 3-7"]
+
+LIVE_TAB Buổi học ["HTML & CSS — Online 10 buổi chiều thứ 3-7"]
+
+LIVE_TAB Bài tập ["HTML & CSS — Online 10 buổi chiều thứ 3-7"]
+
+QA-01 reproduced live: clearing assignment filters switches to the chapter tab
+
+QA-03 reproduced live: PRIMARY filter resets to ANY
+
+  1) [desktop] › tests\e2e\mentor-audit.e2e.ts:5:1 › audit live mentor login and read-only workspace 
+
+    Test timeout of 30000ms exceeded.
+
+    Error Context: .next\mentor-qa-audit-results\mentor-audit.e2e.ts-audit--696f6-gin-and-read-only-workspace-desktop\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    .next\mentor-qa-audit-results\mentor-audit.e2e.ts-audit--696f6-gin-and-read-only-workspace-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace .next\mentor-qa-audit-results\mentor-audit.e2e.ts-audit--696f6-gin-and-read-only-workspace-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+(node:37764) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[2/8] [desktop] › tests\e2e\mentor-audit.e2e.ts:48:1 › QA-02 unchanged effective meeting URL is sent as a session override
+[desktop] › tests\e2e\mentor-audit.e2e.ts:48:1 › QA-02 unchanged effective meeting URL is sent as a session override
+QA-02 unchanged form sends explicit URL: {"expectedVersion":1,"meetingUrl":"https://meet.example.test/old"}
+
+[3/8] [desktop] › tests\e2e\mentor-audit.e2e.ts:60:1 › QA-03 class assignment filter is lost after opening a class and returning
+[desktop] › tests\e2e\mentor-audit.e2e.ts:60:1 › QA-03 class assignment filter is lost after opening a class and returning
+QA-03 filter changed SUBSTITUTE -> ANY after return
+
+[4/8] [desktop] › tests\e2e\mentor-audit.e2e.ts:72:1 › audit clearing assignment filters should preserve the class assignments tab
+[desktop] › tests\e2e\mentor-audit.e2e.ts:72:1 › audit clearing assignment filters should preserve the class assignments tab
+QA-01 reproduced with fixtures: assignment tab loses selection
+
+
+(node:26984) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[5/8] [mobile] › tests\e2e\mentor-audit.e2e.ts:5:1 › audit live mentor login and read-only workspace
+[mobile] › tests\e2e\mentor-audit.e2e.ts:5:1 › audit live mentor login and read-only workspace
+LIVE_LOGIN_STATUS 200
+
+LIVE_TAB Học viên ["HTML & CSS — Online 10 buổi chiều thứ 3-7"]
+
+LIVE_TAB Chuyên cần ["HTML & CSS — Online 10 buổi chiều thứ 3-7"]
+
+LIVE_TAB Tiến độ ["HTML & CSS — Online 10 buổi chiều thứ 3-7"]
+
+LIVE_TAB Buổi học ["HTML & CSS — Online 10 buổi chiều thứ 3-7"]
+
+LIVE_TAB Bài tập ["HTML & CSS — Online 10 buổi chiều thứ 3-7"]
+
+QA-01 reproduced live: clearing assignment filters switches to the chapter tab
+
+  2) [mobile] › tests\e2e\mentor-audit.e2e.ts:5:1 › audit live mentor login and read-only workspace 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('link', { name: '← Lớp của tôi', exact: true })
+
+
+      41 |   await expect(page.getByLabel('Phân công',{exact:true})).toHaveValue('PRIMARY');
+      42 |   await page.getByRole('link').filter({hasText:'HTML-CSS-101-10S-20261013'}).click();
+    > 43 |   await page.getByRole('link',{name:'← Lớp của tôi',exact:true}).click();
+         |                                                                  ^
+      44 |   await expect(page.getByLabel('Phân công',{exact:true})).toHaveValue('ANY');
+      45 |   console.log('QA-03 reproduced live: PRIMARY filter resets to ANY');
+      46 | });
+        at E:\Ki 8\MinDy\Mindy-FE2\tests\e2e\mentor-audit.e2e.ts:43:66
+
+    Error Context: .next\mentor-qa-audit-results\mentor-audit.e2e.ts-audit--696f6-gin-and-read-only-workspace-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    .next\mentor-qa-audit-results\mentor-audit.e2e.ts-audit--696f6-gin-and-read-only-workspace-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace .next\mentor-qa-audit-results\mentor-audit.e2e.ts-audit--696f6-gin-and-read-only-workspace-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+(node:33956) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[6/8] [mobile] › tests\e2e\mentor-audit.e2e.ts:48:1 › QA-02 unchanged effective meeting URL is sent as a session override
+[mobile] › tests\e2e\mentor-audit.e2e.ts:48:1 › QA-02 unchanged effective meeting URL is sent as a session override
+QA-02 unchanged form sends explicit URL: {"expectedVersion":1,"meetingUrl":"https://meet.example.test/old"}
+
+[7/8] [mobile] › tests\e2e\mentor-audit.e2e.ts:60:1 › QA-03 class assignment filter is lost after opening a class and returning
+[mobile] › tests\e2e\mentor-audit.e2e.ts:60:1 › QA-03 class assignment filter is lost after opening a class and returning
+QA-03 filter changed SUBSTITUTE -> ANY after return
+
+[8/8] [mobile] › tests\e2e\mentor-audit.e2e.ts:72:1 › audit clearing assignment filters should preserve the class assignments tab
+[mobile] › tests\e2e\mentor-audit.e2e.ts:72:1 › audit clearing assignment filters should preserve the class assignments tab
+QA-01 reproduced with fixtures: assignment tab loses selection
+
+  2 failed
+    [desktop] › tests\e2e\mentor-audit.e2e.ts:5:1 › audit live mentor login and read-only workspace 
+    [mobile] › tests\e2e\mentor-audit.e2e.ts:5:1 › audit live mentor login and read-only workspace ─
+  6 passed (1.6m)

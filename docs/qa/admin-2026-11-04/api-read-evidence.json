@@ -1,0 +1,146 @@
+{
+  "date": "2026-11-04",
+  "role": "ADMIN",
+  "evidence": [
+    {
+      "path": "auth/me",
+      "status": 200
+    },
+    {
+      "path": "admin/users?page=1&pageSize=100",
+      "status": 200,
+      "total": 77,
+      "count": 77
+    },
+    {
+      "path": "admin/users?page=1&pageSize=10&status=ACTIVE",
+      "status": 200,
+      "total": 75,
+      "count": 10
+    },
+    {
+      "path": "admin/users?page=1&pageSize=10&status=SUSPENDED",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "admin/users?page=1&pageSize=10&status=PENDING_VERIFICATION",
+      "status": 200,
+      "total": 2,
+      "count": 2
+    },
+    {
+      "path": "admin/users?page=1&pageSize=10&role=MENTOR",
+      "status": 200,
+      "total": 31,
+      "count": 10
+    },
+    {
+      "path": "admin/users/30e9aaca-4256-4296-8f34-c7b4a19ecee8",
+      "status": 200
+    },
+    {
+      "path": "admin/courses?page=1&pageSize=100",
+      "status": 200,
+      "total": 13,
+      "count": 13
+    },
+    {
+      "path": "admin/courses?page=1&pageSize=10&isActive=true",
+      "status": 200,
+      "total": 12,
+      "count": 10
+    },
+    {
+      "path": "admin/courses?page=1&pageSize=10&isActive=false",
+      "status": 200,
+      "total": 1,
+      "count": 1
+    },
+    {
+      "path": "admin/courses/e5e90e89-0bc6-4250-bfc5-aa3bfd4a333d",
+      "status": 200
+    },
+    {
+      "path": "admin/courses/9b925aeb-4570-407a-bd27-fcd51392cb1a",
+      "status": 200
+    },
+    {
+      "path": "admin/classes?page=1&pageSize=100",
+      "status": 200,
+      "total": 34,
+      "count": 34
+    },
+    {
+      "path": "admin/classes?page=1&pageSize=10&status=DRAFT",
+      "status": 200,
+      "total": 2,
+      "count": 2
+    },
+    {
+      "path": "admin/classes?page=1&pageSize=10&status=OPEN",
+      "status": 200,
+      "total": 16,
+      "count": 10
+    },
+    {
+      "path": "admin/classes?page=1&pageSize=10&status=IN_PROGRESS",
+      "status": 200,
+      "total": 16,
+      "count": 10
+    },
+    {
+      "path": "admin/classes?page=1&pageSize=10&status=COMPLETED",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "admin/classes?page=1&pageSize=10&status=CANCELLED",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "admin/classes/afa49f8b-d6a7-401d-b0a2-b6448ccb071c",
+      "status": 200
+    },
+    {
+      "path": "admin/classes/afa49f8b-d6a7-401d-b0a2-b6448ccb071c/students?page=1&pageSize=20",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    },
+    {
+      "path": "admin/classes/3db27fcb-482a-4576-ab66-73e91a15841b",
+      "status": 200
+    },
+    {
+      "path": "admin/classes/3db27fcb-482a-4576-ab66-73e91a15841b/students?page=1&pageSize=20",
+      "status": 200,
+      "total": 1,
+      "count": 1
+    },
+    {
+      "path": "admin/classes/3db27fcb-482a-4576-ab66-73e91a15841b/students/99a049e6-9c2f-423b-aa53-7953ada1c321",
+      "status": 200
+    },
+    {
+      "path": "admin/tracking/events?page=1&pageSize=20",
+      "status": 200,
+      "total": 496,
+      "count": 20
+    },
+    {
+      "path": "admin/tracking/events/attendance_audits/5bf57d6c-67e0-4e19-8f0e-507b78ee9aa0",
+      "status": 200
+    },
+    {
+      "path": "admin/payments/reconciliation?page=1&pageSize=20",
+      "status": 200,
+      "total": 0,
+      "count": 0
+    }
+  ]
+}

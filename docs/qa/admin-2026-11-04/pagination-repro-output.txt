@@ -1,0 +1,20 @@
+
+Running 2 tests using 1 worker
+
+
+(node:37216) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[1/2] [desktop] › docs\qa\admin-2026-11-04\admin-audit.e2e.ts:26:1 › ADMIN-02 current page is not corrected when the active-user total shrinks
+[desktop] › docs\qa\admin-2026-11-04\admin-audit.e2e.ts:26:1 › ADMIN-02 current page is not corrected when the active-user total shrinks
+ADMIN-02 reproduced: 20 matching users but empty page 3 / 2
+
+
+(node:32892) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[2/2] [mobile] › docs\qa\admin-2026-11-04\admin-audit.e2e.ts:26:1 › ADMIN-02 current page is not corrected when the active-user total shrinks
+[mobile] › docs\qa\admin-2026-11-04\admin-audit.e2e.ts:26:1 › ADMIN-02 current page is not corrected when the active-user total shrinks
+ADMIN-02 reproduced: 20 matching users but empty page 3 / 2
+
+  2 passed (3.9s)

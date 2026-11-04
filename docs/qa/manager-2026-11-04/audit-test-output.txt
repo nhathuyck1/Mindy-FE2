@@ -1,0 +1,77 @@
+
+Running 20 tests using 1 worker
+
+
+
+(node:34888) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1/20] [desktop] › docs\qa\manager-2026-11-04\manager-audit.e2e.ts:3:1 › live manager read-only screens and material filter regressions
+[desktop] › docs\qa\manager-2026-11-04\manager-audit.e2e.ts:3:1 › live manager read-only screens and material filter regressions
+MANAGER-01 reproduced: REJECTED URL displays PENDING_REVIEW filter
+
+MANAGER-01 reproduced: All status falls back to PENDING_REVIEW
+
+MANAGER-02 reproduced: FILE filter is lost on reload
+
+[2/20] [desktop] › docs\qa\manager-2026-11-04\manager-audit.e2e.ts:37:1 › MANAGER-03 full-day student conflicts still expose approval confirmation
+[desktop] › docs\qa\manager-2026-11-04\manager-audit.e2e.ts:37:1 › MANAGER-03 full-day student conflicts still expose approval confirmation
+MANAGER-03 reproduced with fixtures: full-day conflict still allows approval
+
+[3/20] [desktop] › docs\qa\manager-2026-11-04\manager-leave-fixed-clock.e2e.ts:275:1 › Manager leave queue filters mentors and pages without losing its URL state
+[4/20] [desktop] › docs\qa\manager-2026-11-04\manager-leave-fixed-clock.e2e.ts:303:1 › Manager confirms full-day conflicts and retries an uncertain approval with the same idempotency key
+[5/20] [desktop] › docs\qa\manager-2026-11-04\manager-leave-fixed-clock.e2e.ts:338:1 › Manager can reject a partial-day request when student conflicts block approval
+[6/20] [desktop] › docs\qa\manager-2026-11-04\manager-leave-fixed-clock.e2e.ts:354:1 › Manager can reject a stale-source request but cannot approve it
+[7/20] [desktop] › docs\qa\manager-2026-11-04\manager-leave-fixed-clock.e2e.ts:368:1 › Manager must refresh and confirm again after a version conflict
+[8/20] [desktop] › docs\qa\manager-2026-11-04\manager-leave-fixed-clock.e2e.ts:392:1 › Manager action locks while the decision is being submitted
+[9/20] [desktop] › docs\qa\manager-2026-11-04\manager-leave-fixed-clock.e2e.ts:413:1 › Expired requests are not actionable
+[10/20] [desktop] › docs\qa\manager-2026-11-04\manager-leave-fixed-clock.e2e.ts:421:1 › Escape restores focus and detail has no horizontal overflow at 320px
+(node:26188) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[11/20] [mobile] › docs\qa\manager-2026-11-04\manager-audit.e2e.ts:3:1 › live manager read-only screens and material filter regressions
+  1) [mobile] › docs\qa\manager-2026-11-04\manager-audit.e2e.ts:3:1 › live manager read-only screens and material filter regressions 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/manager$/
+    Received string:  "http://localhost:3001/admin/login?returnTo=%2Fmanager"
+    Timeout: 25000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 25000ms
+        53 × locator resolved to <html lang="vi" class="h-full antialiased" data-scroll-behavior="smooth">…</html>
+           - unexpected value "http://localhost:3001/admin/login?returnTo=%2Fmanager"
+
+
+       7 |  await page.getByLabel('Mật khẩu',{exact:true}).fill(process.env.MINDY_QA_PASSWORD!);
+       8 |  await page.getByRole('button',{name:'Đăng nhập',exact:true}).click();
+    >  9 |  await expect(page).toHaveURL(/\/manager$/,{timeout:25000});
+         |                     ^
+      10 |  await expect(page.getByRole('heading',{name:'Tổng quan Manager',exact:true})).toBeVisible();
+      11 |  await page.screenshot({path:`docs/qa/manager-2026-11-04/live-overview-${info.project.name}.png`,fullPage:true});
+      12 |  await page.goto('/manager/materials?view=inventory&reviewStatus=PENDING_REVIEW');
+        at E:\Ki 8\MinDy\Mindy-FE2\docs\qa\manager-2026-11-04\manager-audit.e2e.ts:9:21
+
+    Error Context: .next\manager-qa-audit-results\manager-audit.e2e.ts-live--b1adf-material-filter-regressions-mobile\error-context.md
+
+
+
+(node:37172) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[12/20] [mobile] › docs\qa\manager-2026-11-04\manager-audit.e2e.ts:37:1 › MANAGER-03 full-day student conflicts still expose approval confirmation
+[mobile] › docs\qa\manager-2026-11-04\manager-audit.e2e.ts:37:1 › MANAGER-03 full-day student conflicts still expose approval confirmation
+MANAGER-03 reproduced with fixtures: full-day conflict still allows approval
+
+[13/20] [mobile] › docs\qa\manager-2026-11-04\manager-leave-fixed-clock.e2e.ts:275:1 › Manager leave queue filters mentors and pages without losing its URL state
+[14/20] [mobile] › docs\qa\manager-2026-11-04\manager-leave-fixed-clock.e2e.ts:303:1 › Manager confirms full-day conflicts and retries an uncertain approval with the same idempotency key
+[15/20] [mobile] › docs\qa\manager-2026-11-04\manager-leave-fixed-clock.e2e.ts:338:1 › Manager can reject a partial-day request when student conflicts block approval
+[16/20] [mobile] › docs\qa\manager-2026-11-04\manager-leave-fixed-clock.e2e.ts:354:1 › Manager can reject a stale-source request but cannot approve it
+[17/20] [mobile] › docs\qa\manager-2026-11-04\manager-leave-fixed-clock.e2e.ts:368:1 › Manager must refresh and confirm again after a version conflict
+[18/20] [mobile] › docs\qa\manager-2026-11-04\manager-leave-fixed-clock.e2e.ts:392:1 › Manager action locks while the decision is being submitted
+[19/20] [mobile] › docs\qa\manager-2026-11-04\manager-leave-fixed-clock.e2e.ts:413:1 › Expired requests are not actionable
+[20/20] [mobile] › docs\qa\manager-2026-11-04\manager-leave-fixed-clock.e2e.ts:421:1 › Escape restores focus and detail has no horizontal overflow at 320px
+  1 failed
+    [mobile] › docs\qa\manager-2026-11-04\manager-audit.e2e.ts:3:1 › live manager read-only screens and material filter regressions 
+  19 passed (1.1m)

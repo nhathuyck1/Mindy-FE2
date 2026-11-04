@@ -1,0 +1,25 @@
+{"path":"auth/me","status":200}
+{"path":"manager/classes?page=1&pageSize=100","status":200,"total":34,"count":34}
+{"path":"manager/mentors?page=1&pageSize=20","status":200,"total":31,"count":20}
+{"path":"manager/orders?page=1&pageSize=20&paymentType=CASH","status":200,"total":39,"count":20}
+{"path":"manager/orders?page=1&pageSize=20&paymentType=CASH&status=PENDING","status":200,"total":4,"count":4}
+{"path":"manager/orders?page=1&pageSize=20&paymentType=CASH&status=PAID","status":200,"total":32,"count":20}
+{"path":"manager/orders/299ac46f-718a-4cdc-8bc1-96051b8ff6ac","status":200}
+{"path":"manager/orders/7f04f9e4-89be-4dac-a866-459678c2d02b","status":200}
+{"path":"manager/materials?page=1&pageSize=20","status":200,"total":35,"count":20}
+{"path":"manager/materials/0578c43a-1cb1-4c16-8cf7-3d694a1f904c","status":200}
+{"path":"manager/materials?page=1&pageSize=20&reviewStatus=PENDING_REVIEW","status":200,"total":6,"count":6}
+{"path":"manager/materials/0578c43a-1cb1-4c16-8cf7-3d694a1f904c","status":200}
+{"path":"manager/materials?page=1&pageSize=20&reviewStatus=APPROVED","status":200,"total":14,"count":14}
+{"path":"manager/materials/2ac681c0-54ce-4b39-9b27-49a4987d40cf","status":200}
+{"path":"manager/materials?page=1&pageSize=20&reviewStatus=DRAFT","status":200,"total":15,"count":15}
+{"path":"manager/materials/58e8075c-7dfe-43ce-993e-9969540df9f1","status":200}
+{"path":"manager/materials?page=1&pageSize=20&reviewStatus=REJECTED","status":200,"total":0,"count":0}
+{"path":"management/mentor-leave-requests?page=1&pageSize=20","status":200,"total":11,"count":11}
+{"path":"management/mentor-leave-requests?page=1&pageSize=20&status=PENDING","status":200,"total":1,"count":1}
+{"path":"management/mentor-leave-requests/6073bb65-215c-42bf-b483-7248e29ef2ee?page=1&pageSize=20","status":200,"count":1}
+{"path":"management/mentor-leave-requests/2789f864-87e9-47f9-b27e-8e783d401980?page=1&pageSize=20","status":200,"count":1}
+{"path":"manager/classes/afa49f8b-d6a7-401d-b0a2-b6448ccb071c","status":200}
+{"path":"manager/classes/afa49f8b-d6a7-401d-b0a2-b6448ccb071c/units?page=1&pageSize=100","status":404,"code":"ENDPOINT_NOT_ALLOWED","message":"API không thuộc phạm vi được hỗ trợ."}
+{"path":"manager/classes/3db27fcb-482a-4576-ab66-73e91a15841b","status":200}
+{"path":"manager/classes/3db27fcb-482a-4576-ab66-73e91a15841b/units?page=1&pageSize=100","status":404,"code":"ENDPOINT_NOT_ALLOWED","message":"API không thuộc phạm vi được hỗ trợ."}

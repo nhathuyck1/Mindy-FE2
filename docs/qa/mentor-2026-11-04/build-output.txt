@@ -1,0 +1,80 @@
+
+> mindy-fe2@0.1.0 build
+> next build
+
+▲ Next.js 16.4.1 (Turbopack)
+- Environments: .env
+✓ Running next.config.ts took 485ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 13.6s
+  Running TypeScript ...
+
+  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+  	- include was updated to add '.next/mentor-qa/types/**/*.ts'
+  	- include was updated to add '.next/mentor-qa/dev/types/**/*.ts'
+
+  Finished TypeScript in 21.5s ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/32) ...
+  Generating static pages using 15 workers (8/32) 
+  Generating static pages using 15 workers (16/32) 
+  Generating static pages using 15 workers (24/32) 
+✓ Generating static pages using 15 workers (32/32) in 1104ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /admin
+├ ○ /admin/classes
+├ ƒ /admin/classes/[classId]/students
+├ ○ /admin/courses
+├ ○ /admin/login
+├ ○ /admin/payments/reconciliation
+├ ○ /admin/tracking
+├ ○ /admin/users
+├ ○ /admin/workflow
+├ ƒ /api/v1/[...path]
+├ ○ /cart
+├ ƒ /checkout/[orderId]
+├ ○ /courses
+├ ƒ /courses/[courseId]
+├ ○ /login
+├ ○ /manager
+├ ○ /manager/collections
+├ ○ /manager/leave-requests
+├ ƒ /manager/leave-requests/[requestId]
+├ ○ /manager/materials
+├ ƒ /manager/materials/[materialId]
+├ ○ /mentor
+├ ƒ /mentor/assignments/[assignmentId]
+├ ○ /mentor/classes
+├ ƒ /mentor/classes/[classId]
+├ ○ /mentor/leave-requests
+├ ○ /mentor/messages
+├ ƒ /mentor/sessions/[sessionId]
+├ ƒ /mentor/zip-submissions/[submissionId]
+├ ƒ /payment/result
+├ ○ /register
+├ ○ /user
+├ ƒ /user/assignment-submissions/[submissionId]
+├ ƒ /user/assignments/[assignmentId]
+├ ƒ /user/classes/[classId]/assignments
+├ ○ /user/courses
+├ ○ /user/materials
+├ ƒ /user/materials/[classId]
+├ ○ /user/messages
+├ ○ /user/orders
+├ ○ /user/profile
+├ ○ /user/schedule
+├ ƒ /user/zip-submissions/[submissionId]
+├ ○ /verify-email
+└ ƒ /whiteboards/[sessionId]
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

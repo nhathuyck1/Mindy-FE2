@@ -1,0 +1,18 @@
+
+Running 1 test using 1 worker
+
+
+
+(node:18716) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1/1] [mobile] › docs\qa\manager-2026-11-04\manager-audit.e2e.ts:3:1 › live manager read-only screens and material filter regressions
+[mobile] › docs\qa\manager-2026-11-04\manager-audit.e2e.ts:3:1 › live manager read-only screens and material filter regressions
+LIVE_LOGIN {"status":200}
+
+MANAGER-01 reproduced: REJECTED URL displays PENDING_REVIEW filter
+
+MANAGER-01 reproduced: All status falls back to PENDING_REVIEW
+
+MANAGER-02 reproduced: FILE filter is lost on reload
+
+  1 passed (21.3s)
