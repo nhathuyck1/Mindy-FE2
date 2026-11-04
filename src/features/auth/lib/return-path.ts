@@ -76,6 +76,15 @@ export function safeReturnPath(value: string | null | undefined): string {
     }
     const parts = url.pathname.split('/');
     if (
+      parts.length === 3 &&
+      parts[1] === 'whiteboards' &&
+      z.uuidv4().safeParse(parts[2]).success
+    ) {
+      return (
+        url.pathname + (url.searchParams.get('audience') === 'mentor' ? '?audience=mentor' : '')
+      );
+    }
+    if (
       parts.length === 4 &&
       parts[1] === 'manager' &&
       parts[2] === 'materials' &&

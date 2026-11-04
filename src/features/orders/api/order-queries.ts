@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '@/features/auth/api/auth-queries';
 import { ApiError, apiRequest } from '@/lib/api/client';
@@ -11,11 +12,32 @@ import {
   checkoutResultSchema,
   orderPageSchema,
   orderPaymentSchema,
+  orderSchema,
 } from '../schemas/order-contracts';
 
 export const ordersKey = (userId?: string) => ['orders', userId] as const;
 export const orderKey = (userId: string | undefined, orderId: string) =>
   ['order', userId, orderId] as const;
+
+export function useCancelOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    retry: false,
+    mutationFn: (orderId: string) =>
+      apiRequest({
+        path: `me/orders/${z.uuid().parse(orderId)}/cancel`,
+        method: 'POST',
+        body: {},
+        schema: orderSchema.refine((order) => order.id === orderId && order.status === 'CANCELLED'),
+      }),
+    onSettled: () =>
+      Promise.all(
+        ['orders', 'order', 'payment-result', 'catalog', 'my-classes', 'my-schedule'].map((key) =>
+          queryClient.invalidateQueries({ queryKey: [key] }),
+        ),
+      ),
+  });
+}
 
 export function usePendingOrders(page: number) {
   const session = useSession();
@@ -39,12 +61,14 @@ export function useCheckout() {
   const queryClient = useQueryClient();
   return useMutation({
     retry: false,
-    mutationFn: () =>
+    mutationFn: (paymentType: z.infer<typeof checkoutInputSchema>['paymentType']) =>
       apiRequest({
         path: 'me/cart/checkout',
         method: 'POST',
-        body: checkoutInputSchema.parse({ paymentType: 'PAYOS' }),
-        schema: checkoutResultSchema,
+        body: checkoutInputSchema.parse({ paymentType }),
+        schema: checkoutResultSchema.refine((result) =>
+          result.orders.every((order) => order.paymentType === paymentType),
+        ),
       }),
     onSettled: () =>
       Promise.all([

@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   BookOpen,
   CalendarDays,
@@ -18,14 +18,24 @@ import { MentorUnits } from './mentor-units';
 import { MentorClassStudents } from './mentor-class-students';
 import { MentorClassTimetable } from './mentor-class-timetable';
 import { MentorClassAttendance, MentorClassProgress } from './mentor-class-reports';
+import { AssignmentList } from '@/features/assignments/components/assignment-list';
 
 export function MentorClassPage(props: { classId: string }) {
-  const [tab, setTab] = useState('units');
+  const search = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const tab = search.get('tab') ?? 'units';
+  function setTab(value: string) {
+    const next = new URLSearchParams(search);
+    next.set('tab', value);
+    router.push(`${pathname}?${next}`, { scroll: false });
+  }
   const query = useMentorQuery(`mentor/classes/${props.classId}`, workspaceSchema);
   const item = query.data;
   const tabs = [
     { icon: BookOpen, id: 'units', title: 'Chương', allowed: item?.status !== 'CANCELLED' },
     { icon: CalendarDays, id: 'sessions', title: 'Buổi học', allowed: true },
+    { icon: BookOpen, id: 'assignments', title: 'Bài tập', allowed: true },
     { icon: Users, id: 'students', title: 'Học viên', allowed: item?.capabilities.readClassRoster },
     {
       icon: ChartNoAxesCombined,
@@ -52,6 +62,11 @@ export function MentorClassPage(props: { classId: string }) {
           item ? `${item.code} · ${item.course.title}` : 'Theo dõi lớp và các buổi được phân công.'
         }
       />
+      {item?.accessScope === 'CLASS' && (
+        <Button asChild variant="outline" className="mb-5">
+          <Link href={`/mentor/messages?classId=${props.classId}`}>Chat lớp</Link>
+        </Button>
+      )}
       <MentorQueryState pending={query.isPending} error={query.error} retry={query.refetch}>
         {item && (
           <>
@@ -100,6 +115,13 @@ export function MentorClassPage(props: { classId: string }) {
               />
             )}
             {active === 'sessions' && <MentorClassTimetable classId={props.classId} />}
+            {active === 'assignments' && (
+              <AssignmentList
+                classId={props.classId}
+                mentor
+                reports={item.capabilities.readClassReports}
+              />
+            )}
             {active === 'students' && <MentorClassStudents classId={props.classId} />}
             {active === 'attendance' && <MentorClassAttendance classId={props.classId} />}
             {active === 'progress' && <MentorClassProgress classId={props.classId} />}

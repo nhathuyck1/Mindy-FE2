@@ -141,6 +141,15 @@ function UnitContent(props: { context: LearningClass; unit: LearningUnit; previe
                     }).format(new Date(session.startsAt))}
                   </p>
                   {session.roomName && <p className="mt-2">Phòng: {session.roomName}</p>}
+                  {!props.preview && session.status !== 'CANCELLED' && (
+                    <Link
+                      href={`/whiteboards/${session.id}`}
+                      className="text-link mt-3 inline-flex min-h-11 items-center font-semibold"
+                    >
+                      Mở bảng vẽ
+                      <ArrowRight aria-hidden="true" className="size-4" />
+                    </Link>
+                  )}
                   {!props.preview && session.status !== 'CANCELLED' && session.meetingUrl && (
                     <a
                       href={session.meetingUrl}
@@ -179,6 +188,11 @@ function LearningWorkspace(props: { context: LearningClass }) {
           {props.context.code} · {preview ? 'Xem trước lớp học' : 'Không gian học tập'}
         </p>
         <h1 className="mt-3 text-2xl font-bold sm:text-3xl">{props.context.name}</h1>
+        {!preview && (
+          <Button asChild variant="outline" className="mt-4">
+            <Link href={`/user/classes/${props.context.id}/assignments`}>Bài tập của lớp</Link>
+          </Button>
+        )}
         <p className="mt-3 text-sm text-muted">
           {units.length} chương · Mentor: {props.context.mentor.displayName || 'Chưa cập nhật'}
         </p>

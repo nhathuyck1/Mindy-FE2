@@ -7,6 +7,26 @@
 - Dùng token Mindy và admin-table-panel hiện hữu; bốn thẻ số liệu, Recharts AreaChart theo ngày, PieChart dạng donut cho trạng thái và BarChart ngang cho top khóa/mentor/lớp. Tooltip hiển thị tên đầy đủ và số liệu; bảng xếp hạng mở bằng details để đọc các tên dài. 320px xếp một cột, desktop chia cột, nhãn trục rút gọn một dòng và giữ số liệu đọc được.
 - Mỗi thống kê ghi rõ tổng hiện tại hoặc trong kỳ; học viên distinct khác lượt đăng ký. Ngày/giờ hiển thị theo Việt Nam. Có loading/error/retry/empty độc lập, bảng ngày mở bằng details/summary, không animation hoặc số demo lấp chỗ.
 
+## Cửa sổ chat nổi — 02/11/2026
+
+- Launcher hình tròn mint ở góc phải dưới, có safe-area, badge headsup `99+` khi vượt 99 tin chưa đọc. Cửa sổ phía trên nút, rộng tối đa 416px, cao theo viewport và không che phủ bằng backdrop; 320px vẫn nằm gọn trong màn hình.
+- Có nút thu gọn, về danh sách, mở trang đầy đủ; Escape đóng và trả focus về launcher. Chọn người/lớp ở trong khung, giữ URL trang hiện tại. Enter gửi, Shift + Enter xuống dòng, bộ gõ đang composition không gửi.
+- Mỗi bong bóng có nút trả lời nhỏ ở bên cạnh; tin do mình gửi có menu ba chấm chứa Sửa/Xóa bằng chữ. Không thêm nút cảm xúc. Nút có aria-label/title và vùng bấm 44px; menu hỗ trợ bàn phím, dialog xác nhận giữ phiên bản và trả focus về nút ba chấm.
+
+## Chat và avatar — 02/11/2026
+
+- Avatar người dùng dùng chữ đầu/cuối tên, ví dụ Đặng Nhật Huy → ĐH, bo tròn `rounded-full`; không cần ảnh đại diện. Dùng `NameAvatar` trong chat và menu tài khoản.
+- Tin nhắn dùng Nunito, token Mindy, panel bo 16px và control 44px. Desktop chia hội thoại/nội dung; mobile mở nội dung riêng với nút về danh sách. Nội dung xuống dòng, không render HTML, tên/file dài không đẩy tràn viewport. Lỗi/loading/empty/chỉ đọc có nội dung riêng và retry.
+- Chat lớp Student nằm trong chi tiết khóa học để giữ hàng bảng gọn; Mentor chính mở từ lớp. Nhắn riêng từ thành viên có tên, không nhập UUID. Chỉ BE quyết định quyền truy cập/gửi/đính kèm.
+
+## Bài tập Mentor / Student — 02/11/2026
+
+- Nội dung ngắn, thao tác theo trạng thái thật: Tạo bản nháp → Soạn câu hỏi/Tệp đề → Xuất bản; ZIP phân biệt Đang kiểm tra/Đã gắn tệp/Đã nộp. Lưu điểm và Trả điểm là hai nút riêng, xác nhận tác động trong dialog.
+- Assignment dùng Nunito/thang chữ Student ở cả Mentor và Student, scoped `.assignment-workspace`; control tối thiểu 44px, góc 8px, panel/dialog 16px. Không đổi typography toàn bộ staff. Màn 320px xuống hàng, tên dài wrap; vùng câu hỏi và bộ lọc không đẩy tràn trang.
+- Filter loại/mục đích/buổi/trạng thái/lượt/trang lưu URL. Tab lớp Mentor cũng theo URL để Back giữ trang Bài tập. Chọn buổi/học viên bằng tên khi API/scope cho phép; không yêu cầu người dùng nhập UUID. Học viên lịch sử không có tên trong roster hiện tại có mã rút gọn; không tự xin roster toàn lớp bằng quyền dạy thay.
+- Câu hỏi Mentor khi xem dùng details và đáp án đúng; ô nhập chỉ có trong trình sửa. Student chỉ thấy câu hỏi sau start, trạng thái tự lưu rõ ràng; phần chưa chọn có lối nhảy tới câu. Không render HTML từ đề/feedback.
+- Lỗi phiên bản giữ bản nhập và có thao tác đọc lại/xác nhận thay thế; không tự đè bản nháp. Tệp chỉ tải bằng liên kết mới tại click. Không hiển thị lỗi/missing/null thành số 0, không hứa kho lịch sử toàn tài khoản.
+
 ## Chuẩn UI lấy Student làm mẫu — 26/10/2026
 
 - Tài liệu áp dụng: [student-ui-standard.md](student-ui-standard.md), gồm bản đồ màn hình/logic, token, typography, bo góc/kích thước, trạng thái, responsive, đối chiếu staff và checklist nghiệm thu. Có dẫn nguồn code và ảnh mới từ production build với API mock.
@@ -322,6 +342,8 @@ Chữ chính dùng forest; chữ phụ dùng muted pha 90% forest. Theo ảnh m�
 - Cập nhật mới nhất 16/10: nền cụm ‹ Tuần này › dùng canvas trắng cùng nền lịch, thay nền soft nhẹ.
 
 - Bảng Đơn hàng của tôi có cột Khóa học sau mã đơn, lấy courseTitle từ các dòng đơn và gộp tên trùng, giới hạn hai dòng để giữ hàng gọn. Bỏ mô tả Theo dõi đơn hàng và trạng thái thanh toán dưới tiêu đề.
+- Xác nhận hủy đơn nằm giữa viewport, không chèn nội dung vào ô thao tác. Dùng native dialog ở top layer để mở được từ chi tiết đơn; ưu tiên focus Giữ đơn hàng, Escape chỉ đóng xác nhận và trả focus. Thông báo lỗi nằm trong xác nhận, nút bị khóa khi đang gửi.
+- Giỏ hàng có nhóm radio Hình thức thanh toán trong khối Tổng thanh toán: Chuyển khoản QR (mặc định) và Tiền mặt. Cả hai dùng nút Thanh toán; bỏ mô tả dưới lựa chọn và dưới nút theo yêu cầu 02/11. Tiền mặt chuyển danh sách đơn chờ thu, chỉ backend xác nhận đã thanh toán. Khóa lựa chọn trong lúc tạo đơn.
 
 ## Màu chữ catalog — 16/10/2026
 

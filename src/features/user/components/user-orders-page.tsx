@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { formatDate, formatPrice } from '@/features/courses/lib/course-format';
 import { Pagination } from '@/features/courses/components/shared/pagination';
 import { orderStatusSchema, type Order } from '@/features/orders/schemas/order-contracts';
+import { CancelOrderButton } from '@/features/orders/components/cancel-order-button';
 import { useUserOrders } from '../api/user-queries';
 import { UserDataState } from './user-data-state';
 import { UserDetailsDialog } from './user-details-dialog';
@@ -17,9 +18,11 @@ const labels = {
 };
 export function UserOrdersPage() {
   const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState<Order | null>(null);
+  const [selectedSnapshot, setSelected] = useState<Order | null>(null);
   const [status, setStatus] = useState<'' | Order['status']>('');
   const query = useUserOrders(page, status);
+  const selected =
+    query.data?.items.find((order) => order.id === selectedSnapshot?.id) ?? selectedSnapshot;
   return (
     <>
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
@@ -125,9 +128,12 @@ export function UserOrdersPage() {
                         </span>
                       </td>
                       <td className="px-5 py-3 whitespace-nowrap">
-                        <Button variant="outline" onClick={() => setSelected(order)}>
-                          Xem chi tiết
-                        </Button>
+                        <div className="flex flex-wrap items-start gap-2">
+                          <Button variant="outline" onClick={() => setSelected(order)}>
+                            Xem chi tiết
+                          </Button>
+                          <CancelOrderButton order={order} />
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -187,6 +193,7 @@ export function UserOrdersPage() {
             <p>
               Tổng thanh toán <strong className="ml-2">{formatPrice(selected.totalAmount)}</strong>
             </p>
+            <CancelOrderButton order={selected} onCancelled={setSelected} />
             {selected.paymentType === 'PAYOS' && (
               <Button asChild>
                 <Link href={'/checkout/' + selected.id}>Xem trạng thái thanh toán</Link>

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ApiError } from './api-error';
+import { safeErrorSchema } from './validation-fields';
 import { authResponseSchema, userSchema } from './contracts';
 import {
   assertSessionAvailable,
@@ -12,10 +13,7 @@ import {
 
 export { ApiError } from './api-error';
 
-const errorSchema = z.object({
-  code: z.string().optional(),
-  message: z.union([z.string(), z.array(z.string())]).optional(),
-});
+const errorSchema = safeErrorSchema.partial();
 
 export type ApiRequestOptions<T> = {
   path: string;
@@ -24,6 +22,8 @@ export type ApiRequestOptions<T> = {
   body?: unknown;
   signal?: AbortSignal;
   idempotencyKey?: string;
+  /** Browser-side timeout; judge runs/validation (Phase 7) need longer than the 15s default. */
+  timeoutMs?: number;
 };
 
 function needsSession(props: ApiRequestOptions<unknown>) {
@@ -42,7 +42,11 @@ async function sendRequest<T>(
   serializedBody = props.body === undefined ? undefined : JSON.stringify(props.body),
 ) {
   signal?.throwIfAborted();
-  const requestSignal = AbortSignal.any([AbortSignal.timeout(15_000), ...(signal ? [signal] : [])]);
+  const bulk = props.method === 'PUT' && /^mentor\/assignments\/[^/]+\/questions$/.test(props.path);
+  const requestSignal = AbortSignal.any([
+    AbortSignal.timeout(props.timeoutMs ?? (bulk ? 60_000 : 15_000)),
+    ...(signal ? [signal] : []),
+  ]);
   const response = await fetch(`/api/v1/${props.path}`, {
     method: props.method ?? 'GET',
     credentials: 'same-origin',
@@ -65,6 +69,7 @@ async function sendRequest<T>(
       response.status,
       error.success ? (error.data.code ?? 'HTTP_ERROR') : 'HTTP_ERROR',
       Array.isArray(message) ? message.join(' ') : (message ?? 'Không thể kết nối hệ thống.'),
+      error.success ? error.data.details?.[0]?.fields : undefined,
     );
   }
   return props.schema.parse(body);

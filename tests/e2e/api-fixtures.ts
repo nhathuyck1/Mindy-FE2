@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { dashboardFixture } from './dashboard-fixtures';
 
 export const testUser = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -19,6 +20,12 @@ const category = {
 };
 
 export async function mockHomepageApi(page: Page) {
+  await page.route('**/api/v1/manager/dashboard?**', (route) =>
+    route.fulfill({ json: dashboardFixture('MANAGER') }),
+  );
+  await page.route('**/api/v1/chat/conversations?**', (route) =>
+    route.fulfill({ json: { data: [], meta: { hasMore: false, nextCursor: null } } }),
+  );
   // The header reads the cart once a test overrides auth/me with a signed-in user.
   await page.route('**/api/v1/me/cart', (route) =>
     route.fulfill({ json: { items: [], totalAmount: 0 } }),

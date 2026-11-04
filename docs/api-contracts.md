@@ -1,5 +1,34 @@
 # API catalog, lớp học và tài khoản
 
+## Chat Student / Mentor — 02/11/2026
+
+- Đối chiếu Swagger local `http://localhost:3000/docs-json`, `../Mindy-BE/docs/api_flow/PHASE_6_FLOW.md`, controller/DTO/service. Chưa xác nhận deploy upstream.
+- Consumer: GET `/chat/conversations`, POST `/chat/conversations/direct` với peerUserId, GET `/:id`, GET `/:id/members`, GET/POST `/:id/messages`, PATCH/DELETE `/:id/messages/:messageId`, PUT `/:id/read`, GET `/classes/:classId/chat`; attachments POST `/:id/attachments/upload-intents`, POST `/:id/attachments/:fileId/complete`, GET `/:id/attachments/:fileId`, POST `/:id/messages/:messageId/file-access`. Các suffix `/:id` thuộc `/chat/conversations`; không mở POST vào collection conversation.
+- Chat page dùng `{data,meta:{nextCursor,hasMore}}`; history trả chronological trong từng trang, trang đầu là mới nhất. Sequence là decimal string, không đổi sang Number. Message sender/peer có displayName, avatarUrl null; capability và accessMode do BE cấp. Mutation `{message,replayed}`; read `{conversationId,lastReadSequence,lastReadAt,unreadCount}`.
+- Send giữ clientMessageId UUIDv4 cho cùng ý định chưa rõ kết quả, body tối đa 4.000 ký tự/16 KiB, FILE/IMAGE dùng fileObjectId READY. Edit/delete có expectedVersion và Idempotency-Key UUIDv4. Proxy body tối đa 32 KiB, query strict/duplicate deny, private no-store, chỉ chuyển access_token. Session recovery dùng client chung.
+- Socket.IO namespace `/chat`, websocket `/socket.io`, conversation:join và message create/update/delete/read/access-changed dùng làm tín hiệu refetch. Full snapshot/polling phục hồi thay vì consumer event cursor. Inbox và typing chưa tích hợp UI.
+
+## Student tự hủy đơn — 02/11/2026
+
+- `POST /me/orders/:orderId/cancel`, body `{}`, trả `200 OrderDto`. Đã bổ sung trong source BE local; chưa xác nhận deploy upstream.
+- Chỉ STUDENT ACTIVE sở hữu đơn được hủy khi PENDING và chưa hết hạn. Backend khóa lớp → đơn → enrollment, chuyển CANCELLED và giải phóng mọi chỗ giữ trong một transaction. Hủy lại đơn CANCELLED trả cùng kết quả; PAID/EXPIRED/quá hạn trả 409 `ORDER_NOT_CANCELLABLE`; sai chủ 403, không tồn tại 404.
+- Proxy kiểm UUID, method, cookie access_token, same Origin và body rỗng strict. Mutation không tự retry, cập nhật lại orders/order/payment-result/catalog/my-classes/my-schedule cả khi lỗi để đọc trạng thái mới nhất. UI xác nhận trước khi gửi và chặn bấm lặp.
+- Hủy đơn không hoàn tiền hoặc xác nhận đã hủy liên kết tại payOS. UI nhắc dừng chuyển tiền; webhook hợp lệ đến sau hủy đi qua luồng REQUIRES_REVIEW hiện hữu và không kích hoạt quyền học.
+
+## Assignment đã tích hợp local — 02/11/2026
+
+- Đủ 35 method/path trong [ma trận](assignment-integration-plan.md), có consumer UI ở `features/assignments`, proxy/schema strict và test ma trận `src/lib/api/assignment-proxy.test.ts`. Mentor authoring 9, Student QUIZ 7, file/ZIP/grade/history/report 19. Hai API progress nhận AVAILABLE + counts và NOT_IMPLEMENTED + null.
+- Mọi mutation file/ZIP/grade và Student QUIZ chuyển Idempotency-Key UUIDv4 đến BE. Unknown receipt giữ body/key cho thao tác thử lại; authoring không có receipt phải đọc lại trước ý định mới. Body bulk 8,388,608 bytes, assignment khác 65,536 bytes, stream UTF-8 bounded. Lỗi chỉ chuyển code/message và details[0].fields path/code an toàn.
+- FE **3001** gọi same-origin `/api/v1`; `.env.local` hiện trỏ BE **localhost:3000**. Origin BE và MinIO local đều cho `http://localhost:3001`. Đổi port không tự đổi upstream: trước khi chuyển local, FE vẫn gọi server và bị BE server từ chối Origin.
+- BE local `mindy_center` tại localhost:5433 đã sao lưu và chạy 21 migration còn thiếu (33 tổng, không còn pending); bật QUIZ timeout/file worker/ZIP và private versioned bucket `mindy-center-local` ở MinIO 19000. Không sửa source/deploy upstream BE. Login local qua FE 200, tạo QUIZ 201, xóa draft 204; phải đăng nhập lại khi chuyển từ cookie server sang local.
+- Smoke độc lập dùng hai browser context Mentor/Student, compiled BE, PostgreSQL/MinIO thật; xác nhận instruction/ZIP PUT → READY → binding → submit, grade ẩn trước release, flag OFF và snapshot/download sau lớp đóng. Bằng chứng trong workspace cha `output/assignment-smoke-2026-11-02`; không coi đây là deploy production.
+
+## Assignment QUIZ / ZIP — plan ngày 02/11/2026
+
+- [Plan tích hợp Assignment](assignment-integration-plan.md) liệt kê đủ 35 method/path trong source BE local và cập nhật assignmentSummary cho hai API tiến độ hiện hữu. Checklist triển khai còn mở; các route assignment chưa được mở trong proxy FE2 ở bước này.
+- Contract mới nằm ở [Phase 5 API BE](../../Mindy-BE/docs/api_flow/PHASE_5_flow-api-breakdown.md), đặc biệt mục 5 ngày 02/11. Source local không chứng minh upstream production đã deploy; nghiệm thu sẽ dùng BE local và storage/worker theo runbook.
+- Triển khai sẽ giữ HTTP client/recovery chung của main mới, bổ sung allowlist/schema, body limit theo endpoint và field error an toàn; không thêm transport refresh riêng hoặc dùng API material thay cho assignment-file.
+
 ## Phục hồi phiên trên frontend — cập nhật 28/10/2026
 
 - HTTP client chung áp dụng cho API cần access cookie của mọi role. Backend đang trả 401 `AUTHENTICATION_REQUIRED` cho cookie thiếu/hết hạn/không hợp lệ; FE không giả định có mã `ACCESS_TOKEN_EXPIRED`.
@@ -112,21 +141,21 @@ Swagger chưa có progress/completion endpoint nên không tự lưu % hoàn th�
 
 Browser chỉ gọi `/api/v1` cùng origin. Các route bổ sung:
 
-| Method/path (sau prefix)                  | Contract                                                   |
-| ----------------------------------------- | ---------------------------------------------------------- |
-| GET `/me/cart`                            | CartDto, currentPriceAmount/totalAmount backend            |
-| DELETE `/me/cart/items/:classId`          | UUID, cookie + Origin, 204                                 |
-| POST `/me/cart/checkout`                  | Strict `{paymentType:"PAYOS"}` → 201 `{orders:[OrderDto]}` |
-| GET `/me/orders`                          | Strict page/pageSize/status, phân trang đơn chờ            |
-| GET `/me/orders/:orderId`                 | OrderPaymentDto, payment nullable                          |
-| POST `/me/orders/:orderId/payments/payos` | Strict `{}` → PaymentDto create/reuse cùng đơn             |
-| GET `/me/orders/payment-result`           | Chỉ orderCode chuỗi số; mapping → OrderPaymentDto          |
+| Method/path (sau prefix)                  | Contract                                                             |
+| ----------------------------------------- | -------------------------------------------------------------------- |
+| GET `/me/cart`                            | CartDto, currentPriceAmount/totalAmount backend                      |
+| DELETE `/me/cart/items/:classId`          | UUID, cookie + Origin, 204                                           |
+| POST `/me/cart/checkout`                  | Strict `{paymentType:"PAYOS" \| "CASH"}` → 201 `{orders:OrderDto[]}` |
+| GET `/me/orders`                          | Strict page/pageSize/status, phân trang đơn chờ                      |
+| GET `/me/orders/:orderId`                 | OrderPaymentDto, payment nullable                                    |
+| POST `/me/orders/:orderId/payments/payos` | Strict `{}` → PaymentDto create/reuse cùng đơn                       |
+| GET `/me/orders/payment-result`           | Chỉ orderCode chuỗi số; mapping → OrderPaymentDto                    |
 
 Order status PENDING/PAID/EXPIRED/CANCELLED; payment status CREATING/PENDING/SUCCEEDED/REQUIRES_REVIEW. Payment qrCode/checkoutUrl nullable; URL chỉ HTTPS pay.payos.vn, không credentials/port. Kiểm payment.orderId và amount khớp order; QRCodeSVG render qrCode nguyên dạng. Không trả token ra JSON/cache/Web Storage.
 
 Origin kiểm cho POST và DELETE; proxy cookie access_token, UUID allowlist và private/no-store. ReturnTo chỉ cart, UUID checkout, result với mã số hoặc courses cũ. Không dùng query status/cancel để settle/hủy đơn. Backend cấu hình PAYOS_RETURN_URL và PAYOS_CANCEL_URL trỏ `/payment/result` ở frontend triển khai; frontend không gửi return URL tùy ý.
 
-Checkout không tự retry khi timeout. Giỏ/đơn chờ refetch để mở lại đơn đã tạo. Payment retry cùng ID, dừng khi PAID/hết hạn/hủy/review. Thử ngân hàng/payOS tiền thật cần môi trường được cấu hình; test QR decode chỉ chứng minh đúng payload render.
+Checkout không tự retry khi timeout. Giỏ/đơn chờ refetch để mở lại đơn đã tạo. PAYOS trả đúng một đơn; CASH trả một hoặc nhiều đơn (tối đa 20 lớp trong giỏ, nhóm theo mentor snapshot). Kiểm tra kết quả cùng paymentType đã chọn, ID không trùng; CASH chuyển danh sách đơn, không gọi tạo QR và không tự xác nhận PAID. Payment retry cùng ID, dừng khi PAID/hết hạn/hủy/review. Thử ngân hàng/payOS tiền thật cần môi trường được cấu hình; test QR decode chỉ chứng minh đúng payload render.
 
 Các trang cart/checkout/payment result dùng AuthGuard: chờ kiểm tra/refresh phiên, chỉ mount nội dung cho STUDENT có status ACTIVE. Guest hoặc phiên hết hạn chuyển về `/login` với returnTo an toàn; thiếu quyền/403 tiếp tục về `/`. Lỗi 401 từ API commerce được client phục hồi một lần trước khi quyết định hết phiên. Lỗi mạng/5xx cho thử lại, 404 giữ thông báo không tìm thấy. Không đổi endpoint hay phân quyền backend; login returnTo vẫn áp dụng khi người dùng chủ động mở link đăng nhập.
 
@@ -162,14 +191,14 @@ Card khóa học dẫn thẳng `/courses/:courseId`, không yêu cầu đăng nh
 
 Đối chiếu Swagger live `/docs-json`, `CourseBrowseController`, `PublicCourseDetailDto`, `ClassDto/ClassDetailDto`, `ClassReadService`, commerce CartController/DTO, auth RegisterDto/VerifyEmailDto và `docs/api_flow/PHASE_2_3_TO_3_2_FLOW.md`, `PHASE_2_3_flow-api-breakdown.md`. Các ghi chú phân công cũ trong tài liệu BE chỉ là lịch sử; source BE không thay đổi trong lần này.
 
-| API                              | Quyền                | Contract và consumer                                                                                                                                 |
-| -------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET `/courses/:courseId`         | Public               | Course + `units[]` (`unitNumber`, `title`, nullable `description`, `requiredScorePercent`) + tối đa 20 `openClasses[]`; không coi đây là toàn bộ lớp |
-| GET `/courses/:courseId/classes` | Public               | `{items: Class[], page, pageSize, total}`; phân trang 10, filter optional `deliveryMode=ONLINE                                                       | OFFLINE`, `startsFrom`, `startsTo` |
-| GET `/classes/:classId`          | Public               | Class + `units[]` (`position`, `title`, `sessions[]`); lịch theo `startsAt/endsAt`, nullable `roomName`, `status`; không meeting URL                 |
-| POST `/me/cart/items`            | STUDENT session      | Strict `{classId: UUID}`; trả CartDto (201). Không nhận giá/student ID; backend quyết định giá, eligibility và capacity                              |
-| POST `/auth/register`            | Public + same Origin | `{displayName,email,password}`, password 6–128; trả `{message}` (202), không có session, không tiết lộ email tồn tại                                 |
-| POST `/auth/email/verify`        | Public + same Origin | `{token}` 32–512; trả AuthenticatedUserDto và cả hai cookie. Chỉ gọi khi người dùng bấm xác thực                                                     |
+| API | Quyền | Contract và consumer |
+| -------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| GET `/courses/:courseId` | Public | Course + `units[]` (`unitNumber`, `title`, nullable `description`, `requiredScorePercent`) + tối đa 20 `openClasses[]`; không coi đây là toàn bộ lớp |
+| GET `/courses/:courseId/classes` | Public | `{items: Class[], page, pageSize, total}`; phân trang 10, filter optional `deliveryMode=ONLINE                                                       | OFFLINE`, `startsFrom`, `startsTo` |
+| GET `/classes/:classId` | Public | Class + `units[]` (`position`, `title`, `sessions[]`); lịch theo `startsAt/endsAt`, nullable `roomName`, `status`; không meeting URL |
+| POST `/me/cart/items` | STUDENT session | Strict `{classId: UUID}`; trả CartDto (201). Không nhận giá/student ID; backend quyết định giá, eligibility và capacity |
+| POST `/auth/register` | Public + same Origin | `{displayName,email,password}`, password 6–128; trả `{message}` (202), không có session, không tiết lộ email tồn tại |
+| POST `/auth/email/verify` | Public + same Origin | `{token}` 32–512; trả AuthenticatedUserDto và cả hai cookie. Chỉ gọi khi người dùng bấm xác thực |
 
 Class có `id, courseId, code, name, startDate, endDate, deliveryMode, maxStudents, availableSeats, mentor: {id, displayName|null}`. OPEN được backend xác định và có thể gồm lớp đã bắt đầu nhưng chưa hết ngày kết thúc; frontend không tự lọc theo ngày hiện tại. Lớp hết chỗ vẫn xem lịch được, nút đăng ký bị disable. Class detail xác minh courseId trước khi hiển thị lịch; lịch sort theo startsAt và hiển thị cố định Asia/Ho_Chi_Minh (UTC+7), phân biệt CANCELLED.
 
@@ -236,3 +265,16 @@ Tìm người dùng (03/11/2026): `GET /api/v1/admin/users` bổ sung query `q` 
 Response trực tiếp có scope, timeZone Asia/Ho_Chi_Minh, generatedAt/from/to ISO UTC; summary `{courses,classes,openClasses,activeClasses,registrations,students}`; courses/mentors/classes top 10 `{id,name,registrations,students,classes}`; trend `{date,registrations}` theo ngày VN có zero-fill; classStatuses `{status,count}`. Mentor trả mentors `[]`. Chỉ ACTIVE/COMPLETED, enrolled_at trong [from,to) được tính đăng ký; học viên đếm distinct, không cộng số theo từng khóa/mentor. Course/class totals mô tả hiện tại.
 
 Proxy chuyển access cookie/private no-store, từ chối query lạ/lặp, validate role response bằng Zod. Session recovery dùng apiRequest chung; 403 không retry, 422 sửa filter, lỗi/503/502 có Thử lại và không hiện số 0 thay lỗi. Chi tiết đầy đủ trong BE `docs/api_flow/DASHBOARD_flow-api-breakdown.md`. Các bảng công việc Manager và lịch Mentor giữ nguyên contract.
+
+## Bài tập lập trình (CODE) — 02/11/2026
+
+Nguồn: `Mindy-BE/docs/api_flow/PHASE_7_CODE_flow-api-breakdown.md`, controller `mentor-code-assignments`/`student-code-assignments` và DTO `code*.dto.ts`. Mọi route chỉ chuyển cookie `access_token`, response qua Zod (strip field dư), `private, no-store`. Rule nằm ở `src/features/code-assignments/api/code-proxy-policy.ts`.
+
+| Nhóm            | Method/path                                                                                                                                                                                                                             | Ghi chú FE2                                                                                                             |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Mentor danh mục | GET `/mentor/code-languages`, POST `/mentor/code-signatures/preview`                                                                                                                                                                    | Preview starter code khi soạn chữ ký hàm.                                                                               |
+| Mentor bài tập  | GET/POST `/mentor/class-sessions/:id/assignments`; POST `/mentor/assignments/:id/{publish,archive}`; DELETE `/mentor/assignments/:id`                                                                                                   | List có query page/pageSize/type; tạo bài CODE (dueAt, maxAttempts 1–50, scoring).                                      |
+| Mentor soạn đề  | GET `…/:id/code`; PUT `…/code-problem`, `…/code-languages`, `…/code-tests/:position(1–30)`, `…/code-reference/:languageKey`; DELETE `…/code-tests/:position`; POST `…/code-validate`, `…/code-extension`                                | Body ≤256 KB, ghi kèm `expectedRevision`; validate timeout 90 giây.                                                     |
+| Mentor wizard   | GET `/mentor/code-library` (page, pageSize≤100, q≤100); POST `…/code-import` (`sourceAssignmentId`); POST `…/code-tests/generate` (`languageKey`, `sourceCode`, `inputs` 1–30, timeout 90 giây); PUT `…/code-tests` (cả bảng 1–30 test) | Kết quả test chỉ lấy từ lời giải mẫu; nhập bài cũ không chép trạng thái đã kiểm tra.                                    |
+| Mentor review   | GET `…/code-summary`, `…/code-submissions` (page, pageSize≤100, studentId); GET `/mentor/code-submissions/:id`; POST `…/rejudge` (không body), `…/void` (reason)                                                                        | Rejudge chỉ áp dụng FAILED; bài bị huỷ vẫn tính lượt.                                                                   |
+| Student         | GET `/me/classes/:id/assignments`; GET `/me/assignments/:id/code`; GET/PUT `…/code-drafts/:languageKey`; POST `…/code-runs`; GET/POST `…/code-submissions`; GET `/me/code-submissions/:id`                                              | Nộp bài bắt buộc Idempotency-Key UUIDv4 (202 khi xếp hàng); chạy thử timeout 90 giây; languageKey ∈ javascript, java21. |

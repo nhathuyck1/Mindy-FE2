@@ -7,6 +7,35 @@
 - Backend tổng hợp toàn bộ dữ liệu trong một statement; FE không tải danh sách học viên để tự tính. Proxy chỉ mở ba GET dashboard và days enum 30/90/365, kiểm scope response, không nhận mentorId từ client. Số đăng ký/học viên là trong kỳ theo ngày xác nhận; lớp/khóa/trạng thái là tổng hiện tại. Mentor dùng phân công chính hiện tại, không gồm lịch dạy thay.
 - Bar ranking là top 10, trend có bảng dữ liệu đọc bằng bàn phím và không animation. Không biến lỗi thành số 0 hoặc dùng danh sách chưa tải đủ làm tổng.
 
+## CODE cùng QUIZ/ZIP, chat và Whiteboard — 03/11/2026
+
+- Nhánh `compiler` tích hợp trên `main` mới nhất. Giữ các module, route và proxy chat/Whiteboard/QUIZ/ZIP; CODE có rule riêng cho thao tác code, còn list/create/publish/archive dùng hợp đồng assignment chung.
+- Schema metadata/list nhận thêm `CODE`; tạo CODE dùng validation riêng (tối đa 50 lượt), không nới rule QUIZ/ZIP. Route `/mentor/assignments/:id` và `/user/assignments/:id` chọn trang CODE theo metadata, giữ giao diện QUIZ/ZIP hiện có. Bộ lọc và nhãn danh sách phân biệt đủ ba loại.
+- CODE mutations invalidate cả cache `code` và `assignments`, giúp danh sách dùng chung đọc lại dữ liệu. Giữ giới hạn đọc body theo stream và timeout bulk questions; chỉ thao tác runner dùng timeout riêng.
+- Panel tạo CODE trong buổi học dùng cùng điều kiện scope/trạng thái/readonly với panel assignment hiện có. API và Playwright dùng fixture; nghiệm thu browser nối backend thật ghi riêng.
+
+## Chat nổi — 02/11/2026
+
+- `FloatingChat` nằm trong `SessionExpiryHandler` của provider, chỉ mount inbox cho Student/Mentor ACTIVE và key theo user. Popover không khóa trang; cửa sổ dùng lại `ChatRoom compact`, callback chọn DM giữ người dùng trên trang hiện tại.
+- `useChatInbox` sở hữu query key `chat/userId/inbox`, đọc đủ trang GET conversations limit=100, dedupe IDs rồi cộng unreadCount ở UI. Poll 4s theo tab visibility; lỗi dừng polling và cho thử lại. Đóng popover không mount timeline nên không gửi read cho nội dung ẩn. Không thêm endpoint hoặc Redux state.
+
+## Chat Student / Mentor — 02/11/2026
+
+- `features/chat` sở hữu schema, query theo user/path, UI và socket lifecycle. Route messages chỉ compose trong shell có guard. `chat-rules.server.ts` mở đúng API tiêu thụ, kiểm UUIDv4/query/body/Origin/cookie và chuyển receipt cho edit/delete/upload intent.
+- Socket `/chat` dùng same-origin `/socket.io` rewrite đến BE; event chỉ invalidate snapshot HTTP có phân quyền. History infinite query refetch tuần tự theo cursor mới, gộp ID/version và sort sequence bằng BigInt. Polling 4s dừng khi lỗi; refocus/Thử lại cập nhật lại. Không bật connection recovery bỏ qua auth hoặc đưa token vào JS.
+- Read chỉ gửi khi đang ở cuối lịch sử, document visible và có focus; snapshot tải trước không tự xác nhận đọc ở tab nền. Thu hồi quyền socket gỡ cache của hội thoại và ẩn room; HTTP lỗi quyền ẩn lịch sử/composer. File PUT có signal phiên/lifetime và không gửi cookie; READY mới được gửi message. URL ký không lưu trong server-state cache.
+- `NameAvatar` là component chung cho chat/menu tài khoản, dùng chữ đầu/cuối tên, Unicode và token Mindy, hình tròn.
+
+## Assignment QUIZ / ZIP — 02/11/2026
+
+- `features/assignments` chứa schema tách Mentor/Student, query theo user/role/path/filter, editor, bài làm, upload, chấm điểm và báo cáo. Sáu route mới chỉ kiểm UUIDv4, await params và compose feature; kế thừa guard ACTIVE của shell. Tab Bài tập nằm trong lớp Mentor; buổi học tải panel khi mở. Student đi từ khóa học hoặc không gian học FULL, không mount assignment trong CASH_PREVIEW.
+- `assignment-rules.server.ts` mở đúng 35 method/path. Proxy kiểm cookie, Origin, query strict/duplicate và receipt UUIDv4; chỉ bulk questions có 8 MiB/45s upstream/60s browser. Body đọc stream theo byte, payload assignment khác 64 KiB; giữ lỗi `{path,code}` qua proxy/client và loại rejected values. Student response loại keys, storage metadata và grade version riêng tư.
+- `QuizSession` serialize autosave/full replacement, debounce 800 ms, gộp thay đổi khi đang gửi; submit khóa nhập và đợi save. Lỗi/409 giữ lựa chọn, chặn write tiếp và yêu cầu xác nhận dùng bản máy chủ. Timer dựa serverNow/expiresAt + monotonic elapsed, đồng bộ khi focus; hết hạn dừng write, result polling tối đa 60s. Không dùng localStorage hoặc tính điểm phía FE.
+- Upload assignment dùng contract riêng: intent → PUT bytes (credentials omit) → complete FILE version → poll → READY → binding/attach → xác nhận submit. URL ký chỉ ở stack và request tức thời; không đưa vào Query/Mutation cache. Hủy/rời trang/đổi phiên dừng upload. Manual status hỗ trợ complete lại cùng receipt sau kết quả chưa xác định.
+- Grade dùng GRADE version, tách SUBMISSION/FILE/assignment revision. Lưu điểm, sửa có lý do và trả điểm là các ý định riêng; release chụp version đang xem. Student chỉ đọc bản released. Hai tổng lịch sử revisions/audits giữ riêng; max chỉ dùng tính số trang điều hướng. Invalidate assignment/report/progress sau lệnh, không remount bài QUIZ đang làm.
+- Tiến độ nhận union AVAILABLE/NOT_IMPLEMENTED, giữ null và completionPolicy UNDEFINED. Metrics dùng counts BE, không tạo tỷ lệ submitted/eligible hoặc cộng các tập điểm sửa chờ trả với bản đã release thành một tổng.
+- FE dev/start chuyển sang **3001**, origin local `http://localhost:3001`; API local trong `.env.local` là `http://localhost:3000/api/v1`. E2E mock vẫn production port 3103. `scripts/assignment-local-smoke.mjs` yêu cầu 3001 trống, tạo DB/bucket test riêng; dùng MinIO test 19000 hiện có và compiled BE HTTP fixture, không gọi merchant thật.
+
 ## Trải nghiệm đăng xuất — 28/10/2026
 
 - `useLogout({ navigateHome: true })` dành cho thao tác người dùng ở menu tài khoản, dùng mutation key `auth/logout/navigate-home`; logout xử lý sai audience vẫn giữ form đăng nhập. Hủy/revert các query trước khi đổi AbortSignal phiên, tạm ngừng query session trong mọi logout để cancellation không xuất hiện thành lỗi dashboard.
@@ -220,7 +249,7 @@ Token màu ở `src/app/globals.css`, theo `docs/pallete.png`. Tailwind v4 dùng
 - Nút “Đăng ký học ngay” kiểm tra lại phiên qua Query: guest thấy popup “Bạn chưa đăng nhập” với link login giữ returnTo về khóa học; có phiên mới mở chọn lớp. Lỗi kiểm tra phiên có thông báo và cho thử lại. Mentor “Xem lớp & lịch học” vẫn mở lịch công khai. “Đăng ký lớp này” cần STUDENT và thêm lớp vào giỏ qua API; login không tự mutation. Return path dùng allowlist và UUID đã kiểm tra.
 - Dialog native hỗ trợ Escape, focus trap/restore và scroll lock; mobile có bước quay lại danh sách lớp. Lịch dùng UTC+7, trạng thái hủy và số chỗ theo backend.
 - `/register` gửi email registration; 202 không phải login. `/verify-email` xác thực khi người dùng bấm nút, thiết lập session HttpOnly. Backend cần cấu hình FRONTEND_BASE_URL/EMAIL_VERIFICATION_PATH đúng frontend triển khai.
-- `/cart`: giỏ, xóa lớp, badge header, checkout toàn bộ PAYOS và danh sách đơn chờ phân trang để mở lại giao dịch gián đoạn.
+- `/cart`: giỏ, xóa lớp, badge header, chọn PAYOS/CASH và checkout toàn bộ giỏ. PAYOS trả một đơn và mở QR; CASH có thể trả nhiều đơn theo nhóm mentor của BE, chuyển tới `/user/orders` chờ trung tâm xác nhận. Danh sách đơn chờ phân trang giúp tìm lại đơn khi mất phản hồi; không tự retry checkout.
 - `/checkout/[orderId]`: đọc đơn thuộc phiên STUDENT, create/reuse payOS, QRCodeSVG từ payload backend, URL fallback, countdown và polling có giới hạn. Không tự checkout lại khi reload; PAID từ backend xác nhận hoàn tất.
 - `/payment/result`: chỉ forward orderCode provider hợp lệ để mapping, bỏ qua status/cancel từ URL. Login returnTo mở rộng bằng allowlist cho cart/checkout/result.
 - Google và compiler chưa triển khai. Admin tracking/reconciliation đã được thêm ở các route được nêu dưới đây. Thêm vào giỏ không đồng nghĩa enrollment ACTIVE.
