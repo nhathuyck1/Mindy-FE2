@@ -1,5 +1,16 @@
 # Kiến trúc Mindy FE2
 
+## Presentation buổi học Mentor — 04/11/2026
+
+- mentor-session-ui.tsx chứa MentorSessionOverview và MentorSessionTools, chỉ nhận metadata/callback từ MentorSessionPage. Page tiếp tục sở hữu query/permissions/mutations và tất cả dialog, ghi chú, bài tập; không đổi API hoặc BE. Counters sử dụng totals backend, preview sử dụng candidates và giữ key enrollment/makeup/page.
+
+## Backend portable và realtime trực tiếp — 04/11/2026
+
+- HTTP của mọi feature vẫn gọi apiRequest → same-origin /api/v1 → proxy allowlist. Upload signed URL tiếp tục gọi storage với credentials omit. readServerEnv là nguồn duy nhất của API_BASE_URL, APP_ORIGIN và REALTIME_ORIGIN; realtime mặc định theo origin API, override khi API dùng hostname nội bộ.
+- lib/realtime/client dùng chung cho chat/Whiteboard: xin POST auth/realtime-ticket qua HTTP/refresh chung, nhận URL runtime từ proxy rồi nối socket trực tiếp BE. Không còn rewrite WebSocket qua Next/host FE. Không thêm NEXT_PUBLIC backend URL hoặc dependency.
+- Vé ký riêng typ mindy-realtime+jwt, origin/channel/session-bound, hạn handshake tối đa 60s và không vượt access expiry. Vé chỉ ở memory/Socket.IO auth payload, không URL/Query cache/Web Storage; không đưa access/refresh token cho JavaScript. Mỗi reconnect xin vé mới; session abort/unmount dừng attempt cũ. BE vẫn kiểm session/role/resource và ngắt socket lúc access expiry.
+- Xem docs/backend-connectivity.md cho cấu hình và kiểm chứng; cần deploy BE hỗ trợ ticket trước FE.
+
 ## CODE cùng QUIZ/ZIP, chat và Whiteboard — 03/11/2026
 
 - Nhánh `compiler` tích hợp trên `main` mới nhất. Giữ các module, route và proxy chat/Whiteboard/QUIZ/ZIP; CODE có rule riêng cho thao tác code, còn list/create/publish/archive dùng hợp đồng assignment chung.

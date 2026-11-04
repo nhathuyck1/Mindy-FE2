@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { chromium, expect } from '@playwright/test';
 const require = createRequire(import.meta.url),
-  be = resolve('../Mindy-BE'),
+  be = resolve(process.env.BACKEND_DIR || '../Mindy-BE'),
   beRequire = createRequire(resolve(be, 'package.json'));
 const { DataSource } = beRequire('typeorm');
 const testUrl = process.env.TEST_DATABASE_URL;
@@ -156,7 +156,7 @@ try {
       throw e;
     });
   results.push(
-    'Production Next external rewrite: real HttpOnly-cookie same-origin WebSocket connected.',
+    'Production Next HTTP ticket proxy + direct backend WebSocket connected; login cookies remain HttpOnly on FE.',
   );
   await student.context.request.post(`${origin}/api/v1/me/cart/items`, {
     headers: { Origin: origin },

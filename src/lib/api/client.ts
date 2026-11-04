@@ -28,7 +28,7 @@ export type ApiRequestOptions<T> = {
 
 function needsSession(props: ApiRequestOptions<unknown>) {
   const path = props.path.split('?')[0];
-  if (path.startsWith('auth/')) return path === 'auth/me';
+  if (path.startsWith('auth/')) return path === 'auth/me' || path === 'auth/realtime-ticket';
   return !(
     (props.method ?? 'GET') === 'GET' &&
     /^(courses(?:\/.*)?|course-categories|classes\/[^/]+)$/.test(path)

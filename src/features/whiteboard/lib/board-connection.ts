@@ -1,4 +1,5 @@
-import { io, type Socket } from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
+import { createRealtimeSocket } from '@/lib/realtime/client';
 import * as Y from 'yjs';
 import { z } from 'zod';
 import { apiRequest, ApiError } from '@/lib/api/client';
@@ -52,6 +53,7 @@ export class BoardConnection {
     captureTimeout: 0,
   });
   private socket?: Socket;
+  private connectionAttempt = 0;
   private pending: Pending[] = [];
   private sending = false;
   private stopped = false;
@@ -106,7 +108,7 @@ export class BoardConnection {
     }
     this.stopped = false;
     this.signal.addEventListener('abort', this.abort, { once: true });
-    this.connect();
+    void this.connect();
     this.presenceTimer = setInterval(
       () =>
         this.publish({ peers: this.snapshot.peers.filter((p) => Date.now() - p.seenAt < 6000) }),
@@ -118,6 +120,7 @@ export class BoardConnection {
   };
   stop() {
     this.stopped = true;
+    this.connectionAttempt++;
     clearTimeout(this.reconnectTimer);
     clearInterval(this.presenceTimer);
     this.signal.removeEventListener('abort', this.abort);
@@ -145,18 +148,38 @@ export class BoardConnection {
     this.publish({ shapes: readShapes(this.doc) });
     if (origin !== REMOTE) void this.flush();
   };
-  private connect() {
+  private async connect() {
     if (this.stopped || this.signal.aborted) return;
+    clearTimeout(this.reconnectTimer);
     this.socket?.removeAllListeners();
     this.socket?.disconnect();
-    const socket = io(window.location.origin, {
-      path: '/ws/whiteboards',
-      addTrailingSlash: false,
-      transports: ['websocket'],
-      withCredentials: true,
-      forceNew: true,
-      reconnection: false,
-    });
+    const attempt = ++this.connectionAttempt;
+    const offline = () => {
+      if (this.stopped || attempt !== this.connectionAttempt || this.snapshot.status === 'denied')
+        return;
+      this.sending = false;
+      this.publish({ status: 'offline', peers: [] });
+      if (this.retries < 3) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = setTimeout(() => {
+          void this.reconnect();
+        }, [1000, 2000, 5000][this.retries++]);
+      }
+    };
+    let socket: Socket;
+    try {
+      socket = await createRealtimeSocket('whiteboards', this.signal);
+    } catch (error) {
+      if (this.stopped || attempt !== this.connectionAttempt) return;
+      if (error instanceof ApiError && [401, 403, 404].includes(error.status))
+        this.deny('Phiên hoặc quyền truy cập bảng đã thay đổi.');
+      else offline();
+      return;
+    }
+    if (this.stopped || attempt !== this.connectionAttempt || this.signal.aborted) {
+      socket.disconnect();
+      return;
+    }
     this.socket = socket;
     socket.on('connect', () => {
       void this.join();
@@ -185,19 +208,9 @@ export class BoardConnection {
         ],
       });
     });
-    const offline = () => {
-      if (this.stopped || this.snapshot.status === 'denied') return;
-      this.sending = false;
-      this.publish({ status: 'offline', peers: [] });
-      if (this.retries < 3) {
-        clearTimeout(this.reconnectTimer);
-        this.reconnectTimer = setTimeout(() => {
-          void this.reconnect();
-        }, [1000, 2000, 5000][this.retries++]);
-      }
-    };
     socket.on('disconnect', offline);
     socket.on('connect_error', offline);
+    socket.connect();
   }
   private async emit(event: string, payload: unknown) {
     if (!this.socket?.connected) throw new Error('Disconnected');
@@ -207,14 +220,16 @@ export class BoardConnection {
     return response.data;
   }
   private async join() {
+    const attempt = this.connectionAttempt;
     try {
       const state = boardSyncSchema.parse(await this.emit('board:join', { boardId: this.boardId }));
-      if (this.stopped) return;
+      if (this.stopped || attempt !== this.connectionAttempt) return;
       this.accept(state);
       if (!this.pending.length) this.retries = 0;
       this.publish({ status: 'online' });
       void this.flush();
     } catch (e) {
+      if (this.stopped || attempt !== this.connectionAttempt) return;
       if (e instanceof ApiError && [401, 403, 404].includes(e.status))
         this.deny('Phiên hoặc quyền truy cập bảng đã thay đổi.');
       else this.publish({ status: 'offline' });
@@ -317,6 +332,8 @@ export class BoardConnection {
   }
   async reconnect() {
     if (this.stopped) return;
+    clearTimeout(this.reconnectTimer);
+    const attempt = this.connectionAttempt;
     this.publish({ status: 'connecting' });
     try {
       await apiRequest({
@@ -324,8 +341,9 @@ export class BoardConnection {
         schema: boardResponseSchema,
         signal: this.signal,
       });
-      if (!this.stopped) this.connect();
+      if (!this.stopped && attempt === this.connectionAttempt) await this.connect();
     } catch (e) {
+      if (this.stopped || attempt !== this.connectionAttempt) return;
       if (e instanceof ApiError && [401, 403, 404].includes(e.status))
         this.deny('Phiên hoặc quyền truy cập đã thay đổi.');
       else this.publish({ status: 'offline' });

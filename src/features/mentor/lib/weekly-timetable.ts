@@ -1,4 +1,5 @@
 import type { TeachingSession } from '../schemas/mentor-contracts';
+import { teachingSlots } from './teaching-slots';
 
 const dayMs = 86400000;
 export function vietnamDate(value: Date | string = new Date()) {
@@ -48,14 +49,10 @@ export function buildWeeklyTimetable(sessions: TeachingSession[], monday: string
     end: number | null;
     days: TeachingSession[][];
   };
-  const slots: Slot[] = [
-    { number: 1, start: 450, end: 540 },
-    { number: 2, start: 570, end: 660 },
-    { number: 3, start: 780, end: 930 },
-    { number: 4, start: 960, end: 1050 },
-    { number: 5, start: 1080, end: 1170 },
-    { number: 6, start: 1200, end: 1290 },
-  ].map((slot) => ({ ...slot, days: days.map((): TeachingSession[] => []) }));
+  const slots: Slot[] = teachingSlots.map((slot) => ({
+    ...slot,
+    days: days.map((): TeachingSession[] => []),
+  }));
   const outside: Slot = { number: null, start: null, end: null, days: days.map(() => []) };
   for (const session of sessions) {
     for (const [index, day] of days.entries()) {
@@ -68,9 +65,14 @@ export function buildWeeklyTimetable(sessions: TeachingSession[], monday: string
       const to = Math.ceil((Math.min(end, sessionEnd) - start) / 60000);
       // Prefer the slot containing the start. A lesson beginning in a break uses
       // the slot with the most overlap, while keeping its actual BE times.
-      let target = slots.find(
-        (slot) => slot.start !== null && slot.end !== null && from >= slot.start && from < slot.end,
-      );
+      // Overlapping configured slots use the latest matching start, so 13:00
+      // lessons stay in their own row instead of the new 12:00–14:00 row.
+      let target = [...slots]
+        .reverse()
+        .find(
+          (slot) =>
+            slot.start !== null && slot.end !== null && from >= slot.start && from < slot.end,
+        );
       if (!target) {
         let longestOverlap = 0;
         for (const slot of slots) {

@@ -1,5 +1,23 @@
 # Tiến độ
 
+## 04/11/2026 — Đồng bộ bảy ca học và lịch dạy bù
+
+- Theo xác nhận của người dùng, thêm 12:00–14:00 thành ca 3, giữ sáu ca cũ và đánh số tổng bảy ca. Lịch tuần dùng cùng cấu hình teaching-slots với bộ lọc giờ dạy bù trong đơn xin nghỉ. Ca 13:00–15:30 vẫn có hàng riêng khi giao với ca trưa.
+- Chỉ hiển thị giờ dạy bù khớp cả giờ đầu/cuối của một trong bảy ca và có trong kết quả BE (giữ kiểm tra thời lượng, lịch trống và quyền). Không tự tạo giờ khả dụng hoặc sửa BE. TypeScript, lint và format tệp sửa PASS. Chưa deploy; cập nhật assertion/fixture hiện hữu cho bảy ca, chưa chạy test trong lượt này.
+
+## 04/11/2026 — Làm lại giao diện buổi học Mentor
+
+- Source ở worktree Mindy-FE2-realtime trên codex/portable-backend: hero mint, nền soft, hai cột điểm danh/bài tập code và công cụ; dark forest cho bảng vẽ/phòng học, peach cho nhật ký. Danh sách dự kiến thêm NameAvatar/số thứ tự/nhãn học bù, counters sau start dùng số thật. Tách hai component trình bày khỏi page.
+- Bỏ hai đoạn kỹ thuật về chỉ bắt đầu trong ngày/không thể sửa và giải thích danh sách dự kiến. Giữ permission guards, API/mutations, deadline sửa/thanh toán, bulk cả buổi, meeting editor, ghi chú, bài tập và dialog. Không sửa BE hoặc deploy. Nguồn tham khảo thiết kế ở ui-rules.md.
+- Kiểm chứng: production build, TypeScript, lint và format các tệp sửa PASS. Bộ E2E liên quan có 20 kịch bản desktop/mobile; lượt đầu 16 PASS, 4 assertion cũ được cập nhật theo UI, lượt chạy lại 6/6 PASS gồm hai kịch bản thiết kế mới. Đã xem ảnh desktop và mobile 320px, kiểm tra không tràn ngang trước/sau bắt đầu buổi. E2E dùng API fixture, chưa nghiệm thu với BE thật hoặc deploy.
+
+## 04/11/2026 — Sửa realtime khi FE đổi host
+
+- Nhánh codex/portable-backend từ origin/compiler; giữ riêng phần UI chưa commit ở checkout dev. Audit toàn bộ fetch/socket: REST đã qua client/proxy chung; chat và Whiteboard bỏ phụ thuộc origin FE. Thay hai socket bằng helper dùng endpoint/vé runtime, xóa rewrite socket Next, bổ sung REALTIME_ORIGIN server-only (mặc định origin API_BASE_URL).
+- BE tương ứng trên codex/portable-backend từ origin/dev: endpoint ticket có guard/strict DTO/Origin/feature flags; vé ký riêng typ/origin/channel và hạn60s, socket kiểm session/quyền như cũ. Chat chuẩn hóa path không trailing slash; vẫn nhận cookie client cũ. Không migration/dependency mới hoặc đổi auth cookie.
+- Kiểm chứng local: 303 unit tests FE, 10 unit tests auth BE, 20 E2E chat desktop/mobile, lint/format tệp sửa, type-check và production build cả hai repo PASS. HTTP/gateway smoke thật PASS; browser cùng build tại hai origin kiểm bảng online, update ACK, chat socket và reconnect vé mới PASS. Domain/session lookup/REST màn hình của smoke dùng fixture memory, không phải DB/production.
+- Xem backend-connectivity.md cho deploy BE trước FE và cấu hình khi đổi host. Chưa deploy/commit/push; chưa sửa môi trường production.
+
 ## 03/11/2026 — Tích hợp CODE trên main, chuẩn bị PR compiler
 
 - Cập nhật nhánh `compiler` lên `origin/main` có QUIZ/ZIP, chat và Whiteboard, sau đó gộp CODE; giữ các route và giao diện hiện có. Metadata/list nhận đủ ba loại; route assignment dùng metadata để chọn đúng trang CODE hoặc QUIZ/ZIP. Rule tạo CODE riêng giữ tối đa 50 lượt, không nới rule ZIP/QUIZ.

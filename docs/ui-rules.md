@@ -1,5 +1,17 @@
 # Quy tắc giao diện Mindy
 
+## Ca học và lịch dạy bù — 04/11/2026
+
+- Dùng chung bảy ca trong teaching-slots: 07:30–09:00, 09:30–11:00, 12:00–14:00, 13:00–15:30, 16:00–17:30, 18:00–19:30, 20:00–21:30. Giữ giờ thực tế của buổi học từ BE; ca trưa mới không gộp mất ca 13:00.
+- Chọn giờ dạy bù chỉ hiện các ca khớp cả giờ đầu/cuối trong danh sách BE trả về; không hiển thị các mốc 15 phút khác. Khi không có ca phù hợp còn trống, cho chọn ngày/buổi khác. Khoảng nghỉ sáng/chiều/tối/cả ngày giữ nguyên hợp đồng BE.
+
+## Chi tiết buổi học Mentor — 04/11/2026
+
+- Trang buổi học dùng nền soft nhẹ, hero mint gồm tên buổi/lớp, badge trạng thái, phân công và lịch/phòng. Không đổi theme hoặc shell các trang khác.
+- Desktop có cột điểm danh/bài tập code chính và cột công cụ: bảng vẽ/phòng học nền forest, nhật ký nền peach, bài tập thường nền soft. Mobile xếp dọc; không tràn ngang320px. Tái sử dụng Button, NameAvatar và token palette hiện hữu, không thêm dependency/ảnh nền.
+- Danh sách trước bắt đầu có avatar, số thứ tự theo trang, tên và nhãn học bù; không có nút điểm danh hoặc số chuyên cần giả. Sau bắt đầu dùng counters thật và roster hiện có. Bỏ câu Chỉ bắt đầu được trong ngày học / Hiện không thể sửa điểm danh và đoạn giải thích danh sách dự kiến theo yêu cầu; giữ deadline sửa, pending-payment count, lỗi/retry và toàn bộ permissions.
+- Tham khảo cách phân cấp màu/avatar của School Attendance App – Muhammad Dias: https://dribbble.com/shots/26268194-School-Attendance-App-Clean-and-Intuitive-UI-Design ; không sao chép asset hoặc palette ngoài Mindy.
+
 ## Cửa sổ chat nổi — 02/11/2026
 
 - Launcher hình tròn mint ở góc phải dưới, có safe-area, badge headsup `99+` khi vượt 99 tin chưa đọc. Cửa sổ phía trên nút, rộng tối đa 416px, cao theo viewport và không che phủ bằng backdrop; 320px vẫn nằm gọn trong màn hình.

@@ -51,32 +51,37 @@ describe('Shared API session recovery', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('refreshes expired access cookies and replays the rejected request exactly once', async () => {
-    vi.stubGlobal('navigator', {});
-    const fetchMock = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(unauthorized())
-      .mockResolvedValueOnce(unauthorized())
-      .mockResolvedValueOnce(Response.json({ user, accessTokenExpiresAt: '2030-01-01T00:00:00Z' }))
-      .mockResolvedValueOnce(Response.json({ ok: true }));
-    vi.stubGlobal('fetch', fetchMock);
-    expect(await apiRequest(options)).toEqual({ ok: true });
-    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
-      '/api/v1/files/upload-intents',
-      '/api/v1/auth/me',
-      '/api/v1/auth/refresh',
-      '/api/v1/files/upload-intents',
-    ]);
-    expect(fetchMock.mock.calls[3][1]).toMatchObject({
-      method: 'POST',
-      body: JSON.stringify(options.body),
-      credentials: 'same-origin',
-    });
-    expect(fetchMock.mock.calls[2][1]).toMatchObject({
-      method: 'POST',
-      credentials: 'same-origin',
-    });
-  });
+  it.each(['files/upload-intents', 'auth/realtime-ticket'])(
+    'refreshes expired access cookies and replays %s exactly once',
+    async (path) => {
+      vi.stubGlobal('navigator', {});
+      const fetchMock = vi
+        .fn<typeof fetch>()
+        .mockResolvedValueOnce(unauthorized())
+        .mockResolvedValueOnce(unauthorized())
+        .mockResolvedValueOnce(
+          Response.json({ user, accessTokenExpiresAt: '2030-01-01T00:00:00Z' }),
+        )
+        .mockResolvedValueOnce(Response.json({ ok: true }));
+      vi.stubGlobal('fetch', fetchMock);
+      expect(await apiRequest({ ...options, path })).toEqual({ ok: true });
+      expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+        '/api/v1/' + path,
+        '/api/v1/auth/me',
+        '/api/v1/auth/refresh',
+        '/api/v1/' + path,
+      ]);
+      expect(fetchMock.mock.calls[3][1]).toMatchObject({
+        method: 'POST',
+        body: JSON.stringify(options.body),
+        credentials: 'same-origin',
+      });
+      expect(fetchMock.mock.calls[2][1]).toMatchObject({
+        method: 'POST',
+        credentials: 'same-origin',
+      });
+    },
+  );
 
   it('serializes concurrent recovery and refreshes only once', async () => {
     vi.stubGlobal('navigator', {});

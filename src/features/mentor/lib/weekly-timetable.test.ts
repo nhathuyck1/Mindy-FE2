@@ -72,10 +72,11 @@ describe('weekly teaching timetable', () => {
     const next = buildWeeklyTimetable([overnight], '2026-10-19');
     expect(next.slots.find((slot) => slot.number === null)?.days[0]).toEqual([overnight]);
   });
-  it('keeps six fixed slots even when empty and assigns every configured start correctly', () => {
+  it('keeps seven fixed slots even when empty and assigns every configured start correctly', () => {
     const ranges = [
       ['07:30', '09:00'],
       ['09:30', '11:00'],
+      ['12:00', '14:00'],
       ['13:00', '15:30'],
       ['16:00', '17:30'],
       ['18:00', '19:30'],
@@ -93,13 +94,14 @@ describe('weekly teaching timetable', () => {
     ).toEqual([
       [1, 450, 540],
       [2, 570, 660],
-      [3, 780, 930],
-      [4, 960, 1050],
-      [5, 1080, 1170],
-      [6, 1200, 1290],
+      [3, 720, 840],
+      [4, 780, 930],
+      [5, 960, 1050],
+      [6, 1080, 1170],
+      [7, 1200, 1290],
     ]);
     const result = buildWeeklyTimetable(sessions, '2026-10-12');
-    expect(result.slots).toHaveLength(6);
+    expect(result.slots).toHaveLength(7);
     for (const [index, slot] of result.slots.entries())
       expect(slot.days[0]).toEqual([sessions[index]]);
   });

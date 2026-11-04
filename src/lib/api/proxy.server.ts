@@ -1,3 +1,4 @@
+import { realtimeTicketInputSchema, realtimeTicketSchema } from '@/lib/realtime/contracts';
 import { resolveChatRule } from './chat-rules.server';
 import { resolveWhiteboardRule } from './whiteboard-rules.server';
 import 'server-only';
@@ -73,6 +74,11 @@ const rules = {
   'POST me/cart/items': {
     response: cartSchema,
     body: addCartItemSchema,
+    cookies: ['access_token'],
+  },
+  'POST auth/realtime-ticket': {
+    response: realtimeTicketSchema,
+    body: realtimeTicketInputSchema,
     cookies: ['access_token'],
   },
   'GET auth/me': { response: userSchema, cookies: ['access_token'] },
@@ -252,7 +258,12 @@ export async function proxyApi(request: Request, path: string) {
       return error(400, 'INVALID_JSON', 'Dữ liệu không hợp lệ.');
     }
   }
-  if (path === 'auth/me' && !requestCookies(request.headers.get('cookie'), ['access_token']))
+  if (path === 'auth/realtime-ticket' && new URL(request.url).search)
+    return error(422, 'INVALID_QUERY', 'Yêu cầu kết nối không nhận tham số URL.');
+  if (
+    (path === 'auth/me' || path === 'auth/realtime-ticket') &&
+    !requestCookies(request.headers.get('cookie'), ['access_token'])
+  )
     return error(401, 'AUTHENTICATION_REQUIRED', 'Bạn chưa đăng nhập.');
   if (path.startsWith('me/') && !requestCookies(request.headers.get('cookie'), ['access_token']))
     return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập để đăng ký lớp.');
@@ -377,6 +388,11 @@ export async function proxyApi(request: Request, path: string) {
       !sessionCookies.every((name) => cookies.some((cookie) => cookie.startsWith(`${name}=`)))
     )
       return error(502, 'SESSION_COOKIE_MISSING', 'Không thể thiết lập phiên đăng nhập.');
+    if (path === 'auth/realtime-ticket')
+      return Response.json(
+        { ...realtimeTicketSchema.parse(result.data), url: env.realtimeOrigin },
+        { status: response.status, headers },
+      );
     return Response.json(result.data, { status: response.status, headers });
   } catch {
     return error(503, 'API_UNAVAILABLE', 'Không thể kết nối hệ thống.');

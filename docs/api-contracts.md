@@ -1,5 +1,12 @@
 # API catalog, lớp học và tài khoản
 
+## Realtime portable — 04/11/2026
+
+- POST /api/v1/auth/realtime-ticket: cookie access_token, Origin đúng APP_ORIGIN; body strict {channel: chat|whiteboards}, không query/URL đích từ client. BE cho MENTOR/STUDENT ACTIVE, channel phải bật, Origin phải nằm trong CORS_ORIGINS. HTTP 200 {ticket, expiresAt}; proxy FE bổ sung url từ REALTIME_ORIGIN runtime. private/no-store, không trả access/refresh token.
+- Browser kết nối thẳng url + namespace /chat, path /socket.io cho chat; namespace mặc định, path /ws/whiteboards cho bảng. Cả hai websocket-only, addTrailingSlash false, auth:{ticket}, withCredentials false. Vé không dùng được ở REST hoặc kênh/origin khác. Cookie gateway cũ vẫn tương thích khi cùng origin.
+- Vé handshake hết hạn sau tối đa 60s; socket tồn tại tới access expiry và tiếp tục kiểm session/quyền. 401 ở HTTP dùng recovery chung rồi xin lại một lần; 403 dừng; 422 input sai; 503 channel/backend chưa sẵn sàng. Disconnect/connect_error xin vé mới với tối đa 3 retry backoff 1/2/5s. Whiteboard vẫn có nút Kết nối lại; chat giữ HTTP polling fallback.
+- Đây là contract source local, chưa xác nhận deploy. Chi tiết BE ở PHASE_1_flow-api-breakdown.md; cấu hình ở backend-connectivity.md.
+
 ## Chat Student / Mentor — 02/11/2026
 
 - Đối chiếu Swagger local `http://localhost:3000/docs-json`, `../Mindy-BE/docs/api_flow/PHASE_6_FLOW.md`, controller/DTO/service. Chưa xác nhận deploy upstream.
