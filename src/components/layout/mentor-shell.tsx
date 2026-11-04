@@ -11,6 +11,7 @@ import {
   PanelLeftOpen,
   CalendarOff,
   ChartNoAxesCombined,
+  UserRound,
 } from 'lucide-react';
 import { Brand } from '@/components/ui/brand';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ import { ApiError } from '@/lib/api/client';
 import { SessionControls } from '@/features/auth/components/session-controls';
 
 const navigation = [
+  { href: '/mentor/profile', title: 'Thông tin cá nhân', icon: UserRound },
   { href: '/mentor/dashboard', title: 'Tổng quan', icon: ChartNoAxesCombined },
   { href: '/mentor', title: 'Lịch dạy', icon: CalendarDays },
   { href: '/mentor/classes', title: 'Lớp của tôi', icon: GraduationCap },

@@ -1,5 +1,10 @@
 # Kiến trúc Mindy FE2
 
+## Lịch dùng chung và hồ sơ Mentor — 04/11/2026
+
+- components/ui/schedule-week-controls, schedule-date-picker và weekly-timetable dùng chung giữa Student/Mentor; lib/weekly-timetable nhóm sự kiện có timestamp theo sáu ca và ca ngoài giờ, giữ buổi qua đêm. Bảng nhận renderer và key từ từng feature; không sở hữu API hoặc quyền. Module Mentor cũ re-export utility để giữ consumer hiện có.
+- /mentor/profile dùng lại ProfilePage đọc session dưới MentorShell/guard MENTOR ACTIVE. /user giữ guard STUDENT; menu theo role dẫn tới route riêng.
+
 ## Dashboard theo vai trò — 03/11/2026
 
 - `features/dashboard` sở hữu schema Zod, query và UI thống kê dùng chung. Server state có key `dashboard/userId/audience/days`; `apiRequest` dùng recovery phiên tập trung của dev, không tạo cơ chế refresh riêng.

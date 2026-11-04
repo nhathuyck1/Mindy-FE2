@@ -1,5 +1,10 @@
 # Quy tắc giao diện Mindy
 
+## Đồng bộ lịch Student với Mentor — 04/11/2026
+
+- Lịch Student dùng cùng bộ chọn ngày dd/mm/yyyy, nút tuần trước/hiện tại/sau, toolbar làm mới, bảng sáu ca, màu và kích thước ô như Mentor. Cột Ca học cố định khi cuộn ngang; buổi ngoài ca có hàng Khác. Mỗi buổi Student mở dialog cũ, giữ điểm danh thật và trạng thái hủy.
+- Menu tài khoản Student gồm hồ sơ/lịch/khóa học/tài liệu. Mentor gồm hồ sơ/lịch dạy/lớp của tôi; hồ sơ có cùng bố cục Student và nhãn vai trò Mentor. Các quy tắc này thay bố cục lịch và giới hạn menu Student cũ bên dưới.
+
 ## Dashboard ba vai trò — 03/11/2026
 
 - Phản hồi mới nhất: Manager chỉ giữ thẻ tổng quan, biểu đồ xu hướng và donut trạng thái, không hiển thị hai biểu đồ xếp hạng. Bỏ đoạn giải thích cách tính đăng ký/thời điểm cập nhật ở tất cả dashboard.

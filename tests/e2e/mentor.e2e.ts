@@ -570,3 +570,34 @@ test('mentor guard, expired attendance, conflict and narrow viewport', async ({ 
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
 });
+
+test('mentor account menu opens its own profile and classes without student links', async ({
+  page,
+}, info) => {
+  await mockMentor(page);
+  if (info.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 780 });
+  await page.goto('/mentor/profile');
+  await expect(page.getByRole('heading', { name: 'Thông tin cá nhân', exact: true })).toBeVisible();
+  await expect(page.getByRole('definition').filter({ hasText: 'Mentor Minh' })).toBeVisible();
+  await expect(page.getByRole('definition').filter({ hasText: /^Mentor$/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Tài khoản của Mentor Minh' }).click();
+  const menu = page.getByRole('region', { name: 'Thông tin tài khoản' });
+  await expect(menu.getByRole('link', { name: 'Thông tin cá nhân', exact: true })).toHaveAttribute(
+    'href',
+    '/mentor/profile',
+  );
+  await expect(menu.getByRole('link', { name: 'Lịch dạy', exact: true })).toHaveAttribute(
+    'href',
+    '/mentor',
+  );
+  await expect(menu.getByRole('link', { name: 'Lớp của tôi', exact: true })).toHaveAttribute(
+    'href',
+    '/mentor/classes',
+  );
+  await expect(menu.locator('a[href^="/user"]')).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: info.outputPath('mentor-account-menu.png'), fullPage: true });
+  await menu.getByRole('link', { name: 'Lớp của tôi', exact: true }).click();
+  await expect(page).toHaveURL('/mentor/classes');
+  await expect(menu).toHaveCount(0);
+});

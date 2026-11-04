@@ -136,6 +136,13 @@ test('Dropdown opens personal workspace, four navigation entries and collapsible
     'href',
     '/user/schedule',
   );
+  await expect(
+    dropdown.getByRole('link', { name: 'Khóa học của tôi', exact: true }),
+  ).toHaveAttribute('href', '/user/courses');
+  await expect(
+    dropdown.getByRole('link', { name: 'Tài liệu học tập', exact: true }),
+  ).toHaveAttribute('href', '/user/materials');
+  await expect(dropdown.getByRole('link', { name: 'Lớp của tôi', exact: true })).toHaveCount(0);
   await dropdown.getByRole('link', { name: 'Thông tin cá nhân', exact: true }).click();
   await expect(page).toHaveURL('/user/profile');
   await expect(page.getByRole('heading', { name: 'Thông tin cá nhân', exact: true })).toBeVisible();
@@ -172,12 +179,15 @@ test('Weekly schedule has Monday through Sunday columns, all API pages and week 
   await fixture(page);
   if (testInfo.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 780 });
   await page.goto('/user/schedule');
-  await page.getByLabel('Chọn ngày xem lịch', { exact: true }).fill('2026-10-14');
+  await page.getByLabel('Chọn ngày (dd/mm/yyyy)', { exact: true }).fill('14/10/2026');
+  await page.getByLabel('Chọn ngày (dd/mm/yyyy)', { exact: true }).press('Enter');
   const table = page.getByRole('table');
-  await expect(table.getByRole('columnheader')).toHaveCount(7);
-  await expect(table.getByRole('columnheader').first()).toContainText('Thứ 2');
+  await expect(table.getByRole('columnheader')).toHaveCount(8);
+  await expect(table.getByRole('columnheader').first()).toContainText('Ca học');
+  await expect(table.getByRole('rowheader')).toHaveCount(6);
+  await expect(table.getByRole('columnheader').nth(1)).toContainText('Thứ Hai');
   await expect(table.getByRole('columnheader').last()).toContainText('Chủ nhật');
-  await expect(table.getByRole('columnheader').first()).toContainText('12/10/2026');
+  await expect(table.getByRole('columnheader').nth(1)).toContainText('(12/10)');
   await expect(table.getByRole('article', { name: 'Thực hành Web' })).toContainText(
     '19:00 – 21:00',
   );
@@ -197,9 +207,9 @@ test('Weekly schedule has Monday through Sunday columns, all API pages and week 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('user-schedule.png'), fullPage: true });
   await page.getByRole('button', { name: 'Tuần sau', exact: true }).click();
-  await expect(table.getByRole('columnheader').first()).toContainText('19/10/2026');
+  await expect(table.getByRole('columnheader').nth(1)).toContainText('(19/10)');
   await page.getByRole('button', { name: 'Tuần trước', exact: true }).click();
-  await expect(table.getByRole('columnheader').first()).toContainText('12/10/2026');
+  await expect(table.getByRole('columnheader').nth(1)).toContainText('(12/10)');
 });
 test('Orders use existing order API, preserve server statuses and show an empty result', async ({
   page,

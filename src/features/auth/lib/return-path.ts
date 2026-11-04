@@ -105,9 +105,13 @@ export function safeReturnPath(value: string | null | undefined): string {
     )
       return url.pathname + (url.searchParams.get('preview') === 'true' ? '?preview=true' : '');
     if (
-      ['/mentor', '/mentor/dashboard', '/mentor/classes', '/mentor/leave-requests'].includes(
-        url.pathname,
-      )
+      [
+        '/mentor',
+        '/mentor/profile',
+        '/mentor/dashboard',
+        '/mentor/classes',
+        '/mentor/leave-requests',
+      ].includes(url.pathname)
     )
       return url.pathname;
     if (

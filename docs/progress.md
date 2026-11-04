@@ -1,5 +1,12 @@
 # Tiến độ
 
+## 04/11/2026 — Lịch Student và menu theo vai trò
+
+- Student dùng chung bộ chọn tuần/ngày và bảng sáu ca với Mentor: giờ Việt Nam, cột ca cố định, ngày hiện tại, cuộn ngang và làm mới. Giữ API /me/schedule, đọc đủ trang, định danh enrollment/makeup, trạng thái điểm danh và dialog chi tiết. Logic nhóm ca chuyển về lib/weekly-timetable; Mentor dùng lại cùng bảng.
+- Menu Student có Thông tin cá nhân, Lịch học, Khóa học của tôi và Tài liệu học tập. Mentor có Thông tin cá nhân, Lịch dạy và Lớp của tôi; thêm /mentor/profile dùng hồ sơ session và nhãn vai trò Mentor, nằm trong guard Mentor hiện hữu. Sidebar Mentor và returnTo nhận route mới.
+- BE: nhánh checkout Feat/Miro chưa có dashboard; sau fetch, origin/dev commit b6b6976 đã có GET /api/v1/admin/dashboard, /manager/dashboard, /mentor/dashboard. Mentor chỉ thấy lớp phụ trách chính, bộ lọc 30/90/365 ngày; FE đã tích hợp /mentor/dashboard. Chỉ đọc source BE, không merge/chuyển nhánh hoặc xác nhận deploy.
+- Kiểm chứng: lint các tệp sửa, production build riêng `.next-role-sync`, 17 unit tests lịch/ca/returnTo và 12 E2E desktop/mobile PASS. E2E dùng API fixture, kiểm menu đúng role, hồ sơ Mentor, đủ trang lịch, sáu ca, chuyển tuần/ngày, điểm danh/hủy, dialog/focus, lỗi/retry và chặn guest. Đã xem ảnh lịch desktop và menu Mentor 320px, không tràn ngang. Lượt build đầu vướng `.next/dev/types/validator.ts` cũ tham chiếu route nhánh khác; đổi tên riêng file sinh tự động thành `.ts.stale` rồi build PASS. Không deploy/commit/push.
+
 ## 03/11/2026 — Tìm người dùng qua API
 
 - `/admin/users` gửi `q` tới GET `/admin/users` thay vì lọc trang hiện tại. Bắt đầu từ 2 ký tự, debounce 250ms sau mỗi lần dừng gõ; hỗ trợ composition tiếng Việt, trim, tối đa 100 ký tự. Một ký tự không gửi search và có hướng dẫn; xóa hết trở về danh sách. Đổi từ khóa về trang 1/xóa selection, phân trang và role/status giữ từ khóa. Query key có q; request cũ dùng AbortSignal hiện hữu.
