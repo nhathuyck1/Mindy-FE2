@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Icon } from '@/components/ui/icon';
 import { useAdminList } from '../api/admin-queries';
 import {
@@ -29,22 +29,41 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
   const [status, setStatus] = useState('');
   const [filter, setFilter] = useState('');
   const [search, setSearch] = useState('');
+  const [userSearch, setUserSearch] = useState('');
+  const [composing, setComposing] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [sort, setSort] = useState<'none' | 'asc' | 'desc'>('none');
   const [hidden, setHidden] = useState<Set<OptionalColumn>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
+  useEffect(() => {
+    if (props.resource !== 'users' || composing) return;
+    if (search.trim().length === 1) return;
+    if (search.trim() === userSearch) return;
+    const timer = window.setTimeout(() => {
+      setUserSearch(search.trim());
+      setPage(1);
+      setSelected(new Set());
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [search, userSearch, composing, props.resource]);
+
+  const searchTooShort = props.resource === 'users' && search.trim().length === 1;
+
   const query = useAdminList(props.resource, {
     page,
     pageSize,
+    ...(props.resource === 'users' ? { q: userSearch } : {}),
     [config.statusKey]: status,
     ...(config.filterKey ? { [config.filterKey]: filter } : {}),
   });
-  const rows = (query.data?.items ?? []).filter((row) =>
-    normalizeAdminSearch([row.name, row.subtitle, row.secondary].join(' ')).includes(
-      normalizeAdminSearch(search),
-    ),
+  const rows = (query.data?.items ?? []).filter(
+    (row) =>
+      props.resource === 'users' ||
+      normalizeAdminSearch([row.name, row.subtitle, row.secondary].join(' ')).includes(
+        normalizeAdminSearch(search),
+      ),
   );
   if (sort !== 'none')
     rows.sort((a, b) => a.name.localeCompare(b.name, 'vi') * (sort === 'asc' ? 1 : -1));
@@ -60,7 +79,7 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
 
   function changePage(next: number) {
     setPage(next);
-    setSearch('');
+    if (props.resource !== 'users') setSearch('');
     setSelected(new Set());
   }
   function exportCsv() {
@@ -91,7 +110,7 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
             size="unstyled"
             type="button"
             onClick={exportCsv}
-            disabled={query.isError || query.isPending || !exportRows.length}
+            disabled={query.isError || query.isPending || searchTooShort || !exportRows.length}
             className="admin-button admin-button-primary"
             title="Xuất các dòng đã chọn hoặc kết quả hiển thị trên trang hiện tại"
           >
@@ -162,8 +181,17 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
               className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted"
             />
             <Input
-              aria-label={`Tìm ${config.singular} trong trang`}
-              placeholder={`Tìm ${config.singular} trong trang…`}
+              aria-label={
+                props.resource === 'users' ? 'Tìm người dùng' : `Tìm ${config.singular} trong trang`
+              }
+              placeholder={
+                props.resource === 'users'
+                  ? 'Tìm tên, email, số điện thoại…'
+                  : `Tìm ${config.singular} trong trang…`
+              }
+              maxLength={props.resource === 'users' ? 100 : undefined}
+              onCompositionStart={() => setComposing(true)}
+              onCompositionEnd={() => setComposing(false)}
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
@@ -232,7 +260,11 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
           </div>
         </div>
 
-        {query.isPending || query.isError ? (
+        {searchTooShort ? (
+          <p role="status" className="p-8 text-center text-sm text-muted">
+            Nhập ít nhất 2 ký tự để tìm người dùng.
+          </p>
+        ) : query.isPending || query.isError ? (
           <AdminQueryState
             loading={query.isPending}
             columns={7 - hidden.size}
@@ -304,7 +336,7 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
               type="button"
               className="admin-icon-button border border-line"
               aria-label="Trang trước"
-              disabled={page <= 1 || query.isFetching}
+              disabled={page <= 1 || query.isFetching || searchTooShort}
               onClick={() => changePage(page - 1)}
             >
               <Icon name="chevron" className="size-4 rotate-180" />
@@ -318,7 +350,7 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
               type="button"
               className="admin-icon-button border border-line"
               aria-label="Trang sau"
-              disabled={page >= totalPages || query.isFetching || query.isError}
+              disabled={page >= totalPages || query.isFetching || query.isError || searchTooShort}
               onClick={() => changePage(page + 1)}
             >
               <Icon name="chevron" className="size-4" />

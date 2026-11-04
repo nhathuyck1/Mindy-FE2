@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { AnalyticsDashboard } from '@/features/dashboard/components/analytics-dashboard';
 import { CheckCheck, Clock3, FileText, PencilLine, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { materialsSchema } from '../schemas/manager-contracts';
@@ -61,6 +62,8 @@ export function ManagerOverviewPage() {
           </Button>
         </div>
       </header>
+
+      <AnalyticsDashboard audience="manager" embedded />
 
       <section aria-label="Thống kê tài liệu" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {counts.map((item) => (

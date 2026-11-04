@@ -1,5 +1,7 @@
 import type { Page } from '@playwright/test';
 import { testUser } from './api-fixtures';
+import { dashboardFixture } from './dashboard-fixtures';
+import { normalizeAdminSearch } from '../../src/features/admin/lib/admin-resources';
 
 export const adminUser = {
   ...testUser,
@@ -102,12 +104,17 @@ export async function mockAdminApi(page: Page) {
   await page.route('**/api/v1/admin/*?**', (route) => {
     const url = new URL(route.request().url());
     const query = url.searchParams;
+    if (url.pathname.endsWith('/dashboard')) return route.fulfill({ json: dashboardFixture() });
     let items;
     if (url.pathname.endsWith('/users'))
       items = adminUsers.filter(
         (item) =>
           (!query.get('role') || item.role === query.get('role')) &&
-          (!query.get('status') || item.status === query.get('status')),
+          (!query.get('status') || item.status === query.get('status')) &&
+          (!query.get('q') ||
+            normalizeAdminSearch(`${item.displayName} ${item.email} ${item.phone ?? ''}`).includes(
+              normalizeAdminSearch(query.get('q') ?? ''),
+            )),
       );
     else if (url.pathname.endsWith('/courses'))
       items = adminCourses.filter(

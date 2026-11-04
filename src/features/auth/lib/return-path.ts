@@ -113,7 +113,15 @@ export function safeReturnPath(value: string | null | undefined): string {
       z.uuid().safeParse(parts[3]).success
     )
       return url.pathname + (url.searchParams.get('preview') === 'true' ? '?preview=true' : '');
-    if (['/mentor', '/mentor/classes', '/mentor/leave-requests'].includes(url.pathname))
+    if (
+      [
+        '/mentor',
+        '/mentor/profile',
+        '/mentor/dashboard',
+        '/mentor/classes',
+        '/mentor/leave-requests',
+      ].includes(url.pathname)
+    )
       return url.pathname;
     if (
       parts.length === 4 &&

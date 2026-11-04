@@ -281,6 +281,7 @@ for (const period of ['FULL_DAY', 'MORNING'])
       await page.getByLabel('Dạy bù cho ngày 2026-10-26').fill('2026-10-28');
     else {
       await page.getByLabel('Ngày dạy bù', { exact: true }).fill('2026-10-28');
+      await page.getByLabel('Buổi dạy bù', { exact: true }).selectOption('AFTERNOON');
       await page.getByRole('button', { name: 'Tìm giờ phù hợp' }).click();
       await page.getByRole('radio').check();
     }
@@ -317,9 +318,9 @@ for (const period of ['FULL_DAY', 'MORNING'])
         {
           sourceSessionId: mentorIds.nextUnit,
           targetDate: '2026-10-28',
-          targetPeriod: 'MORNING',
-          startsAt: '2026-10-28T03:00:00.000Z',
-          endsAt: '2026-10-28T05:00:00.000Z',
+          targetPeriod: 'AFTERNOON',
+          startsAt: '2026-10-28T05:00:00.000Z',
+          endsAt: '2026-10-28T07:00:00.000Z',
         },
       ]);
       expect(create?.body).not.toHaveProperty('dayMappings');

@@ -421,7 +421,7 @@ export async function mockMentorWorkspace(
       });
     if (path === 'mentor/leave-requests/makeup-slots')
       return ok({
-        slots: [{ startsAt: '2026-10-28T03:00:00.000Z', endsAt: '2026-10-28T05:00:00.000Z' }],
+        slots: [{ startsAt: '2026-10-28T05:00:00.000Z', endsAt: '2026-10-28T07:00:00.000Z' }],
         sessionVersion: source.version,
         asOf: workspaceDate,
         timeZone: session.timeZone,

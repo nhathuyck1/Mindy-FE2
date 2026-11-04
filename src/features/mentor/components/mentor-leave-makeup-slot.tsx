@@ -11,6 +11,7 @@ import {
   type LeaveSessionMapping,
 } from '../schemas/leave-contracts';
 import { leavePeriods } from '../lib/leave-display';
+import { isTeachingSlot } from '@/lib/teaching-slots';
 import { mentorDate } from './mentor-shared';
 export function SessionMakeupSlot(props: {
   source: LeavePreview['affectedSessions'][number];
@@ -20,6 +21,10 @@ export function SessionMakeupSlot(props: {
   const [period, setPeriod] = useState('MORNING');
   const [selected, setSelected] = useState('');
   const slots = useMentorCommand(leaveSlotsSchema);
+  const availableSlots =
+    slots.data?.slots.filter((slot) =>
+      isTeachingSlot(slot.startsAt, slot.endsAt, slots.data?.timeZone ?? 'Asia/Ho_Chi_Minh'),
+    ) ?? [];
   return (
     <div className="space-y-4 rounded-xl border border-line bg-canvas p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -109,10 +114,10 @@ export function SessionMakeupSlot(props: {
         slots.data && (
           <fieldset className="grid gap-2 sm:grid-cols-2">
             <legend className="mb-2 text-sm font-bold">Chọn khung giờ</legend>
-            {slots.data.slots.length === 0 && (
-              <p>Không có giờ phù hợp. Hãy chọn ngày hoặc buổi khác.</p>
+            {availableSlots.length === 0 && (
+              <p>Không có ca học phù hợp còn trống. Hãy chọn ngày hoặc buổi khác.</p>
             )}
-            {slots.data.slots.map((slot) => (
+            {availableSlots.map((slot) => (
               <label
                 key={slot.startsAt}
                 className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border p-3 text-sm transition-colors ${selected === slot.startsAt ? 'border-mint bg-mint/5 text-forest' : 'border-line hover:border-mint/40'}`}

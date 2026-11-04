@@ -1,8 +1,10 @@
+import { realtimeTicketInputSchema, realtimeTicketSchema } from '@/lib/realtime/contracts';
 import { resolveChatRule } from './chat-rules.server';
 import { resolveWhiteboardRule } from './whiteboard-rules.server';
 import 'server-only';
 import { resolveAssignmentRule } from './assignment-rules.server';
 import { safeErrorSchema, validationFields, type ValidationField } from './validation-fields';
+import { resolveDashboardRule } from './dashboard-rules.server';
 import { resolveAdminCrudRule } from './admin-rules.server';
 import { resolveManagerRule } from './manager-rules.server';
 import { codeProxyRule } from '@/features/code-assignments/api/code-proxy-policy';
@@ -75,6 +77,11 @@ const rules = {
     body: addCartItemSchema,
     cookies: ['access_token'],
   },
+  'POST auth/realtime-ticket': {
+    response: realtimeTicketSchema,
+    body: realtimeTicketInputSchema,
+    cookies: ['access_token'],
+  },
   'GET auth/me': { response: userSchema, cookies: ['access_token'] },
   'POST auth/login': { response: authResponseSchema, body: loginSchema, cookies: [] },
   'POST auth/register': { response: registrationAcceptedSchema, body: registerSchema, cookies: [] },
@@ -93,6 +100,8 @@ type ApiRule = {
   timeoutMs?: number;
 };
 function resolveRule(method: string, path: string): ApiRule | undefined {
+  const dashboardRule = resolveDashboardRule(method, path);
+  if (dashboardRule) return dashboardRule;
   const key = `${method} ${path}`;
   if (Object.hasOwn(rules, key)) return rules[key as keyof typeof rules];
   const chatRule = resolveChatRule(method, path);
@@ -252,13 +261,28 @@ export async function proxyApi(request: Request, path: string) {
       return error(400, 'INVALID_JSON', 'Dữ liệu không hợp lệ.');
     }
   }
-  if (path === 'auth/me' && !requestCookies(request.headers.get('cookie'), ['access_token']))
+  if (path === 'auth/realtime-ticket' && new URL(request.url).search)
+    return error(422, 'INVALID_QUERY', 'Yêu cầu kết nối không nhận tham số URL.');
+  if (
+    (path === 'auth/me' || path === 'auth/realtime-ticket') &&
+    !requestCookies(request.headers.get('cookie'), ['access_token'])
+  )
     return error(401, 'AUTHENTICATION_REQUIRED', 'Bạn chưa đăng nhập.');
   if (path.startsWith('me/') && !requestCookies(request.headers.get('cookie'), ['access_token']))
     return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập để đăng ký lớp.');
   if (path === 'auth/refresh' && !requestCookies(request.headers.get('cookie'), ['refresh_token']))
     return error(401, 'AUTHENTICATION_REQUIRED', 'Phiên đăng nhập đã hết hạn.');
   let search = '';
+  if (resolveDashboardRule(request.method, path)) {
+    if (!requestCookies(request.headers.get('cookie'), ['access_token']))
+      return error(401, 'AUTHENTICATION_REQUIRED', 'Vui lòng đăng nhập để xem dashboard.');
+    const input = new URL(request.url).searchParams;
+    if ([...input.keys()].some((key) => input.getAll(key).length !== 1))
+      return error(422, 'INVALID_QUERY', 'Tham số bị lặp.');
+    const parsed = rule.query!.safeParse(Object.fromEntries(input));
+    if (!parsed.success) return error(422, 'INVALID_QUERY', 'Khoảng thời gian không hợp lệ.');
+    search = `?${new URLSearchParams(Object.entries(parsed.data).map(([key, value]) => [key, String(value)]))}`;
+  }
   if (
     resolveManagerRule(request.method, path) ||
     resolveMentorRule(request.method, path) ||
@@ -377,6 +401,11 @@ export async function proxyApi(request: Request, path: string) {
       !sessionCookies.every((name) => cookies.some((cookie) => cookie.startsWith(`${name}=`)))
     )
       return error(502, 'SESSION_COOKIE_MISSING', 'Không thể thiết lập phiên đăng nhập.');
+    if (path === 'auth/realtime-ticket')
+      return Response.json(
+        { ...realtimeTicketSchema.parse(result.data), url: env.realtimeOrigin },
+        { status: response.status, headers },
+      );
     return Response.json(result.data, { status: response.status, headers });
   } catch {
     return error(503, 'API_UNAVAILABLE', 'Không thể kết nối hệ thống.');

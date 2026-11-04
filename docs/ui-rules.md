@@ -1,5 +1,17 @@
 # Quy tắc giao diện Mindy
 
+## Ca học và lịch dạy bù — 04/11/2026
+
+- Dùng chung bảy ca trong teaching-slots: 07:30–09:00, 09:30–11:00, 12:00–14:00, 13:00–15:30, 16:00–17:30, 18:00–19:30, 20:00–21:30. Giữ giờ thực tế của buổi học từ BE; ca trưa mới không gộp mất ca 13:00.
+- Chọn giờ dạy bù chỉ hiện các ca khớp cả giờ đầu/cuối trong danh sách BE trả về; không hiển thị các mốc 15 phút khác. Khi không có ca phù hợp còn trống, cho chọn ngày/buổi khác. Khoảng nghỉ sáng/chiều/tối/cả ngày giữ nguyên hợp đồng BE.
+
+## Chi tiết buổi học Mentor — 04/11/2026
+
+- Trang buổi học dùng nền soft nhẹ, hero mint gồm tên buổi/lớp, badge trạng thái, phân công và lịch/phòng. Không đổi theme hoặc shell các trang khác.
+- Desktop có cột điểm danh/bài tập code chính và cột công cụ: bảng vẽ/phòng học nền forest, nhật ký nền peach, bài tập thường nền soft. Mobile xếp dọc; không tràn ngang320px. Tái sử dụng Button, NameAvatar và token palette hiện hữu, không thêm dependency/ảnh nền.
+- Danh sách trước bắt đầu có avatar, số thứ tự theo trang, tên và nhãn học bù; không có nút điểm danh hoặc số chuyên cần giả. Sau bắt đầu dùng counters thật và roster hiện có. Bỏ câu Chỉ bắt đầu được trong ngày học / Hiện không thể sửa điểm danh và đoạn giải thích danh sách dự kiến theo yêu cầu; giữ deadline sửa, pending-payment count, lỗi/retry và toàn bộ permissions.
+- Tham khảo cách phân cấp màu/avatar của School Attendance App – Muhammad Dias: https://dribbble.com/shots/26268194-School-Attendance-App-Clean-and-Intuitive-UI-Design ; không sao chép asset hoặc palette ngoài Mindy.
+
 ## Cửa sổ chat nổi — 02/11/2026
 
 - Launcher hình tròn mint ở góc phải dưới, có safe-area, badge headsup `99+` khi vượt 99 tin chưa đọc. Cửa sổ phía trên nút, rộng tối đa 416px, cao theo viewport và không che phủ bằng backdrop; 320px vẫn nằm gọn trong màn hình.
@@ -19,6 +31,18 @@
 - Filter loại/mục đích/buổi/trạng thái/lượt/trang lưu URL. Tab lớp Mentor cũng theo URL để Back giữ trang Bài tập. Chọn buổi/học viên bằng tên khi API/scope cho phép; không yêu cầu người dùng nhập UUID. Học viên lịch sử không có tên trong roster hiện tại có mã rút gọn; không tự xin roster toàn lớp bằng quyền dạy thay.
 - Câu hỏi Mentor khi xem dùng details và đáp án đúng; ô nhập chỉ có trong trình sửa. Student chỉ thấy câu hỏi sau start, trạng thái tự lưu rõ ràng; phần chưa chọn có lối nhảy tới câu. Không render HTML từ đề/feedback.
 - Lỗi phiên bản giữ bản nhập và có thao tác đọc lại/xác nhận thay thế; không tự đè bản nháp. Tệp chỉ tải bằng liên kết mới tại click. Không hiển thị lỗi/missing/null thành số 0, không hứa kho lịch sử toàn tài khoản.
+
+## Đồng bộ lịch Student với Mentor — 04/11/2026
+
+- Lịch Student dùng cùng bộ chọn ngày dd/mm/yyyy, nút tuần trước/hiện tại/sau, toolbar làm mới, bảng sáu ca, màu và kích thước ô như Mentor. Cột Ca học cố định khi cuộn ngang; buổi ngoài ca có hàng Khác. Mỗi buổi Student mở dialog cũ, giữ điểm danh thật và trạng thái hủy.
+- Menu tài khoản Student gồm hồ sơ/lịch/khóa học/tài liệu. Mentor gồm hồ sơ/lịch dạy/lớp của tôi; hồ sơ có cùng bố cục Student và nhãn vai trò Mentor. Các quy tắc này thay bố cục lịch và giới hạn menu Student cũ bên dưới.
+
+## Dashboard ba vai trò — 03/11/2026
+
+- Phản hồi mới nhất: Manager chỉ giữ thẻ tổng quan, biểu đồ xu hướng và donut trạng thái, không hiển thị hai biểu đồ xếp hạng. Bỏ đoạn giải thích cách tính đăng ký/thời điểm cập nhật ở tất cả dashboard.
+
+- Dùng token Mindy và admin-table-panel hiện hữu; bốn thẻ số liệu, Recharts AreaChart theo ngày, PieChart dạng donut cho trạng thái và BarChart ngang cho top khóa/mentor/lớp. Tooltip hiển thị tên đầy đủ và số liệu; bảng xếp hạng mở bằng details để đọc các tên dài. 320px xếp một cột, desktop chia cột, nhãn trục rút gọn một dòng và giữ số liệu đọc được.
+- Mỗi thống kê ghi rõ tổng hiện tại hoặc trong kỳ; học viên distinct khác lượt đăng ký. Ngày/giờ hiển thị theo Việt Nam. Có loading/error/retry/empty độc lập, bảng ngày mở bằng details/summary, không animation hoặc số demo lấp chỗ.
 
 ## Chuẩn UI lấy Student làm mẫu — 26/10/2026
 

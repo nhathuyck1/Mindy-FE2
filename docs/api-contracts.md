@@ -1,5 +1,12 @@
 # API catalog, lớp học và tài khoản
 
+## Realtime portable — 04/11/2026
+
+- POST /api/v1/auth/realtime-ticket: cookie access_token, Origin đúng APP_ORIGIN; body strict {channel: chat|whiteboards}, không query/URL đích từ client. BE cho MENTOR/STUDENT ACTIVE, channel phải bật, Origin phải nằm trong CORS_ORIGINS. HTTP 200 {ticket, expiresAt}; proxy FE bổ sung url từ REALTIME_ORIGIN runtime. private/no-store, không trả access/refresh token.
+- Browser kết nối thẳng url + namespace /chat, path /socket.io cho chat; namespace mặc định, path /ws/whiteboards cho bảng. Cả hai websocket-only, addTrailingSlash false, auth:{ticket}, withCredentials false. Vé không dùng được ở REST hoặc kênh/origin khác. Cookie gateway cũ vẫn tương thích khi cùng origin.
+- Vé handshake hết hạn sau tối đa 60s; socket tồn tại tới access expiry và tiếp tục kiểm session/quyền. 401 ở HTTP dùng recovery chung rồi xin lại một lần; 403 dừng; 422 input sai; 503 channel/backend chưa sẵn sàng. Disconnect/connect_error xin vé mới với tối đa 3 retry backoff 1/2/5s. Whiteboard vẫn có nút Kết nối lại; chat giữ HTTP polling fallback.
+- Đây là contract source local, chưa xác nhận deploy. Chi tiết BE ở PHASE_1_flow-api-breakdown.md; cấu hình ở backend-connectivity.md.
+
 ## Chat Student / Mentor — 02/11/2026
 
 - Đối chiếu Swagger local `http://localhost:3000/docs-json`, `../Mindy-BE/docs/api_flow/PHASE_6_FLOW.md`, controller/DTO/service. Chưa xác nhận deploy upstream.
@@ -268,3 +275,13 @@ Nguồn: `Mindy-BE/docs/api_flow/PHASE_7_CODE_flow-api-breakdown.md`, controller
 | Mentor wizard   | GET `/mentor/code-library` (page, pageSize≤100, q≤100); POST `…/code-import` (`sourceAssignmentId`); POST `…/code-tests/generate` (`languageKey`, `sourceCode`, `inputs` 1–30, timeout 90 giây); PUT `…/code-tests` (cả bảng 1–30 test) | Kết quả test chỉ lấy từ lời giải mẫu; nhập bài cũ không chép trạng thái đã kiểm tra.                                    |
 | Mentor review   | GET `…/code-summary`, `…/code-submissions` (page, pageSize≤100, studentId); GET `/mentor/code-submissions/:id`; POST `…/rejudge` (không body), `…/void` (reason)                                                                        | Rejudge chỉ áp dụng FAILED; bài bị huỷ vẫn tính lượt.                                                                   |
 | Student         | GET `/me/classes/:id/assignments`; GET `/me/assignments/:id/code`; GET/PUT `…/code-drafts/:languageKey`; POST `…/code-runs`; GET/POST `…/code-submissions`; GET `/me/code-submissions/:id`                                              | Nộp bài bắt buộc Idempotency-Key UUIDv4 (202 khi xếp hàng); chạy thử timeout 90 giây; languageKey ∈ javascript, java21. |
+
+## Dashboard — 03/11/2026
+
+Contract mới triển khai đồng thời trong BE `codex/dashboard` từ `origin/dev`, chưa chứng minh đã deploy. Browser gọi same-origin `GET /api/v1/{admin|manager|mentor}/dashboard?days=30|90|365` (mặc định 90), chỉ role ACTIVE tương ứng; không body/mentorId. Backend giới hạn Mentor vào classes.mentor_id từ phiên, không gồm dạy thay.
+
+Tìm người dùng (03/11/2026): `GET /api/v1/admin/users` bổ sung query `q` tùy chọn, trim 2–100 ký tự, kết hợp page/pageSize/role/status. Tìm substring tên/email/điện thoại không phân biệt dấu/hoa thường; wildcard `%`, `_`, `\` được hiểu là ký tự literal. Total là toàn bộ kết quả phù hợp trước phân trang. Proxy validate q, bỏ q khi trống; FE debounce 250ms, bắt đầu từ 2 ký tự. Đã kiểm local; cần deploy BE mới trước khi dùng với upstream từ xa.
+
+Response trực tiếp có scope, timeZone Asia/Ho_Chi_Minh, generatedAt/from/to ISO UTC; summary `{courses,classes,openClasses,activeClasses,registrations,students}`; courses/mentors/classes top 10 `{id,name,registrations,students,classes}`; trend `{date,registrations}` theo ngày VN có zero-fill; classStatuses `{status,count}`. Mentor trả mentors `[]`. Chỉ ACTIVE/COMPLETED, enrolled_at trong [from,to) được tính đăng ký; học viên đếm distinct, không cộng số theo từng khóa/mentor. Course/class totals mô tả hiện tại.
+
+Proxy chuyển access cookie/private no-store, từ chối query lạ/lặp, validate role response bằng Zod. Session recovery dùng apiRequest chung; 403 không retry, 422 sửa filter, lỗi/503/502 có Thử lại và không hiện số 0 thay lỗi. Chi tiết đầy đủ trong BE `docs/api_flow/DASHBOARD_flow-api-breakdown.md`. Các bảng công việc Manager và lịch Mentor giữ nguyên contract.

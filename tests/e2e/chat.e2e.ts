@@ -52,6 +52,13 @@ async function setup(
   let denied = false,
     sendCount = 0;
   const clientIds: string[] = [];
+  // This suite exercises HTTP fallback; live ticket/socket transport has a dedicated smoke test.
+  await page.route('**/api/v1/auth/realtime-ticket', (route) =>
+    route.fulfill({
+      status: 503,
+      json: { code: 'REALTIME_UNAVAILABLE', message: 'Transport fixture offline' },
+    }),
+  );
   await page.routeWebSocket('**/socket.io/**', (socket) => socket.close());
   await page.route('**/api/v1/auth/me', (r) =>
     r.fulfill({ json: { ...testUser, role: options.role ?? 'STUDENT' } }),

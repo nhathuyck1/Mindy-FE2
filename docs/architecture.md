@@ -1,5 +1,16 @@
 # Kiến trúc Mindy FE2
 
+## Presentation buổi học Mentor — 04/11/2026
+
+- mentor-session-ui.tsx chứa MentorSessionOverview và MentorSessionTools, chỉ nhận metadata/callback từ MentorSessionPage. Page tiếp tục sở hữu query/permissions/mutations và tất cả dialog, ghi chú, bài tập; không đổi API hoặc BE. Counters sử dụng totals backend, preview sử dụng candidates và giữ key enrollment/makeup/page.
+
+## Backend portable và realtime trực tiếp — 04/11/2026
+
+- HTTP của mọi feature vẫn gọi apiRequest → same-origin /api/v1 → proxy allowlist. Upload signed URL tiếp tục gọi storage với credentials omit. readServerEnv là nguồn duy nhất của API_BASE_URL, APP_ORIGIN và REALTIME_ORIGIN; realtime mặc định theo origin API, override khi API dùng hostname nội bộ.
+- lib/realtime/client dùng chung cho chat/Whiteboard: xin POST auth/realtime-ticket qua HTTP/refresh chung, nhận URL runtime từ proxy rồi nối socket trực tiếp BE. Không còn rewrite WebSocket qua Next/host FE. Không thêm NEXT_PUBLIC backend URL hoặc dependency.
+- Vé ký riêng typ mindy-realtime+jwt, origin/channel/session-bound, hạn handshake tối đa 60s và không vượt access expiry. Vé chỉ ở memory/Socket.IO auth payload, không URL/Query cache/Web Storage; không đưa access/refresh token cho JavaScript. Mỗi reconnect xin vé mới; session abort/unmount dừng attempt cũ. BE vẫn kiểm session/role/resource và ngắt socket lúc access expiry.
+- Xem docs/backend-connectivity.md cho cấu hình và kiểm chứng; cần deploy BE hỗ trợ ticket trước FE.
+
 ## CODE cùng QUIZ/ZIP, chat và Whiteboard — 03/11/2026
 
 - Nhánh `compiler` tích hợp trên `main` mới nhất. Giữ các module, route và proxy chat/Whiteboard/QUIZ/ZIP; CODE có rule riêng cho thao tác code, còn list/create/publish/archive dùng hợp đồng assignment chung.
@@ -28,6 +39,18 @@
 - Grade dùng GRADE version, tách SUBMISSION/FILE/assignment revision. Lưu điểm, sửa có lý do và trả điểm là các ý định riêng; release chụp version đang xem. Student chỉ đọc bản released. Hai tổng lịch sử revisions/audits giữ riêng; max chỉ dùng tính số trang điều hướng. Invalidate assignment/report/progress sau lệnh, không remount bài QUIZ đang làm.
 - Tiến độ nhận union AVAILABLE/NOT_IMPLEMENTED, giữ null và completionPolicy UNDEFINED. Metrics dùng counts BE, không tạo tỷ lệ submitted/eligible hoặc cộng các tập điểm sửa chờ trả với bản đã release thành một tổng.
 - FE dev/start chuyển sang **3001**, origin local `http://localhost:3001`; API local trong `.env.local` là `http://localhost:3000/api/v1`. E2E mock vẫn production port 3103. `scripts/assignment-local-smoke.mjs` yêu cầu 3001 trống, tạo DB/bucket test riêng; dùng MinIO test 19000 hiện có và compiled BE HTTP fixture, không gọi merchant thật.
+
+## Lịch dùng chung và hồ sơ Mentor — 04/11/2026
+
+- components/ui/schedule-week-controls, schedule-date-picker và weekly-timetable dùng chung giữa Student/Mentor; lib/weekly-timetable nhóm sự kiện có timestamp theo sáu ca và ca ngoài giờ, giữ buổi qua đêm. Bảng nhận renderer và key từ từng feature; không sở hữu API hoặc quyền. Module Mentor cũ re-export utility để giữ consumer hiện có.
+- /mentor/profile dùng lại ProfilePage đọc session dưới MentorShell/guard MENTOR ACTIVE. /user giữ guard STUDENT; menu theo role dẫn tới route riêng.
+
+## Dashboard theo vai trò — 03/11/2026
+
+- `features/dashboard` sở hữu schema Zod, query và UI thống kê dùng chung. Server state có key `dashboard/userId/audience/days`; `apiRequest` dùng recovery phiên tập trung của dev, không tạo cơ chế refresh riêng.
+- `/admin` chọn endpoint Admin/Manager theo phiên đã được shell kiểm; `/manager` nhúng analytics phía dưới heading và giữ hàng chờ công việc; `/mentor/dashboard` dành riêng Mentor. Lịch dạy vẫn ở `/mentor`; thêm đường dẫn dashboard vào safeReturnPath.
+- Backend tổng hợp toàn bộ dữ liệu trong một statement; FE không tải danh sách học viên để tự tính. Proxy chỉ mở ba GET dashboard và days enum 30/90/365, kiểm scope response, không nhận mentorId từ client. Số đăng ký/học viên là trong kỳ theo ngày xác nhận; lớp/khóa/trạng thái là tổng hiện tại. Mentor dùng phân công chính hiện tại, không gồm lịch dạy thay.
+- Bar ranking là top 10, trend có bảng dữ liệu đọc bằng bàn phím và không animation. Không biến lỗi thành số 0 hoặc dùng danh sách chưa tải đủ làm tổng.
 
 ## Trải nghiệm đăng xuất — 28/10/2026
 

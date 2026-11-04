@@ -40,20 +40,21 @@ test('weekly timetable groups slots, stacks sessions and navigates whole weeks',
     'aria-current',
     'date',
   );
-  await expect(page.getByRole('rowheader')).toHaveCount(6);
+  await expect(page.getByRole('rowheader')).toHaveCount(7);
   await expect(page.getByRole('rowheader')).toHaveText([
     /^1\s*07:30\s*\|\s*09:00$/,
     /^2\s*09:30\s*\|\s*11:00$/,
-    /^3\s*13:00\s*\|\s*15:30$/,
-    /^4\s*16:00\s*\|\s*17:30$/,
-    /^5\s*18:00\s*\|\s*19:30$/,
-    /^6\s*20:00\s*\|\s*21:30$/,
+    /^3\s*12:00\s*\|\s*14:00$/,
+    /^4\s*13:00\s*\|\s*15:30$/,
+    /^5\s*16:00\s*\|\s*17:30$/,
+    /^6\s*18:00\s*\|\s*19:30$/,
+    /^7\s*20:00\s*\|\s*21:30$/,
   ]);
   await expect(
     page.getByRole('row').filter({ has: page.getByRole('rowheader', { name: /^2\s*09:30/ }) }),
   ).toContainText('JS101-A');
   await expect(
-    page.getByRole('row').filter({ has: page.getByRole('rowheader', { name: /^3\s*13:00/ }) }),
+    page.getByRole('row').filter({ has: page.getByRole('rowheader', { name: /^4\s*13:00/ }) }),
   ).toContainText('JS101-A');
   if (testInfo.project.name === 'desktop') {
     const emptyDay = await page.getByRole('columnheader', { name: /Thứ Hai/ }).boundingBox();
@@ -118,7 +119,7 @@ test('mentor attendance keeps student names readable and preserves the attendanc
   await expect(page.getByText('Phòng: Phòng 101', { exact: false })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Danh sách học viên dự kiến' })).toBeVisible();
   await page.getByRole('button', { name: 'Bắt đầu buổi' }).click();
-  const absentStat = page.getByText('Vắng mặt', { exact: true }).first().locator('..');
+  const absentStat = page.getByRole('group', { name: 'Vắng mặt', exact: true });
   await expect(absentStat).not.toHaveClass(/border-status-red/);
   await page.getByRole('button', { name: 'Có mặt: Học viên An' }).click();
   await expect(page.getByRole('button', { name: 'Có mặt: Học viên An' })).toHaveAttribute(
@@ -554,7 +555,7 @@ test('mentor guard, expired attendance, conflict and narrow viewport', async ({ 
   await page.unrouteAll({ behavior: 'wait' });
   await mockMentor(page, { expired: true });
   await page.goto(`/mentor/sessions/${mentorIds.session}`);
-  await expect(page.getByText('Hiện không thể sửa điểm danh.', { exact: false })).toBeVisible();
+  await expect(page.getByText('Hiện không thể sửa điểm danh.', { exact: false })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Bắt đầu buổi' })).toHaveCount(0);
   await page.unrouteAll({ behavior: 'wait' });
   await mockMentor(page, { conflict: true });
@@ -569,4 +570,35 @@ test('mentor guard, expired attendance, conflict and narrow viewport', async ({ 
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
+test('mentor account menu opens its own profile and classes without student links', async ({
+  page,
+}, info) => {
+  await mockMentor(page);
+  if (info.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 780 });
+  await page.goto('/mentor/profile');
+  await expect(page.getByRole('heading', { name: 'Thông tin cá nhân', exact: true })).toBeVisible();
+  await expect(page.getByRole('definition').filter({ hasText: 'Mentor Minh' })).toBeVisible();
+  await expect(page.getByRole('definition').filter({ hasText: /^Mentor$/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Tài khoản của Mentor Minh' }).click();
+  const menu = page.getByRole('region', { name: 'Thông tin tài khoản' });
+  await expect(menu.getByRole('link', { name: 'Thông tin cá nhân', exact: true })).toHaveAttribute(
+    'href',
+    '/mentor/profile',
+  );
+  await expect(menu.getByRole('link', { name: 'Lịch dạy', exact: true })).toHaveAttribute(
+    'href',
+    '/mentor',
+  );
+  await expect(menu.getByRole('link', { name: 'Lớp của tôi', exact: true })).toHaveAttribute(
+    'href',
+    '/mentor/classes',
+  );
+  await expect(menu.locator('a[href^="/user"]')).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: info.outputPath('mentor-account-menu.png'), fullPage: true });
+  await menu.getByRole('link', { name: 'Lớp của tôi', exact: true }).click();
+  await expect(page).toHaveURL('/mentor/classes');
+  await expect(menu).toHaveCount(0);
 });
