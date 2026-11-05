@@ -2,6 +2,7 @@
 import { MentorCodeAuthoringPage } from '@/features/code-assignments/components/mentor-code-authoring-page';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { PencilLine, ListChecks, Paperclip, Send, Trash2, RefreshCw } from 'lucide-react';
 import { workspaceSchema } from '@/features/mentor/schemas/workspace-contracts';
 import { sessionContextSchema } from '@/features/mentor/schemas/mentor-contracts';
 import { z } from 'zod';
@@ -81,14 +82,19 @@ export function MentorAssignmentPage(props: { assignmentId: string }) {
         }
         backLabel="Bài tập của lớp"
       >
-        <Button variant="outline" disabled={command.isPending} onClick={refresh}>
+        <Button
+          variant="outline"
+          className="border-line text-forest shadow-none hover:border-mint/50"
+          disabled={command.isPending}
+          onClick={refresh}
+        >
+          <RefreshCw size={16} aria-hidden="true" />
           Tải lại bài tập
         </Button>
       </AssignmentHeading>
       <QueryState pending={query.isPending} error={query.error} retry={query.refetch}>
         {a && (
           <>
-            <AssignmentMeta item={a} />
             <ErrorNotice error={error} />
             {(context.error || workspace.error) && (
               <div className="space-y-3">
@@ -104,77 +110,121 @@ export function MentorAssignmentPage(props: { assignmentId: string }) {
                 </Button>
               </div>
             )}
-            <div className="flex flex-wrap gap-3">
-              {a.status === 'DRAFT' && !editor && canAuthor && (
-                <>
-                  <Button variant="outline" onClick={() => setEditor('metadata')}>
-                    Sửa thông tin
-                  </Button>
-                  {a.type === 'QUIZ' && (
-                    <Button variant="outline" onClick={() => setEditor('questions')}>
-                      Soạn câu hỏi
-                    </Button>
+            <section
+              aria-label="Nội dung bài tập"
+              className="min-w-0 overflow-hidden rounded-2xl border border-line bg-canvas"
+            >
+              <AssignmentMeta item={a} embedded />
+              {(editor || (canAuthor && (a.status === 'DRAFT' || a.status === 'PUBLISHED'))) && (
+                <div className="flex flex-wrap items-center gap-3 border-t border-line bg-soft/50 px-5 py-4 sm:px-7 [&_[data-variant=outline]]:border-line [&_[data-variant=outline]]:bg-canvas [&_[data-variant=outline]]:text-forest [&_[data-variant=outline]]:shadow-none [&_[data-variant=outline]]:hover:border-mint/50">
+                  {a.status === 'DRAFT' && !editor && canAuthor && (
+                    <>
+                      <div className="flex w-full flex-wrap gap-2 sm:w-auto [&>button]:grow sm:[&>button]:grow-0">
+                        <Button variant="outline" onClick={() => setEditor('metadata')}>
+                          <PencilLine size={16} aria-hidden="true" />
+                          Sửa thông tin
+                        </Button>
+                        {a.type === 'QUIZ' && (
+                          <Button variant="outline" onClick={() => setEditor('questions')}>
+                            <ListChecks size={16} aria-hidden="true" />
+                            Soạn câu hỏi
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          disabled={!a.capabilities.instructionFilesEnabled}
+                          onClick={() => setEditor('files')}
+                        >
+                          <Paperclip size={16} aria-hidden="true" />
+                          Tệp đề bài
+                        </Button>
+                      </div>
+                      <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto [&>button]:grow sm:[&>button]:grow-0">
+                        <Button
+                          disabled={
+                            blocked || (a.type === 'ZIP' && !a.capabilities.zipMutationsEnabled)
+                          }
+                          onClick={() => {
+                            setReason('');
+                            setConfirm({ action: 'publish', revision: a.revision });
+                          }}
+                        >
+                          <Send size={16} aria-hidden="true" />
+                          Xuất bản
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="text-headsup hover:bg-coral/10 hover:text-headsup"
+                          disabled={blocked}
+                          onClick={() => setConfirm({ action: 'delete', revision: a.revision })}
+                        >
+                          <Trash2 size={16} aria-hidden="true" />
+                          Xóa bản nháp
+                        </Button>
+                      </div>
+                    </>
                   )}
-                  <Button
-                    variant="outline"
-                    disabled={!a.capabilities.instructionFilesEnabled}
-                    onClick={() => setEditor('files')}
-                  >
-                    Tệp đề bài
-                  </Button>
-                  <Button
-                    disabled={blocked || (a.type === 'ZIP' && !a.capabilities.zipMutationsEnabled)}
-                    onClick={() => {
-                      setReason('');
-                      setConfirm({ action: 'publish', revision: a.revision });
-                    }}
-                  >
-                    Xuất bản
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    disabled={blocked}
-                    onClick={() => setConfirm({ action: 'delete', revision: a.revision })}
-                  >
-                    Xóa bản nháp
-                  </Button>
-                </>
-              )}
-              {a.status === 'PUBLISHED' && !editor && canAuthor && (
-                <>
-                  <Button
-                    variant="outline"
-                    disabled={blocked}
-                    onClick={() => {
-                      setReason('');
-                      setConfirm({ action: 'archive', revision: a.revision });
-                    }}
-                  >
-                    Lưu trữ bài
-                  </Button>
-                  {a.type === 'ZIP' && (
+                  {a.status === 'PUBLISHED' && !editor && canAuthor && (
+                    <>
+                      <Button
+                        variant="outline"
+                        disabled={blocked}
+                        onClick={() => {
+                          setReason('');
+                          setConfirm({ action: 'archive', revision: a.revision });
+                        }}
+                      >
+                        Lưu trữ bài
+                      </Button>
+                      {a.type === 'ZIP' && (
+                        <Button
+                          variant="outline"
+                          disabled={!a.capabilities.zipMutationsEnabled}
+                          onClick={() => setEditor('extend')}
+                        >
+                          Gia hạn / thêm lượt
+                        </Button>
+                      )}
+                    </>
+                  )}
+                  {editor && (
                     <Button
                       variant="outline"
-                      disabled={!a.capabilities.zipMutationsEnabled}
-                      onClick={() => setEditor('extend')}
+                      onClick={() => {
+                        setEditor(null);
+                        void refresh();
+                      }}
                     >
-                      Gia hạn / thêm lượt
+                      Đóng trình sửa
                     </Button>
                   )}
-                </>
+                </div>
               )}
-              {editor && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setEditor(null);
-                    void refresh();
-                  }}
-                >
-                  Đóng trình sửa
-                </Button>
+              {!editor && (a.type === 'QUIZ' || a.instructionFiles.length > 0) && (
+                <div className="space-y-6 border-t border-line p-5 sm:p-7">
+                  {a.instructionFiles.length > 0 && (
+                    <section className="space-y-3">
+                      <h2 className="flex items-center gap-2.5 text-lg font-extrabold">
+                        <Paperclip size={20} className="text-mint" aria-hidden="true" />
+                        Tệp đề bài
+                      </h2>
+                      {a.instructionFiles.map((file) => (
+                        <FileDownload key={file.id} file={file} />
+                      ))}
+                    </section>
+                  )}
+                  {a.type === 'QUIZ' && (
+                    <QuizQuestionEditor
+                      key={`${a.id}-${a.revision}`}
+                      item={a}
+                      readonly
+                      embedded
+                      onSaved={() => undefined}
+                    />
+                  )}
+                </div>
               )}
-            </div>
+            </section>
             {editor === 'metadata' && (
               <AssignmentMetadataEditor
                 item={a}
@@ -200,33 +250,21 @@ export function MentorAssignmentPage(props: { assignmentId: string }) {
               />
             )}
             {!editor && (
-              <>
-                {a.instructionFiles.length > 0 && (
-                  <section className={`${panelClass} space-y-3`}>
-                    <h2 className="text-xl font-extrabold">Tệp đề bài</h2>
-                    {a.instructionFiles.map((file) => (
-                      <FileDownload key={file.id} file={file} />
-                    ))}
-                  </section>
-                )}
-                {a.type === 'QUIZ' && (
-                  <QuizQuestionEditor
-                    key={`${a.id}-${a.revision}`}
-                    item={a}
-                    readonly
-                    onSaved={() => undefined}
-                  />
-                )}
+              <div
+                aria-label="Theo dõi bài tập"
+                className={`grid min-w-0 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-canvas ${workspace.data?.capabilities.readClassRoster ? 'xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.6fr)] xl:divide-x xl:divide-y-0' : ''}`}
+              >
                 <AssignmentHistory
                   assignmentId={a.id}
                   mentor
                   type={a.type}
                   rosterAllowed={workspace.data?.capabilities.readClassRoster}
+                  embedded
                 />
                 {workspace.data?.capabilities.readClassRoster && (
-                  <AssignmentRoster assignmentId={a.id} />
+                  <AssignmentRoster assignmentId={a.id} embedded />
                 )}
-              </>
+              </div>
             )}
             {confirm && (
               <Confirm

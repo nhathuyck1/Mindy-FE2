@@ -20,24 +20,45 @@ export function SessionExpiryHandler(props: { children: React.ReactNode }) {
   const session = useSession();
   const logoutStates = useMutationState({
     filters: { mutationKey: logoutNavigationKey, exact: true },
-    select: (mutation) => mutation.state.status,
+    select: (mutation) => {
+      const context: unknown = mutation.state.context;
+      return {
+        status: mutation.state.status,
+        target:
+          context &&
+          typeof context === 'object' &&
+          'redirectTo' in context &&
+          context.redirectTo === '/admin/login'
+            ? '/admin/login'
+            : '/',
+      };
+    },
   });
-  const logoutStatus = logoutStates.at(-1);
+  const logoutStatus = logoutStates.at(-1)?.status;
+  const logoutTarget = logoutStates.at(-1)?.target ?? '/';
   const logoutFinished = logoutStatus === 'success' && sessionWasLoggedOut();
   // One owner for navigation: guards only hide private content. Competing
   // router.replace calls can force a document reload and lose the expiry toast.
   useEffect(() => {
     if (logoutStatus === 'pending') return;
     if (logoutFinished) {
-      if (pathname !== '/') router.replace('/');
+      if (pathname !== logoutTarget) router.replace(logoutTarget);
       return;
     }
     if (!session.isSuccess || session.data) return;
     const target = sessionLoginTarget(window.location.pathname + window.location.search);
     if (target) router.replace(sessionWasLoggedOut() ? '/' : target);
-  }, [session.isSuccess, session.data, pathname, router, logoutStatus, logoutFinished]);
+  }, [
+    session.isSuccess,
+    session.data,
+    pathname,
+    router,
+    logoutStatus,
+    logoutFinished,
+    logoutTarget,
+  ]);
   useEffect(() => {
-    if (pathname !== '/' || logoutStatus !== 'success') return;
+    if (pathname !== logoutTarget || logoutStatus !== 'success') return;
     // Retire the completed navigation so a later audience-mismatch logout
     // stays on its login form, and a future logout starts with a clean state.
     for (const mutation of client.getMutationCache().findAll({
@@ -46,7 +67,7 @@ export function SessionExpiryHandler(props: { children: React.ReactNode }) {
       status: 'success',
     }))
       client.getMutationCache().remove(mutation);
-  }, [client, pathname, logoutStatus]);
+  }, [client, pathname, logoutStatus, logoutTarget]);
   useEffect(
     () =>
       subscribeSessionExpiry(() => {
@@ -72,7 +93,7 @@ export function SessionExpiryHandler(props: { children: React.ReactNode }) {
       }),
     [client],
   );
-  if (logoutStatus === 'pending' || (logoutFinished && pathname !== '/'))
+  if (logoutStatus === 'pending' || (logoutFinished && pathname !== logoutTarget))
     return (
       <main
         className="grid min-h-dvh place-items-center bg-canvas px-6"

@@ -8,7 +8,7 @@ import { unitsSchema } from '../schemas/mentor-contracts';
 import { MentorPagination, MentorQueryState } from './mentor-shared';
 import { MentorMaterials } from './mentor-materials';
 
-export function MentorUnits(props: { classId: string; canAuthor: boolean }) {
+export function MentorUnits(props: { classId: string; canAuthor: boolean; general?: boolean }) {
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const units = useMentorQuery(
@@ -92,7 +92,12 @@ export function MentorUnits(props: { classId: string; canAuthor: boolean }) {
               )}
             </aside>
             {selected && (
-              <MentorMaterials key={selected.id} unit={selected} canAuthor={props.canAuthor} />
+              <MentorMaterials
+                key={selected.id}
+                unit={selected}
+                canAuthor={props.canAuthor}
+                general={props.general}
+              />
             )}
           </div>
         </div>

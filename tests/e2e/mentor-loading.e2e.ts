@@ -93,7 +93,7 @@ test('mentor chapter keeps one loading across content, editor and session reads'
     });
   }
   try {
-    await page.goto(`/mentor/classes/${mentorIds.class}`);
+    await page.goto(`/mentor/classes/${mentorIds.class}?tab=materials`);
     const loading = page.getByRole('status', { name: 'Đang tải dữ liệu…', exact: true });
     await expect(loading).toHaveCount(1);
     await page.getByRole('button', { name: 'Thêm nội dung', exact: true }).click();

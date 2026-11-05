@@ -19,6 +19,14 @@ const category = {
 };
 
 export async function mockHomepageApi(page: Page) {
+  // Keep fixture tests isolated when a page starts consuming another backend endpoint.
+  // Feature-specific routes registered later take precedence over this fallback.
+  await page.route('**/api/v1/**', (route) =>
+    route.fulfill({
+      status: 503,
+      json: { code: 'TEST_ENDPOINT_NOT_MOCKED', message: 'Endpoint chưa được fixture mô phỏng.' },
+    }),
+  );
   await page.route('**/api/v1/chat/conversations?**', (route) =>
     route.fulfill({ json: { data: [], meta: { hasMore: false, nextCursor: null } } }),
   );

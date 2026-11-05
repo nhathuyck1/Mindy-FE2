@@ -7,6 +7,7 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 import { useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Icon } from '@/components/ui/icon';
 import { useAdminList } from '../api/admin-queries';
 import {
@@ -26,13 +27,32 @@ import { AdminEditorButton } from './admin-editor';
 
 export function AdminResourcePage(props: { resource: AdminResource }) {
   const config = adminResources[props.resource];
-  const [status, setStatus] = useState('');
-  const [filter, setFilter] = useState('');
-  const [search, setSearch] = useState('');
-  const [userSearch, setUserSearch] = useState('');
+  const params = useSearchParams(),
+    router = useRouter(),
+    pathname = usePathname();
+  const statusValue = params.get(config.statusKey) ?? '';
+  const status = config.tabs.some((value) => value === statusValue) ? statusValue : '';
+  const filterValue = params.get(config.filterKey) ?? '';
+  const filter = config.filters.some(([value]) => value === filterValue) ? filterValue : '';
+  const [search, setSearch] = useState(() =>
+    props.resource === 'users' ? (params.get('q') ?? '') : '',
+  );
+  const rawSearch = params.get('q')?.trim() ?? '';
+  const userSearch = rawSearch.length <= 100 && rawSearch.length !== 1 ? rawSearch : '';
   const [composing, setComposing] = useState(false);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const requestedPage = Number(params.get('page') ?? 1);
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const requestedSize = Number(params.get('pageSize') ?? 10);
+  const pageSize = [10, 20, 50].includes(requestedSize) ? requestedSize : 10;
+  function changeFilters(values: Record<string, string | number>) {
+    const next = new URLSearchParams(params);
+    for (const [key, value] of Object.entries(values)) {
+      if (value === '' || (key === 'page' && value === 1)) next.delete(key);
+      else next.set(key, String(value));
+    }
+    router.replace(`${pathname}${next.size ? `?${next}` : ''}`, { scroll: false });
+    setSelected(new Set());
+  }
   const [sort, setSort] = useState<'none' | 'asc' | 'desc'>('none');
   const [hidden, setHidden] = useState<Set<OptionalColumn>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -42,12 +62,13 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
     if (search.trim().length === 1) return;
     if (search.trim() === userSearch) return;
     const timer = window.setTimeout(() => {
-      setUserSearch(search.trim());
-      setPage(1);
+      changeFilters({ q: search.trim(), page: 1 });
       setSelected(new Set());
     }, 250);
     return () => window.clearTimeout(timer);
-  }, [search, userSearch, composing, props.resource]);
+    // Filter navigation is handled by the current render's URL snapshot.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, userSearch, composing, props.resource, page]);
 
   const searchTooShort = props.resource === 'users' && search.trim().length === 1;
 
@@ -68,6 +89,13 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
   if (sort !== 'none')
     rows.sort((a, b) => a.name.localeCompare(b.name, 'vi') * (sort === 'asc' ? 1 : -1));
   const totalPages = Math.max(1, Math.ceil((query.data?.total ?? 0) / pageSize));
+  useEffect(() => {
+    if (query.isSuccess && page > totalPages) {
+      const next = new URLSearchParams(params);
+      next.set('page', String(totalPages));
+      router.replace(`${pathname}?${next}`, { scroll: false });
+    }
+  }, [query.isSuccess, page, totalPages, params, pathname, router]);
   const allSelected = rows.length > 0 && rows.every((row) => selected.has(row.id));
   const exportRows = selected.size ? rows.filter((row) => selected.has(row.id)) : rows;
   const columnLabels = {
@@ -78,7 +106,7 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
   };
 
   function changePage(next: number) {
-    setPage(next);
+    changeFilters({ page: next });
     if (props.resource !== 'users') setSearch('');
     setSelected(new Set());
   }
@@ -153,8 +181,7 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
               aria-label={tab ? statusLabels[tab] : 'Tất cả'}
               aria-pressed={status === tab}
               onClick={() => {
-                setStatus(tab);
-                changePage(1);
+                changeFilters({ [config.statusKey]: tab, page: 1 });
               }}
               className={`relative min-h-12 shrink-0 cursor-pointer rounded-none border-b-2 pr-6 pl-3 text-sm font-extrabold transition-colors ${status === tab ? 'border-mint text-mint' : 'border-transparent text-muted hover:bg-soft'}`}
             >
@@ -205,8 +232,7 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
               aria-label={config.filterLabel}
               value={filter}
               onChange={(event) => {
-                setFilter(event.target.value);
-                changePage(1);
+                changeFilters({ [config.filterKey]: event.target.value, page: 1 });
               }}
               className="h-12 max-w-full rounded-lg border border-line bg-canvas px-3 text-sm font-bold"
             >
@@ -319,8 +345,7 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
                 value={pageSize}
                 className="h-9 rounded-lg border border-line bg-canvas px-2 font-bold"
                 onChange={(event) => {
-                  setPageSize(Number(event.target.value));
-                  changePage(1);
+                  changeFilters({ pageSize: Number(event.target.value), page: 1 });
                 }}
               >
                 {[10, 20, 50].map((value) => (

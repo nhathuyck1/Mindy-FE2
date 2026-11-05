@@ -32,6 +32,34 @@ export function useMyCourses(page: number, view: 'current' | 'history' | 'all') 
     retry: false,
   });
 }
+export function useAssignmentClasses() {
+  const session = useSession();
+  return useQuery({
+    queryKey: ['my-classes', session.data?.id, 'assignment-selector'],
+    enabled: session.data?.role === 'STUDENT' && session.data.status === 'ACTIVE',
+    retry: false,
+    queryFn: async ({ signal }) => {
+      const read = (page: number) =>
+        apiRequest({
+          path: `me/classes?page=${page}&pageSize=100&view=all`,
+          schema: myClassesPageSchema,
+          signal,
+        });
+      const first = await read(1);
+      const items = [...first.items];
+      for (let page = 2; page <= Math.ceil(first.total / first.pageSize); page++) {
+        const next = await read(page);
+        if (next.total !== first.total) throw new Error('Danh sách lớp đã thay đổi. Hãy tải lại.');
+        items.push(...next.items);
+      }
+      return [
+        ...new Map(
+          items.filter((c) => c.canViewClass && c.accessMode === 'FULL').map((c) => [c.classId, c]),
+        ).values(),
+      ];
+    },
+  });
+}
 export function useMySchedule(from: string, to: string) {
   const session = useSession();
   return useQuery({

@@ -2,14 +2,20 @@
 
 import Link from 'next/link';
 import { AnalyticsDashboard } from '@/features/dashboard/components/analytics-dashboard';
-import { CheckCheck, Clock3, FileText, PencilLine, Wallet } from 'lucide-react';
+import {
+  ArrowUpRight,
+  CalendarDays,
+  CheckCheck,
+  Clock3,
+  FileText,
+  PencilLine,
+  Wallet,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { materialsSchema } from '../schemas/manager-contracts';
 import { useManagerQuery } from '../api/manager-queries';
-import { ManagerState } from './manager-shared';
 import { ManagerPendingMaterials } from './manager-pending-materials';
 import { ManagerPendingLeaves } from './manager-pending-leaves';
-import { ManagerWeeklySchedule } from '@/features/operations/components/weekly-schedule-panel';
 
 const statuses = [
   { title: 'Chờ duyệt', status: 'PENDING_REVIEW', icon: Clock3, tone: 'text-coral' },
@@ -40,15 +46,15 @@ export function ManagerOverviewPage() {
     <div className="space-y-7">
       <header className="admin-page-heading">
         <div>
-          <p className="mb-2 text-xs font-semibold tracking-widest text-mint uppercase">
-            Mindy / Không gian Manager
-          </p>
           <h1 className="text-3xl font-bold tracking-tight">Tổng quan Manager</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            Theo dõi tài liệu và đơn xin nghỉ cần xử lý, mở nhanh các công việc quản lý.
-          </p>
         </div>
         <div className="flex flex-wrap gap-3">
+          <Button asChild variant="outline">
+            <Link href="/manager/schedule">
+              <CalendarDays aria-hidden="true" className="size-4" />
+              Lịch và khai giảng
+            </Link>
+          </Button>
           <Button asChild variant="outline">
             <Link href="/manager/materials?view=inventory&reviewStatus=PENDING_REVIEW">
               <FileText aria-hidden="true" className="size-4" />
@@ -64,47 +70,53 @@ export function ManagerOverviewPage() {
         </div>
       </header>
 
-      <AnalyticsDashboard audience="manager" embedded />
-      <ManagerWeeklySchedule />
-
-      <section aria-label="Thống kê tài liệu" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {counts.map((item) => (
-          <article
-            key={item.status}
-            className="min-w-0 rounded-2xl border border-line bg-canvas p-5 transition-colors hover:border-mint"
-          >
-            <Link
-              href={`/manager/materials?view=inventory&reviewStatus=${item.status}`}
-              className="flex min-h-11 items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint"
-            >
-              <item.icon aria-hidden="true" className={`size-5 ${item.tone}`} />
-              <span className="font-bold">{item.title}</span>
-            </Link>
-            <ManagerState
-              pending={item.query.isPending}
-              error={item.query.error}
-              retry={() => void item.query.refetch()}
-            >
-              {item.query.data && (
+      <section aria-label="Thống kê tài liệu" className="space-y-3">
+        <h2 className="text-lg font-bold">Tài liệu</h2>
+        <div className="grid divide-y divide-line border-y border-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          {counts.map((item) => (
+            <div key={item.status} className="min-w-0">
+              {item.query.isError ? (
+                <div
+                  className="flex min-h-20 flex-wrap items-center justify-between gap-2 px-4 py-3"
+                  role="alert"
+                >
+                  <span className="text-sm">{item.title}: chưa tải được</span>
+                  <Button variant="outline" onClick={() => void item.query.refetch()}>
+                    Thử lại
+                  </Button>
+                </div>
+              ) : (
                 <Link
                   href={`/manager/materials?view=inventory&reviewStatus=${item.status}`}
-                  className="mt-4 block text-3xl font-extrabold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint"
-                  aria-label={`${item.title}: ${item.query.data.total}`}
-                  aria-live="polite"
+                  aria-label={
+                    item.query.data ? `${item.title}: ${item.query.data.total}` : item.title
+                  }
+                  className="group flex min-h-20 items-center gap-3 px-4 py-4 transition-colors hover:bg-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-mint"
                 >
-                  {item.query.data.total.toLocaleString('vi-VN')}
+                  <item.icon aria-hidden="true" className={`size-5 shrink-0 ${item.tone}`} />
+                  <span className="flex-1 text-sm font-semibold">{item.title}</span>
+                  <span
+                    aria-live="polite"
+                    className="text-2xl font-extrabold text-forest tabular-nums"
+                  >
+                    {item.query.isPending ? (
+                      <span className="text-sm font-normal text-muted">Đang tải…</span>
+                    ) : (
+                      item.query.data?.total.toLocaleString('vi-VN')
+                    )}
+                  </span>
+                  <ArrowUpRight
+                    aria-hidden="true"
+                    className="size-4 shrink-0 text-muted group-hover:text-mint"
+                  />
                 </Link>
               )}
-            </ManagerState>
-            <Link
-              href={`/manager/materials?view=inventory&reviewStatus=${item.status}`}
-              className="mt-2 inline-flex min-h-11 items-center text-sm text-muted underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint"
-            >
-              Mở danh sách lọc
-            </Link>
-          </article>
-        ))}
+            </div>
+          ))}
+        </div>
       </section>
+
+      <AnalyticsDashboard audience="manager" embedded />
 
       <ManagerPendingMaterials
         onRefresh={() => {
@@ -115,25 +127,6 @@ export function ManagerOverviewPage() {
       />
 
       <ManagerPendingLeaves />
-
-      <section className="admin-table-panel p-5 sm:p-6">
-        <h2 className="text-lg font-extrabold">Công việc Manager</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-          Chọn Quản lý tài liệu để mở danh sách khóa học và chương. Đơn xin nghỉ mở hàng chờ duyệt
-          mentor. Mục Thu tiền mở danh sách phiếu thu hiện có.
-        </p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Button asChild variant="outline">
-            <Link href="/manager/materials">Danh sách khóa học</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/manager/leave-requests">Đơn xin nghỉ</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/manager/collections">Mở Thu tiền</Link>
-          </Button>
-        </div>
-      </section>
     </div>
   );
 }

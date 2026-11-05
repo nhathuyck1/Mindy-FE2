@@ -26,6 +26,14 @@ export function Modal(props: {
     if (returnFocus instanceof HTMLElement && returnFocus.isConnected)
       returnFocus.focus({ preventScroll: true });
   };
+  const onEscapeKeyDown = (event: KeyboardEvent) => {
+    if (
+      event.target instanceof Element &&
+      event.target.matches('[role="combobox"][aria-expanded="true"]')
+    ) {
+      event.preventDefault();
+    }
+  };
   const close = (
     <Button
       type="button"
@@ -48,6 +56,7 @@ export function Modal(props: {
           showCloseButton={false}
           aria-describedby={undefined}
           onCloseAutoFocus={restoreFocus}
+          onEscapeKeyDown={onEscapeKeyDown}
           className="admin-typography h-dvh w-72 max-w-[calc(100vw-2rem)] gap-0 overflow-y-auto border-line p-0 text-foreground sm:max-w-72"
         >
           <SheetHeader className="flex-row items-center justify-between gap-4 border-b border-line p-5">
@@ -66,6 +75,7 @@ export function Modal(props: {
         showCloseButton={false}
         aria-describedby={undefined}
         onCloseAutoFocus={restoreFocus}
+        onEscapeKeyDown={onEscapeKeyDown}
         className={cn(
           'admin-typography scrollbar-hidden block max-h-[90dvh] max-w-xl overflow-y-auto rounded-2xl border-line p-0 text-foreground sm:max-w-xl [&_*]:scrollbar-hidden',
           props.contentClassName,

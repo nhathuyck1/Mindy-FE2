@@ -5,11 +5,11 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Files, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { useCourseCatalog } from '@/features/courses/api/course-queries';
-import { courseDetailSchema } from '@/features/courses/schemas/course-contracts';
+import { useManagerCourseOptions } from '../api/manager-course-queries';
+import { managerCourseDetailSchema } from '../schemas/manager-contracts';
 import { useManagerQuery } from '../api/manager-queries';
 import { ManagerCourseWorkspace } from './manager-course-workspace';
-import { ManagerCourseList } from './manager-course-list';
+import { ManagerMaterialsDashboard } from './manager-materials-dashboard';
 import { ManagerMaterialEditor } from './manager-material-editor';
 import { ManagerMaterialsInventory } from './manager-materials-inventory';
 import { ManagerState } from './manager-shared';
@@ -21,14 +21,20 @@ export function ManagerMaterialsPage() {
   const searchParams = useSearchParams();
   const inventory = searchParams.get('view') === 'inventory';
   const requestedStatus = searchParams.get('reviewStatus');
-  const reviewStatus = ['PENDING_REVIEW', 'APPROVED', 'DRAFT'].includes(requestedStatus ?? '')
-    ? (requestedStatus ?? 'PENDING_REVIEW')
-    : 'PENDING_REVIEW';
+  const reviewStatus = ['PENDING_REVIEW', 'APPROVED', 'DRAFT', 'REJECTED', ''].includes(
+    requestedStatus ?? '',
+  )
+    ? (requestedStatus ?? '')
+    : '';
   const [courseId, setCourseId] = useState('');
   const [creating, setCreating] = useState(false);
-  const courses = useCourseCatalog({});
+  const courses = useManagerCourseOptions();
   const selectedCourse = courses.data?.find((item) => item.id === courseId);
-  const course = useManagerQuery(`courses/${courseId}`, courseDetailSchema, Boolean(courseId));
+  const course = useManagerQuery(
+    `manager/courses/${courseId}`,
+    managerCourseDetailSchema,
+    Boolean(courseId),
+  );
 
   const coursePicker = (
     <div className="min-w-0">
@@ -67,6 +73,7 @@ export function ManagerMaterialsPage() {
           onReviewStatusChange={(status) => {
             const query = new URLSearchParams(searchParams.toString());
             query.set('view', 'inventory');
+            query.delete('page');
             if (status) query.set('reviewStatus', status);
             else query.delete('reviewStatus');
             router.push(`${pathname}?${query.toString()}`);
@@ -86,9 +93,6 @@ export function ManagerMaterialsPage() {
       )}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="mb-2 text-xs font-semibold tracking-widest text-mint uppercase">
-            Mindy / Quản lý tài liệu
-          </p>
           <h1 className="text-2xl font-bold sm:text-3xl">
             {course.data?.title ?? 'Quản lý tài liệu'}
           </h1>
@@ -129,7 +133,9 @@ export function ManagerMaterialsPage() {
         </ManagerState>
       ) : (
         <ManagerState pending={courses.isPending} error={courses.error} retry={courses.refetch}>
-          {courses.data && <ManagerCourseList courses={courses.data} onSelect={setCourseId} />}
+          {courses.data && (
+            <ManagerMaterialsDashboard courses={courses.data} onSelect={setCourseId} />
+          )}
         </ManagerState>
       )}
       {creating && <ManagerMaterialEditor onClose={() => setCreating(false)} />}

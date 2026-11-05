@@ -12,6 +12,7 @@ export async function mockMentorWorkspace(
     noteConflict?: boolean;
     noteTimeout?: boolean;
     leaveConflict?: boolean;
+    multipleLeaveSessions?: boolean;
     classStatus?: 'COMPLETED' | 'CANCELLED';
   } = {},
 ) {
@@ -45,6 +46,19 @@ export async function mockMentorWorkspace(
     timeZone: 'Asia/Ho_Chi_Minh',
   };
   const source = { ...session, sessionId: mentorIds.nextUnit, title: 'Buổi xin nghỉ', version: 4 };
+  const leaveSources = options.multipleLeaveSessions
+    ? [
+        source,
+        {
+          ...source,
+          sessionId: mentorIds.file,
+          title: 'Buổi chiều cùng ngày',
+          version: 2,
+          startsAt: '2026-10-26T08:00:00.000Z',
+          endsAt: '2026-10-26T10:00:00.000Z',
+        },
+      ]
+    : [source];
   const snapshot = () => ({
     ...session,
     permissions: {
@@ -422,20 +436,33 @@ export async function mockMentorWorkspace(
     }
     if (path === 'mentor/leave-requests/preview')
       return ok({
-        affectedSessions: [source],
-        sourceVersions: [{ sessionId: source.sessionId, version: source.version }],
+        affectedSessions: leaveSources,
+        sourceVersions: leaveSources.map((item) => ({
+          sessionId: item.sessionId,
+          version: item.version,
+        })),
         noticeEligible: true,
         noticeDeadline: '2026-10-24T17:00:00.000Z',
         asOf: workspaceDate,
         timeZone: session.timeZone,
       });
-    if (path === 'mentor/leave-requests/makeup-slots')
+    if (path === 'mentor/leave-requests/makeup-slots') {
+      const date = String(body?.targetDate);
+      const hour = body?.targetPeriod === 'AFTERNOON' ? '05' : '03';
       return ok({
-        slots: [{ startsAt: '2026-10-28T05:00:00.000Z', endsAt: '2026-10-28T07:00:00.000Z' }],
-        sessionVersion: source.version,
+        slots: [
+          {
+            startsAt: `${date}T${hour}:00:00.000Z`,
+            endsAt: `${date}T${String(Number(hour) + 2).padStart(2, '0')}:00:00.000Z`,
+          },
+        ],
+        sessionVersion:
+          leaveSources.find((item) => item.sessionId === body?.sourceSessionId)?.version ??
+          source.version,
         asOf: workspaceDate,
         timeZone: session.timeZone,
       });
+    }
     if (path === 'mentor/leave-requests') {
       if (method === 'GET')
         return ok({

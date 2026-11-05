@@ -58,19 +58,12 @@ function fileSize(bytes: number) {
   return `${size.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} ${unit}`;
 }
 
-function MaterialSession(props: {
-  sessionId: string | null;
-  context: UnitContextQuery;
-  onChoose?: () => void;
-}) {
+function MaterialSession(props: { sessionId: string; context: UnitContextQuery }) {
   const linked = props.context.data?.sessions.find((item) => item.id === props.sessionId);
-  const hasActions = Boolean(
-    (props.sessionId && props.context.error) || (!props.sessionId && props.onChoose),
-  );
   return (
     <section
       aria-label="Buổi học của tài liệu"
-      className={`grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] items-start gap-3 rounded-xl border border-line bg-soft/50 p-4 sm:gap-4 ${hasActions ? '@xl/mentor-content:grid-cols-[2.5rem_minmax(0,1fr)_auto]' : ''}`}
+      className={`grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] items-start gap-3 rounded-xl border border-line bg-soft/50 p-4 sm:gap-4 ${props.context.error ? '@xl/mentor-content:grid-cols-[2.5rem_minmax(0,1fr)_auto]' : ''}`}
     >
       <span
         aria-hidden="true"
@@ -92,33 +85,19 @@ function MaterialSession(props: {
           </>
         ) : (
           <p className="text-base leading-7 font-semibold">
-            {!props.sessionId
-              ? 'Chưa gắn buổi học'
-              : props.context.isPending
-                ? 'Đang tải thông tin buổi học…'
-                : props.context.error
-                  ? 'Chưa tải được thông tin buổi học'
-                  : 'Buổi học đã gắn không nằm trong chương này'}
-          </p>
-        )}
-        {!props.sessionId && (
-          <p className="text-sm leading-6 text-muted">
-            Tài liệu chưa được gắn với một buổi học cụ thể.
+            {props.context.isPending
+              ? 'Đang tải thông tin buổi học…'
+              : props.context.error
+                ? 'Chưa tải được thông tin buổi học'
+                : 'Buổi học đã gắn không nằm trong chương này'}
           </p>
         )}
       </div>
-      {hasActions && (
+      {Boolean(props.context.error) && (
         <div className="col-span-full flex flex-wrap items-center gap-2 @xl/mentor-content:col-span-1">
-          {props.sessionId && props.context.error && (
-            <Button type="button" variant="outline" onClick={() => props.context.refetch()}>
-              Thử lại
-            </Button>
-          )}
-          {!props.sessionId && props.onChoose && (
-            <Button type="button" variant="outline" onClick={props.onChoose}>
-              Gắn buổi học
-            </Button>
-          )}
+          <Button type="button" variant="outline" onClick={() => props.context.refetch()}>
+            Thử lại
+          </Button>
         </div>
       )}
     </section>
@@ -359,11 +338,9 @@ function MaterialDetail(props: {
                   </div>
                 )}
               </div>
-              <MaterialSession
-                sessionId={item.sessionId}
-                context={props.unitContext}
-                onChoose={editable ? () => props.onEdit(item) : undefined}
-              />
+              {item.sessionId && (
+                <MaterialSession sessionId={item.sessionId} context={props.unitContext} />
+              )}
               {item.description && (
                 <p className="whitespace-pre-wrap text-base leading-7">{item.description}</p>
               )}
@@ -431,7 +408,11 @@ function MaterialDetail(props: {
     </Modal>
   );
 }
-export function MentorMaterials(props: { unit: ContentUnit; canAuthor: boolean }) {
+export function MentorMaterials(props: {
+  unit: ContentUnit;
+  canAuthor: boolean;
+  general?: boolean;
+}) {
   const [filter, setFilter] = useState('');
   const [detail, setDetail] = useState<string | null>(null);
   const [editor, setEditor] = useState<{ material?: MaterialDetail } | null>(null);
@@ -486,11 +467,15 @@ export function MentorMaterials(props: { unit: ContentUnit; canAuthor: boolean }
           <>
             <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
               <div className="min-w-0 flex-[1_1_14rem]">
-                <h3 className="text-lg font-bold">Nội dung theo buổi học</h3>
+                <h3 className="text-lg font-bold">
+                  {props.general ? 'Tài liệu chung' : 'Nội dung theo buổi học'}
+                </h3>
                 <p className="mt-1 text-sm leading-6 text-muted">
-                  {props.canAuthor
-                    ? 'Chọn nội dung để xem, chỉnh sửa hoặc gửi duyệt. Nhấn Thêm nội dung ở đầu chương để tạo và chọn buổi học.'
-                    : 'Nội dung đã công bố trong phạm vi buổi học được phân công.'}
+                  {props.general
+                    ? 'Tài liệu của chương không gắn với buổi học cụ thể.'
+                    : props.canAuthor
+                      ? 'Chọn nội dung để xem, chỉnh sửa hoặc gửi duyệt. Tài liệu không gắn buổi học nằm ở tab Tài liệu chung.'
+                      : 'Nội dung đã công bố trong phạm vi buổi học được phân công.'}
                 </p>
               </div>
               <NativeSelect
@@ -519,6 +504,7 @@ export function MentorMaterials(props: { unit: ContentUnit; canAuthor: boolean }
               retry={() => Promise.all([materials.refetch(), unitContext.refetch()])}
             >
               <MentorSessionMaterials
+                general={props.general}
                 sessions={unitContext.data?.sessions ?? []}
                 items={materials.data ?? []}
                 filtered={Boolean(filter)}
@@ -538,7 +524,7 @@ export function MentorMaterials(props: { unit: ContentUnit; canAuthor: boolean }
             }}
           >
             <ArrowLeft aria-hidden="true" className="size-4" />
-            Về danh sách buổi học
+            {props.general ? 'Về tài liệu chung' : 'Về nội dung chương'}
           </Button>
         )}
         {detail && !editor && (
@@ -584,7 +570,7 @@ export function MentorMaterials(props: { unit: ContentUnit; canAuthor: boolean }
             <p>
               {confirm.action === 'submit'
                 ? 'Gửi bản nháp này cho Manager duyệt? Bạn sẽ không sửa được khi đang chờ duyệt.'
-                : 'Xóa bản nháp này khỏi buổi học?'}{' '}
+                : 'Xóa bản nháp này khỏi chương?'}{' '}
               <strong>{confirm.material.title}</strong>
             </p>
             {(submit.isError || remove.isError) && (

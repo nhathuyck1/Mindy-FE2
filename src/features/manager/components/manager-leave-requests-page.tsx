@@ -114,9 +114,6 @@ export function ManagerLeaveRequestsPage() {
     <div className="space-y-6">
       <header className="admin-page-heading">
         <div>
-          <p className="mb-2 text-xs font-semibold tracking-widest text-mint uppercase">
-            Mindy / Không gian Manager
-          </p>
           <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight">
             <CalendarOff aria-hidden="true" className="size-7 text-mint" />
             Đơn xin nghỉ mentor
@@ -259,51 +256,64 @@ export function ManagerLeaveRequestsPage() {
               Không có đơn phù hợp với bộ lọc.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="admin-data-table min-w-200">
-                <caption className="sr-only">Danh sách đơn xin nghỉ mentor</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Mentor</th>
-                    <th scope="col">Khoảng nghỉ</th>
-                    <th scope="col">Lý do</th>
-                    <th scope="col">Buổi ảnh hưởng</th>
-                    <th scope="col">Gửi lúc</th>
-                    <th scope="col">Hạn duyệt</th>
-                    <th scope="col">Trạng thái</th>
-                    <th scope="col">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaves.data?.items.map((leave) => (
-                    <tr key={leave.id}>
-                      <td>
-                        <ManagerLeaveMentorName id={leave.mentorId} />
-                      </td>
-                      <td className="min-w-45">
-                        <span className="block whitespace-nowrap">
-                          {managerLeaveDate(leave.fromDate)} – {managerLeaveDate(leave.toDate)}
-                        </span>
-                        <span className="text-xs text-muted">
-                          {leavePeriodLabels[leave.period]}
-                        </span>
-                      </td>
-                      <td className="max-w-64 whitespace-pre-wrap break-words">{leave.reason}</td>
-                      <td>{leave.itemCount}</td>
-                      <td className="whitespace-nowrap">{managerLeaveDate(leave.submittedAt)}</td>
-                      <td className="whitespace-nowrap">{managerLeaveDate(leave.expiresAt)}</td>
-                      <td>
-                        <LeaveStatusBadge status={leave.status} />
-                      </td>
-                      <td>
-                        <Button asChild variant="outline">
-                          <Link href={`/manager/leave-requests/${leave.id}`}>Xem và xử lý</Link>
-                        </Button>
-                      </td>
+            <div>
+              <p className="border-t border-line px-5 py-3 text-xs text-muted lg:hidden">
+                Vuốt ngang để xem đầy đủ thông tin và thao tác xử lý.
+              </p>
+              <div className="overflow-x-auto">
+                <table className="admin-data-table min-w-220">
+                  <caption className="sr-only">Danh sách đơn xin nghỉ mentor</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Mentor</th>
+                      <th scope="col">Nội dung xin nghỉ</th>
+                      <th scope="col">Thời gian xử lý</th>
+                      <th scope="col">Trạng thái</th>
+                      <th scope="col">Thao tác</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {leaves.data?.items.map((leave) => (
+                      <tr key={leave.id}>
+                        <td className="min-w-44 align-top">
+                          <ManagerLeaveMentorName id={leave.mentorId} />
+                        </td>
+                        <td className="min-w-64 align-top">
+                          <span className="block font-semibold">
+                            {managerLeaveDate(leave.fromDate)}
+                            {leave.fromDate !== leave.toDate && (
+                              <> – {managerLeaveDate(leave.toDate)}</>
+                            )}
+                          </span>
+                          <span className="mt-1 block text-xs text-muted">
+                            {leavePeriodLabels[leave.period]} · {leave.itemCount} buổi ảnh hưởng
+                          </span>
+                          <p className="mt-2 max-w-80 whitespace-pre-wrap break-words text-muted">
+                            {leave.reason}
+                          </p>
+                        </td>
+                        <td className="min-w-48 align-top">
+                          <span className="block text-xs text-muted">Hạn duyệt</span>
+                          <span className="mt-1 block font-semibold">
+                            {managerLeaveDate(leave.expiresAt)}
+                          </span>
+                          <span className="mt-2 block text-xs text-muted">
+                            Gửi lúc {managerLeaveDate(leave.submittedAt)}
+                          </span>
+                        </td>
+                        <td className="align-top">
+                          <LeaveStatusBadge status={leave.status} />
+                        </td>
+                        <td className="align-top">
+                          <Button asChild variant="outline">
+                            <Link href={`/manager/leave-requests/${leave.id}`}>Xem và xử lý</Link>
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
           {leaves.data && leaves.data.total > 0 && (

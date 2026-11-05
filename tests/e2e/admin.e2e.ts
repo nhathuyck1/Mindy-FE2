@@ -279,7 +279,9 @@ test('Overview and resource pages use real contract totals and stay within the v
     if (route !== '/admin/workflow' && route !== '/admin') {
       if (route !== '/admin') {
         const actions = page.getByRole('table').locator('tbody tr').first().locator('td').last();
-        await expect(actions.getByRole('button')).toHaveCount(route === '/admin/users' ? 3 : 2);
+        await expect(actions.getByRole('button')).toHaveCount(route === '/admin/classes' ? 3 : 2);
+        if (route === '/admin/classes')
+          await expect(actions.getByRole('button', { name: /^Xếp lịch:/ })).toBeVisible();
         await expect(actions.getByRole('link')).toHaveCount(route === '/admin/classes' ? 1 : 0);
         await expect(actions.getByRole('button').first()).toHaveAccessibleName(/^Xem thông tin:/);
       }
@@ -481,7 +483,7 @@ test('Admin login returns to the selected admin page and logout removes private 
   await expect(page.getByRole('table')).toBeVisible();
   await page.getByRole('button', { name: `Tài khoản của ${adminUser.displayName}` }).click();
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
-  await expect(page).toHaveURL('/');
+  await expect(page).toHaveURL('/admin/login');
   await expect(page.getByRole('table')).toHaveCount(0);
   expect(
     await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length })),

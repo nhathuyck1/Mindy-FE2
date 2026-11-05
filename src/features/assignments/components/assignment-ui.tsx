@@ -173,7 +173,7 @@ export function Confirm(props: {
 export function AssignmentMeta(props: { item: Assignment; embedded?: boolean }) {
   const a = props.item;
   return (
-    <div className={props.embedded ? 'min-w-0 p-5 sm:p-6' : panelClass}>
+    <div className={props.embedded ? 'min-w-0 p-5 sm:p-7' : panelClass}>
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <Status value={a.status} />
         <span className="text-sm text-muted">
@@ -181,7 +181,9 @@ export function AssignmentMeta(props: { item: Assignment; embedded?: boolean }) 
           {a.purpose === 'TEST' ? 'Kiểm tra' : 'Bài về nhà'}
         </span>
       </div>
-      <dl className="grid gap-5 sm:grid-cols-3">
+      <dl
+        className={`grid gap-5 sm:grid-cols-3 ${props.embedded ? 'sm:gap-0 sm:divide-x sm:divide-line' : ''}`}
+      >
         {[
           ['Hạn nộp', dateLabel(a.dueAt)],
           ['Điểm tối đa', a.maxScore],
@@ -194,9 +196,11 @@ export function AssignmentMeta(props: { item: Assignment; embedded?: boolean }) 
               : `${a.maxAttempts} lượt`,
           ],
         ].map(([label, value]) => (
-          <div key={label}>
+          <div key={label} className={props.embedded ? 'sm:px-6 sm:first:pl-0 sm:last:pr-0' : ''}>
             <dt className="text-sm text-muted">{label}</dt>
-            <dd className="mt-1 font-bold">{value}</dd>
+            <dd className={`mt-1 font-bold ${props.embedded ? 'text-lg text-forest' : ''}`}>
+              {value}
+            </dd>
           </div>
         ))}
       </dl>

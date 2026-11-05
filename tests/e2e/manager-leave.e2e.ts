@@ -289,6 +289,7 @@ test('Manager leave queue filters mentors and pages without losing its URL state
     .click();
   await expect(page).toHaveURL('/manager/leave-requests');
   await expect(page.getByRole('heading', { name: 'Chờ duyệt', exact: true })).toBeVisible();
+  await page.screenshot({ path: test.info().outputPath('manager-leave-list.png'), fullPage: true });
   await page.getByRole('button', { name: 'Sau' }).last().click();
   await expect(page).toHaveURL('/manager/leave-requests?page=2');
   await expect(page.getByRole('link', { name: 'Xem và xử lý' })).toHaveCount(2);
@@ -429,6 +430,10 @@ test('Escape restores focus and detail has no horizontal overflow at 320px', asy
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog', { name: 'Xác nhận duyệt đơn' })).toBeHidden();
   await expect(approve).toBeFocused();
+  await page.screenshot({
+    path: test.info().outputPath('manager-leave-detail.png'),
+    fullPage: true,
+  });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );

@@ -8,13 +8,15 @@ function ContentRows(props: {
   items: Material[];
   filtered: boolean;
   onSelect: (id: string) => void;
+  emptyMessage?: string;
 }) {
   if (!props.items.length)
     return (
       <p className="px-5 py-6 text-sm leading-6 text-muted">
         {props.filtered
           ? 'Không có nội dung khớp trạng thái đang lọc.'
-          : 'Chưa có nội dung. Thêm bài viết, tài liệu hoặc video để chuẩn bị cho buổi học.'}
+          : (props.emptyMessage ??
+            'Chưa có nội dung. Thêm bài viết, tài liệu hoặc video để chuẩn bị cho buổi học.')}
       </p>
     );
   return (
@@ -54,6 +56,7 @@ function ContentRows(props: {
 }
 
 export function MentorSessionMaterials(props: {
+  general?: boolean;
   sessions: ContentSession[];
   items: Material[];
   filtered: boolean;
@@ -63,12 +66,35 @@ export function MentorSessionMaterials(props: {
   const known = new Set(sessions.map((session) => session.id));
   const unassigned = props.items.filter((item) => !item.sessionId);
   const unresolved = props.items.filter((item) => item.sessionId && !known.has(item.sessionId));
+  if (props.general)
+    return (
+      <section
+        aria-label="Tài liệu chung"
+        className="min-w-0 overflow-hidden rounded-xl border border-line bg-canvas"
+      >
+        <div className="space-y-1 border-b border-line bg-soft/50 p-4 sm:p-5">
+          <h3 className="flex items-center gap-2 text-base font-bold">
+            <FolderOpen aria-hidden="true" className="size-5 text-mint" />
+            Tài liệu chung
+          </h3>
+          <p className="text-sm leading-6 text-muted">
+            {unassigned.length} nội dung{props.filtered ? ' khớp bộ lọc' : ''} · Tài liệu của chương
+            không gắn với buổi học cụ thể.
+          </p>
+        </div>
+        <ContentRows
+          items={unassigned}
+          filtered={props.filtered}
+          onSelect={props.onSelect}
+          emptyMessage="Chưa có tài liệu chung trong chương này."
+        />
+      </section>
+    );
   return (
     <div className="space-y-5">
       {!sessions.length && (
         <p className="rounded-xl border border-dashed border-line bg-soft/40 p-5 text-sm leading-6 text-muted">
-          Chương này chưa có buổi học. Bạn có thể chuẩn bị nội dung chung bên dưới và gắn vào buổi
-          học sau.
+          Chương này chưa có buổi học. Tài liệu không gắn buổi học hiển thị trong Tài liệu chung.
         </p>
       )}
       {sessions.map((session) => {
@@ -122,24 +148,6 @@ export function MentorSessionMaterials(props: {
           </section>
         );
       })}
-      <section
-        aria-label="Nội dung chưa gắn buổi học"
-        className="min-w-0 overflow-hidden rounded-xl border border-dashed border-line bg-canvas"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-soft/30 p-4 sm:p-5">
-          <div className="min-w-0 space-y-1">
-            <h3 className="flex items-center gap-2 text-base font-bold">
-              <FolderOpen aria-hidden="true" className="size-5 text-mint" />
-              Chưa gắn buổi học
-            </h3>
-            <p className="text-sm leading-6 text-muted">
-              {unassigned.length} nội dung{props.filtered ? ' khớp bộ lọc' : ''} · Nội dung dùng
-              chung hoặc đang chờ phân buổi.
-            </p>
-          </div>
-        </div>
-        <ContentRows items={unassigned} filtered={props.filtered} onSelect={props.onSelect} />
-      </section>
       {unresolved.length > 0 && (
         <section
           aria-label="Nội dung có buổi học chưa xác định"

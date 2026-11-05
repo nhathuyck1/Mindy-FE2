@@ -27,6 +27,8 @@ const sourceLabels: Record<(typeof trackingSources)[number], string> = {
   class_unit_release_audit: 'Phát hành chương',
   session_meeting_audits: 'Phòng học trực tuyến',
   attendance_recovery_audits: 'Khôi phục điểm danh',
+  assignment_audits: 'Bài tập',
+  assignment_zip_audits: 'Bài tập ZIP',
 };
 const actionLabels: Record<string, string> = {
   CREATE: 'Tạo mới',

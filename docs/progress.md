@@ -1,5 +1,182 @@
 # Tiến độ
 
+## 06/11/2026 — Kiểm tra toàn bộ FE trước PR vào main
+
+- Lint toàn repo, TypeScript, production build và 353 unit tests PASS. E2E đầy đủ: 531 PASS, 5 SKIP và 10 lỗi assertion cũ; đã cập nhật theo nút Xếp lịch Admin, đích logout Admin, thứ tự menu Tổng quan, thống kê Manager và tab Tài liệu chung Mentor. Chạy lại đủ 10 trường hợp desktop/mobile: PASS; tổng 541 PASS, 5 SKIP.
+- Prettier các file thay đổi và git diff --check PASS. format:check toàn repo còn lỗi baseline ở các file ngoài phạm vi; không format lại toàn bộ repo.
+- Kiểm thử E2E dùng API mock; không thay thế nghiệm thu backend/storage/runner thật trên deploy.
+
+## 06/11/2026 — Tài liệu chung Mentor và tài liệu buổi học Student
+
+- Mentor bỏ tab Buổi học ở lớp đang hoạt động, thêm Tài liệu chung giữa Chương và Bài tập. Chọn chương để xem tài liệu có sessionId null; tài liệu đã gắn buổi và buổi chưa xác định giữ riêng ở Chương. Giữ URL lịch lớp cũ và lịch sử lớp hủy.
+- Chi tiết tài liệu chung bỏ khối Phạm vi tài liệu; chỉnh sửa vẫn qua toolbar. Lựa chọn không gắn buổi trong form mang tên Tài liệu chung của chương. Không đổi API hoặc quyền.
+- Student giữ bố cục chương và nội dung chung hiện có, thêm nút Tài liệu buổi học bên phải header chương để mở/thu gọn danh sách theo buổi; mặc định thu gọn, viewer theo buổi chỉ mount khi mở. Chương khóa và xem trước không hiện thao tác này.
+- Kiểm chứng: build/TypeScript, lint các file sửa; 46 E2E học liệu Student/Mentor desktop/mobile PASS với API mock. Đã xem ảnh desktop và 320px.
+
+## 06/11/2026 — Nút quay lại từ buổi dạy
+
+- Header chi tiết buổi Mentor dùng “Về lịch dạy”, trỏ `/mentor` thay vì lớp học. Giữ nguyên các thao tác buổi/điểm danh.
+- Kiểm chứng: production build/TypeScript, lint/Prettier file sửa và 2 E2E desktop/mobile PASS, bấm nút về đúng trang Lịch dạy của bạn.
+
+## 06/11/2026 — Làm gọn lịch hôm nay trên Tổng quan
+
+- Gom lịch hôm nay vào khung trắng có header/ngày và đường phân cách; giờ học nằm trong ô nền soft, trạng thái có nhãn và liên kết có tên rõ trên desktop. Giữ danh sách responsive, API và các trạng thái tải/lỗi/trống hiện hữu; component chung cho Student/Mentor.
+- Kiểm chứng: build/TypeScript, lint, 16 E2E Tổng quan desktop/mobile PASS; xem ảnh Student desktop và 320px với API mock.
+
+## 06/11/2026 — Lịch hôm nay và thứ tự menu các vai trò
+
+- Mentor Tổng quan thay Lịch sắp tới bằng Lịch hôm nay, lấy đầy đủ các trang lịch tuần hiện hữu rồi lọc ngày bắt đầu theo Asia/Ho_Chi_Minh; không dựa vào dashboard.upcoming vốn chỉ có tối đa 20 buổi tương lai. Giữ buổi đã hoàn thành trong ngày, loại buổi hủy, sắp xếp theo giờ; tự đổi ngày lúc 0h và khi quay lại tab.
+- `/user` trở thành Tổng quan Học viên với lịch hôm nay từ me/schedule, có link khóa học/bài tập/lịch đầy đủ. Không thêm API hoặc thống kê giả. Link buổi Mentor mở phiên dạy; Học viên mở lịch học hiện hữu.
+- Tổng quan đứng đầu sidebar cả bốn vai trò; Tin nhắn và Thông tin cá nhân ở cuối các menu có hai chức năng này. Root `/user` chỉ active chính xác tại Tổng quan, không che active của các trang con.
+- Kiểm chứng: production build/TypeScript, lint/Prettier các file sửa, 353 unit tests và 46 E2E dashboard/navigation/workspace/mentor UI desktop/mobile PASS (16 test chuyên biệt đã chạy lại sau chỉnh assertion menu mobile). Đã xem ảnh desktop/320px; kiểm ngày UTC khác ngày Việt Nam, đầy đủ phân trang, qua nửa đêm, lỗi/thử lại và ngày trống. Chỉ dùng API mock trong kiểm thử.
+
+## 06/11/2026 — Thu gọn Tổng quan Manager và tách thao tác lớp
+
+- Tổng quan Manager thay ba card tài liệu cao bằng một dải trạng thái gọn, mỗi trạng thái có một link đến bộ lọc tương ứng. Bỏ link mô tả lặp; bộ lọc thời gian và Làm mới cùng hàng.
+- Admin có nút lịch riêng ở dòng lớp: mở Lịch học của lớp để xếp tuần/thêm buổi/đổi giờ, không gộp vào form sửa thông tin. Panel độc lập bỏ khung và số bước thừa.
+- Đổi giảng viên dùng một combobox tìm/chọn, debounce 250ms, hỗ trợ nhập tiếng Việt, phân trang, loading/error/empty và bàn phím. Đổi nội dung tìm xóa lựa chọn cũ; Esc đóng danh sách trước khi đóng modal; giữ nguyên xác nhận/version/idempotency của luồng lưu.
+- Kiểm chứng: production build/TypeScript, lint và Prettier các file sửa, 353 unit tests, 42 E2E Admin/Manager/operations desktop/mobile PASS. Đã xem ảnh desktop và 320px. Dữ liệu kiểm thử là API mock, không thay phân công/lịch lớp thật.
+
+## 06/11/2026 — Cân bằng cột lịch tuần
+
+- Bảy cột ngày chia đều chiều rộng, không còn ép cột trống xuống 80px khiến ngày có lịch phình rộng. Giữ cột ca học và vùng cuộn ngang mobile; áp dụng cho component lịch dùng chung.
+- Cập nhật kiểm tra E2E lịch Mentor để yêu cầu cột trống và cột có lịch rộng bằng nhau.
+- Kiểm chứng: production build/TypeScript, lint và 2 E2E lịch Mentor desktop/mobile PASS; đã xem ảnh hai kích thước với API mock.
+
+## 06/11/2026 — Tách lịch và rà soát giao diện toàn bộ Manager bằng impeccable
+
+- Tạo menu/trang `/manager/schedule` cho lịch tuần và dời khai giảng; gỡ form khỏi Tổng quan, thêm lối đi nhanh và safe return sau đăng nhập. Form chọn lớp/ngày/ca/nội dung/lý do/preview có nhóm rõ, đủ 49 ô ca, thao tác bàn phím và vùng cuộn riêng mobile.
+- CSS scope Manager thống nhất typography 16px, nền/vùng dữ liệu, bảng, control 44px, focus/selection và sidebar cuộn khi màn thấp. Bỏ eyebrow lặp trên các trang chính/detail, bỏ hướng dẫn lặp ở Tổng quan, đưa thống kê tài liệu lên trước analytics.
+- Dùng skill impeccable: context, đánh giá layout và mechanical độc lập, kiểm tra ảnh desktop/320px/768px, polish theo hệ thống Mindy. Không thêm dependency/API hoặc thay nghiệp vụ thu tiền/duyệt đơn/tài liệu.
+- Kiểm chứng: production build/TypeScript, lint, Prettier các file sửa, 353 unit tests, 122 E2E desktop/mobile PASS; thêm lượt xem ảnh/bàn phím/tablet với 6 E2E PASS. Sau khi xem ảnh, gom bảng đơn nghỉ từ 8 cột thành 5 nhóm thông tin để tên/lý do không bị ép dòng, chạy lại 16 E2E đơn nghỉ PASS. Dữ liệu nghiệm thu là API mock, không thay lịch lớp thật.
+
+## 06/11/2026 — Đổi giảng viên phụ trách lớp
+
+- Form sửa lớp có mục Đổi giảng viên, tìm/phân trang danh sách phù hợp lịch từ BE, lý do bắt buộc và xác nhận số buổi ảnh hưởng. Lớp hoàn thành/đã hủy chỉ xem; giữ nguyên phân công dạy thay từng buổi.
+- GET available-mentors và PATCH mentor qua proxy allowlist, Zod, Origin, cookie access và Idempotency-Key. Gửi assignmentVersion để chống ghi đè; xung đột yêu cầu tải lại/chọn lại, kết quả chưa rõ cho thử lại cùng body/key.
+- Kiểm chứng: lint, TypeScript, production build và 353 unit tests PASS; 6 E2E đổi giảng viên và 8 E2E CRUD lớp/người dùng/khóa học PASS trên desktop/mobile (320px). Đã rà ảnh xác nhận. Kiểm tra bằng API mock, không thay phân công lớp thật.
+
+## 06/11/2026 — Admin đăng xuất về đăng nhập nội bộ
+
+- Menu tài khoản Admin lưu đích `/admin/login` vào context mutation trước khi xóa phiên; SessionExpiryHandler giữ màn chờ đến đúng đích và dọn mutation khi đến nơi. Các vai trò khác giữ đích hiện hữu.
+- Kiểm chứng: production build/TypeScript, lint các file sửa, 349 unit tests và 12 E2E đăng xuất desktop/mobile PASS. Kiểm cả response 204/401, không đi qua homepage, lỗi/thử lại và luồng đăng nhập sai vai trò sau đăng xuất.
+
+## 06/11/2026 — Upload ảnh chat từ localhost
+
+- Composer giữ preview và cho thử tải lại/bỏ tệp khi upload lỗi; báo riêng lỗi storage và lỗi xác nhận complete. Không gửi mất ảnh kèm theo khi người dùng nhập chữ sau lỗi upload. Poll trạng thái tiếp tục sau lỗi mạng tạm thời.
+- Kiểm chứng: production build/TypeScript, lint, 349 unit tests và 28 E2E chat desktop/mobile PASS. E2E dùng API/storage mock, kiểm gửi IMAGE không có body, preview trước gửi, retry PUT lỗi và mở lớn ảnh sau gửi.
+- FE local đang dùng API VPS. Preflight PUT tới storage.quanh123.id.vn/mindy-center từ http://localhost:3001 trả 204 nhưng thiếu Access-Control-Allow-Origin/Methods/Headers, nên browser vẫn chặn. Chưa sửa/deploy cấu hình storage VPS; cần thêm origin localhost vào CORS_ORIGINS và recreate MinIO theo runbook BE PHASE_3_2_VPS_MINIO_RUNBOOK.md. Chưa xác nhận upload thật trên VPS thành công.
+
+## 06/11/2026 — Biểu đồ Manager/Mentor và thẻ lớp Mentor
+
+- Dashboard Manager dùng Recharts cho xu hướng thực thu, donut phương thức và cột ngang top 10 khóa/lớp; bảng đầy đủ mở qua details, tiền trong bảng giữ định dạng BigInt từ API. Không thêm endpoint/dependency.
+- Dashboard Mentor có biểu đồ so sánh số buổi (các nhóm có thể giao nhau), donut trạng thái đơn nghỉ và lịch sắp tới dạng thẻ. Không suy tỷ lệ hoàn thành hoặc tạo lịch sử giờ dạy chưa có trong DTO.
+- Lớp của tôi dùng grid thẻ responsive, phân cấp tên/mã/trạng thái, icon lịch/hình thức/sĩ số và CTA Vào lớp; giữ filter URL, phân trang và quyền hiện hữu.
+- Kiểm chứng: TypeScript, production build, lint và 349 unit tests PASS; 10 E2E desktop/mobile PASS cho dashboard/filter/bảng chi tiết, menu tài khoản, danh sách lớp/filter/điều hướng; đã xem ảnh desktop và 320px với API mock.
+
+## 06/11/2026 — Tracking nhận audit bài tập từ API server
+
+- Schema và bộ lọc Admin tracking bổ sung `assignment_audits`, `assignment_zip_audits`, đối chiếu Swagger server. Trước đó proxy trả 502 INVALID_RESPONSE khi trang chứa sự kiện bài tập từ seed.
+- Bổ sung regression test cho danh sách không lọc, lọc nguồn và chi tiết của cả hai loại audit. Giữ xác thực, quyền Admin và schema validation hiện hữu.
+
+## 06/11/2026 — Đối chiếu nhiều nhánh FE, chỉ sửa UI chung
+
+- Đã kiểm tra 18 nhánh FE origin, đặc biệt dev 7e3dc7c, feature/bug-mentor 81cdd08 và feature/test-mentor 91c3472. Chọn phần UI chung của dev; đọc QA để kiểm lỗi, không nhập ảnh/log cũ như bằng chứng mới.
+- Theo yêu cầu người dùng, gỡ toàn bộ thay đổi compiler/code workspace và các phần chat/bảng vẽ liên quan; thư mục compiler giữ nguyên HEAD đầu vào.
+- Giữ cải tiến danh sách bài tập/học liệu, bulk quiz import, dashboard tài liệu; sửa return path, xóa lọc giữ tab/lớp, inventory/phân công Mentor theo URL, clamp phân trang Admin và không lưu link buổi chưa đổi.
+- Kết quả cuối ghi trong [báo cáo](fe-branch-audit-2026-11-06.md). Không commit/push/deploy.
+- Nghiệm thu cuối: build/TypeScript/ESLint, 347 unit tests và 507 E2E desktop/mobile PASS, 5 SKIP theo viewport; Prettier các file sửa PASS. Global format còn 332 file baseline ngoài phạm vi. Preview đang chạy ở localhost:3001.
+
+## 05/11/2026 — Từ buổi học Mentor quay về lớp
+
+- Nút quay lại của trang buổi học đổi thành Về lớp học, trỏ thẳng trang chính `/mentor/classes/:classId` từ context buổi/attendance, kể cả khi mở URL buổi trực tiếp. Chưa có dữ liệu lớp thì về danh sách Lớp của tôi; không dùng browser Back hoặc chuyển sang lịch dạy.
+
+## 05/11/2026 — Nội dung Student mở ngay dưới tiêu đề
+
+- Thu nhỏ header lớp/chương/bài, áp dụng khung chương kiểu Mentor; mobile dùng chọn chương gọn. Gộp các buổi vào chương, từng bài là accordion mở tại chỗ và bấm lại thu gọn, bài đầu mở sẵn. Bỏ vùng đọc riêng sau cả danh sách và nút Bài trước/Bài tiếp theo; tệp/video chính mở cùng accordion, tệp đính kèm vẫn theo nút tải riêng.
+- Giữ bài chung/buổi chưa xác định, lịch/link họp/bảng vẽ, quyền FULL/CASH_PREVIEW/chương khóa và lỗi/thử lại. Chỉ mount detail bài đang mở; cleanup gỡ media và hủy access khi thu gọn. Không sửa backend hoặc deploy.
+- Kiểm chứng: lint, TypeScript/production build, Prettier các file sửa, 342 unit tests và 12 E2E production desktop/mobile PASS. E2E kiểm nội dung đầu trong viewport desktop (kể cả bài chung), mở/đóng bằng click/Enter/Space, đổi bài/chương, video tự lấy quyền xem và gỡ khi đóng, tệp đính kèm, preview không gọi API riêng tư, chương khóa, lỗi/thử lại và 320px không tràn ngang. Đã xem ảnh desktop/320px với API mock.
+
+## 05/11/2026 — Làm rõ buổi học và deadline bài tập
+
+- Tinh chỉnh theo phản hồi: bỏ chữ Giờ Việt Nam ở nhãn; bỏ icon buổi/deadline, cột Buổi học căn trái, Hạn nộp căn giữa trên desktop. Không lặp tiền tố Buổi N nếu tên buổi đã có số; mobile tiếp tục căn trái để dễ đọc.
+- Thu gọn danh sách bài tập của lớp thành các cột bài/buổi/hạn nộp, có số lượng từ total backend và Xem bài. Hiển thị số/tên buổi, chương và lịch học qua dữ liệu hiện hữu; bộ lọc buổi kèm ngày/giờ. Mobile xếp dọc, giữ URL lọc và phân trang.
+- Deadline dùng giờ Việt Nam, nhãn thời gian còn lại/Sắp đến hạn/Đã qua hạn cập nhật mỗi phút và khi focus. Không giới hạn, buổi thiếu, lỗi/thử lại và bài lưu trữ có trạng thái riêng; không suy đã nộp/chưa nộp từ deadline.
+- Kiểm chứng: lint, TypeScript, production build, 342 unit tests và 40 E2E desktop/mobile PASS; gồm metadata, UTC+7, chuyển qua deadline, null/archived, retry, điều hướng và viewport 320px. Prettier các file sửa PASS; format:check toàn repo báo 396 file ngoài phạm vi sửa (cây Git sạch trước thay đổi), không format lan rộng. API mock, không thay backend hoặc deploy.
+
+## 05/11/2026 — Ẩn thanh cuộn chú giải tài liệu
+
+- Danh sách số lượng/% cạnh biểu đồ tròn dùng utility `scrollbar-hidden` hiện hữu; giữ chiều cao tối đa và cuộn bằng chuột/cảm ứng.
+
+## 05/11/2026 — Sửa lỗi count trên backend đang chạy
+
+- Network thực tế báo `property courseId should not exist`: frontend gửi filter đã có ở source BE local nhưng chưa có trên server. Thay query count theo khóa bằng detail Manager → cộng total tài liệu từng học phần qua API hiện hữu, pageSize=1. Không gửi courseId, không cần courseId trong response, không sửa/deploy backend. Các học phần trong mỗi khóa đọc tuần tự và hủy theo AbortSignal; một học phần lỗi không hiển thị count một phần.
+- Kiểm chứng: TypeScript, ESLint các file sửa, production build và 12 unit/proxy tests PASS. 12 E2E production desktop/mobile PASS, mô phỏng server từ chối filter courseId và response thiếu nhãn khóa; xác nhận tổng 75/25 từ nhiều học phần, khóa không có học phần, lỗi/thử lại ở detail hoặc một học phần, kho và điều hướng workspace. Không dùng phiên đăng nhập thật để gọi dữ liệu tài liệu trên server.
+
+## 05/11/2026 — Count và dashboard tài liệu theo khóa học
+
+- `/manager/materials` thêm tổng tài liệu, tổng khóa học, số khóa có tài liệu và biểu đồ tròn Recharts dạng donut với số lượng/% theo khóa. Mỗi hàng khóa học có count riêng, kể cả 0; danh sách lấy đủ trang catalog Manager gồm khóa chưa kích hoạt. Workspace đọc detail Manager để mở được các khóa này.
+- Count dùng `total` do backend trả, gồm mọi trạng thái duyệt; không cộng số dòng của trang đầu. Query theo user thuộc cache Manager và được invalidate bởi mutations hiện hữu. Chỉ hiển thị tổng/tỷ lệ khi đủ count; lỗi giữ dấu —, có làm mới; tổng 0 có empty state. Cách đọc count đã được sửa tương thích server ở mục phía trên.
+- Kiểm chứng: lint, TypeScript, production build và 12 unit/proxy tests PASS. 12 E2E production desktop/mobile PASS cho tỷ lệ 75/25 từ total (mỗi API chỉ trả 1 item), catalog nhiều trang, count 0, lỗi/thử lại, response cũ thiếu courseId và điều hướng kho/workspace. Đã xem ảnh desktop/320px, không tràn ngang.
+
+## 05/11/2026 — Ẩn thanh cuộn danh sách khung giờ bù
+
+- Vùng Chọn khung giờ giữ chiều cao và overflow-y-auto, ẩn scrollbar trên Firefox/Chromium/WebKit bằng utility scoped; vẫn cuộn chuột/cảm ứng và chọn giờ như cũ. Không đổi API/backend.
+
+## 05/11/2026 — Đổi nhãn kiểm tra lịch dạy
+
+- Đổi nút Xem buổi bị ảnh hưởng thành Kiểm tra lịch dạy và trạng thái tải thành Đang kiểm tra…; cập nhật selector E2E hiện hữu. Prettier các file liên quan PASS, không đổi API/backend.
+
+## 05/11/2026 — Chặn lịch bù trùng giữa các buổi trong cùng đơn
+
+- Theo yêu cầu cuối cùng, hủy phương án giới hạn 6 khung: giữ API tìm giờ linh hoạt và thời lượng gốc. Đã hoàn tác toàn bộ sửa BE/FE chỉ phục vụ phương án 6 khung; giữ chặn ngày và overlap ở frontend/proxy.
+
+- Hai bảng slot trước đây chỉ đọc lịch đã lưu, không đối chiếu các mapping chưa gửi. Thêm kiểm overlap dùng chung: khóa slot trùng/chồng lấn với buổi khác và hiện lý do, cập nhật khi đổi/xóa lựa chọn; parent sở hữu selection và kiểm lại khi update/gửi. Schema proxy chặn payload overlap trước upstream. Cho phép tiếp giáp đúng ranh giới và cùng giờ ở ngày khác. Backend giữ kiểm xung đột cuối, không đổi API.
+- Kiểm chứng: 23 unit/proxy tests, 16 E2E dev desktop/mobile, types/build/lint PASS. Có ca cả hai bảng tải trước khi chọn, giờ trùng hoàn toàn/chồng lấn, giờ nối tiếp, giải phóng slot khi đổi ngày và gửi hai mapping không trùng.
+
+## 05/11/2026 — Sửa mốc khóa ngày bù theo khoảng nghỉ
+
+- Phản hồi ảnh thực tế cho thấy mốc cũ chỉ chặn trước hôm nay, vẫn cho chọn ngày trước buổi nghỉ hoặc nằm trong khoảng nghỉ tương lai. Sửa FULL_DAY: min là ngày sau toDate (11–14/11 → 15/11); nghỉ theo buổi: min là ngày buổi gốc, vẫn giữ khả năng bù khác giờ cùng ngày. Kết hợp mốc hôm nay theo timezone, dùng chung rule cho calendar/tìm slot/kiểm đủ mapping và submit.
+- Bổ sung unit tests cho khoảng nghỉ nhiều ngày, timezone, giao năm và đồng hồ mới hơn; E2E kiểm rangeUnderflow cùng nút tìm giờ với ngày tương lai nhưng trước/trong khoảng nghỉ. Không thay BE/schema API.
+- Kiểm chứng: 7 unit tests lịch/schema, 12 E2E dev desktop/mobile, TypeScript, lint và Prettier các file liên quan PASS. Kiểm tra cả ngày trước buổi nghỉ và ngày cuối khoảng FULL_DAY; ngày ngay sau khoảng nghỉ được bật tìm giờ.
+
+## 05/11/2026 — Tách lịch bù từng buổi và chặn ngày quá khứ
+
+- Xác định lỗi gom buổi nằm ở FE: FULL_DAY dùng dayMappings theo ngày dù backend đã hỗ trợ sessionMappings từng buổi. Đổi UI/payload để mỗi buổi có ngày/period/slot riêng, kể cả hai buổi cùng ngày. Schema giữ tương thích dayMappings cũ và chấp nhận targetPeriod FULL_DAY. Đã đối chiếu Swagger live ngày 05/11; không sửa BE.
+- Bố cục từng buổi chia thông tin lịch gốc và chọn lịch bù, có số thứ tự, thời lượng, trạng thái và tóm tắt lịch đã chọn; mobile xếp dọc. Native date min theo timezone BE và đồng hồ mới hơn client/server; chặn nhập tay ngày cũ, cập nhật qua focus/mỗi phút, kiểm lại mapping tương lai ở submit.
+- Kiểm chứng: types/build/lint/Prettier các file sửa PASS; 14 unit/proxy tests PASS; 10 E2E dev và 10 E2E production desktop/mobile PASS, gồm hai buổi cùng ngày chọn ngày/giờ khác nhau, đổi một mapping giữ mapping còn lại, min/rangeUnderflow và chặn tìm giờ ngày cũ, FULL_DAY/MORNING, stale source và rút đơn. Đã xem ảnh desktop/320px, không tràn ngang. Chín tests BE calendar/planning hiện hữu PASS; E2E dùng fixture, không tạo đơn trên tài khoản thật.
+
+## 05/11/2026 — Course/unit và bộ lọc hàng chờ duyệt Manager
+
+- `/manager` thêm cột Khóa học/Học phần (số thứ tự + tên), lọc khóa/học phần/loại và Xóa bộ lọc. Đổi khóa xóa unit; đổi filter reset trang 1; empty/error/retry tách riêng. Bảng giữ 20 dòng, cuộn trong panel ở 320px.
+- API list giữ metadata course/unit từ backend mới, nhận `courseId` và lọc trước count/phân trang. Hai GET catalog Manager hiện hữu được mở trong proxy chỉ đọc; hook đọc đủ trang gồm khóa chưa kích hoạt. Server state theo Manager/user, không thêm dependency hoặc Redux state.
+- Kiểm tra: lint/format file liên quan/types/build PASS; 12 proxy tests PASS; 12 Playwright production desktop/mobile PASS (queue, kết hợp/reset filters, tải catalog nhiều trang/inactive/retry, phê duyệt và thống kê). Đã xem ảnh bảng desktop. Full unit suite: 322 PASS, 2 FAIL trong `code-highlight.test.ts` ngoài phạm vi thay đổi.
+- BE types/build và 95 tests domain Materials PASS. Đã mở rộng test PostgreSQL queue nhưng chưa chạy integration vì không có DB test hoạt động (Docker daemon tắt); chưa kiểm Swagger live/deploy. Cần triển khai cả FE và BE để nhãn/lọc khóa học hoạt động đầy đủ.
+
+## 05/11/2026 — Nhập câu hỏi ABCD hàng loạt và đặt lại checkbox lịch sử
+
+- Mentor mở Soạn câu hỏi → Nhập hàng loạt để dán nhiều câu ABCD hoặc chọn tệp .txt UTF-8, tải mẫu và kiểm tra/xem trước đáp án đúng. Hỗ trợ câu/đáp án nhiều dòng; chặn thiếu/trùng nhãn, thiếu/sai đáp án đúng, nội dung quá dài và tổng vượt 200 câu. Lỗi hiển thị theo dòng, không nhập một phần batch lỗi.
+- Mặc định thêm cuối và giữ câu/ID đang soạn; có lựa chọn thay toàn bộ, hủy giữ nguyên đề. Áp dụng chỉ cập nhật editor; Lưu bộ câu hỏi gửi PUT questions với expectedRevision hiện hữu. Dialog giữ header/footer và cuộn body riêng, không thêm dependency/API.
+- Đưa Gồm lượt cũ lên góc phải cùng hàng Bài đã nộp; giữ bộ lọc URL và vùng bấm 44px.
+- Kiểm chứng: 77 unit tests assignment/proxy (gồm 16 ca parser), 36 E2E assignments production desktop/mobile, TypeScript, build và lint/Prettier các tệp sửa đạt. Đã xem ảnh dialog và màn 320px; checkbox cùng hàng tiêu đề, không tràn ngang. E2E dùng API fixture, chưa nghiệm thu với backend thật cho luồng nhập mới.
+
+## 05/11/2026 — Tinh chỉnh bộ lọc bài đã nộp
+
+- Bỏ thanh nền mint kéo dài; căn đều Trạng thái/Lượt nộp/Học viên với nhãn phía trên và ô chọn nền trắng. Đưa Gồm lượt cũ xuống hàng riêng, checkbox màu mint và vùng bấm 44px. Bố cục theo chiều rộng vùng nội dung, xếp dọc trên mobile; giữ API, tên truy cập và bộ lọc URL.
+- Kiểm chứng: lint, Prettier và TypeScript đạt; 4 E2E dev desktop/mobile hiện có đạt. Đã xem ảnh desktop/320px, không tràn ngang. E2E dùng API fixture.
+
+## 05/11/2026 — Gom giao diện chi tiết bài tập Mentor
+
+- Gom thông tin, thanh thao tác và bộ câu hỏi/tệp đề vào một card; bài đã nộp và học viên dùng chung card thứ hai, chia cột trên desktop và xếp dọc trên mobile. Bỏ viền card lồng nhau; tinh chỉnh khoảng cách, tiêu đề, màu viền nút, nhóm nút chính/phụ và avatar học viên. Trình sửa vẫn mở theo thao tác hiện hữu.
+- Thêm chế độ embedded cho các phần hiển thị dùng trong màn Mentor; giữ luồng QUIZ/ZIP, quyền sửa, bộ lọc, upload và dialog xác nhận. Bổ sung ảnh draft/320px và kiểm tra tràn ngang Mentor trong E2E hiện có.
+- Kiểm chứng: lint/Prettier các tệp sửa, TypeScript và production build riêng `.next-assignment-ui` đạt. 4 E2E dev cho soạn/xem trước/xuất bản và responsive, cùng 32 E2E assignments production desktop/mobile đều đạt; đã xem ảnh desktop/320px. E2E dùng API fixture.
+
+## 05/11/2026 — Sửa QUIZ không chọn được đáp án
+
+- Tái hiện trên Next dev: Strict Mode chạy cleanup ngay sau mount, đặt `QuizSession.blocked = true` khiến bấm đáp án không được ghi nhận. Tách cleanup request/timer khỏi xử lý kết thúc phiên đăng nhập; chỉ kết thúc phiên thật mới khóa bài và cập nhật UI ngay. Giữ khóa nhập khi nộp bài, hết giờ hoặc lỗi phiên bản.
+- Thêm E2E chọn bằng nhãn đáp án, cập nhật bộ đếm, tự lưu, reload và đổi đáp án bằng phím mũi tên. Bổ sung `MINDY_E2E_DEV=1` cho Playwright chạy Next dev tại localhost:3103 với output riêng `.next-e2e-dev`; mặc định vẫn kiểm production. Trên PowerShell: `$env:MINDY_E2E_DEV='1'; npx playwright test tests/e2e/assignments.e2e.ts --grep QUIZ --workers 2`.
+- Kiểm chứng: regression thất bại trước bản sửa và đạt sau bản sửa; 12 E2E QUIZ dev desktop/mobile đạt; 32 E2E assignments production desktop/mobile đạt; 61 unit test assignment/proxy, lint, TypeScript, build và Prettier các tệp sửa đạt. E2E dùng API fixture. Toàn bộ Vitest: 304 đạt, 2 lỗi có sẵn ở `code-highlight.test.ts` (khoảng trắng token); format toàn repo còn báo 419 tệp. Không sửa lan sang các phần đó.
+
 ## 06/11/2026 — BE Change nghiệm thu sau restart
 
 - BE full90 suites/775 tests PASS với PostgreSQL/MinIO; clean38 và upgrade35→38 migrations PASS; HTTP contract mới PASS. Không migrate DB ứng dụng, không deploy/commit/push. Cleanup vẫn OFF mặc định.

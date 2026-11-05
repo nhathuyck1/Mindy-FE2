@@ -32,9 +32,6 @@ export function WeeklyTimetable<T extends TimedSession>(props: {
   const today = vietnamDate();
   const timetable = buildWeeklyTimetable(props.sessions, monday);
   const slots = timetable.slots;
-  const daysWithLessons = timetable.days.map((_, dayIndex) =>
-    slots.some((slot) => slot.days[dayIndex].length > 0),
-  );
   return (
     <>
       <p id={helpId} className="mb-3 text-[13px] text-muted xl:hidden">
@@ -54,8 +51,8 @@ export function WeeklyTimetable<T extends TimedSession>(props: {
           </caption>
           <colgroup>
             <col className="w-16" />
-            {timetable.days.map((day, index) => (
-              <col key={day} className={daysWithLessons[index] ? undefined : 'w-20'} />
+            {timetable.days.map((day) => (
+              <col key={day} />
             ))}
           </colgroup>
           <TableHeader>

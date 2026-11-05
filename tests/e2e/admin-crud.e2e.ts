@@ -75,6 +75,19 @@ test('Table icon actions open centered blurred modals without duplicate action b
 async function mockCrud(page: Page) {
   await mockHomepageApi(page);
   await mockAdminApi(page);
+  await page.route('**/api/v1/teaching-slots', (route) =>
+    route.fulfill({
+      json: [
+        { id: 1, startsAt: '07:30', endsAt: '09:00' },
+        { id: 2, startsAt: '09:30', endsAt: '11:00' },
+        { id: 3, startsAt: '12:00', endsAt: '14:00' },
+        { id: 4, startsAt: '13:00', endsAt: '15:30' },
+        { id: 5, startsAt: '16:00', endsAt: '17:30' },
+        { id: 6, startsAt: '18:00', endsAt: '19:30' },
+        { id: 7, startsAt: '20:00', endsAt: '21:30' },
+      ],
+    }),
+  );
   let user = userSchema.parse(adminUsers[0]);
   let course = adminCourseDetailSchema.parse({ ...adminCourses[1], units: [] });
   let classroom = adminClassDetailSchema.parse({ ...adminClasses[1], meetingUrl: null, units: [] });
@@ -91,6 +104,8 @@ async function mockCrud(page: Page) {
           json: parts[0] === 'users' ? user : parts[0] === 'courses' ? course : classroom,
         });
       }
+      if (parts.length === 1 && parts[0] === 'classes')
+        return route.fulfill({ json: { items: [classroom], total: 1, page: 1, pageSize: 10 } });
       if (parts.length === 1) return route.fallback();
       return route.fulfill({ status: 404, json: { message: 'Not mocked' } });
     }
@@ -310,6 +325,20 @@ test('Creates and edits a class, schedules in Vietnam time and confirms lifecycl
     method: 'PATCH',
     body: { name: 'React tháng 10 cập nhật' },
   });
+  await expect(dialog.getByRole('heading', { name: 'Học phần & lịch buổi' })).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Đóng', exact: true }).click();
+  const schedule = page.getByRole('button', {
+    name: 'Xếp lịch: React tháng 10 cập nhật',
+    exact: true,
+  });
+  await schedule.click();
+  await expect(dialog).toContainText('Lịch học của lớp');
+  await expect(dialog.getByRole('button', { name: 'Lưu lớp học' })).toHaveCount(0);
+  await expect(dialog.getByRole('checkbox', { name: 'Thứ 2, slot 1', exact: true })).toBeVisible();
+  await page.screenshot({
+    path: testInfo.outputPath('class-schedule.png'),
+    animations: 'disabled',
+  });
   await dialog.getByLabel('Học phần của lớp').selectOption(unitId);
   await dialog.getByLabel('Tên buổi học').fill('Mở đầu React');
   await dialog.getByLabel(/^Ngày học(?: \*)?$/).fill('2026-10-21');
@@ -327,6 +356,11 @@ test('Creates and edits a class, schedules in Vietnam time and confirms lifecycl
     method: 'PATCH',
     body: { startTime: '18:30', endTime: '20:30' },
   });
+  await dialog.getByRole('button', { name: 'Đóng', exact: true }).click();
+  await expect(schedule).toBeFocused();
+  await page
+    .getByRole('button', { name: 'Chỉnh sửa lớp học: React tháng 10 cập nhật', exact: true })
+    .click();
   await dialog.getByRole('button', { name: 'Mở tuyển sinh', exact: true }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Xác nhận' }).click();
   await expect(dialog).toContainText('Đang tuyển sinh');

@@ -141,10 +141,10 @@ async function setup(
           file: input.fileObjectId
             ? {
                 id: input.fileObjectId,
-                originalFilename: 'bai-hoc.pdf',
-                mimeType: 'application/pdf',
+                originalFilename: input.type === 'IMAGE' ? 'anh.png' : 'bai-hoc.pdf',
+                mimeType: input.type === 'IMAGE' ? 'image/png' : 'application/pdf',
                 sizeBytes: 20,
-                kind: 'PDF',
+                kind: input.type === 'IMAGE' ? 'IMAGE' : 'PDF',
               }
             : null,
         };
@@ -469,4 +469,89 @@ test('previews a selected image and leaves send disabled after upload fails', as
   await expect(page.getByAltText('Ảnh đã chọn: anh.png')).toHaveJSProperty('naturalWidth', 128);
   await expect(page.getByRole('button', { name: 'Gửi', exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Đính kèm ảnh hoặc PDF' })).toBeEnabled();
+});
+
+test('retries a failed image upload, previews and sends the image without text', async ({
+  page,
+}) => {
+  await setup(page, { attachments: true });
+  const fileId = '66666666-6666-4666-8666-666666666666';
+  let uploads = 0;
+  await page.route('https://storage.example.test/**', (route) => {
+    if (route.request().method() === 'PUT') {
+      uploads++;
+      return uploads === 1 ? route.abort('failed') : route.fulfill({ status: 200 });
+    }
+    return route.fulfill({ contentType: 'image/png', body: png });
+  });
+  await page.route('**/attachments/**', (route) =>
+    route.fulfill({
+      json: route.request().url().endsWith('/upload-intents')
+        ? {
+            fileId,
+            uploadUrl: 'https://storage.example.test/upload',
+            requiredHeaders: { 'content-type': 'image/png' },
+            uploadUrlExpiresAt: new Date(Date.now() + 60000).toISOString(),
+            intentExpiresAt: new Date(Date.now() + 60000).toISOString(),
+            replayed: false,
+          }
+        : {
+            id: fileId,
+            status: 'READY',
+            originalFilename: 'anh.png',
+            errorCode: null,
+            file: {
+              id: fileId,
+              originalFilename: 'anh.png',
+              mimeType: 'image/png',
+              sizeBytes: png.length,
+              kind: 'IMAGE',
+            },
+          },
+    }),
+  );
+  await page.route('**/file-access?disposition=inline', (route) =>
+    route.fulfill({
+      json: {
+        url: 'https://storage.example.test/image',
+        expiresAt: new Date(Date.now() + 60000).toISOString(),
+      },
+    }),
+  );
+  await page.goto(`/user/messages?conversation=${id}`);
+  const input = page.getByRole('textbox', { name: 'Tin nhắn', exact: true });
+  const send = page.getByRole('button', { name: 'Gửi', exact: true });
+  await page
+    .getByLabel('Chọn ảnh hoặc PDF')
+    .setInputFiles({ name: 'anh.png', mimeType: 'image/png', buffer: png });
+  await expect(page.getByAltText('Ảnh đã chọn: anh.png')).toHaveJSProperty('naturalWidth', 128);
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Chưa tải được tệp lên kho lưu trữ' }),
+  ).toBeVisible();
+  await expect(send).toBeDisabled();
+  await input.fill('Chú thích');
+  await input.press('Enter');
+  await expect(input).toHaveValue('Chú thích');
+  await input.clear();
+  await page.getByRole('button', { name: 'Thử tải lại tệp' }).click();
+  await expect(send).toBeEnabled();
+  await expect(input).toHaveValue('');
+  const sent = page.waitForRequest(
+    (request) => request.method() === 'POST' && request.url().endsWith('/messages'),
+  );
+  await input.press('Enter');
+  expect((await sent).postDataJSON()).toEqual({
+    clientMessageId: expect.any(String),
+    type: 'IMAGE',
+    fileObjectId: fileId,
+  });
+  await expect(page.getByAltText('Ảnh đã chọn: anh.png')).toHaveCount(0);
+  const image = page.getByRole('button', { name: 'Mở lớn ảnh anh.png', exact: true });
+  await expect(image.locator('img')).toHaveJSProperty('naturalWidth', 128);
+  await image.click();
+  await expect(page.getByRole('dialog').getByAltText('anh.png')).toHaveJSProperty(
+    'naturalWidth',
+    128,
+  );
+  expect(uploads).toBe(2);
 });

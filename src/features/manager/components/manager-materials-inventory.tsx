@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   FileText,
   Plus,
@@ -33,8 +34,22 @@ export function ManagerMaterialsInventory(props: {
   onReviewStatusChange: (status: string) => void;
 }) {
   const status = props.reviewStatus;
-  const [type, setType] = useState('');
-  const [page, setPage] = useState(1);
+  const searchParams = useSearchParams(),
+    router = useRouter(),
+    pathname = usePathname();
+  const requestedType = searchParams.get('contentType') ?? '';
+  const type = ['ARTICLE', 'VIDEO', 'FILE'].includes(requestedType) ? requestedType : '';
+  const requestedPage = Number(searchParams.get('page') ?? 1);
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  function update(values: Record<string, string | number>) {
+    const next = new URLSearchParams(searchParams);
+    for (const [key, value] of Object.entries(values)) {
+      if (!value || (key === 'page' && value === 1)) next.delete(key);
+      else next.set(key, String(value));
+    }
+    router.replace(`${pathname}?${next}`, { scroll: false });
+  }
+  const setPage = (page: number) => update({ page });
   const [detail, setDetail] = useState<string | null>(null);
   const [create, setCreate] = useState(false);
   const [courseId, setCourseId] = useState('');
@@ -115,9 +130,6 @@ export function ManagerMaterialsInventory(props: {
     return (
       <div className="space-y-6">
         <div>
-          <p className="mb-2 text-xs font-semibold tracking-widest text-mint uppercase">
-            Mindy / Quản lý tài liệu
-          </p>
           <h1 className="text-2xl font-bold sm:text-3xl">
             {course.data?.title ?? 'Nội dung khóa học'}
           </h1>
@@ -138,9 +150,6 @@ export function ManagerMaterialsInventory(props: {
     <div className="space-y-7">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="mb-2 text-xs font-semibold tracking-widest text-mint uppercase">
-            Mindy / Không gian Manager
-          </p>
           <h1 className="text-3xl font-bold tracking-tight">Quản lý tài liệu</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
             Một nơi để biên soạn, kiểm duyệt và phát hành tài liệu cho các khóa học.
@@ -158,7 +167,6 @@ export function ManagerMaterialsInventory(props: {
             key={item.status}
             onClick={() => {
               props.onReviewStatusChange(item.status);
-              setPage(1);
             }}
             className={`flex cursor-pointer items-start gap-4 rounded-2xl border p-5 text-left transition-colors hover:border-mint ${status === item.status ? 'border-mint/50 bg-soft/60' : 'border-line bg-canvas'}`}
           >
@@ -259,7 +267,6 @@ export function ManagerMaterialsInventory(props: {
               value={status}
               onChange={(event) => {
                 props.onReviewStatusChange(event.target.value);
-                setPage(1);
               }}
             >
               <NativeSelectOption value="">Tất cả trạng thái</NativeSelectOption>
@@ -278,8 +285,7 @@ export function ManagerMaterialsInventory(props: {
               className="h-12 w-full py-2 text-base leading-6"
               value={type}
               onChange={(event) => {
-                setType(event.target.value);
-                setPage(1);
+                update({ contentType: event.target.value, page: 1 });
               }}
             >
               <NativeSelectOption value="">Tất cả loại</NativeSelectOption>

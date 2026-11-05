@@ -1,11 +1,35 @@
 import { z } from 'zod';
 import * as dto from '@/features/operations/schemas/operation-contracts';
+import {
+  assignClassMentorInputSchema,
+  classMentorAssignmentSchema,
+  classMentorCandidatesSchema,
+  mentorCandidatesQuerySchema,
+} from '@/features/admin/schemas/admin-mentor-contracts';
 const empty = z.object({}).strict();
 function rule(response: z.ZodType, body?: z.ZodType, idempotent = false) {
   return { response, body, idempotent, query: empty, cookies: ['access_token'], bodyLimit: 65536 };
 }
 export function resolveOperationRule(method: string, path: string) {
   const p = path.split('/');
+  if (
+    p.length === 4 &&
+    p[0] === 'management' &&
+    p[1] === 'classes' &&
+    z.uuidv4().safeParse(p[2]).success
+  ) {
+    if (method === 'GET' && p[3] === 'available-mentors')
+      return {
+        ...rule(classMentorCandidatesSchema.refine((data) => data.classId === p[2])),
+        query: mentorCandidatesQuerySchema,
+      };
+    if (method === 'PATCH' && p[3] === 'mentor')
+      return rule(
+        classMentorAssignmentSchema.refine((data) => data.classId === p[2]),
+        assignClassMentorInputSchema,
+        true,
+      );
+  }
   if (method === 'GET' && path === 'management/classes')
     return {
       ...rule(dto.scheduleClassesSchema),

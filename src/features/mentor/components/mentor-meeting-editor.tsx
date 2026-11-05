@@ -16,6 +16,7 @@ export function MentorMeetingEditor(props: {
   const [version] = useState(props.version);
   const [error, setError] = useState('');
   const command = useMentorCommand(meetingResponseSchema);
+  const changed = url.trim() !== (props.meetingUrl ?? '');
   return (
     <Modal
       title="Sửa link buổi học"
@@ -27,6 +28,7 @@ export function MentorMeetingEditor(props: {
         className="space-y-5 p-5"
         onSubmit={async (event) => {
           event.preventDefault();
+          if (!changed) return props.onClose();
           const input = meetingInputSchema.safeParse({
             expectedVersion: version,
             meetingUrl: url.trim() || null,
@@ -75,7 +77,10 @@ export function MentorMeetingEditor(props: {
           >
             Đóng
           </Button>
-          <Button type="submit" disabled={command.isPending || props.version !== version}>
+          <Button
+            type="submit"
+            disabled={!changed || command.isPending || props.version !== version}
+          >
             {command.isPending ? 'Đang lưu…' : 'Lưu link buổi học'}
           </Button>
         </div>

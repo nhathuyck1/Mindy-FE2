@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { z } from 'zod';
-import { Plus, ArrowUp, ArrowDown, Trash2, Eye } from 'lucide-react';
+import { Plus, ArrowUp, ArrowDown, Trash2, Eye, ListChecks, FileInput } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { ApiError } from '@/lib/api/client';
 import { useAssignmentCommand } from '../api/assignment-queries';
 import * as dto from '../schemas/assignment-contracts';
 import { ErrorNotice, panelClass, fieldClass } from './assignment-ui';
+import { QuizBulkImportDialog } from './quiz-bulk-import-dialog';
 
 function blankQuestion(): dto.QuestionInput {
   return {
@@ -23,6 +24,7 @@ export function QuizQuestionEditor(props: {
   item: dto.Assignment;
   onSaved: (item: dto.Assignment) => void;
   readonly?: boolean;
+  embedded?: boolean;
 }) {
   const [questions, setQuestions] = useState<dto.QuestionInput[]>(
     () =>
@@ -34,6 +36,7 @@ export function QuizQuestionEditor(props: {
       })) ?? [],
   );
   const [preview, setPreview] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [blocked, setBlocked] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -54,13 +57,17 @@ export function QuizQuestionEditor(props: {
   }
   if (props.readonly)
     return (
-      <section className={`${panelClass} space-y-4`}>
-        <h2 className="text-xl font-extrabold">
-          Bộ câu hỏi <span className="text-base text-muted">({questions.length})</span>
+      <section className={`${props.embedded ? 'min-w-0' : panelClass} space-y-4`}>
+        <h2 className="flex items-center gap-2.5 text-lg font-extrabold">
+          <ListChecks size={20} className="text-mint" aria-hidden="true" />
+          Bộ câu hỏi
+          <span className="rounded-full bg-soft px-2.5 py-0.5 text-sm font-bold text-forest">
+            {questions.length}
+          </span>
         </h2>
         {questions.map((question, index) => (
-          <details key={question.id ?? index} className="rounded-xl border border-line p-4">
-            <summary className="cursor-pointer font-bold whitespace-pre-wrap break-words">
+          <details key={question.id ?? index} className="border-b border-line py-1 last:border-b-0">
+            <summary className="min-h-11 cursor-pointer py-3 font-bold whitespace-pre-wrap break-words marker:text-mint">
               Câu {index + 1}. {question.prompt}
             </summary>
             <ul className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -76,7 +83,16 @@ export function QuizQuestionEditor(props: {
             </ul>
           </details>
         ))}
-        {questions.length === 0 && <p className="text-muted">Chưa có câu hỏi.</p>}
+        {questions.length === 0 && (
+          <div className="py-6 text-center">
+            <p className="font-bold text-muted">Chưa có câu hỏi.</p>
+            {props.item.status === 'DRAFT' && (
+              <p className="mt-1 text-sm text-muted">
+                Soạn câu hỏi để hoàn thiện đề trước khi xuất bản.
+              </p>
+            )}
+          </div>
+        )}
       </section>
     );
   return (
@@ -85,10 +101,16 @@ export function QuizQuestionEditor(props: {
         <h2 className="text-xl font-extrabold">
           Câu hỏi <span className="text-base text-muted">({questions.length}/200)</span>
         </h2>
-        <Button variant="outline" onClick={() => setPreview(true)}>
-          <Eye size={18} />
-          Xem trước
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" disabled={disabled} onClick={() => setBulkOpen(true)}>
+            <FileInput size={18} aria-hidden="true" />
+            Nhập hàng loạt
+          </Button>
+          <Button variant="outline" onClick={() => setPreview(true)}>
+            <Eye size={18} />
+            Xem trước
+          </Button>
+        </div>
       </div>
       <fieldset disabled={disabled} className="min-w-0 space-y-5">
         {questions.map((question, index) => (
@@ -229,6 +251,18 @@ export function QuizQuestionEditor(props: {
           </div>
         </>
       )}
+      <QuizBulkImportDialog
+        open={bulkOpen}
+        disabled={!!disabled}
+        existingCount={questions.length}
+        onClose={() => setBulkOpen(false)}
+        onImport={(imported, replace) => {
+          if (disabled || (replace ? 0 : questions.length) + imported.length > 200) return;
+          setQuestions((previous) => (replace ? imported : [...previous, ...imported]));
+          setDirty(true);
+          setBulkOpen(false);
+        }}
+      />
       {preview && (
         <Modal
           title="Xem trước bài trắc nghiệm"

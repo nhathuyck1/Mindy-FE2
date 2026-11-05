@@ -20,5 +20,7 @@ export function loginDestination(
   }
   if (role === 'STUDENT') return null;
   const home = staffHomes[role];
+  if (role === 'MENTOR' && /^\/whiteboards\/[^/?]+\?audience=mentor$/.test(returnTo))
+    return returnTo;
   return isWithin(returnTo, home) ? returnTo : home;
 }

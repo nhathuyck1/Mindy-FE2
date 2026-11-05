@@ -233,6 +233,45 @@ describe('Admin read API adapter', () => {
     expect((await proxyApi(request(), detailPath)).status).toBe(502);
   });
 
+  it.each(['assignment_audits', 'assignment_zip_audits'])(
+    'proxies assignment tracking list, source filter and detail for %s',
+    async (source) => {
+      const event = {
+        id: '55555555-5555-4555-8555-555555555555',
+        source,
+        action: 'PUBLISH',
+        actor: { id: user.id, displayName: 'Giảng viên' },
+        entityType: 'assignment',
+        entityId: '66666666-6666-4666-8666-666666666666',
+        classId: null,
+        sessionId: null,
+        version: 2,
+        reason: null,
+        occurredAt: '2026-11-06T00:00:00Z',
+      };
+      const path = 'admin/tracking/events';
+      const page = { items: [event], page: 1, pageSize: 20, total: 1 };
+      const request = (suffix = '') =>
+        new Request(`http://localhost:3003/api/v1/${path}${suffix}`, {
+          headers: { Cookie: 'access_token=opaque' },
+        });
+
+      for (const suffix of ['', `?source=${source}`]) {
+        fetchMock.mockResolvedValueOnce(Response.json(page));
+        const response = await proxyApi(request(suffix), path);
+        expect(response.status).toBe(200);
+        expect(await response.json()).toEqual(page);
+        if (suffix) expect(String(fetchMock.mock.lastCall?.[0])).toContain(`source=${source}`);
+      }
+
+      const detail = { ...event, data: { assignment_id: event.entityId }, evidenceItems: [] };
+      fetchMock.mockResolvedValueOnce(Response.json(detail));
+      const response = await proxyApi(request(), `${path}/${source}/${event.id}`);
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual(detail);
+    },
+  );
+
   it('Allows only a paginated reconciliation read and never proxies its mutation', async () => {
     const path = 'admin/payments/reconciliation';
     const request = (suffix = '', method = 'GET') =>

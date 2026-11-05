@@ -21,8 +21,8 @@ for (const audience of ['admin', 'manager', 'mentor'] as const) {
         pendingOrders: 1,
       },
       paymentMethods: [{ id: 'CASH', name: 'CASH', amount: '1200000', orders: 2 }],
-      courses: [],
-      classes: [],
+      courses: [{ id: 'course', name: 'ReactJS thực chiến', amount: '1200000', orders: 2 }],
+      classes: [{ id: 'class', name: 'React K01', amount: '1200000', orders: 2 }],
       trend: [{ date: '2026-11-03', amount: '1200000', orders: 2 }],
       reconciliation: [],
       openingAlerts: [],
@@ -38,7 +38,10 @@ for (const audience of ['admin', 'manager', 'mentor'] as const) {
         actualTeachingHours: 9,
       },
       upcoming: [],
-      leaveRequests: [],
+      leaveRequests: [
+        { status: 'APPROVED', count: 2 },
+        { status: 'PENDING', count: 1 },
+      ],
     };
     await page.route('**/api/v1/**', (route) => {
       const url = new URL(route.request().url());
@@ -49,6 +52,17 @@ for (const audience of ['admin', 'manager', 'mentor'] as const) {
         return route.fulfill({
           json:
             audience === 'admin' ? dashboardFixture() : audience === 'manager' ? manager : mentor,
+        });
+      }
+      if (audience === 'manager' && url.pathname.endsWith('/manager/materials')) {
+        const status = url.searchParams.get('reviewStatus');
+        return route.fulfill({
+          json: {
+            items: [],
+            page: 1,
+            pageSize: Number(url.searchParams.get('pageSize') ?? 20),
+            total: status === 'PENDING_REVIEW' ? 1 : status === 'APPROVED' ? 25 : 0,
+          },
         });
       }
       return route.fulfill({
@@ -62,11 +76,40 @@ for (const audience of ['admin', 'manager', 'mentor'] as const) {
     });
     await expect(dashboard).toBeVisible();
     if (audience === 'manager') {
+      const materials = page.getByRole('region', { name: 'Thống kê tài liệu', exact: true });
+      await expect(materials.getByRole('link')).toHaveCount(3);
+      await expect(
+        materials.getByRole('link', { name: 'Chờ duyệt: 1', exact: true }),
+      ).toHaveAttribute('href', '/manager/materials?view=inventory&reviewStatus=PENDING_REVIEW');
+      await expect(
+        materials.getByRole('link', { name: 'Đã duyệt: 25', exact: true }),
+      ).toBeVisible();
+      await expect(materials.getByRole('link', { name: 'Bản nháp: 0', exact: true })).toBeVisible();
+      await expect(page.getByText('Mở danh sách lọc', { exact: true })).toHaveCount(0);
       await expect(dashboard.getByText('Thực thu', { exact: true }).first()).toBeVisible();
       await expect(dashboard.getByText('1.200.000', { exact: false }).first()).toBeVisible();
+      for (const name of [
+        'Biểu đồ thực thu theo ngày',
+        'Biểu đồ theo phương thức',
+        'Biểu đồ theo khóa học',
+        'Biểu đồ theo lớp',
+      ]) {
+        await expect(dashboard.locator(`[aria-label="${name}"] .recharts-surface`)).toBeVisible();
+      }
+      const course = dashboard.getByRole('region', { name: 'Theo khóa học', exact: true });
+      await course.getByText('Xem số liệu chi tiết', { exact: true }).click();
+      await expect(
+        course.getByRole('cell', { name: 'ReactJS thực chiến', exact: true }),
+      ).toBeVisible();
     } else if (audience === 'mentor') {
       await expect(dashboard.getByText('Giờ dạy thực tế', { exact: true })).toBeVisible();
       await expect(dashboard.getByText('Thực thu', { exact: true })).toHaveCount(0);
+      await expect(
+        dashboard.locator('[aria-label="Biểu đồ số buổi giảng dạy"] .recharts-surface'),
+      ).toBeVisible();
+      await expect(
+        dashboard.locator('[aria-label="Biểu đồ trạng thái đơn nghỉ"] .recharts-surface'),
+      ).toBeVisible();
     } else
       await expect(
         dashboard.getByRole('heading', { name: 'Khóa học được đăng ký nhiều nhất' }),

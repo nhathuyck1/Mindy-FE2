@@ -136,6 +136,6 @@ test('mentor chapter list and material body scroll independently at tablet width
   await expect.poll(() => body.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
   expect(await create.boundingBox()).toEqual(before);
   await expect(
-    page.getByRole('region', { name: 'Nội dung chưa gắn buổi học', exact: true }),
+    page.getByRole('region', { name: 'Nội dung có buổi học chưa xác định', exact: true }),
   ).toBeInViewport();
 });

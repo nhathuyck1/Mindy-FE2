@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { loginDestination } from './login-destination';
 
 describe('loginDestination', () => {
+  it('returns mentors to their session board and keeps other staff in their workspace', () => {
+    const board = '/whiteboards/11111111-1111-4111-8111-111111111111?audience=mentor';
+    expect(loginDestination('staff', 'MENTOR', board)).toBe(board);
+    expect(loginDestination('staff', 'MANAGER', board)).toBe('/manager');
+  });
   it('only lets students use the student login and keeps them out of staff areas', () => {
     expect(loginDestination('student', 'STUDENT', '/cart')).toBe('/cart');
     expect(loginDestination('student', 'STUDENT', '/admin/users')).toBe('/');

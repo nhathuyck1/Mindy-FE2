@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import '@fontsource-variable/inter';
 import '@/app/admin/admin.css';
+import './manager.css';
 import { ManagerShell } from '@/components/layout/manager-shell';
 export const metadata: Metadata = {
   title: { default: 'Manager | Mindy', template: '%s | Mindy Manager' },

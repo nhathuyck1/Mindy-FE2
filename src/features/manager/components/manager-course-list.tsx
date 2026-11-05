@@ -1,7 +1,11 @@
 import { ArrowRight, BookOpen } from 'lucide-react';
 import type { Course } from '@/features/courses/schemas/course-contracts';
 
-export function ManagerCourseList(props: { courses: Course[]; onSelect: (id: string) => void }) {
+export function ManagerCourseList(props: {
+  courses: Course[];
+  counts: Record<string, number | undefined>;
+  onSelect: (id: string) => void;
+}) {
   return (
     <section
       aria-label="Danh sách khóa học"
@@ -26,6 +30,12 @@ export function ManagerCourseList(props: { courses: Course[]; onSelect: (id: str
                 <span className="min-w-0 flex-1">
                   <span className="block text-base font-semibold break-words">{course.title}</span>
                   <span className="mt-1 block text-sm break-words text-muted">{course.code}</span>
+                  <span className="mt-2 block text-xs font-medium text-mint sm:hidden">
+                    {props.counts[course.id]?.toLocaleString('vi-VN') ?? '—'} tài liệu
+                  </span>
+                </span>
+                <span className="hidden shrink-0 rounded-lg bg-soft px-3 py-2 text-sm font-semibold text-forest tabular-nums sm:inline">
+                  {props.counts[course.id]?.toLocaleString('vi-VN') ?? '—'} tài liệu
                 </span>
                 <span className="hidden shrink-0 text-sm font-medium text-mint sm:inline">
                   Xem chi tiết

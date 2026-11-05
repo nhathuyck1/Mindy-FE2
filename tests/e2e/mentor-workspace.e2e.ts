@@ -10,6 +10,10 @@ test('mentor assignment filters, class shell and timetable use the new contracts
 }, info) => {
   const { calls } = await mockMentorWorkspace(page);
   await page.goto('/mentor/classes');
+  await expect(page.getByRole('heading', { name: 'Lớp JavaScript tháng 10' })).toBeVisible();
+  await page.setViewportSize({ width: info.project.name === 'mobile' ? 320 : 1440, height: 900 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: info.outputPath('mentor-classes.png'), fullPage: true });
   await page.getByLabel('Phân công', { exact: true }).selectOption('SUBSTITUTE');
   await expect
     .poll(() =>
@@ -17,7 +21,8 @@ test('mentor assignment filters, class shell and timetable use the new contracts
     )
     .toBe(true);
   await page.getByRole('link', { name: /Lớp JavaScript tháng 10/ }).click();
-  await page.getByRole('button', { name: 'Buổi học', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Buổi học', exact: true })).toHaveCount(0);
+  await page.goto(`/mentor/classes/${mentorIds.class}?tab=sessions`);
   await expect(page.getByRole('heading', { name: 'Buổi vòng lặp' })).toBeVisible();
   await page.getByLabel('Từ ngày', { exact: true }).fill('2026-10-26');
   await page.getByLabel('Đến ngày', { exact: true }).fill('2026-10-26');
@@ -47,6 +52,7 @@ test('substitute sees assigned teaching content without class roster, reports or
   await expect(page.getByText('Dạy thay · Chỉ xem chương', { exact: false })).toBeVisible();
   for (const name of ['Học viên', 'Chuyên cần', 'Tiến độ', 'Thêm nội dung', 'Quyền truy cập'])
     await expect(page.getByRole('button', { name, exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Tài liệu chung', exact: true }).click();
   await page.getByRole('button', { name: /Bài viết đầu tiên/ }).click();
   await expect(page.getByRole('button', { name: 'Chỉnh sửa', exact: true })).toHaveCount(0);
   expect(

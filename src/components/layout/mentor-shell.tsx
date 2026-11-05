@@ -24,12 +24,12 @@ import { ApiError } from '@/lib/api/client';
 import { SessionControls } from '@/features/auth/components/session-controls';
 
 const navigation = [
-  { href: '/mentor/messages', title: 'Tin nhắn', icon: MessageCircle },
-  { href: '/mentor/profile', title: 'Thông tin cá nhân', icon: UserRound },
   { href: '/mentor/dashboard', title: 'Tổng quan', icon: ChartNoAxesCombined },
   { href: '/mentor', title: 'Lịch dạy', icon: CalendarDays },
   { href: '/mentor/classes', title: 'Lớp của tôi', icon: GraduationCap },
   { href: '/mentor/leave-requests', title: 'Đơn xin nghỉ', icon: CalendarOff },
+  { href: '/mentor/messages', title: 'Tin nhắn', icon: MessageCircle },
+  { href: '/mentor/profile', title: 'Thông tin cá nhân', icon: UserRound },
 ];
 function MentorAccess(props: { children: React.ReactNode }) {
   const session = useSession();

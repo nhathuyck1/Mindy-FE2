@@ -18,7 +18,7 @@ import {
 } from './admin-form-parts';
 import { AdminQueryState } from './admin-query-state';
 import { AdminStatus } from './admin-status';
-import { AdminClassSessions } from './admin-class-sessions';
+import { AdminClassMentor } from './admin-class-mentor';
 
 function ClassScheduleFields(props: { initial?: AdminClassDetail }) {
   return (
@@ -183,10 +183,7 @@ export function AdminClassForm(props: { initial: AdminClassDetail }) {
         <p className="text-sm text-muted">Mã lớp: {props.initial.code}</p>
         <AdminStatus status={props.initial.status} />
       </div>
-      <p className="text-sm leading-7 text-muted">
-        Giảng viên: <strong>{props.initial.mentor.displayName || 'Chưa cập nhật tên'}</strong>. Phân
-        công lại giảng viên cần quy trình riêng có lý do và kiểm tra lịch.
-      </p>
+      <AdminClassMentor classroom={props.initial} editable={editable} />
       <form
         className="space-y-5"
         onSubmit={async (event) => {
@@ -278,7 +275,6 @@ export function AdminClassForm(props: { initial: AdminClassDetail }) {
           </div>
         </section>
       )}
-      <AdminClassSessions classroom={props.initial} editable={editable} />
     </div>
   );
 }

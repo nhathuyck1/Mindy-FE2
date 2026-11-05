@@ -15,11 +15,13 @@ import {
   type LeavePreview,
   type LeaveSessionMapping,
 } from '../schemas/leave-contracts';
-import { localDate, leavePeriods } from '../lib/leave-display';
+import { localDate, leavePeriods, makeupMinDate } from '../lib/leave-display';
+import { hasOverlappingMakeupSlots } from '../lib/leave-makeup';
 import { mentorDate } from './mentor-shared';
 import { SessionMakeupSlot } from './mentor-leave-makeup-slot';
 import { ScheduleConflicts } from '@/features/operations/components/schedule-conflicts';
 export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string) => void }) {
+  const [now] = useState(() => Date.now());
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [period, setPeriod] = useState('FULL_DAY');
@@ -50,7 +52,8 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
     preview.affectedSessions.length > 0 &&
     (period === 'FULL_DAY' && mappingMode === 'keep-time'
       ? sourceDays.every((day) => days[day])
-      : preview.affectedSessions.every((item) => sessions[item.sessionId]));
+      : !hasOverlappingMakeupSlots(Object.values(sessions)) &&
+        preview.affectedSessions.every((item) => sessions[item.sessionId]));
   return (
     <section
       className="mx-auto mb-6 max-w-4xl space-y-6 rounded-2xl border border-line bg-canvas p-5 sm:p-8"
@@ -246,6 +249,11 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
                     <SessionMakeupSlot
                       key={source.sessionId}
                       source={source}
+                      minDate={makeupMinDate(preview.asOf, preview.timeZone, now, {
+                        period,
+                        toDate,
+                        sourceStartsAt: source.startsAt,
+                      })}
                       onSelect={(mapping) =>
                         setSessions((current) => {
                           const next = { ...current };

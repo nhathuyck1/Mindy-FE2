@@ -8,6 +8,15 @@ export function safeReturnPath(value: string | null | undefined): string {
   try {
     const url = new URL(value, 'https://mindy.invalid');
     if (url.origin !== 'https://mindy.invalid') return '/';
+    if (url.pathname === '/user/assignments') {
+      const classId = url.searchParams.get('classId');
+      return (
+        '/user/assignments' +
+        (url.searchParams.getAll('classId').length === 1 && z.uuidv4().safeParse(classId).success
+          ? `?classId=${classId}`
+          : '')
+      );
+    }
     if (
       [
         '/user',
@@ -16,6 +25,9 @@ export function safeReturnPath(value: string | null | undefined): string {
         '/user/schedule',
         '/user/courses',
         '/user/materials',
+        '/user/messages',
+        '/user/assignments',
+        '/mentor/messages',
         '/admin',
         '/admin/users',
         '/admin/courses',
@@ -24,6 +36,7 @@ export function safeReturnPath(value: string | null | undefined): string {
         '/admin/tracking',
         '/admin/payments/reconciliation',
         '/manager',
+        '/manager/schedule',
         '/manager/collections',
       ].includes(url.pathname)
     )
@@ -61,7 +74,7 @@ export function safeReturnPath(value: string | null | undefined): string {
       )
         return '/manager/materials';
       if (view !== 'inventory') return '/manager/materials';
-      const statuses = ['PENDING_REVIEW', 'APPROVED', 'DRAFT'];
+      const statuses = ['PENDING_REVIEW', 'APPROVED', 'DRAFT', 'REJECTED'];
       return reviewStatus && !statuses.includes(reviewStatus)
         ? '/manager/materials'
         : `/manager/materials?view=inventory${reviewStatus ? `&reviewStatus=${reviewStatus}` : ''}`;
@@ -75,6 +88,39 @@ export function safeReturnPath(value: string | null | undefined): string {
         : '/';
     }
     const parts = url.pathname.split('/');
+    if (
+      ['user', 'mentor'].includes(parts[1]) &&
+      ['assignments', 'zip-submissions', 'code-submissions', 'assignment-submissions'].includes(
+        parts[2],
+      ) &&
+      z.uuidv4().safeParse(parts[3]).success &&
+      (parts.length === 4 ||
+        (parts.length === 5 &&
+          parts[1] === 'mentor' &&
+          parts[2] === 'assignments' &&
+          parts[4] === 'review')) &&
+      !(parts[1] === 'mentor' && parts[2] === 'assignment-submissions') &&
+      !(parts[1] === 'user' && parts[2] === 'code-submissions')
+    ) {
+      const classId = url.searchParams.get('classId');
+      return (
+        url.pathname +
+        (parts[1] === 'user' &&
+        parts[2] === 'assignments' &&
+        url.searchParams.getAll('classId').length === 1 &&
+        z.uuidv4().safeParse(classId).success
+          ? `?classId=${classId}`
+          : '')
+      );
+    }
+    if (
+      parts.length === 5 &&
+      parts[1] === 'user' &&
+      parts[2] === 'classes' &&
+      z.uuidv4().safeParse(parts[3]).success &&
+      parts[4] === 'assignments'
+    )
+      return url.pathname;
     if (
       parts.length === 3 &&
       parts[1] === 'whiteboards' &&

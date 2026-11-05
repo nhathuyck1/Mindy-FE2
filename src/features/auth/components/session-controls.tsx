@@ -12,7 +12,11 @@ import { useLogout, useSession } from '../api/auth-queries';
 
 export function SessionControls() {
   const session = useSession();
-  const logout = useLogout({ navigateHome: true });
+  const logout = useLogout({
+    navigateHome: true,
+    redirectTo:
+      session.data?.role === 'ADMIN' || session.data?.role === 'MENTOR' ? '/admin/login' : '/',
+  });
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);

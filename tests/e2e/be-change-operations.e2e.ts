@@ -46,7 +46,8 @@ test('mentor swaps two assigned future sessions and retries the same uncertain r
         });
   });
   await page.goto(`/mentor/classes/${mentorIds.class}`);
-  await page.getByRole('button', { name: 'Buổi học', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Buổi học', exact: true })).toHaveCount(0);
+  await page.goto(`/mentor/classes/${mentorIds.class}?tab=sessions`);
   await page.getByText('Hoán đổi hai buổi trong trang lịch này', { exact: true }).click();
   await page
     .getByRole('combobox', { name: 'Buổi thứ nhất', exact: true })
@@ -132,7 +133,17 @@ test('manager previews a weekly timetable and retries an uncertain save with the
         },
       });
     if (path.endsWith('/teaching-slots'))
-      return route.fulfill({ json: [{ id: 1, startsAt: '07:30', endsAt: '09:00' }] });
+      return route.fulfill({
+        json: [
+          { id: 1, startsAt: '07:30', endsAt: '09:00' },
+          { id: 2, startsAt: '09:30', endsAt: '11:00' },
+          { id: 3, startsAt: '12:00', endsAt: '14:00' },
+          { id: 4, startsAt: '13:00', endsAt: '15:30' },
+          { id: 5, startsAt: '16:00', endsAt: '17:30' },
+          { id: 6, startsAt: '18:00', endsAt: '19:30' },
+          { id: 7, startsAt: '20:00', endsAt: '21:30' },
+        ],
+      });
     if (path.endsWith('/management/classes'))
       return route.fulfill({ json: { items: [detail], page: 1, pageSize: 20, total: 1 } });
     if (path.endsWith('/weekly-schedule/preview')) return route.fulfill({ json: result });
@@ -158,11 +169,28 @@ test('manager previews a weekly timetable and retries an uncertain save with the
     });
   });
   await page.goto('/manager');
-  await page.getByText('Lịch tuần và dời khai giảng', { exact: true }).click();
+  await expect(
+    page.getByRole('region', { name: 'Lịch tuần và dời khai giảng', exact: true }),
+  ).toHaveCount(0);
+  if (info.project.name === 'mobile')
+    await page.getByRole('button', { name: 'Mở menu Manager' }).click();
+  const navigation = page.getByRole('navigation', { name: 'Điều hướng Manager' });
+  await navigation.getByRole('link', { name: 'Lịch và khai giảng', exact: true }).click();
+  await expect(page).toHaveURL('/manager/schedule');
+  await expect(
+    page.getByRole('heading', { name: 'Lịch và khai giảng', exact: true }),
+  ).toBeVisible();
   await page
     .getByRole('combobox', { name: 'Lớp đang mở đăng ký', exact: true })
     .selectOption(classId);
-  await expect(page.getByLabel('Tên buổi 1')).toBeDisabled();
+  await expect(page.getByText('Nội dung giữ nguyên', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Tên buổi 1')).toHaveCount(0);
+  await expect(page.getByRole('checkbox')).toHaveCount(49);
+  const slot = page.getByRole('checkbox', { name: 'Thứ 3, slot 6', exact: true });
+  await slot.focus();
+  await page.keyboard.press('Space');
+  await expect(slot).toBeChecked();
+  await page.screenshot({ path: info.outputPath('weekly-schedule-editor.png'), fullPage: true });
   await page.getByLabel('Lý do', { exact: true }).fill('Dời khai giảng');
   await page.getByRole('button', { name: 'Xem trước lịch', exact: true }).click();
   await expect(page.getByText('Lịch dự kiến', { exact: true })).toBeVisible();
@@ -179,6 +207,13 @@ test('manager previews a weekly timetable and retries an uncertain save with the
     await page.evaluate(() => innerWidth),
   );
   await page.screenshot({ path: info.outputPath('weekly-schedule.png'), fullPage: true });
+  if (info.project.name === 'desktop') {
+    await page.setViewportSize({ width: 768, height: 600 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    await page.screenshot({ path: info.outputPath('weekly-schedule-tablet.png'), fullPage: true });
+  }
 });
 
 test('manager confirms a retention snapshot and sees stale items without claiming reclaimed storage', async ({

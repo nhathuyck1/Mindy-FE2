@@ -16,9 +16,11 @@ import { isTeachingSlot } from '@/lib/teaching-slots';
 import { mentorDate } from './mentor-shared';
 export function SessionMakeupSlot(props: {
   source: LeavePreview['affectedSessions'][number];
+  minDate: string;
   onSelect: (mapping: LeaveSessionMapping | null) => void;
 }) {
   const [date, setDate] = useState('');
+  const [now] = useState(() => Date.now());
   const [period, setPeriod] = useState('MORNING');
   const [selected, setSelected] = useState('');
   const slots = useMentorCommand(leaveSlotsSchema);
@@ -28,13 +30,15 @@ export function SessionMakeupSlot(props: {
     return hour * 60 + minute;
   };
   const availableSlots =
-    slots.data?.slots.filter((slot) =>
-      isTeachingSlot(
-        slot.startsAt,
-        slot.endsAt,
-        slots.data?.timeZone ?? 'Asia/Ho_Chi_Minh',
-        (catalogue.data ?? []).map((s) => ({ start: clock(s.startsAt), end: clock(s.endsAt) })),
-      ),
+    slots.data?.slots.filter(
+      (slot) =>
+        Date.parse(slot.startsAt) > now &&
+        isTeachingSlot(
+          slot.startsAt,
+          slot.endsAt,
+          slots.data?.timeZone ?? 'Asia/Ho_Chi_Minh',
+          (catalogue.data ?? []).map((s) => ({ start: clock(s.startsAt), end: clock(s.endsAt) })),
+        ),
     ) ?? [];
   return (
     <div className="space-y-4 rounded-xl border border-line bg-canvas p-4 sm:p-5">
@@ -83,6 +87,7 @@ export function SessionMakeupSlot(props: {
           <Input
             className="h-12"
             type="date"
+            min={props.minDate}
             required
             value={date}
             disabled={slots.isPending}

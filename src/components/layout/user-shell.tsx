@@ -22,11 +22,15 @@ function UserNavigation(props: { collapsed?: boolean; onNavigate?: () => void })
           aria-label={item.label}
           title={props.collapsed ? item.label : undefined}
           aria-current={
-            pathname === item.href || pathname.startsWith(item.href + '/') ? 'page' : undefined
+            pathname === item.href ||
+            (item.href !== '/user' && pathname.startsWith(item.href + '/'))
+              ? 'page'
+              : undefined
           }
           className={
             'user-nav-link ' +
-            (pathname === item.href || pathname.startsWith(item.href + '/')
+            (pathname === item.href ||
+            (item.href !== '/user' && pathname.startsWith(item.href + '/'))
               ? 'user-nav-active '
               : '') +
             (props.collapsed ? 'justify-center px-0' : '')
@@ -101,7 +105,9 @@ export function UserShell(props: { children: React.ReactNode }) {
     )
       ? 'Bài tập'
       : (userNavigation.find(
-          (item) => item.href === pathname || pathname.startsWith(item.href + '/'),
+          (item) =>
+            item.href === pathname ||
+            (item.href !== '/user' && pathname.startsWith(item.href + '/')),
         )?.label ?? 'Tài khoản');
   return (
     <AuthGuard role="STUDENT">

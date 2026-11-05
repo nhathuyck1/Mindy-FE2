@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { CalendarDays, Check, ListOrdered } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
 import { useSession } from '@/features/auth/api/auth-queries';
@@ -49,85 +50,120 @@ export function ManagerWeeklySchedule() {
       }),
   });
   return (
-    <details className="rounded-2xl border border-line bg-canvas p-4">
-      <summary className="cursor-pointer text-xl font-bold">Lịch tuần và dời khai giảng</summary>
-      <div className="mt-4 space-y-4">
-        <label className="block text-sm font-bold">
-          Trạng thái lớp
-          <NativeSelect
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              setPage(1);
-              setId('');
-            }}
-          >
-            <NativeSelectOption value="OPEN">Đang mở đăng ký</NativeSelectOption>
-            <NativeSelectOption value="DRAFT">Bản nháp</NativeSelectOption>
-          </NativeSelect>
-        </label>
-        <label className="block text-sm font-bold">
-          Lớp đang mở đăng ký
-          <NativeSelect value={id} onChange={(e) => setId(e.target.value)}>
-            <NativeSelectOption value="">Chọn lớp</NativeSelectOption>
-            {query.data?.items.map((c) => (
-              <NativeSelectOption key={c.id} value={c.id}>
-                {c.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        </label>
+    <section aria-label="Lịch tuần và dời khai giảng" className="space-y-6">
+      <div className="rounded-2xl border border-line bg-canvas p-5 sm:p-6">
+        <div className="mb-5 flex items-start gap-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-mint text-sm font-bold text-white">
+            1
+          </span>
+          <div>
+            <h2 className="text-lg font-extrabold">Chọn lớp cần xếp lịch</h2>
+            <p className="mt-1 text-sm text-muted">
+              Thiết lập lịch mới hoặc dời khai giảng cho lớp bản nháp, đang mở đăng ký.
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+          <label className="block space-y-2 text-sm font-semibold">
+            Trạng thái lớp
+            <NativeSelect
+              wrapperClassName="w-full"
+              value={status}
+              onChange={(e) => {
+                setStatus(e.target.value);
+                setPage(1);
+                setId('');
+              }}
+            >
+              <NativeSelectOption value="OPEN">Đang mở đăng ký</NativeSelectOption>
+              <NativeSelectOption value="DRAFT">Bản nháp</NativeSelectOption>
+            </NativeSelect>
+          </label>
+          <label className="block min-w-0 space-y-2 text-sm font-semibold">
+            {status === 'DRAFT' ? 'Lớp bản nháp' : 'Lớp đang mở đăng ký'}
+            <NativeSelect
+              wrapperClassName="w-full"
+              value={id}
+              onChange={(e) => setId(e.target.value)}
+            >
+              <NativeSelectOption value="">Chọn lớp</NativeSelectOption>
+              {query.data?.items.map((c) => (
+                <NativeSelectOption key={c.id} value={c.id}>
+                  {c.name}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          </label>
+        </div>
         {query.isPending ? (
-          <p>Đang tải lớp…</p>
+          <p role="status" className="mt-4 text-sm text-muted">
+            Đang tải lớp…
+          </p>
         ) : query.isError ? (
-          <p role="alert">
+          <p role="alert" className="mt-4 text-sm">
             Chưa tải được lớp.{' '}
             <Button variant="link" onClick={() => void query.refetch()}>
               Thử lại
             </Button>
           </p>
         ) : query.data?.total === 0 ? (
-          <p>Không có lớp đang mở đăng ký.</p>
+          <p className="mt-4 text-sm text-muted">Không có lớp phù hợp với trạng thái đã chọn.</p>
         ) : (
-          <div className="flex gap-2">
-            <Button variant="outline" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-              Trước
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!query.data || page * 20 >= query.data.total}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Sau
-            </Button>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+            <span className="text-sm text-muted">
+              {query.data?.total} lớp · Trang {page}/
+              {Math.max(1, Math.ceil((query.data?.total ?? 0) / 20))}
+            </span>
+            <div className="flex gap-2">
+              <Button variant="outline" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+                Trước
+              </Button>
+              <Button
+                variant="outline"
+                disabled={!query.data || page * 20 >= query.data.total}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Sau
+              </Button>
+            </div>
           </div>
         )}
-        {id &&
-          (config.isPending ? (
-            <p>Đang tải lịch…</p>
-          ) : config.isError ? (
-            <p role="alert">
-              Chưa tải được lịch.{' '}
-              <Button variant="link" onClick={() => void config.refetch()}>
-                Thử lại
-              </Button>
-            </p>
-          ) : (
-            config.data && (
-              <WeeklySchedulePanel
-                key={`${id}:${config.data.class.assignmentVersion}`}
-                classroom={config.data.class}
-                savedSlots={config.data.weeklySlots}
-              />
-            )
-          ))}
       </div>
-    </details>
+      {!id && !query.isPending && !query.isError && (
+        <div className="grid place-items-center rounded-2xl border border-dashed border-mint/30 bg-canvas px-5 py-14 text-center">
+          <CalendarDays aria-hidden="true" className="mb-4 size-10 text-mint" />
+          <h2 className="font-bold">Bắt đầu từ một lớp học</h2>
+          <p className="mt-2 max-w-md text-sm leading-6 text-muted">
+            Chọn lớp phía trên để xem lịch hiện tại, chọn ca học và kiểm tra lịch dự kiến.
+          </p>
+        </div>
+      )}
+      {id &&
+        (config.isPending ? (
+          <p>Đang tải lịch…</p>
+        ) : config.isError ? (
+          <p role="alert">
+            Chưa tải được lịch.{' '}
+            <Button variant="link" onClick={() => void config.refetch()}>
+              Thử lại
+            </Button>
+          </p>
+        ) : (
+          config.data && (
+            <WeeklySchedulePanel
+              key={`${id}:${config.data.class.assignmentVersion}`}
+              classroom={config.data.class}
+              savedSlots={config.data.weeklySlots}
+            />
+          )
+        ))}
+    </section>
   );
 }
 export function WeeklySchedulePanel(props: {
   classroom: z.infer<typeof scheduleConfigurationSchema>['class'];
   savedSlots?: { weekday: number; slotId: number }[];
+  standalone?: boolean;
 }) {
   const c = props.classroom,
     session = useSession(),
@@ -210,10 +246,26 @@ export function WeeklySchedulePanel(props: {
     }
   }
   return (
-    <section className="min-w-0 space-y-4 rounded-xl border border-line p-4">
-      <h3 className="font-bold">Xếp lịch theo tuần</h3>
+    <section
+      className={
+        props.standalone
+          ? 'min-w-0 space-y-5'
+          : 'min-w-0 space-y-5 rounded-2xl border border-line bg-canvas p-4 sm:p-6'
+      }
+    >
+      <div className="flex items-start gap-3">
+        {!props.standalone && (
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-mint text-sm font-bold text-white">
+            2
+          </span>
+        )}
+        <div className="min-w-0">
+          <h2 className="text-lg font-extrabold">Xếp lịch theo tuần</h2>
+          <p className="mt-1 text-sm text-muted break-words">{c.name}</p>
+        </div>
+      </div>
       {c.activeStudentCount !== undefined && (
-        <p className="text-sm">
+        <p className="rounded-xl bg-soft px-4 py-3 text-sm leading-6 text-forest">
           Đã thanh toán: {c.activeStudentCount}/{c.minStudents ?? 3} học viên tối thiểu.{' '}
           {c.startIneligibilityReason === 'RESCHEDULE_REQUIRED'
             ? 'Lớp cần dời sang mốc khai giảng mới.'
@@ -224,8 +276,8 @@ export function WeeklySchedulePanel(props: {
         <p>Lớp đã bắt đầu hoặc có buổi đã học; không thể dời toàn bộ lịch.</p>
       ) : (
         <>
-          <fieldset disabled={busy || !!pending} className="min-w-0 space-y-4">
-            <label className="block space-y-2 text-sm font-bold">
+          <fieldset disabled={busy || !!pending} className="min-w-0 space-y-6">
+            <label className="block max-w-sm space-y-2 text-sm font-semibold">
               Ngày bắt đầu
               <Input
                 type="date"
@@ -244,73 +296,130 @@ export function WeeklySchedulePanel(props: {
                 </Button>
               </p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="text-sm">
-                  <thead>
-                    <tr>
-                      <th>Slot</th>
-                      {[1, 2, 3, 4, 5, 6, 7].map((d) => (
-                        <th key={d} className="min-w-12">
-                          {d === 7 ? 'CN' : `T${d + 1}`}
+              <div>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="flex items-center gap-2 font-bold">
+                    <CalendarDays aria-hidden="true" className="size-4 text-mint" />
+                    Ca học hằng tuần
+                  </h3>
+                  <span className="rounded-full bg-soft px-3 py-1 text-xs font-semibold text-forest">
+                    {selected.length} ca đã chọn
+                  </span>
+                </div>
+                <p className="mb-4 text-sm text-muted">
+                  Chọn các ô tương ứng với ngày và ca học. Lịch dự kiến sẽ kiểm tra xung đột trước
+                  khi lưu.
+                </p>
+                <p className="mb-2 text-xs text-muted sm:hidden">
+                  Vuốt ngang để xem đủ các ngày trong tuần.
+                </p>
+                <div className="overflow-x-auto rounded-xl border border-line">
+                  <table className="w-full min-w-160 border-collapse text-sm">
+                    <thead>
+                      <tr>
+                        <th scope="col" className="sticky left-0 z-10 bg-soft p-3 text-left">
+                          Ca học
                         </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {slots.data?.map((s) => (
-                      <tr key={s.id}>
-                        <th className="whitespace-nowrap py-2 text-left">
-                          Slot {s.id} · {s.startsAt}–{s.endsAt}
-                        </th>
-                        {[1, 2, 3, 4, 5, 6, 7].map((weekday) => (
-                          <td key={weekday} className="text-center">
-                            <input
-                              type="checkbox"
-                              aria-label={`Thứ ${weekday === 7 ? 'Chủ nhật' : weekday + 1}, slot ${s.id}`}
-                              checked={selected.some(
-                                (v) => v.weekday === weekday && v.slotId === s.id,
-                              )}
-                              onChange={(e) => {
-                                setSelected(
-                                  e.target.checked
-                                    ? [...selected, { weekday, slotId: s.id }]
-                                    : selected.filter(
-                                        (v) => v.weekday !== weekday || v.slotId !== s.id,
-                                      ),
-                                );
-                                changed();
-                              }}
-                            />
-                          </td>
+                        {[1, 2, 3, 4, 5, 6, 7].map((d) => (
+                          <th scope="col" key={d} className="min-w-14 bg-soft p-3">
+                            {d === 7 ? 'CN' : `T${d + 1}`}
+                          </th>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {slots.data?.map((s) => (
+                        <tr key={s.id} className="border-t border-line">
+                          <th
+                            scope="row"
+                            className="sticky left-0 z-10 whitespace-nowrap bg-canvas px-3 py-2 text-left"
+                          >
+                            <span className="block text-xs text-muted">Ca {s.id}</span>
+                            <span className="font-semibold">
+                              {s.startsAt}–{s.endsAt}
+                            </span>
+                          </th>
+                          {[1, 2, 3, 4, 5, 6, 7].map((weekday) => (
+                            <td key={weekday} className="p-1 text-center">
+                              <label className="relative flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-transparent text-muted transition-colors hover:border-mint/40 hover:bg-soft has-checked:border-mint/40 has-checked:bg-mint/10 has-checked:text-mint has-focus-visible:outline-2 has-focus-visible:outline-mint has-disabled:cursor-default">
+                                <input
+                                  className="peer absolute inset-0 size-full cursor-pointer opacity-0 disabled:cursor-default"
+                                  type="checkbox"
+                                  aria-label={`Thứ ${weekday === 7 ? 'Chủ nhật' : weekday + 1}, slot ${s.id}`}
+                                  checked={selected.some(
+                                    (v) => v.weekday === weekday && v.slotId === s.id,
+                                  )}
+                                  onChange={(e) => {
+                                    setSelected(
+                                      e.target.checked
+                                        ? [...selected, { weekday, slotId: s.id }]
+                                        : selected.filter(
+                                            (v) => v.weekday !== weekday || v.slotId !== s.id,
+                                          ),
+                                    );
+                                    changed();
+                                  }}
+                                />
+                                <Check
+                                  aria-hidden="true"
+                                  className="pointer-events-none size-5 opacity-0 peer-checked:opacity-100"
+                                />
+                                <span
+                                  aria-hidden="true"
+                                  className="pointer-events-none absolute size-2 rounded-full bg-line peer-checked:hidden"
+                                />
+                              </label>
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
-            <ol className="space-y-2">
-              {sessions.map((s, index) => (
-                <li key={s.sessionId ?? `${s.classUnitId}:${index}`}>
-                  <label className="flex items-center gap-2 text-sm">
-                    <span>{index + 1}.</span>
-                    <Input
-                      aria-label={`Tên buổi ${index + 1}`}
-                      value={s.title}
-                      disabled={!!s.sessionId}
-                      onChange={(e) => {
-                        setSessions((current) =>
-                          current.map((v, i) =>
-                            i === index ? { ...v, title: e.target.value } : v,
-                          ),
-                        );
-                        changed();
-                      }}
-                    />
-                  </label>
-                </li>
-              ))}
-            </ol>
+            <div className="border-t border-line pt-5">
+              <h3 className="mb-4 flex items-center gap-2 font-bold">
+                <ListOrdered aria-hidden="true" className="size-4 text-mint" />
+                Nội dung buổi học{' '}
+                <span className="ml-auto text-xs font-normal text-muted">
+                  {sessions.length} buổi
+                </span>
+              </h3>
+              <ol className="grid max-h-96 gap-2 overflow-y-auto lg:grid-cols-2">
+                {sessions.map((s, index) => (
+                  <li key={s.sessionId ?? `${s.classUnitId}:${index}`}>
+                    {s.sessionId ? (
+                      <div className="flex h-full items-start gap-3 rounded-lg bg-soft/60 p-3 text-sm">
+                        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-canvas text-xs font-bold text-mint">
+                          {index + 1}
+                        </span>
+                        <span className="py-1 leading-5 break-words">{s.title}</span>
+                      </div>
+                    ) : (
+                      <label className="flex items-center gap-2 text-sm">
+                        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-soft text-xs font-bold text-mint">
+                          {index + 1}
+                        </span>
+                        <Input
+                          aria-label={`Tên buổi ${index + 1}`}
+                          value={s.title}
+                          disabled={!!s.sessionId}
+                          onChange={(e) => {
+                            setSessions((current) =>
+                              current.map((v, i) =>
+                                i === index ? { ...v, title: e.target.value } : v,
+                              ),
+                            );
+                            changed();
+                          }}
+                        />
+                      </label>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </div>
             {!c.units.some((u) => u.sessions.length) && (
               <div className="flex flex-wrap gap-2">
                 {c.units.map((u) => (
@@ -345,7 +454,7 @@ export function WeeklySchedulePanel(props: {
               />
             </label>
           </fieldset>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-3 border-t border-line pt-5">
             <Button
               variant="outline"
               disabled={busy || !!pending || !slots.data}
@@ -375,8 +484,9 @@ export function WeeklySchedulePanel(props: {
           {error && <p role="alert">{error}</p>}
           {saved && <p role="status">Đã lưu lịch tuần.</p>}
           {preview && (
-            <div className="max-h-80 overflow-auto">
-              <p className="font-bold">
+            <div className="max-h-96 space-y-3 overflow-auto rounded-xl border border-line bg-soft/40 p-4 sm:p-5">
+              <p className="flex items-center gap-2 font-bold">
+                <CalendarDays aria-hidden="true" className="size-5 text-mint" />
                 {preview.conflicts.length
                   ? `${preview.conflicts.length} xung đột; chưa thể lưu.`
                   : 'Lịch dự kiến'}
@@ -388,7 +498,10 @@ export function WeeklySchedulePanel(props: {
               ))}
               <ol>
                 {preview.sessions.map((s, i) => (
-                  <li key={s.sessionId ?? i} className="py-1 text-sm">
+                  <li
+                    key={s.sessionId ?? i}
+                    className="border-b border-line py-3 text-sm leading-6 last:border-0"
+                  >
                     {i + 1}. {s.title} · {time(s.startsAt)}–{time(s.endsAt)}
                   </li>
                 ))}

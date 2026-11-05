@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   BookOpen,
+  FolderOpen,
   CalendarDays,
   Users,
   ChartNoAxesCombined,
@@ -34,7 +35,18 @@ export function MentorClassPage(props: { classId: string }) {
   const item = query.data;
   const tabs = [
     { icon: BookOpen, id: 'units', title: 'Chương', allowed: item?.status !== 'CANCELLED' },
-    { icon: CalendarDays, id: 'sessions', title: 'Buổi học', allowed: true },
+    {
+      icon: FolderOpen,
+      id: 'materials',
+      title: 'Tài liệu chung',
+      allowed: item?.status !== 'CANCELLED',
+    },
+    {
+      icon: CalendarDays,
+      id: 'sessions',
+      title: 'Lịch sử buổi học',
+      allowed: item?.status === 'CANCELLED',
+    },
     { icon: BookOpen, id: 'assignments', title: 'Bài tập', allowed: true },
     { icon: Users, id: 'students', title: 'Học viên', allowed: item?.capabilities.readClassRoster },
     {
@@ -50,7 +62,8 @@ export function MentorClassPage(props: { classId: string }) {
       allowed: item?.capabilities.readClassReports,
     },
   ].filter((entry) => entry.allowed);
-  const active = tabs.some((entry) => entry.id === tab) ? tab : tabs[0]?.id;
+  // Keep existing timetable URLs usable after removing the redundant navigation tab.
+  const active = tab === 'sessions' || tabs.some((entry) => entry.id === tab) ? tab : tabs[0]?.id;
   return (
     <>
       <Link href="/mentor/classes" className="mb-6 inline-block text-sm font-bold text-mint">
@@ -108,9 +121,11 @@ export function MentorClassPage(props: { classId: string }) {
                 </Button>
               ))}
             </div>
-            {active === 'units' && (
+            {(active === 'units' || active === 'materials') && (
               <MentorUnits
+                key={active}
                 classId={props.classId}
+                general={active === 'materials'}
                 canAuthor={item.capabilities.authorMaterials && !item.readonly}
               />
             )}

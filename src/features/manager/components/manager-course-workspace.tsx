@@ -210,7 +210,7 @@ function ManagerChapterContent(props: {
 }
 
 export function ManagerCourseWorkspace(props: {
-  course: CourseDetail;
+  course: Pick<CourseDetail, 'id' | 'units'>;
   coursePicker: React.ReactNode;
 }) {
   const [unitId, setUnitId] = useState<string | null>(null);

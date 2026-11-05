@@ -36,6 +36,7 @@ export function ChatComposer(props: {
     } | null>(null);
   const [processing, setProcessing] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [retryFile, setRetryFile] = useState<File | null>(null);
   const textInput = useRef<HTMLTextAreaElement>(null);
   const lifetime = useRef<AbortController | null>(null),
     fileInput = useRef<HTMLInputElement>(null),
@@ -74,10 +75,10 @@ export function ChatComposer(props: {
           setNotice('Tệp không được chấp nhận. Vui lòng chọn tệp khác.');
           return;
         }
-        if (++attempts < 15) timer = setTimeout(() => void poll(), 2000);
       } catch {
         /* Keep the file ID for an explicit status check after transient failures. */
       }
+      if (!active.aborted && ++attempts < 15) timer = setTimeout(() => void poll(), 2000);
     }
     timer = setTimeout(() => void poll(), 1500);
     return () => {
@@ -87,7 +88,7 @@ export function ChatComposer(props: {
   }, [processing, c.id]);
   const locked = busy || !!pending;
   async function send() {
-    if (sending.current) return;
+    if (sending.current || busy || processing || retryFile) return;
     const input = pending ?? {
       clientMessageId: crypto.randomUUID(),
       type: attachment?.type ?? 'TEXT',
@@ -114,6 +115,7 @@ export function ChatComposer(props: {
       setBody('');
       setAttachment(null);
       setPreviewFile(null);
+      setRetryFile(null);
       setPending(null);
       props.onClearReply();
       void refresh();
@@ -165,10 +167,12 @@ export function ChatComposer(props: {
       return;
     }
     setBusy(true);
+    setRetryFile(null);
     setPreviewFile(file.type.startsWith('image/') ? file : null);
     setAttachment(null);
     setProcessing(null);
     setNotice('Đang tải tệp…');
+    let stage: 'intent' | 'storage' | 'complete' = 'intent';
     try {
       const active = signal();
       const intent = await apiRequest({
@@ -179,6 +183,7 @@ export function ChatComposer(props: {
         schema: uploadIntentSchema,
         signal: active,
       });
+      stage = 'storage';
       const uploaded = await fetch(intent.uploadUrl, {
         method: 'PUT',
         body: file,
@@ -188,10 +193,18 @@ export function ChatComposer(props: {
         signal: AbortSignal.any([active, AbortSignal.timeout(60000)]),
       });
       if (!uploaded.ok) throw new Error('Upload failed');
+      stage = 'complete';
       setProcessing(intent.fileId);
       await checkFile(intent.fileId);
     } catch (e) {
-      setNotice(chatError(e));
+      if (stage !== 'complete') setRetryFile(file);
+      setNotice(
+        stage === 'storage'
+          ? 'Chưa tải được tệp lên kho lưu trữ. Vui lòng thử tải lại.'
+          : stage === 'complete'
+            ? 'Tệp đã tải lên nhưng chưa xác nhận được. Nhấn Kiểm tra tệp để tiếp tục.'
+            : chatError(e),
+      );
     } finally {
       setBusy(false);
       if (fileInput.current) fileInput.current.value = '';
@@ -221,6 +234,31 @@ export function ChatComposer(props: {
       )}
       {previewFile && (
         <LocalImagePreview key={previewFile.name + previewFile.lastModified} file={previewFile} />
+      )}
+      {retryFile && (
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="truncate">{retryFile.name}</span>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={locked}
+            onClick={() => void upload(retryFile)}
+          >
+            Thử tải lại tệp
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={locked}
+            onClick={() => {
+              setRetryFile(null);
+              setPreviewFile(null);
+              setNotice('');
+            }}
+          >
+            Bỏ tệp
+          </Button>
+        </div>
       )}
       {attachment && (
         <div className="flex items-center justify-between gap-2 text-sm">
@@ -260,7 +298,8 @@ export function ChatComposer(props: {
           )
             return;
           event.preventDefault();
-          if (!busy && !processing && (pending || body.trim() || attachment)) void send();
+          if (!busy && !processing && !retryFile && (pending || body.trim() || attachment))
+            void send();
         }}
         className="max-h-40 min-h-20 resize-y"
       />
@@ -344,7 +383,9 @@ export function ChatComposer(props: {
         </div>
         <Button
           type="submit"
-          disabled={busy || !!processing || (!pending && !body.trim() && !attachment)}
+          disabled={
+            busy || !!processing || !!retryFile || (!pending && !body.trim() && !attachment)
+          }
         >
           <Send aria-hidden="true" />
           {busy ? 'Đang xử lý…' : pending ? 'Thử gửi lại' : 'Gửi'}

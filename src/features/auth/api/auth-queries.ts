@@ -54,13 +54,18 @@ export function useLogin() {
   });
 }
 
-export function useLogout(options: { navigateHome?: boolean } = {}) {
+export function useLogout(
+  options: { navigateHome?: boolean; redirectTo?: '/' | '/admin/login' } = {},
+) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationKey: options.navigateHome ? logoutNavigationKey : logoutKey,
     // Revert query observers before changing the transport's session signal.
     // Intentional cancellation must never become a dashboard error.
-    onMutate: () => queryClient.cancelQueries(),
+    onMutate: async () => {
+      await queryClient.cancelQueries();
+      return { redirectTo: options.redirectTo ?? '/' };
+    },
     mutationFn: () =>
       withAuthChange(async () => {
         try {

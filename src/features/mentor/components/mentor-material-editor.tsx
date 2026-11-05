@@ -226,7 +226,7 @@ export function MentorMaterialEditor(props: {
               value={sessionId}
               onChange={(e) => setSessionId(e.target.value)}
             >
-              <NativeSelectOption value="">Không gắn buổi học</NativeSelectOption>
+              <NativeSelectOption value="">Tài liệu chung của chương</NativeSelectOption>
               {sessionId && !sessions.data?.items.some((s) => s.id === sessionId) && (
                 <NativeSelectOption value={sessionId}>Buổi học đã chọn</NativeSelectOption>
               )}

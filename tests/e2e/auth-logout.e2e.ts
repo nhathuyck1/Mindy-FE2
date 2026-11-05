@@ -1,9 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 import { mockHomepageApi, testUser } from './api-fixtures';
 
-async function mockManagerLogout(page: Page) {
+async function mockManagerLogout(page: Page, role: 'MANAGER' | 'ADMIN' | 'MENTOR' = 'MANAGER') {
   await mockHomepageApi(page);
-  const user = { ...testUser, role: 'MANAGER', displayName: 'Quản lý kiểm thử' };
+  const user = { ...testUser, role, displayName: 'Quản lý kiểm thử' };
   const state = {
     loggedIn: true,
     logoutStatus: 204,
@@ -51,6 +51,39 @@ async function mockManagerLogout(page: Page) {
 async function clickLogout(page: Page) {
   await page.getByRole('button', { name: 'Tài khoản của Quản lý kiểm thử', exact: true }).click();
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
+}
+
+for (const status of [204, 401]) {
+  test(`mentor logout (${status}) goes directly to internal login`, async ({ page }) => {
+    const { state } = await mockManagerLogout(page, 'MENTOR');
+    state.logoutStatus = status;
+    const destinations: string[] = [];
+    page.on('framenavigated', (frame) => {
+      if (frame === page.mainFrame()) destinations.push(new URL(frame.url()).pathname);
+    });
+    await page.goto('/mentor/profile');
+    await clickLogout(page);
+    await expect(page).toHaveURL('/admin/login');
+    await expect(page.getByRole('button', { name: 'Đăng nhập', exact: true })).toBeVisible();
+    expect(destinations).not.toContain('/');
+    expect(state.logoutCalls).toBe(1);
+  });
+
+  test(`admin logout (${status}) goes directly to internal login`, async ({ page }) => {
+    const { state } = await mockManagerLogout(page, 'ADMIN');
+    state.logoutStatus = status;
+    const destinations: string[] = [];
+    page.on('framenavigated', (frame) => {
+      if (frame === page.mainFrame()) destinations.push(new URL(frame.url()).pathname);
+    });
+    await page.goto('/admin');
+    await clickLogout(page);
+    await expect(page).toHaveURL('/admin/login');
+    await expect(page.getByRole('button', { name: 'Đăng nhập', exact: true })).toBeVisible();
+    await expect(page.getByRole('status', { name: 'Đang đăng xuất…', exact: true })).toHaveCount(0);
+    expect(destinations).not.toContain('/');
+    expect(state.logoutCalls).toBe(1);
+  });
 }
 
 test('manager logout hides pending dashboard requests and waits on a neutral screen', async ({
