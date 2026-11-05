@@ -1,5 +1,17 @@
 # Quy tắc giao diện Mindy
 
+## Không gian học Student gọn và mở tại chỗ — 05/11/2026
+
+- Dùng pattern khung chương của Mentor: sidebar 248px khi vùng nội dung đủ rộng, màn hẹp chọn chương bằng select thay danh sách dài phía trên. Header lớp/chương nhỏ, khung desktop cuộn nội dung riêng và giữ cột chương.
+- Buổi học gộp ngay trong chương, hiển thị tên/lịch và lối vào lớp/bảng vẽ; không thêm tab buổi học. Bài đọc/tệp/video là accordion có số, tên, loại và chevron: bấm mở ngay dưới tiêu đề, bấm lại thu gọn, mỗi lần mở một bài; bài đầu mở sẵn. Không lặp tiêu đề lớn ở vùng đọc. Tệp/video chính lấy quyền xem khi mục mở, tệp đính kèm vẫn tải theo nút riêng.
+- Nội dung chung và buổi chưa xác định giữ khu riêng, không tự gán buổi. Giữ quyền FULL/CASH_PREVIEW/chương khóa, các trạng thái lỗi/thử lại và bàn phím Enter/Space; responsive từ 320px.
+
+## Danh sách bài tập theo buổi — 05/11/2026
+
+- Cột Buổi học/Hạn nộp bỏ icon; Buổi học căn trái cả tiêu đề và nội dung, Hạn nộp căn giữa trên desktop. Mobile giữ nhãn và căn trái. Tiêu đề buổi đã có số không thêm tiền tố trùng. Nhãn cột chỉ ghi Hạn nộp.
+- Danh sách lớp dùng hàng gọn với cột Bài tập / Buổi học / Hạn nộp và Xem bài; tối đa 1152px, mobile xếp dọc có nhãn. Buổi hiển thị số/tên, chương và lịch học thật từ context lớp; không suy số thứ tự theo vị trí mảng. Bộ lọc có nhãn, lựa chọn buổi gồm lịch để phân biệt tên trùng.
+- Hạn nộp có giờ/ngày/năm theo Việt Nam và nhãn thời gian còn lại; trong 24 giờ dùng nền coral nhạt, hết hạn ghi Đã qua hạn. Nhãn cập nhật mỗi phút/khi focus, chỉ hiển thị với PUBLISHED; không suy tình trạng nộp bài từ hạn nộp. Null ghi Không giới hạn, metadata buổi thiếu/lỗi có thông báo và thử lại.
+
 ## Thống kê tài liệu theo khóa — 05/11/2026
 
 - Trang danh sách khóa của quản lý tài liệu có ba thẻ count và donut Recharts theo khóa, kèm chú giải tên đầy đủ/số lượng/% và nút làm mới. Hàng khóa có count riêng: badge trên desktop, chữ dưới mã khóa ở mobile. Dùng token Mindy, không animation, 320px xếp dọc; lỗi không hiển thị tổng/tỷ lệ chưa đủ, tổng 0 có thông báo riêng.

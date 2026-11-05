@@ -2,175 +2,13 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import {
-  ArrowLeft,
-  ArrowRight,
-  BookOpen,
-  CalendarDays,
-  ChevronLeft,
-  FileText,
-  LockKeyhole,
-  PlayCircle,
-} from 'lucide-react';
+import { BookOpen, ChevronLeft, LockKeyhole } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { formatDate } from '@/features/courses/lib/course-format';
-import { useLearningClass, useUnitMaterials } from '../api/learning-queries';
-import type { LearningClass, LearningUnit } from '../schemas/learning-contracts';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { useLearningClass } from '../api/learning-queries';
+import type { LearningClass } from '../schemas/learning-contracts';
 import { LearningState } from './learning-state';
-import { MaterialViewer } from './material-viewer';
-
-function UnitContent(props: { context: LearningClass; unit: LearningUnit; preview: boolean }) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const unit = props.unit;
-  const locked = unit.status === 'LOCKED';
-  const query = useUnitMaterials(props.context.id, unit.id, !props.preview && !locked);
-  const materials = query.data ?? [];
-  const selected = materials.find((item) => item.id === selectedId) ?? materials[0];
-  const index = selected ? materials.findIndex((item) => item.id === selected.id) : -1;
-  return (
-    <div className="min-w-0">
-      <div className="border-b border-line px-5 py-5 sm:px-8">
-        <p className="text-xs font-semibold text-mint">CHƯƠNG {unit.position}</p>
-        <h2 className="mt-2 text-xl font-bold">{unit.title}</h2>
-      </div>
-      <div className="space-y-6 p-5 sm:p-8">
-        {props.preview ? (
-          <LearningState>
-            Đây là chế độ xem trước. Tài liệu và video sẽ mở sau khi trung tâm xác nhận thanh toán
-            tiền mặt.
-          </LearningState>
-        ) : locked ? (
-          <LearningState>
-            <LockKeyhole aria-hidden="true" className="mb-3 size-6 text-mint" />
-            Chương chưa được mở.
-            {unit.unlockAt
-              ? ` Dự kiến: ${formatDate(unit.unlockAt)}.`
-              : ' Vui lòng chờ mentor mở nội dung.'}
-          </LearningState>
-        ) : query.isPending ? (
-          <LearningState>Đang tải danh sách tài liệu…</LearningState>
-        ) : query.isError ? (
-          <LearningState error={query.error} retry={() => void query.refetch()} />
-        ) : !materials.length ? (
-          <LearningState>
-            Chưa có tài liệu được phát hành cho chương này. Nội dung sẽ xuất hiện khi được mở cho
-            lớp.
-          </LearningState>
-        ) : (
-          <>
-            <nav aria-label="Tài liệu trong chương" className="space-y-2">
-              {materials.map((item, position) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  aria-current={selected?.id === item.id ? 'true' : undefined}
-                  onClick={() => setSelectedId(item.id)}
-                  className={
-                    'flex min-h-14 w-full items-center gap-3 rounded-lg border px-4 py-3 text-left text-sm transition-colors ' +
-                    (selected?.id === item.id
-                      ? 'border-mint bg-mint/10 font-bold'
-                      : 'border-line hover:bg-soft')
-                  }
-                >
-                  {item.contentType === 'VIDEO' ? (
-                    <PlayCircle aria-hidden="true" className="size-5 shrink-0 text-mint" />
-                  ) : (
-                    <FileText aria-hidden="true" className="size-5 shrink-0 text-mint" />
-                  )}
-                  <span className="min-w-0 flex-1 break-words">
-                    {position + 1}. {item.title}
-                  </span>
-                  <span className="hidden shrink-0 text-xs text-muted sm:block">
-                    {item.contentType === 'VIDEO'
-                      ? 'Video'
-                      : item.contentType === 'ARTICLE'
-                        ? 'Bài đọc'
-                        : 'Tệp'}
-                  </span>
-                </button>
-              ))}
-            </nav>
-            {selected && (
-              <div className="border-t border-line pt-7">
-                <MaterialViewer
-                  key={selected.id}
-                  classId={props.context.id}
-                  unitId={unit.id}
-                  materialId={selected.id}
-                />
-              </div>
-            )}
-            <div className="flex flex-wrap justify-between gap-3 border-t border-line pt-5">
-              <Button
-                variant="outline"
-                disabled={index <= 0}
-                onClick={() => setSelectedId(materials[index - 1].id)}
-              >
-                <ArrowLeft aria-hidden="true" />
-                Bài trước
-              </Button>
-              <Button
-                variant="outline"
-                disabled={index >= materials.length - 1}
-                onClick={() => setSelectedId(materials[index + 1].id)}
-              >
-                Bài tiếp theo
-                <ArrowRight aria-hidden="true" />
-              </Button>
-            </div>
-          </>
-        )}
-        {!!unit.sessions.length && (
-          <section className="border-t border-line pt-6" aria-label="Buổi học của chương">
-            <h3 className="flex items-center gap-2 font-bold">
-              <CalendarDays aria-hidden="true" className="size-5 text-mint" />
-              Buổi học
-            </h3>
-            <ul className="mt-4 divide-y divide-line">
-              {unit.sessions.map((session) => (
-                <li key={session.id} className="py-4 text-sm">
-                  <p className="font-semibold">
-                    {session.title}
-                    {session.status === 'CANCELLED' ? ' · Đã hủy' : ''}
-                  </p>
-                  <p className="mt-2 text-muted">
-                    {new Intl.DateTimeFormat('vi-VN', {
-                      dateStyle: 'medium',
-                      timeStyle: 'short',
-                      timeZone: 'Asia/Ho_Chi_Minh',
-                    }).format(new Date(session.startsAt))}
-                  </p>
-                  {session.roomName && <p className="mt-2">Phòng: {session.roomName}</p>}
-                  {!props.preview && session.status !== 'CANCELLED' && (
-                    <Link
-                      href={`/whiteboards/${session.id}`}
-                      className="text-link mt-3 inline-flex min-h-11 items-center font-semibold"
-                    >
-                      Mở bảng vẽ
-                      <ArrowRight aria-hidden="true" className="size-4" />
-                    </Link>
-                  )}
-                  {!props.preview && session.status !== 'CANCELLED' && session.meetingUrl && (
-                    <a
-                      href={session.meetingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      referrerPolicy="no-referrer"
-                      className="text-link font-semibold"
-                    >
-                      Tham gia buổi học
-                      <ArrowRight aria-hidden="true" className="size-4" />
-                    </a>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-      </div>
-    </div>
-  );
-}
+import { LearningUnitContent } from './learning-unit-content';
 
 function LearningWorkspace(props: { context: LearningClass }) {
   const [unitId, setUnitId] = useState<string | null>(null);
@@ -179,76 +17,99 @@ function LearningWorkspace(props: { context: LearningClass }) {
   const preview = props.context.accessMode === 'CASH_PREVIEW';
   return (
     <>
-      <Link href="/user/materials" className="text-link font-semibold mb-5">
+      <Link
+        href="/user/materials"
+        className="text-link mb-3 inline-flex min-h-11 items-center font-semibold"
+      >
         <ChevronLeft aria-hidden="true" className="size-4" />
         Tất cả tài liệu học tập
       </Link>
-      <div className="mb-7">
-        <p className="eyebrow font-bold text-mint">
-          {props.context.code} · {preview ? 'Xem trước lớp học' : 'Không gian học tập'}
-        </p>
-        <h1 className="mt-3 text-2xl font-bold sm:text-3xl">{props.context.name}</h1>
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-bold text-mint">
+            {props.context.code} · {preview ? 'Xem trước lớp học' : 'Không gian học tập'}
+          </p>
+          <h1 className="mt-1 text-xl font-bold break-words sm:text-2xl">{props.context.name}</h1>
+          <p className="mt-1 text-sm text-muted">
+            {units.length} chương · Mentor: {props.context.mentor.displayName || 'Chưa cập nhật'}
+          </p>
+        </div>
         {!preview && (
-          <Button asChild variant="outline" className="mt-4">
+          <Button asChild variant="outline">
             <Link href={`/user/classes/${props.context.id}/assignments`}>Bài tập của lớp</Link>
           </Button>
         )}
-        <p className="mt-3 text-sm text-muted">
-          {units.length} chương · Mentor: {props.context.mentor.displayName || 'Chưa cập nhật'}
-        </p>
-      </div>
-      <div className="grid min-w-0 overflow-hidden rounded-2xl border border-line bg-canvas xl:grid-cols-[280px_minmax(0,1fr)]">
-        <aside
-          className="border-b border-line bg-soft/30 xl:border-r xl:border-b-0"
-          aria-label="Nội dung khóa học"
-        >
-          <h2 className="flex items-center gap-3 border-b border-line px-5 py-6 font-bold">
-            <BookOpen aria-hidden="true" className="size-5 text-mint" />
-            Nội dung khóa học
-          </h2>
-          <nav
-            aria-label="Chương"
-            className="flex max-h-80 flex-col overflow-y-auto p-3 xl:max-h-[75vh]"
+      </header>
+      <div className="@container/learning-course min-w-0">
+        <div className="grid min-w-0 overflow-hidden rounded-2xl border border-line bg-canvas @3xl/learning-course:h-[min(800px,calc(100dvh-16rem))] @3xl/learning-course:min-h-96 @3xl/learning-course:grid-cols-[248px_minmax(0,1fr)]">
+          <aside
+            className="flex min-h-0 min-w-0 flex-col border-b border-line bg-soft/30 @3xl/learning-course:border-r @3xl/learning-course:border-b-0"
+            aria-label="Nội dung khóa học"
           >
-            {units.map((unit) => (
-              <button
-                key={unit.id}
-                aria-current={unit.id === selected?.id ? 'step' : undefined}
-                onClick={() => setUnitId(unit.id)}
-                className={
-                  'flex min-h-19 items-start gap-3 rounded-lg px-3 py-4 text-left ' +
-                  (unit.id === selected?.id ? 'bg-mint/10 text-forest' : 'hover:bg-soft')
-                }
+            <h2 className="hidden shrink-0 items-center gap-3 border-b border-line px-4 py-4 text-sm font-bold @3xl/learning-course:flex">
+              <BookOpen aria-hidden="true" className="size-5 text-mint" />
+              Nội dung khóa học
+            </h2>
+            <label className="grid gap-2 p-3 text-sm font-semibold @3xl/learning-course:hidden">
+              Chương đang xem
+              <NativeSelect
+                wrapperClassName="w-full min-w-0"
+                className="h-11 w-full truncate bg-canvas"
+                value={selected?.id ?? ''}
+                onChange={(event) => setUnitId(event.target.value)}
               >
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-line bg-canvas text-xs font-bold">
-                  {unit.status === 'LOCKED' ? (
-                    <LockKeyhole aria-hidden="true" className="size-3.5" />
-                  ) : (
-                    unit.position
-                  )}
-                </span>
-                <span className="min-w-0">
-                  <span className="block break-words text-sm font-bold">{unit.title}</span>
-                  <span className="mt-1 block text-xs text-muted">
-                    {unit.status === 'LOCKED' ? 'Chưa mở' : `${unit.sessions.length} buổi học`}
+                {units.map((unit) => (
+                  <NativeSelectOption key={unit.id} value={unit.id}>
+                    {unit.position}. {unit.title}
+                    {unit.status === 'LOCKED' ? ' · Chưa mở' : ''}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </label>
+            <nav
+              aria-label="Chương"
+              className="hidden min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain p-2 @3xl/learning-course:flex"
+            >
+              {units.map((unit) => (
+                <button
+                  key={unit.id}
+                  aria-current={unit.id === selected?.id ? 'step' : undefined}
+                  onClick={() => setUnitId(unit.id)}
+                  className={
+                    'flex min-h-14 shrink-0 items-start gap-2.5 rounded-lg px-3 py-3 text-left focus-visible:outline-2 focus-visible:outline-mint ' +
+                    (unit.id === selected?.id ? 'bg-mint/10 text-forest' : 'hover:bg-soft')
+                  }
+                >
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-line bg-canvas text-xs font-bold">
+                    {unit.status === 'LOCKED' ? (
+                      <LockKeyhole aria-hidden="true" className="size-3.5" />
+                    ) : (
+                      unit.position
+                    )}
                   </span>
-                </span>
-              </button>
-            ))}
-          </nav>
-        </aside>
-        {selected ? (
-          <UnitContent
-            key={selected.id}
-            context={props.context}
-            unit={selected}
-            preview={preview}
-          />
-        ) : (
-          <div className="p-6">
-            <LearningState>Lớp chưa có chương.</LearningState>
-          </div>
-        )}
+                  <span className="min-w-0">
+                    <span className="block break-words text-sm font-bold">{unit.title}</span>
+                    <span className="mt-1 block text-xs text-muted">
+                      {unit.status === 'LOCKED' ? 'Chưa mở' : `${unit.sessions.length} buổi học`}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </nav>
+          </aside>
+          {selected ? (
+            <LearningUnitContent
+              key={selected.id}
+              context={props.context}
+              unit={selected}
+              preview={preview}
+            />
+          ) : (
+            <div className="p-6">
+              <LearningState>Lớp chưa có chương.</LearningState>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

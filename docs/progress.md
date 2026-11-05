@@ -1,5 +1,22 @@
 # Tiến độ
 
+## 05/11/2026 — Từ buổi học Mentor quay về lớp
+
+- Nút quay lại của trang buổi học đổi thành Về lớp học, trỏ thẳng trang chính `/mentor/classes/:classId` từ context buổi/attendance, kể cả khi mở URL buổi trực tiếp. Chưa có dữ liệu lớp thì về danh sách Lớp của tôi; không dùng browser Back hoặc chuyển sang lịch dạy.
+
+## 05/11/2026 — Nội dung Student mở ngay dưới tiêu đề
+
+- Thu nhỏ header lớp/chương/bài, áp dụng khung chương kiểu Mentor; mobile dùng chọn chương gọn. Gộp các buổi vào chương, từng bài là accordion mở tại chỗ và bấm lại thu gọn, bài đầu mở sẵn. Bỏ vùng đọc riêng sau cả danh sách và nút Bài trước/Bài tiếp theo; tệp/video chính mở cùng accordion, tệp đính kèm vẫn theo nút tải riêng.
+- Giữ bài chung/buổi chưa xác định, lịch/link họp/bảng vẽ, quyền FULL/CASH_PREVIEW/chương khóa và lỗi/thử lại. Chỉ mount detail bài đang mở; cleanup gỡ media và hủy access khi thu gọn. Không sửa backend hoặc deploy.
+- Kiểm chứng: lint, TypeScript/production build, Prettier các file sửa, 342 unit tests và 12 E2E production desktop/mobile PASS. E2E kiểm nội dung đầu trong viewport desktop (kể cả bài chung), mở/đóng bằng click/Enter/Space, đổi bài/chương, video tự lấy quyền xem và gỡ khi đóng, tệp đính kèm, preview không gọi API riêng tư, chương khóa, lỗi/thử lại và 320px không tràn ngang. Đã xem ảnh desktop/320px với API mock.
+
+## 05/11/2026 — Làm rõ buổi học và deadline bài tập
+
+- Tinh chỉnh theo phản hồi: bỏ chữ Giờ Việt Nam ở nhãn; bỏ icon buổi/deadline, cột Buổi học căn trái, Hạn nộp căn giữa trên desktop. Không lặp tiền tố Buổi N nếu tên buổi đã có số; mobile tiếp tục căn trái để dễ đọc.
+- Thu gọn danh sách bài tập của lớp thành các cột bài/buổi/hạn nộp, có số lượng từ total backend và Xem bài. Hiển thị số/tên buổi, chương và lịch học qua dữ liệu hiện hữu; bộ lọc buổi kèm ngày/giờ. Mobile xếp dọc, giữ URL lọc và phân trang.
+- Deadline dùng giờ Việt Nam, nhãn thời gian còn lại/Sắp đến hạn/Đã qua hạn cập nhật mỗi phút và khi focus. Không giới hạn, buổi thiếu, lỗi/thử lại và bài lưu trữ có trạng thái riêng; không suy đã nộp/chưa nộp từ deadline.
+- Kiểm chứng: lint, TypeScript, production build, 342 unit tests và 40 E2E desktop/mobile PASS; gồm metadata, UTC+7, chuyển qua deadline, null/archived, retry, điều hướng và viewport 320px. Prettier các file sửa PASS; format:check toàn repo báo 396 file ngoài phạm vi sửa (cây Git sạch trước thay đổi), không format lan rộng. API mock, không thay backend hoặc deploy.
+
 ## 05/11/2026 — Deploy Vercel cho khách hàng test
 
 - Đã deploy toàn bộ mã nguồn hiện tại, gồm thay đổi chưa commit, vào project riêng `luonggiahao2005-2838s-projects/mindy-fe2`. Link khách hàng: `https://mindy-fe2.vercel.app`; deployment `dpl_7gxhJpSHcsYhsaYv7jofGHbFaNmY` READY. Project test mới cho truy cập bằng link; không thay project Vercel cũ, không commit/push Git hoặc deploy backend. Gói nguồn không chứa `.env`, node_modules hay build local.

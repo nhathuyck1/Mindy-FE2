@@ -54,6 +54,7 @@ export function MentorSessionPage(props: { sessionId: string }) {
   );
   const command = useMentorCommand(attendanceWriteSchema);
   const session = attendance.data?.session;
+  const classId = context.data?.session.classId ?? session?.classId;
   const busy =
     command.isPending ||
     attendance.isFetching ||
@@ -115,8 +116,11 @@ export function MentorSessionPage(props: { sessionId: string }) {
     !new URL(meetingUrl).password;
   return (
     <>
-      <Link href="/mentor" className="mb-6 inline-block text-sm font-bold text-mint">
-        ← Lịch dạy
+      <Link
+        href={classId ? `/mentor/classes/${classId}` : '/mentor/classes'}
+        className="mb-6 inline-flex min-h-11 items-center text-sm font-bold text-mint"
+      >
+        {classId ? '← Về lớp học' : '← Lớp của tôi'}
       </Link>
       <MentorHeading
         title={context.data?.session.title ?? 'Thông tin buổi học'}

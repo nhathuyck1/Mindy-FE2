@@ -9,9 +9,17 @@ import * as dto from '../schemas/assignment-contracts';
 import { workspaceSessionsSchema } from '@/features/mentor/schemas/workspace-contracts';
 import { studentClassSchema } from '@/features/learning/schemas/learning-contracts';
 
+export type AssignmentSession = {
+  id: string;
+  title: string;
+  sessionNumber: number | null;
+  startsAt: string;
+  unitTitle: string | null;
+};
+
 export function useAssignmentSessions(classId: string | undefined, mentor: boolean) {
   const session = useSession();
-  return useQuery({
+  return useQuery<AssignmentSession[]>({
     queryKey: [
       'assignments',
       session.data?.id,
@@ -32,7 +40,15 @@ export function useAssignmentSessions(classId: string | undefined, mentor: boole
           schema: studentClassSchema,
           signal,
         });
-        return context.units.flatMap((u) => u.sessions).map((s) => ({ id: s.id, title: s.title }));
+        return context.units.flatMap((u) =>
+          u.sessions.map((s) => ({
+            id: s.id,
+            title: s.title,
+            sessionNumber: s.sessionNumber,
+            startsAt: s.startsAt,
+            unitTitle: u.title,
+          })),
+        );
       }
       const read = (page: number) =>
         apiRequest({
@@ -47,7 +63,13 @@ export function useAssignmentSessions(classId: string | undefined, mentor: boole
         if (next.total !== first.total) throw new Error('Danh sách buổi đã thay đổi.');
         items.push(...next.items);
       }
-      return items.map((s) => ({ id: s.sessionId, title: s.title }));
+      return items.map((s) => ({
+        id: s.sessionId,
+        title: s.title,
+        sessionNumber: null,
+        startsAt: s.startsAt,
+        unitTitle: null,
+      }));
     },
   });
 }

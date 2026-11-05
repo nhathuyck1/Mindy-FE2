@@ -277,7 +277,10 @@
     @apply space-y-4 leading-8 break-words;
   }
   .learning-article :is(h1, h2, h3, h4, h5, h6) {
-    @apply mt-7 text-xl font-bold;
+    @apply mt-5 text-lg font-bold;
+  }
+  .learning-article > :first-child {
+    margin-top: 0;
   }
   .learning-article ul {
     @apply list-disc space-y-2 pl-6;

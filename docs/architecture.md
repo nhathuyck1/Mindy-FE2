@@ -1,5 +1,14 @@
 # Kiến trúc Mindy FE2
 
+## Accordion học liệu Student — 05/11/2026
+
+- `LearningWorkspace` dùng khung chương theo container của Mentor, không nhập module staff. `LearningUnitContent` sở hữu query chương và state mục mở; ghép tài liệu bằng sessionId, tách nội dung chung/buổi không xác định. `LearningMaterialList` render trigger aria-expanded/aria-controls và panel gắn với từng tiêu đề, chỉ mount `MaterialViewer` đang mở; null là đã thu gọn, undefined mở bài đầu theo thứ tự hiển thị. Đổi chương remount state.
+- `MaterialViewer` giữ sanitizer, kiểm class/unit và luồng quyền tệp hiện hữu, bỏ heading lặp. File chính đọc signed access khi mount, refresh do người dùng; cleanup hủy request và gỡ media khi đóng mục. URL ký chỉ trong component memory. Preview/locked không mount list/detail/file access, lỗi list không render dữ liệu cũ. Không thêm API hoặc quyền Mentor vào Student.
+
+## Metadata buổi trong danh sách bài tập — 05/11/2026
+
+- `useAssignmentSessions` giữ số buổi/lịch/chương từ context Student và tên/lịch từ danh sách buổi Mentor hiện hữu, không thêm endpoint. `AssignmentListItem` ghép bằng sessionId; không tải detail từng bài hoặc suy trạng thái nộp từ assignment status. `assignment-deadline` chỉ tính nhãn hạn theo đồng hồ client; backend tiếp tục quyết định quyền làm/nộp bài.
+
 ## Dashboard tài liệu theo khóa — 05/11/2026
 
 - `ManagerMaterialsDashboard` dùng `useManagerMaterialCounts` (`useQueries`) đọc detail Manager của mỗi khóa rồi cộng total từ danh sách tài liệu từng học phần, pageSize=1; không tải toàn bộ tài liệu hoặc gửi query courseId chưa được upstream hỗ trợ. Học phần được đọc tuần tự trong từng khóa, dùng AbortSignal chung. Danh sách khóa dùng `useManagerCourseOptions` đủ trang. Query key `manager/userId/material-count-by-course/courseId` dùng cơ chế invalidate Manager hiện hữu. Chart/tổng chỉ dựng khi đủ count, lỗi một học phần làm count cả khóa chưa xác định.
