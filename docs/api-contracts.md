@@ -285,3 +285,7 @@ Tìm người dùng (03/11/2026): `GET /api/v1/admin/users` bổ sung query `q` 
 Response trực tiếp có scope, timeZone Asia/Ho_Chi_Minh, generatedAt/from/to ISO UTC; summary `{courses,classes,openClasses,activeClasses,registrations,students}`; courses/mentors/classes top 10 `{id,name,registrations,students,classes}`; trend `{date,registrations}` theo ngày VN có zero-fill; classStatuses `{status,count}`. Mentor trả mentors `[]`. Chỉ ACTIVE/COMPLETED, enrolled_at trong [from,to) được tính đăng ký; học viên đếm distinct, không cộng số theo từng khóa/mentor. Course/class totals mô tả hiện tại.
 
 Proxy chuyển access cookie/private no-store, từ chối query lạ/lặp, validate role response bằng Zod. Session recovery dùng apiRequest chung; 403 không retry, 422 sửa filter, lỗi/503/502 có Thử lại và không hiện số 0 thay lỗi. Chi tiết đầy đủ trong BE `docs/api_flow/DASHBOARD_flow-api-breakdown.md`. Các bảng công việc Manager và lịch Mentor giữ nguyên contract.
+
+## BE Change — source local 05/11/2026
+
+Contract source mới ở ../Mindy-BE/docs/api_flow/PHASE_BE_CHANGE_flow-api-breakdown.md. Bổ sung teaching-slots; management/classes/:id/weekly-schedule GET/POST và preview POST; mentor/classes/:id/sessions/swap; materials/:id/open; manager/materials/bulk-delete và storage-cleanup; manager materials unseen query; chat file-access disposition. Manager/Mentor dashboard dùng schema riêng. Có migration mới BE, chưa xác nhận deploy.

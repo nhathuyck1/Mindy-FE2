@@ -307,3 +307,7 @@ Next config hỗ trợ `MINDY_DIST_DIR` cho build output riêng trong lúc previ
 - Browser vẫn same-origin `/api/v1`; proxy bổ sung đúng hai GET list, strict query, validate DTO và cookie access_token/no-store. Session/user ID nằm trong query key; dữ liệu riêng tư được xóa bởi luồng đổi phiên hiện có.
 
 Cập nhật 16/10: user orders/courses hiển thị dạng bảng, dữ liệu chi tiết từ list DTO mở qua `UserDetailsDialog`. Calendar dùng cùng dialog với ScheduleEvent đã tải; không phát sinh API hay quyền mới. Link payOS/schedule/public course nằm trong dialog và chỉ điều hướng khi bấm.
+
+## BE Change — 05/11/2026
+
+features/operations sở hữu schema/proxy mới và các panel lịch tuần/swap/retention. Dashboard manager/mentor có DTO và renderer riêng, Admin giữ analytics cũ. Server state vẫn TanStack Query theo user; retry mutation giữ receipt/body. Không mở manager/mentorId tùy ý.

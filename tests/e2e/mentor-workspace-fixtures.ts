@@ -147,6 +147,16 @@ export async function mockMentorWorkspace(
       key: request.headers()['idempotency-key'],
     });
     const ok = (json: unknown, status = 200) => route.fulfill({ status, json });
+    if (path === 'teaching-slots')
+      return ok([
+        { id: 1, startsAt: '07:30', endsAt: '09:00' },
+        { id: 2, startsAt: '09:30', endsAt: '11:00' },
+        { id: 3, startsAt: '12:00', endsAt: '14:00' },
+        { id: 4, startsAt: '13:00', endsAt: '15:30' },
+        { id: 5, startsAt: '16:00', endsAt: '17:30' },
+        { id: 6, startsAt: '18:00', endsAt: '19:30' },
+        { id: 7, startsAt: '20:00', endsAt: '21:30' },
+      ]);
     if (path === prefix)
       return ok({
         id: mentorIds.class,

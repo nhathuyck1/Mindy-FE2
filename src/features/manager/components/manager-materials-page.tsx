@@ -13,6 +13,7 @@ import { ManagerCourseList } from './manager-course-list';
 import { ManagerMaterialEditor } from './manager-material-editor';
 import { ManagerMaterialsInventory } from './manager-materials-inventory';
 import { ManagerState } from './manager-shared';
+import { MaterialRetentionPanel } from '@/features/operations/components/material-retention-panel';
 
 export function ManagerMaterialsPage() {
   const router = useRouter();
@@ -71,6 +72,7 @@ export function ManagerMaterialsPage() {
             router.push(`${pathname}?${query.toString()}`);
           }}
         />
+        <MaterialRetentionPanel />
       </div>
     );
 

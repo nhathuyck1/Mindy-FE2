@@ -13,6 +13,7 @@ import { NameAvatar } from '@/components/ui/name-avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { apiRequest } from '@/lib/api/client';
 import { cn } from '@/lib/utils';
+import { ChatImage } from './chat-image';
 import { chatError, useRefreshChat } from '../api/chat-queries';
 import {
   accessSchema,
@@ -113,6 +114,13 @@ export function ChatMessageItem(props: {
                   </p>
                 )}
                 {m.body && <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{m.body}</p>}
+                {m.file && m.type === 'IMAGE' && (
+                  <ChatImage
+                    conversationId={m.conversationId}
+                    messageId={m.id}
+                    name={m.file.originalFilename}
+                  />
+                )}
                 {m.file && (
                   <Button
                     variant="link"

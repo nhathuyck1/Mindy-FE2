@@ -12,6 +12,7 @@ import {
   safeResourceUrl,
 } from '../schemas/learning-contracts';
 import { LearningState } from './learning-state';
+import { MaterialOpen, recordMaterialOpen } from '@/features/operations/components/material-open';
 
 async function accessFile(
   classId: string,
@@ -207,6 +208,12 @@ function FileViewer(props: { material: MaterialDetail; file: MaterialFile; attac
     }
   }
   const restore = () => {
+    if (!props.attachment)
+      void recordMaterialOpen(
+        props.material.classId,
+        props.material.id,
+        props.material.revision,
+      ).catch(() => undefined);
     if (media.current) {
       media.current.currentTime = position.current.time;
       if (position.current.playing) void media.current.play().catch(() => undefined);
@@ -259,6 +266,7 @@ function FileViewer(props: { material: MaterialDetail; file: MaterialFile; attac
           )}
           {!props.attachment && props.file.kind === 'PDF' && (
             <iframe
+              onLoad={restore}
               title={props.material.title}
               src={signed.url}
               referrerPolicy="no-referrer"
@@ -270,6 +278,7 @@ function FileViewer(props: { material: MaterialDetail; file: MaterialFile; attac
           {!props.attachment && props.file.kind === 'IMAGE' && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
+              onLoad={restore}
               src={signed.url}
               alt={props.material.title}
               referrerPolicy="no-referrer"
@@ -279,6 +288,14 @@ function FileViewer(props: { material: MaterialDetail; file: MaterialFile; attac
           {!linkExpired && (
             <a
               href={signed.url}
+              onClick={() => {
+                if (!props.attachment)
+                  void recordMaterialOpen(
+                    props.material.classId,
+                    props.material.id,
+                    props.material.revision,
+                  ).catch(() => undefined);
+              }}
               target="_blank"
               rel="noopener noreferrer"
               referrerPolicy="no-referrer"
@@ -304,6 +321,9 @@ export function MaterialViewer(props: { classId: string; materialId: string; uni
     return <LearningState>Nội dung không thuộc chương này.</LearningState>;
   return (
     <article>
+      {item.contentType === 'ARTICLE' && (
+        <MaterialOpen classId={props.classId} materialId={item.id} revision={item.revision} />
+      )}
       <p className="eyebrow font-bold text-mint">
         {item.contentType === 'ARTICLE'
           ? 'Bài đọc'

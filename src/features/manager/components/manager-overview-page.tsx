@@ -9,6 +9,7 @@ import { useManagerQuery } from '../api/manager-queries';
 import { ManagerState } from './manager-shared';
 import { ManagerPendingMaterials } from './manager-pending-materials';
 import { ManagerPendingLeaves } from './manager-pending-leaves';
+import { ManagerWeeklySchedule } from '@/features/operations/components/weekly-schedule-panel';
 
 const statuses = [
   { title: 'Chờ duyệt', status: 'PENDING_REVIEW', icon: Clock3, tone: 'text-coral' },
@@ -64,6 +65,7 @@ export function ManagerOverviewPage() {
       </header>
 
       <AnalyticsDashboard audience="manager" embedded />
+      <ManagerWeeklySchedule />
 
       <section aria-label="Thống kê tài liệu" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {counts.map((item) => (

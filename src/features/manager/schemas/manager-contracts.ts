@@ -21,7 +21,7 @@ export {
 } from '@/features/mentor/schemas/mentor-contracts';
 
 export const managerFiltersSchema = materialsQuerySchema
-  .extend({ courseUnitId: z.uuid().optional() })
+  .extend({ courseUnitId: z.uuid().optional(), unseen: z.enum(['true', 'false']).optional() })
   .strict();
 export const rejectMaterialSchema = z
   .object({

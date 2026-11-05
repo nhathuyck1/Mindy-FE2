@@ -105,7 +105,10 @@ export const uploadInput = z
     declaredMimeType: z.enum(['image/jpeg', 'image/png', 'image/webp', 'application/pdf']),
     declaredSizeBytes: z.number().int().min(1).max(10485760),
   })
-  .strict();
+  .strict()
+  .refine((v) => v.declaredMimeType === 'application/pdf' || v.declaredSizeBytes <= 5242880, {
+    message: 'Ảnh tối đa 5 MiB.',
+  });
 export const uploadIntentSchema = z.object({
   fileId: z.uuidv4(),
   uploadUrl: z.url(),

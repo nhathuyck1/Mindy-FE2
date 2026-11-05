@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { apiRequest } from '@/lib/api/client';
+import { MaterialOpen, recordMaterialOpen } from '@/features/operations/components/material-open';
 import {
   Plus,
   FileText,
@@ -131,6 +132,12 @@ function MaterialFilePreview(props: {
   primary?: boolean;
   file: NonNullable<Material['file']>;
 }) {
+  const opened = () => {
+    if (props.primary)
+      void recordMaterialOpen(props.classId, props.materialId, props.revision).catch(
+        () => undefined,
+      );
+  };
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const controller = useRef<AbortController | null>(null);
@@ -221,6 +228,7 @@ function MaterialFilePreview(props: {
         <div className="space-y-4 border-t border-line p-4 @xl/mentor-content:p-5">
           <a
             href={link.url}
+            onClick={opened}
             target="_blank"
             rel="noopener noreferrer"
             referrerPolicy="no-referrer"
@@ -231,10 +239,17 @@ function MaterialFilePreview(props: {
           </a>
           <p className="text-xs text-muted">Liên kết hết hạn: {mentorDate(link.expiresAt)}</p>
           {props.file.kind === 'AUDIO' && (
-            <audio controls preload="metadata" className="w-full" src={link.url} />
+            <audio
+              onLoadedMetadata={opened}
+              controls
+              preload="metadata"
+              className="w-full"
+              src={link.url}
+            />
           )}
           {props.file.kind === 'PDF' && (
             <iframe
+              onLoad={opened}
               title={props.file.originalFilename}
               referrerPolicy="no-referrer"
               src={link.url}
@@ -242,12 +257,19 @@ function MaterialFilePreview(props: {
             />
           )}
           {props.file.kind === 'VIDEO' && (
-            <video controls preload="metadata" className="w-full rounded-xl" src={link.url}>
+            <video
+              onLoadedMetadata={opened}
+              controls
+              preload="metadata"
+              className="w-full rounded-xl"
+              src={link.url}
+            >
               <track kind="captions" />
             </video>
           )}
           {props.file.kind === 'IMAGE' && (
             <iframe
+              onLoad={opened}
               title={props.file.originalFilename}
               sandbox=""
               referrerPolicy="no-referrer"
@@ -292,6 +314,13 @@ function MaterialDetail(props: {
         <MentorQueryState pending={detail.isPending} error={detail.error} retry={detail.refetch}>
           {item && (
             <>
+              {item.contentType === 'ARTICLE' && (
+                <MaterialOpen
+                  classId={props.classId}
+                  materialId={item.id}
+                  revision={item.revision}
+                />
+              )}
               <div
                 className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4"
                 role="toolbar"

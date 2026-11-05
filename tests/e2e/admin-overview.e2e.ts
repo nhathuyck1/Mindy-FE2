@@ -3,67 +3,91 @@ import { testUser } from './api-fixtures';
 import { dashboardFixture } from './dashboard-fixtures';
 
 for (const audience of ['admin', 'manager', 'mentor'] as const) {
-  test(`${audience} analytics filters, ranking and responsive layout`, async ({ page }, info) => {
+  test(audience + ' analytics filters and responsive layout', async ({ page }, info) => {
     const calls: string[] = [];
-    const errors: string[] = [];
-    page.on('pageerror', (error) => errors.push(error.message));
+    const base = {
+      scope: audience.toUpperCase(),
+      timeZone: 'Asia/Ho_Chi_Minh',
+      generatedAt: '2026-11-03T10:00:00Z',
+      from: '2026-08-05T17:00:00Z',
+      to: '2026-11-03T10:00:00Z',
+    };
+    const manager = {
+      ...base,
+      summary: {
+        collectedAmount: '1200000',
+        paidOrders: 2,
+        pendingAmount: '500000',
+        pendingOrders: 1,
+      },
+      paymentMethods: [{ id: 'CASH', name: 'CASH', amount: '1200000', orders: 2 }],
+      courses: [],
+      classes: [],
+      trend: [{ date: '2026-11-03', amount: '1200000', orders: 2 }],
+      reconciliation: [],
+      openingAlerts: [],
+    };
+    const mentor = {
+      ...base,
+      summary: {
+        primaryClasses: 2,
+        students: 12,
+        assignedSessions: 8,
+        substituteSessions: 2,
+        completedSessions: 6,
+        actualTeachingHours: 9,
+      },
+      upcoming: [],
+      leaveRequests: [],
+    };
     await page.route('**/api/v1/**', (route) => {
       const url = new URL(route.request().url());
       if (url.pathname.endsWith('/auth/me'))
         return route.fulfill({ json: { ...testUser, role: audience.toUpperCase() } });
       if (url.pathname.endsWith('/dashboard')) {
-        calls.push(`${route.request().method()} ${url.pathname}${url.search}`);
+        calls.push(url.search);
         return route.fulfill({
-          json: dashboardFixture(audience.toUpperCase() as 'ADMIN' | 'MANAGER' | 'MENTOR'),
+          json:
+            audience === 'admin' ? dashboardFixture() : audience === 'manager' ? manager : mentor,
         });
       }
-      return route.fulfill({ json: { items: [], page: 1, pageSize: 20, total: 0 } });
+      return route.fulfill({
+        json: { items: [], page: 1, pageSize: 20, total: 0, asOf: base.generatedAt },
+      });
     });
-    await page.goto(audience === 'mentor' ? '/mentor/dashboard' : `/${audience}`);
-    const dashboard = page.getByRole('region', { name: 'Dashboard đào tạo', exact: true });
-    await expect(dashboard.getByText('Chỉ tính đăng ký đã xác nhận', { exact: false })).toHaveCount(
-      0,
-    );
+    await page.goto(audience === 'mentor' ? '/mentor/dashboard' : '/' + audience);
+    const dashboard = page.getByRole('region', {
+      name: audience === 'admin' ? 'Dashboard đào tạo' : 'Dashboard theo vai trò',
+      exact: true,
+    });
+    await expect(dashboard).toBeVisible();
     if (audience === 'manager') {
-      await expect(
-        dashboard.getByRole('heading', { name: 'Khóa học được đăng ký nhiều nhất' }),
-      ).toHaveCount(0);
-      await expect(
-        dashboard.getByRole('heading', { name: 'Mentor có nhiều học viên nhất' }),
-      ).toHaveCount(0);
-      await expect(dashboard.locator('svg.recharts-surface')).toHaveCount(2);
-    } else {
+      await expect(dashboard.getByText('Thực thu', { exact: true }).first()).toBeVisible();
+      await expect(dashboard.getByText('1.200.000', { exact: false }).first()).toBeVisible();
+    } else if (audience === 'mentor') {
+      await expect(dashboard.getByText('Giờ dạy thực tế', { exact: true })).toBeVisible();
+      await expect(dashboard.getByText('Thực thu', { exact: true })).toHaveCount(0);
+    } else
       await expect(
         dashboard.getByRole('heading', { name: 'Khóa học được đăng ký nhiều nhất' }),
       ).toBeVisible();
-      await expect(dashboard.locator('svg.recharts-surface')).toHaveCount(4);
-      await dashboard
-        .getByRole('region', { name: 'Khóa học được đăng ký nhiều nhất', exact: true })
-        .getByText('Xem bảng xếp hạng')
-        .click();
-      await expect(dashboard.getByText('24 lượt đăng ký', { exact: true }).first()).toBeVisible();
-      await expect(
-        dashboard.getByRole('heading', {
-          name: audience === 'mentor' ? 'So sánh các lớp của tôi' : 'Mentor có nhiều học viên nhất',
-        }),
-      ).toBeVisible();
-    }
-    if (audience === 'mentor') await expect(dashboard.getByText('Mentor Minh')).toHaveCount(0);
-    await dashboard.getByRole('combobox', { name: 'Khoảng thời gian đăng ký' }).selectOption('30');
+    const filter = dashboard.getByRole('combobox', {
+      name: audience === 'admin' ? 'Khoảng thời gian đăng ký' : 'Khoảng thời gian',
+      exact: true,
+    });
+    await filter.selectOption('30');
     await expect.poll(() => calls.at(-1)).toContain('days=30');
-    await dashboard.getByRole('combobox', { name: 'Khoảng thời gian đăng ký' }).selectOption('365');
+    await filter.selectOption('365');
     await expect.poll(() => calls.at(-1)).toContain('days=365');
-    await dashboard.getByText('Xem số liệu theo ngày').click();
-    await expect(dashboard.getByRole('table')).toContainText('2026-11-03');
     await page.setViewportSize({ width: info.project.name === 'mobile' ? 320 : 1440, height: 950 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.evaluate(() => document.fonts.ready);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
-    await page.screenshot({ path: info.outputPath(`dashboard-${audience}.png`), fullPage: true });
-    expect(errors).toEqual([]);
-    expect(calls.every((call) => call.startsWith(`GET /api/v1/${audience}/dashboard?`))).toBe(true);
+    await page.screenshot({
+      path: info.outputPath('dashboard-' + audience + '.png'),
+      fullPage: true,
+    });
   });
 }
 

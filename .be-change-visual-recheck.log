@@ -1,0 +1,17 @@
+[WebServer] (node:46468) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 6 tests using 1 worker
+
+(node:32996) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [desktop] › tests\e2e\be-change-operations.e2e.ts:66:1 › manager previews a weekly timetable and retries an uncertain save with the same receipt (1.2s)
+  ok 2 [desktop] › tests\e2e\chat.e2e.ts:426:1 › shows an image in the timeline, renews an expired URL, and restores focus after enlarge (829ms)
+  ok 3 [desktop] › tests\e2e\chat.e2e.ts:460:1 › previews a selected image and leaves send disabled after upload fails (365ms)
+(node:25276) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 4 [mobile] › tests\e2e\be-change-operations.e2e.ts:66:1 › manager previews a weekly timetable and retries an uncertain save with the same receipt (1.3s)
+  ok 5 [mobile] › tests\e2e\chat.e2e.ts:426:1 › shows an image in the timeline, renews an expired URL, and restores focus after enlarge (815ms)
+  ok 6 [mobile] › tests\e2e\chat.e2e.ts:460:1 › previews a selected image and leaves send disabled after upload fails (366ms)
+
+  6 passed (8.0s)

@@ -70,10 +70,12 @@ export const createLeaveInputSchema = z
   .refine(
     (v) => v.toDate >= v.fromDate && Date.parse(v.toDate) - Date.parse(v.fromDate) < 93 * 86400000,
   )
-  .refine((v) =>
-    v.period === 'FULL_DAY'
-      ? Boolean(v.dayMappings?.length) && v.sessionMappings === undefined
-      : Boolean(v.sessionMappings?.length) && v.dayMappings === undefined,
+  .refine(
+    (v) =>
+      (v.period === 'FULL_DAY' &&
+        Boolean(v.dayMappings?.length) &&
+        v.sessionMappings === undefined) ||
+      (Boolean(v.sessionMappings?.length) && v.dayMappings === undefined),
   );
 export const withdrawLeaveInputSchema = z
   .object({ expectedVersion: version, reason: z.string().trim().min(1).max(1000) })

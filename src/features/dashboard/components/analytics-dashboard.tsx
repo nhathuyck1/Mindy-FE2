@@ -9,13 +9,19 @@ import { useSession } from '@/features/auth/api/auth-queries';
 import { useDashboard } from '../api/dashboard-queries';
 import type { DashboardAudience } from '../schemas/dashboard-contracts';
 import { ClassDistribution, DashboardRanking, EnrollmentTrend } from './dashboard-charts';
+import { RoleDashboard } from './role-dashboard';
 
 export function AnalyticsDashboard(props: { audience: DashboardAudience; embedded?: boolean }) {
+  if (props.audience !== 'admin')
+    return <RoleDashboard audience={props.audience} embedded={props.embedded} />;
+  return <AdminAnalyticsDashboard {...props} audience="admin" />;
+}
+function AdminAnalyticsDashboard(props: { audience: 'admin'; embedded?: boolean }) {
   const [days, setDays] = useState(90);
   const filterId = useId();
   const session = useSession();
   const query = useDashboard(props.audience, days);
-  const mentor = props.audience === 'mentor';
+  const mentor = false;
   const data = query.data;
   if (session.data?.role !== props.audience.toUpperCase()) return null;
   const Heading = props.embedded ? 'h2' : 'h1';
@@ -128,7 +134,7 @@ export function AnalyticsDashboard(props: { audience: DashboardAudience; embedde
               <EnrollmentTrend data={data.trend} />
               <ClassDistribution data={data.classStatuses} />
             </div>
-            {props.audience !== 'manager' && (
+            {
               <div className="grid items-start gap-5 lg:grid-cols-2">
                 <DashboardRanking
                   title="Khóa học được đăng ký nhiều nhất"
@@ -152,7 +158,7 @@ export function AnalyticsDashboard(props: { audience: DashboardAudience; embedde
                   />
                 )}
               </div>
-            )}
+            }
           </>
         )
       )}

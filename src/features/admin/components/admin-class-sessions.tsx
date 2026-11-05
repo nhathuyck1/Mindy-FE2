@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { WeeklySchedulePanel } from '@/features/operations/components/weekly-schedule-panel';
 import { useAdminWrite } from '../api/admin-edit-queries';
 import {
   scheduleAdminSessionSchema,
@@ -37,6 +38,9 @@ export function AdminClassSessions(props: { classroom: AdminClassDetail; editabl
   return (
     <section className="space-y-5 border-t border-line pt-6">
       <h3 className="text-lg font-extrabold">Học phần & lịch buổi</h3>
+      {props.editable && (
+        <WeeklySchedulePanel key={props.classroom.assignmentVersion} classroom={props.classroom} />
+      )}
       <p className="text-sm leading-7 text-muted">
         Giờ Việt Nam (UTC+7). Mỗi buổi trong một ngày, trong khoảng thời gian của lớp; hệ thống kiểm
         tra trùng lịch giảng viên khi ghi.

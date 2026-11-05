@@ -59,7 +59,15 @@ async function fixture(page: Page) {
     pages: [] as string[],
     detailFailure: false,
     hiddenOnly: false,
+    opens: [] as { path: string; body: unknown }[],
   };
+  await page.route('**/api/v1/materials/*/open', (route) => {
+    state.opens.push({
+      path: new URL(route.request().url()).pathname,
+      body: route.request().postDataJSON(),
+    });
+    return route.fulfill({ status: 204 });
+  });
   const context = {
     id: classId,
     courseId,
@@ -240,12 +248,18 @@ test('Student opens materials, reads article and attachments, changes lessons an
   await expect(page.getByRole('heading', { name: 'Tài liệu học tập' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Khóa học không có quyền' })).toHaveCount(0);
   await expect(page.getByRole('article')).toHaveCount(1);
+  expect(state.opens).toHaveLength(0);
   await page.getByRole('link', { name: 'Vào học', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Mục tiêu bài học' })).toBeVisible();
   await expect(page.getByRole('img', { name: 'Sơ đồ biến' })).toBeVisible();
+  await expect.poll(() => state.opens.length).toBe(1);
+  expect(state.opens[0]).toEqual({
+    path: `/api/v1/materials/${articleId}/open`,
+    body: { classId, expectedRevision: 1 },
+  });
   expect(state.pages).toEqual(['1', '2']);
   expect(await page.evaluate(() => document.querySelector('.learning-article script'))).toBeNull();
-  await expect(page.locator('.learning-article a')).not.toHaveAttribute('href', /javascript/);
+  await expect(page.locator('.learning-article a[href^="javascript:"]')).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Tham gia buổi học' })).toHaveAttribute(
     'href',
     'https://meet.example.test/class',
@@ -255,6 +269,7 @@ test('Student opens materials, reads article and attachments, changes lessons an
     'href',
     /signature=/,
   );
+  expect(state.opens).toHaveLength(1);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: info.outputPath('learning-article.png'), fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

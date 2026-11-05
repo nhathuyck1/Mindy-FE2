@@ -58,7 +58,11 @@ export function resolveChatRule(method: string, path: string) {
     p[5] === 'file-access' &&
     method === 'POST'
   )
-    return rule(dto.accessSchema);
+    return rule(
+      dto.accessSchema,
+      undefined,
+      z.object({ disposition: z.enum(['inline', 'attachment']).optional() }).strict(),
+    );
   if (p[3] === 'attachments') {
     if (p.length === 5 && p[4] === 'upload-intents' && method === 'POST')
       return rule(dto.uploadIntentSchema, dto.uploadInput, empty, true);

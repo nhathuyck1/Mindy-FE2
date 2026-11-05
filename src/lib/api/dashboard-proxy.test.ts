@@ -20,6 +20,38 @@ function request(path: string, cookie = true, method = 'GET') {
   });
 }
 function payload(scope: string) {
+  const base = {
+    scope,
+    timeZone: 'Asia/Ho_Chi_Minh',
+    generatedAt: '2026-11-03T00:00:00Z',
+    from: '2026-10-01T00:00:00Z',
+    to: '2026-11-03T00:00:00Z',
+  };
+  if (scope === 'MANAGER')
+    return {
+      ...base,
+      summary: { collectedAmount: '0', paidOrders: 0, pendingAmount: '0', pendingOrders: 0 },
+      paymentMethods: [],
+      courses: [],
+      classes: [],
+      trend: [],
+      reconciliation: [],
+      openingAlerts: [],
+    };
+  if (scope === 'MENTOR')
+    return {
+      ...base,
+      summary: {
+        primaryClasses: 0,
+        students: 0,
+        assignedSessions: 0,
+        substituteSessions: 0,
+        completedSessions: 0,
+        actualTeachingHours: 0,
+      },
+      upcoming: [],
+      leaveRequests: [],
+    };
   return {
     scope,
     timeZone: 'Asia/Ho_Chi_Minh',

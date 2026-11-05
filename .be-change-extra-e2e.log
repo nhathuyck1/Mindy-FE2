@@ -1,0 +1,181 @@
+[WebServer] (node:34160) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 38 tests using 1 worker
+
+(node:28572) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x   1 [desktop] › tests\e2e\learning.e2e.ts:234:1 › Student opens materials, reads article and attachments, changes lessons and locked units (5.8s)
+(node:34912) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  2 [desktop] › tests\e2e\learning.e2e.ts:273:1 › Cash preview shows curriculum without loading private materials (540ms)
+  ok  3 [desktop] › tests\e2e\learning.e2e.ts:284:1 › Hides inaccessible classes and shows an empty state without pagination (363ms)
+  ok  4 [desktop] › tests\e2e\learning.e2e.ts:294:1 › Access revocation and hidden material have recoverable states (717ms)
+  ok  5 [desktop] › tests\e2e\mentor-session-materials.e2e.ts:4:1 › mentor loads lessons independently of empty unit detail and creates from the header (2.2s)
+  ok  6 [desktop] › tests\e2e\mentor-session-materials.e2e.ts:71:1 › mentor includes later API pages when grouping session content and retries failed reads (508ms)
+  ok  7 [desktop] › tests\e2e\mentor-workspace.e2e.ts:8:1 › mentor assignment filters, class shell and timetable use the new contracts (757ms)
+  ok  8 [desktop] › tests\e2e\mentor-workspace.e2e.ts:42:1 › substitute sees assigned teaching content without class roster, reports or authoring (531ms)
+  ok  9 [desktop] › tests\e2e\mentor-workspace.e2e.ts:61:1 › attendance reports distinguish no data, physical status and makeup credit (626ms)
+  ok 10 [desktop] › tests\e2e\mentor-workspace.e2e.ts:75:1 › cancelled class opens history and prevents teaching mutations (799ms)
+  ok 11 [desktop] › tests\e2e\mentor-workspace.e2e.ts:89:1 › completed class allows internal notes within the editing window (942ms)
+  ok 12 [desktop] › tests\e2e\mentor-workspace.e2e.ts:97:1 › stored progress preserves zero, missing data and invalid values without writes (588ms)
+  ok 13 [desktop] › tests\e2e\mentor-workspace.e2e.ts:124:1 › preview is read only and bulk attendance includes guests across all pages (1.4s)
+  ok 14 [desktop] › tests\e2e\mentor-workspace.e2e.ts:161:1 › teaching note conflicts preserve drafts and require an explicit merge decision (1.7s)
+  ok 15 [desktop] › tests\e2e\mentor-workspace.e2e.ts:183:1 › network retry keeps note idempotency key and meeting edits can clear the override (2.0s)
+  ok 16 [desktop] › tests\e2e\mentor-workspace.e2e.ts:206:1 › note drafts survive a failed conflict refresh and the edit window is checked on submit (771ms)
+  ok 17 [desktop] › tests\e2e\mentor-workspace.e2e.ts:247:1 › stale leave creation keeps the proposed dates and reason without retrying automatically (568ms)
+  ok 18 [desktop] › tests\e2e\mentor-workspace.e2e.ts:269:3 › leave FULL_DAY preview, mapping, create, detail and withdrawal use current versions (1.7s)
+  x  19 [desktop] › tests\e2e\mentor-workspace.e2e.ts:269:3 › leave MORNING preview, mapping, create, detail and withdrawal use current versions (30.2s)
+(node:52104) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  20 [mobile] › tests\e2e\learning.e2e.ts:234:1 › Student opens materials, reads article and attachments, changes lessons and locked units (5.7s)
+(node:46732) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 21 [mobile] › tests\e2e\learning.e2e.ts:273:1 › Cash preview shows curriculum without loading private materials (630ms)
+  ok 22 [mobile] › tests\e2e\learning.e2e.ts:284:1 › Hides inaccessible classes and shows an empty state without pagination (398ms)
+  ok 23 [mobile] › tests\e2e\learning.e2e.ts:294:1 › Access revocation and hidden material have recoverable states (614ms)
+  ok 24 [mobile] › tests\e2e\mentor-session-materials.e2e.ts:4:1 › mentor loads lessons independently of empty unit detail and creates from the header (2.1s)
+  ok 25 [mobile] › tests\e2e\mentor-session-materials.e2e.ts:71:1 › mentor includes later API pages when grouping session content and retries failed reads (580ms)
+  ok 26 [mobile] › tests\e2e\mentor-workspace.e2e.ts:8:1 › mentor assignment filters, class shell and timetable use the new contracts (874ms)
+  ok 27 [mobile] › tests\e2e\mentor-workspace.e2e.ts:42:1 › substitute sees assigned teaching content without class roster, reports or authoring (534ms)
+  ok 28 [mobile] › tests\e2e\mentor-workspace.e2e.ts:61:1 › attendance reports distinguish no data, physical status and makeup credit (591ms)
+  ok 29 [mobile] › tests\e2e\mentor-workspace.e2e.ts:75:1 › cancelled class opens history and prevents teaching mutations (808ms)
+  ok 30 [mobile] › tests\e2e\mentor-workspace.e2e.ts:89:1 › completed class allows internal notes within the editing window (983ms)
+  ok 31 [mobile] › tests\e2e\mentor-workspace.e2e.ts:97:1 › stored progress preserves zero, missing data and invalid values without writes (679ms)
+  ok 32 [mobile] › tests\e2e\mentor-workspace.e2e.ts:124:1 › preview is read only and bulk attendance includes guests across all pages (1.4s)
+  ok 33 [mobile] › tests\e2e\mentor-workspace.e2e.ts:161:1 › teaching note conflicts preserve drafts and require an explicit merge decision (1.3s)
+  ok 34 [mobile] › tests\e2e\mentor-workspace.e2e.ts:183:1 › network retry keeps note idempotency key and meeting edits can clear the override (1.5s)
+  ok 35 [mobile] › tests\e2e\mentor-workspace.e2e.ts:206:1 › note drafts survive a failed conflict refresh and the edit window is checked on submit (1.2s)
+  ok 36 [mobile] › tests\e2e\mentor-workspace.e2e.ts:247:1 › stale leave creation keeps the proposed dates and reason without retrying automatically (566ms)
+  ok 37 [mobile] › tests\e2e\mentor-workspace.e2e.ts:269:3 › leave FULL_DAY preview, mapping, create, detail and withdrawal use current versions (1.3s)
+  x  38 [mobile] › tests\e2e\mentor-workspace.e2e.ts:269:3 › leave MORNING preview, mapping, create, detail and withdrawal use current versions (30.1s)
+
+
+  1) [desktop] › tests\e2e\learning.e2e.ts:234:1 › Student opens materials, reads article and attachments, changes lessons and locked units 
+
+    Error: expect(locator).not.toHaveAttribute(expected) failed
+
+    Locator: locator('.learning-article a')
+    Expected pattern: not /javascript/
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "not toHaveAttribute" locator('.learning-article a') with timeout 5000ms
+      - waiting for locator('.learning-article a')
+
+
+      246 |   expect(state.pages).toEqual(['1', '2']);
+      247 |   expect(await page.evaluate(() => document.querySelector('.learning-article script'))).toBeNull();
+    > 248 |   await expect(page.locator('.learning-article a')).not.toHaveAttribute('href', /javascript/);
+          |                                                         ^
+      249 |   await expect(page.getByRole('link', { name: 'Tham gia buổi học' })).toHaveAttribute(
+      250 |     'href',
+      251 |     'https://meet.example.test/class',
+        at E:\Documents\Mindy\Mindy-FE2\tests\e2e\learning.e2e.ts:248:57
+
+    Error Context: test-results\learning.e2e.ts-Student-op-3a7a7-es-lessons-and-locked-units-desktop\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\learning.e2e.ts-Student-op-3a7a7-es-lessons-and-locked-units-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\learning.e2e.ts-Student-op-3a7a7-es-lessons-and-locked-units-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [desktop] › tests\e2e\mentor-workspace.e2e.ts:269:3 › leave MORNING preview, mapping, create, detail and withdrawal use current versions 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.selectOption: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByLabel('Buổi dạy bù', { exact: true })
+
+
+      282 |     else {
+      283 |       await page.getByLabel('Ngày dạy bù', { exact: true }).fill('2026-10-28');
+    > 284 |       await page.getByLabel('Buổi dạy bù', { exact: true }).selectOption('AFTERNOON');
+          |                                                             ^
+      285 |       await page.getByRole('button', { name: 'Tìm giờ phù hợp' }).click();
+      286 |       await page.getByRole('radio').check();
+      287 |     }
+        at E:\Documents\Mindy\Mindy-FE2\tests\e2e\mentor-workspace.e2e.ts:284:61
+
+    Error Context: test-results\mentor-workspace.e2e.ts-le-55b39-drawal-use-current-versions-desktop\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\mentor-workspace.e2e.ts-le-55b39-drawal-use-current-versions-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\mentor-workspace.e2e.ts-le-55b39-drawal-use-current-versions-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [mobile] › tests\e2e\learning.e2e.ts:234:1 › Student opens materials, reads article and attachments, changes lessons and locked units 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('img', { name: 'Sơ đồ biến' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('img', { name: 'Sơ đồ biến' }) with timeout 5000ms
+      - waiting for getByRole('img', { name: 'Sơ đồ biến' })
+
+
+      243 |   await page.getByRole('link', { name: 'Vào học', exact: true }).click();
+      244 |   await expect(page.getByRole('heading', { name: 'Mục tiêu bài học' })).toBeVisible();
+    > 245 |   await expect(page.getByRole('img', { name: 'Sơ đồ biến' })).toBeVisible();
+          |                                                               ^
+      246 |   expect(state.pages).toEqual(['1', '2']);
+      247 |   expect(await page.evaluate(() => document.querySelector('.learning-article script'))).toBeNull();
+      248 |   await expect(page.locator('.learning-article a[href^="javascript:"]')).toHaveCount(0);
+        at E:\Documents\Mindy\Mindy-FE2\tests\e2e\learning.e2e.ts:245:63
+
+    Error Context: test-results\learning.e2e.ts-Student-op-3a7a7-es-lessons-and-locked-units-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\learning.e2e.ts-Student-op-3a7a7-es-lessons-and-locked-units-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\learning.e2e.ts-Student-op-3a7a7-es-lessons-and-locked-units-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [mobile] › tests\e2e\mentor-workspace.e2e.ts:269:3 › leave MORNING preview, mapping, create, detail and withdrawal use current versions 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.selectOption: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByLabel('Buổi dạy bù', { exact: true })
+
+
+      282 |     else {
+      283 |       await page.getByLabel('Ngày dạy bù', { exact: true }).fill('2026-10-28');
+    > 284 |       await page.getByLabel('Buổi dạy bù', { exact: true }).selectOption('AFTERNOON');
+          |                                                             ^
+      285 |       await page.getByRole('button', { name: 'Tìm giờ phù hợp' }).click();
+      286 |       await page.getByRole('radio').check();
+      287 |     }
+        at E:\Documents\Mindy\Mindy-FE2\tests\e2e\mentor-workspace.e2e.ts:284:61
+
+    Error Context: test-results\mentor-workspace.e2e.ts-le-55b39-drawal-use-current-versions-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\mentor-workspace.e2e.ts-le-55b39-drawal-use-current-versions-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\mentor-workspace.e2e.ts-le-55b39-drawal-use-current-versions-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    [desktop] › tests\e2e\learning.e2e.ts:234:1 › Student opens materials, reads article and attachments, changes lessons and locked units 
+    [desktop] › tests\e2e\mentor-workspace.e2e.ts:269:3 › leave MORNING preview, mapping, create, detail and withdrawal use current versions 
+    [mobile] › tests\e2e\learning.e2e.ts:234:1 › Student opens materials, reads article and attachments, changes lessons and locked units 
+    [mobile] › tests\e2e\mentor-workspace.e2e.ts:269:3 › leave MORNING preview, mapping, create, detail and withdrawal use current versions 
+  34 passed (1.8m)

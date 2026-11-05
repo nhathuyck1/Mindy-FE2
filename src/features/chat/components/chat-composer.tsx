@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Paperclip, Send, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { LocalImagePreview } from './chat-image';
 import { apiRequest, ApiError } from '@/lib/api/client';
 import { sessionSignal } from '@/lib/api/session-coordinator';
 import { chatError, useRefreshChat } from '../api/chat-queries';
@@ -34,6 +35,8 @@ export function ChatComposer(props: {
       type: 'FILE' | 'IMAGE';
     } | null>(null);
   const [processing, setProcessing] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const textInput = useRef<HTMLTextAreaElement>(null);
   const lifetime = useRef<AbortController | null>(null),
     fileInput = useRef<HTMLInputElement>(null),
     sending = useRef(false);
@@ -110,6 +113,7 @@ export function ChatComposer(props: {
       });
       setBody('');
       setAttachment(null);
+      setPreviewFile(null);
       setPending(null);
       props.onClearReply();
       void refresh();
@@ -157,10 +161,11 @@ export function ChatComposer(props: {
       declaredSizeBytes: file.size,
     });
     if (!input.success) {
-      setNotice('Chọn ảnh JPG, PNG, WebP hoặc PDF, tối đa 10 MiB.');
+      setNotice('Chọn ảnh JPG, PNG, WebP tối đa 5 MiB hoặc PDF tối đa 10 MiB.');
       return;
     }
     setBusy(true);
+    setPreviewFile(file.type.startsWith('image/') ? file : null);
     setAttachment(null);
     setProcessing(null);
     setNotice('Đang tải tệp…');
@@ -214,6 +219,9 @@ export function ChatComposer(props: {
           </Button>
         </div>
       )}
+      {previewFile && (
+        <LocalImagePreview key={previewFile.name + previewFile.lastModified} file={previewFile} />
+      )}
       {attachment && (
         <div className="flex items-center justify-between gap-2 text-sm">
           <span className="truncate">{attachment.name}</span>
@@ -222,7 +230,10 @@ export function ChatComposer(props: {
             variant="ghost"
             disabled={locked}
             aria-label="Bỏ tệp đính kèm"
-            onClick={() => setAttachment(null)}
+            onClick={() => {
+              setAttachment(null);
+              setPreviewFile(null);
+            }}
           >
             <X aria-hidden="true" />
           </Button>
@@ -232,6 +243,7 @@ export function ChatComposer(props: {
         Tin nhắn
       </label>
       <Textarea
+        ref={textInput}
         id={`chat-${c.id}`}
         placeholder="Nhập tin nhắn…"
         rows={2}
@@ -254,6 +266,55 @@ export function ChatComposer(props: {
       />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
+          <details className="relative">
+            <summary className="cursor-pointer rounded-xl p-3 text-sm" aria-label="Chọn emoji">
+              😊
+            </summary>
+            <div className="absolute bottom-full left-0 z-10 grid w-56 grid-cols-5 gap-1 rounded-xl border border-line bg-canvas p-2 shadow-lg">
+              {[
+                '😀',
+                '😊',
+                '😂',
+                '❤️',
+                '👍',
+                '🎉',
+                '🥳',
+                '👏',
+                '🔥',
+                '🤔',
+                '😢',
+                '🙏',
+                '💯',
+                '✅',
+                '👨‍👩‍👧‍👦',
+              ].map((emoji) => (
+                <Button
+                  key={emoji}
+                  type="button"
+                  variant="ghost"
+                  disabled={locked}
+                  aria-label={`Chèn ${emoji}`}
+                  onClick={() => {
+                    const start = textInput.current?.selectionStart ?? body.length,
+                      end = textInput.current?.selectionEnd ?? start;
+                    const next = body.slice(0, start) + emoji + body.slice(end);
+                    if (next.length <= 4000) {
+                      setBody(next);
+                      requestAnimationFrame(() => {
+                        textInput.current?.focus();
+                        textInput.current?.setSelectionRange(
+                          start + emoji.length,
+                          start + emoji.length,
+                        );
+                      });
+                    }
+                  }}
+                >
+                  {emoji}
+                </Button>
+              ))}
+            </div>
+          </details>
           {c.capabilities.canAttach && (
             <>
               <input
@@ -316,6 +377,7 @@ export function ChatComposer(props: {
             disabled={busy}
             onClick={() => {
               setProcessing(null);
+              setPreviewFile(null);
               setNotice('');
             }}
           >

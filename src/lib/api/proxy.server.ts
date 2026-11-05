@@ -1,5 +1,6 @@
 import { realtimeTicketInputSchema, realtimeTicketSchema } from '@/lib/realtime/contracts';
 import { resolveChatRule } from './chat-rules.server';
+import { resolveOperationRule } from './operation-rules.server';
 import { resolveWhiteboardRule } from './whiteboard-rules.server';
 import 'server-only';
 import { resolveAssignmentRule } from './assignment-rules.server';
@@ -100,6 +101,8 @@ type ApiRule = {
   timeoutMs?: number;
 };
 function resolveRule(method: string, path: string): ApiRule | undefined {
+  const operationRule = resolveOperationRule(method, path);
+  if (operationRule) return operationRule;
   const dashboardRule = resolveDashboardRule(method, path);
   if (dashboardRule) return dashboardRule;
   const key = `${method} ${path}`;
@@ -207,7 +210,8 @@ async function upstream(
     resolveAssignmentRule(request.method, path)?.idempotent ||
     resolveWhiteboardRule(request.method, path)?.idempotent ||
     codeProxyRule(request.method, path)?.idempotent ||
-    resolveChatRule(request.method, path)?.idempotent
+    resolveChatRule(request.method, path)?.idempotent ||
+    resolveOperationRule(request.method, path)?.idempotent
   ) {
     headers.set('Idempotency-Key', request.headers.get('idempotency-key')!);
   }
@@ -284,6 +288,7 @@ export async function proxyApi(request: Request, path: string) {
     search = `?${new URLSearchParams(Object.entries(parsed.data).map(([key, value]) => [key, String(value)]))}`;
   }
   if (
+    resolveOperationRule(request.method, path) ||
     resolveManagerRule(request.method, path) ||
     resolveMentorRule(request.method, path) ||
     resolveAssignmentRule(request.method, path) ||

@@ -371,3 +371,7 @@ Chữ chính dùng forest; chữ phụ dùng muted pha 90% forest. Theo ảnh m�
 
 - Trang /courses dùng chữ đen cho tiêu đề, breadcrumb, toolbar, nội dung card và học phí; bộ lọc giữ xanh, icon và nền nhạt giữ điểm nhấn Mindy. Bỏ câu mô tả dưới tiêu đề catalog. Quy tắc chỉ áp dụng catalog.
 - Điều chỉnh tiếp: chữ catalog dùng đen pha 15% trắng để dịu hơn; danh mục trên card giảm 14px xuống 12px, tên khóa học giảm 18px xuống 16px. Giữ cỡ chữ card homepage/related.
+
+## BE Change — 05/11/2026
+
+Giữ panel/token Mindy, controls có label và bảng cuộn trên320px. Lịch tuần preview trước save, swap xác nhận hai buổi/lý do, material bulk có dialog title/revision và không báo freed bytes trước cleanup. Dashboard role-specific; ảnh chat signed bypass image optimizer, modal trả focus và nút lấy lại URL.

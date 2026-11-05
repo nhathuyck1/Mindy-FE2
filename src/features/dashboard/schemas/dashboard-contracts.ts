@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { managerDashboardSchema, mentorDashboardSchema } from './role-dashboard-contracts';
 
 const count = z.number().int().nonnegative();
 export const dashboardQuerySchema = z
@@ -47,6 +48,8 @@ export type Dashboard = z.infer<typeof dashboardSchema>;
 export type DashboardAudience = 'admin' | 'manager' | 'mentor';
 
 export function dashboardSchemaFor(audience: DashboardAudience) {
+  if (audience === 'manager') return managerDashboardSchema;
+  if (audience === 'mentor') return mentorDashboardSchema;
   return dashboardSchema.refine((value) => value.scope === audience.toUpperCase(), {
     message: 'Dữ liệu dashboard không đúng vai trò.',
   });

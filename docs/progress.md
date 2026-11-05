@@ -1,5 +1,23 @@
 # Tiến độ
 
+## 06/11/2026 — BE Change nghiệm thu sau restart
+
+- BE full90 suites/775 tests PASS với PostgreSQL/MinIO; clean38 và upgrade35→38 migrations PASS; HTTP contract mới PASS. Không migrate DB ứng dụng, không deploy/commit/push. Cleanup vẫn OFF mặc định.
+- FE lint/type-check, build35 static pages với1 worker, unit41 suites/312 PASS. E2E bảy suite liên quan: **98/98 PASS** desktop/mobile, gồm dashboard, weekly save retry, swap retry, retention STALE, tracking ARTICLE/no list/asset, chat Unicode/preview/renew URL/upload fail, leave keep-time/choose-slot và MORNING. Browser dùng HTTP contract fixtures; DB/storage policy kiểm bằng BE integration thật.
+- Xem screenshot320px phát hiện fieldset weekly min-content kéo rộng input; đã thêm min-w-0 ở section/fieldset và chạy lại visual acceptance riêng. PNG chat fixture128×96, chờ image load/dialog hết animation để screenshot có ý nghĩa.
+- Visual recheck cuối6/6 PASS desktop/mobile; đã mở xem screenshot weekly320px và dialog ảnh. Input giữ trong viewport, slot cuộn trong khung. FE build cuối PASS35 pages.
+- Global `format:check` còn365 file baseline ngoài phạm vi; chỉ format các file thay đổi của task. Lint/types/build và Prettier các file thay đổi được kiểm riêng.
+- Chi tiết/evidence/giới hạn: [BE progress](../../Mindy-BE/docs/progress/BE_CHANGE_PROGRESS.md). Các checkpoint tạm dừng/chưa nghiệm thu phía dưới là lịch sử trước resume.
+
+## 05/11/2026 — BE Change integration
+
+- Dashboard manager dùng tài chính PAID/pending và cảnh báo khai giảng; mentor chỉ nhận workload/sessions/hours/current scope. Giữ Admin analytics cũ, tách Zod theo vai trò.
+- Manager overview chọn lớp OPEN/DRAFT, đọc danh mục slot BE/cấu hình, preview và save lịch tuần với version/receipt; Admin class sessions dùng chung panel. Mentor timeline có swap cùng lớp, cùng thời lượng, hai version và retry cùng key. FULL_DAY hỗ trợ giữ giờ hoặc chọn slot từng buổi, nhận interval conflict an toàn qua proxy.
+- Inventory materials có UNSEEN, snapshot selection/confirmation và per-item bulk-delete; hiển thị reclaimable/reclaimed riêng. Tracking chỉ ở viewer ARTICLE hoặc primary media loaded/mở tệp, không list/prefetch/manager.
+- Chat có emoji picker chèn ở caret, ảnh local object URL/revoke, inline timeline/lightbox và lấy lại URL. Ảnh5MiB/PDF10MiB đồng bộ với BE.
+- Proxy chỉ mở đúng các route/query/body/UUID/role cookies; backend migration/API phải deploy trước FE. Cleanup backend mặc định OFF tới khi rehearsal shared files pass. Không push/commit/deploy.
+- Kết quả nghiệm thu sau resume được ghi ở mục06/11/2026 bên trên; xem BE progress cho evidence chi tiết.
+
 ## 04/11/2026 — Gom khung chi tiết bài tập Student
 
 - QUIZ/ZIP dùng một khung bo góc có border chung cho thông tin, tệp đề bài, thao tác và lịch sử nộp; phân cách bằng đường kẻ, vùng thao tác nền soft nhẹ. Component metadata/lịch sử hỗ trợ nhúng, giữ giao diện mặc định ở các trang khác.
@@ -777,3 +795,7 @@ Course detail/lớp/lịch public, email registration/verification, cart/checkou
 
 - Khai báo data-scroll-behavior trên html để Next.js tạm tắt cuộn mượt khi chuyển route.
 - Bổ sung kiểm tra scrollY = 0 sau đăng nhập về trang chủ; Playwright desktop/mobile 2/2 pass, production build pass.
+
+### Checkpoint tạm dừng sau build — 05/11/2026
+
+User yêu cầu pause để restart máy/bật Docker. FE production build cuối PASS (compile/TypeScript/35 static pages), dùng CIRCLE_NODE_TOTAL=2 để giới hạn1 page worker. Lượt15-worker trước gây OOM; không coi OOM là test nghiệp vụ fail. Unit312 PASS ở lượt trước thay đổi cuối; còn chạy lại lint/type/unit và E2E dashboard/chat/leave/materials/weekly/swap sau restart. Chưa deploy/commit/push. Checkpoint chi tiết và thứ tự tiếp tục ở ../Mindy-BE/docs/progress/BE_CHANGE_PROGRESS.md, mục CHECKPOINT.

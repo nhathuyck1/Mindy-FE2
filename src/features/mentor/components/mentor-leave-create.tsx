@@ -18,10 +18,12 @@ import {
 import { localDate, leavePeriods } from '../lib/leave-display';
 import { mentorDate } from './mentor-shared';
 import { SessionMakeupSlot } from './mentor-leave-makeup-slot';
+import { ScheduleConflicts } from '@/features/operations/components/schedule-conflicts';
 export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string) => void }) {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [period, setPeriod] = useState('FULL_DAY');
+  const [mappingMode, setMappingMode] = useState('keep-time');
   const [reason, setReason] = useState('');
   const [preview, setPreview] = useState<LeavePreview | null>(null);
   const [days, setDays] = useState<Record<string, string>>({});
@@ -46,7 +48,7 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
   const mappingsComplete =
     preview &&
     preview.affectedSessions.length > 0 &&
-    (period === 'FULL_DAY'
+    (period === 'FULL_DAY' && mappingMode === 'keep-time'
       ? sourceDays.every((day) => days[day])
       : preview.affectedSessions.every((item) => sessions[item.sessionId]));
   return (
@@ -178,7 +180,27 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
                   description="Chọn ngày hoặc khung giờ bù cho từng buổi bị ảnh hưởng."
                 />
               </div>
-              {period === 'FULL_DAY' ? (
+              {period === 'FULL_DAY' && (
+                <label className="block space-y-2 text-sm font-bold">
+                  Cách đổi lịch
+                  <NativeSelect
+                    value={mappingMode}
+                    disabled={busy}
+                    onChange={(e) => {
+                      setMappingMode(e.target.value);
+                      setDays({});
+                      setSessions({});
+                      create.reset();
+                    }}
+                  >
+                    <NativeSelectOption value="keep-time">Đổi ngày, giữ giờ</NativeSelectOption>
+                    <NativeSelectOption value="choose-slot">
+                      Đổi ngày, chọn slot cho từng buổi
+                    </NativeSelectOption>
+                  </NativeSelect>
+                </label>
+              )}
+              {period === 'FULL_DAY' && mappingMode === 'keep-time' ? (
                 <div className="space-y-3">
                   {sourceDays.map((day) => (
                     <div
@@ -253,7 +275,7 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
                     period,
                     reason,
                     sourceVersions: preview.sourceVersions,
-                    ...(period === 'FULL_DAY'
+                    ...(period === 'FULL_DAY' && mappingMode === 'keep-time'
                       ? {
                           dayMappings: sourceDays.map((sourceDate) => ({
                             sourceDate,
@@ -300,6 +322,7 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
                     {mentorError(create.error)}
                   </p>
                 )}
+                <ScheduleConflicts error={create.error} />
                 <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-5">
                   <p className="max-w-sm text-xs leading-5 text-muted">
                     Lịch chỉ thay đổi sau khi đơn được quản lý duyệt.
