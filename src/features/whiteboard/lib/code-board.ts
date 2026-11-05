@@ -1,3 +1,4 @@
+import type React from 'react';
 import type { TokenKind } from '@/features/code-assignments/lib/code-highlight';
 import type { CodeLanguageKey } from '@/features/code-assignments/schemas/code-contracts';
 import type { BoardShape } from '../schemas/whiteboard-contracts';
@@ -84,3 +85,35 @@ export function codeShape(
 
 /** Tag for drags that start in the code editor, so the board knows the language. */
 export const CODE_DRAG_TYPE = 'application/x-mindy-code';
+
+/**
+ * Starts a drag that carries code to the whiteboard or the chat composer: plain text plus the
+ * language tag, with a visible preview card (the editor's own text is transparent, so the
+ * browser's default drag image would be empty).
+ */
+export function startCodeDrag(event: React.DragEvent, text: string, language: CodeLanguageKey) {
+  event.dataTransfer.setData('text/plain', text);
+  event.dataTransfer.setData(CODE_DRAG_TYPE, language);
+  event.dataTransfer.effectAllowed = 'copy';
+  const card = document.createElement('div');
+  const lines = text.split('\n');
+  card.textContent =
+    lines.slice(0, 4).join('\n') + (lines.length > 4 ? `\n… +${lines.length - 4} dòng` : '');
+  Object.assign(card.style, {
+    position: 'fixed',
+    top: '-1000px',
+    left: '-1000px',
+    maxWidth: '320px',
+    padding: '8px 12px',
+    borderRadius: '10px',
+    background: CODE_PALETTE.bg,
+    color: CODE_PALETTE.plain,
+    font: `12px/1.5 ${CODE_FONT}`,
+    whiteSpace: 'pre',
+    overflow: 'hidden',
+    boxShadow: '0 8px 24px rgba(0,0,0,.25)',
+  });
+  document.body.appendChild(card);
+  event.dataTransfer.setDragImage(card, 16, 16);
+  setTimeout(() => card.remove(), 0);
+}

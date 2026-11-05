@@ -12,10 +12,13 @@ import {
   Play,
   RotateCcw,
   ArrowLeftToLine,
+  GripVertical,
+  MessageSquareCode,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useShellFocus } from '@/components/layout/shell-focus';
-import { CODE_DRAG_TYPE } from '@/features/whiteboard/lib/code-board';
+import { startCodeDrag } from '@/features/whiteboard/lib/code-board';
+import { useSendCodeToChat } from '@/features/chat/components/use-send-code-to-chat';
 import type { BoardBridge } from '@/features/whiteboard/components/whiteboard-workspace';
 import { codeError, useCodeCommand, useCodeQuery } from '../api/code-queries';
 import { formatValue, parseCustomArgs } from '../lib/code-format';
@@ -177,6 +180,7 @@ function DemoIde(props: {
   if (boardOpened && desktop && !boardMounted) setBoardMounted(true);
   const [bridge, setBridge] = useState<BoardBridge | null>(null);
   const [selection, setSelection] = useState('');
+  const sendCodeToChat = useSendCodeToChat();
   // "Gửi lên bảng" pressed before the board was open: sent as soon as the board reports ready.
   const pendingSend = useRef<{ text: string; language: CodeLanguageKey } | null>(null);
   const onBoardReady = useCallback((next: BoardBridge | null) => {
@@ -420,6 +424,24 @@ function DemoIde(props: {
                       />
                     </label>
                     <span className="ml-auto" />
+                    <span
+                      draggable
+                      onDragStart={(event) =>
+                        startCodeDrag(event, selection.trim() ? selection : code, language)
+                      }
+                      title="Kéo thả vào bảng vẽ hoặc ô chat (đoạn đang chọn, hoặc cả file)"
+                      className="hidden h-7 cursor-grab items-center gap-1 rounded-md px-2 text-[12.5px] font-bold text-ide-muted transition-colors select-none hover:bg-ide-raised hover:text-ide-text active:cursor-grabbing sm:inline-flex"
+                    >
+                      <GripVertical aria-hidden="true" className="size-3.5" />
+                      Kéo code
+                    </span>
+                    <ToolButton
+                      dark
+                      label={selection.trim() ? 'Gửi đoạn đang chọn vào chat' : 'Gửi code vào chat'}
+                      onClick={() => sendCodeToChat(selection.trim() ? selection : code, language)}
+                    >
+                      <MessageSquareCode aria-hidden="true" />
+                    </ToolButton>
                     <button
                       type="button"
                       onClick={() => {
@@ -465,7 +487,7 @@ function DemoIde(props: {
                       indent={indent}
                       onCursor={(line, column) => setCursor({ line, column })}
                       onSelectionChange={setSelection}
-                      dragData={{ [CODE_DRAG_TYPE]: language }}
+                      onDragCode={(event, selected) => startCodeDrag(event, selected, language)}
                     />
                   </div>
                   <div className="flex h-7 shrink-0 items-center gap-4 border-t border-ide-line bg-ide-deep px-3 text-[11.5px] text-ide-muted">

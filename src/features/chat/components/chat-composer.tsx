@@ -5,7 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { apiRequest, ApiError } from '@/lib/api/client';
 import { sessionSignal } from '@/lib/api/session-coordinator';
+import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
+import { clearChatDraft } from '@/lib/store/ui-slice';
+import { CODE_DRAG_TYPE } from '@/features/whiteboard/lib/code-board';
 import { chatError, useRefreshChat } from '../api/chat-queries';
+import { CHAT_TEXT_MAX, codeFence } from '../lib/chat-code';
 import {
   chatMutationSchema,
   fileStatusSchema,
@@ -24,7 +28,10 @@ export function ChatComposer(props: {
 }) {
   const c = props.conversation,
     refresh = useRefreshChat();
-  const [body, setBody] = useState(''),
+  // A draft sent from the code workspace ("Gửi vào chat") fills a freshly opened composer.
+  const draft = useAppSelector((state) => state.ui.chatDraft),
+    dispatch = useAppDispatch();
+  const [body, setBody] = useState(() => (draft ? draft.text.slice(0, CHAT_TEXT_MAX) : '')),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState('');
   const [pending, setPending] = useState<SendInput | null>(null),
@@ -37,6 +44,11 @@ export function ChatComposer(props: {
   const lifetime = useRef<AbortController | null>(null),
     fileInput = useRef<HTMLInputElement>(null),
     sending = useRef(false);
+  useEffect(() => {
+    if (draft) dispatch(clearChatDraft());
+    // Consume the draft once, when this composer mounts with it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     lifetime.current = new AbortController();
     return () => lifetime.current?.abort();
@@ -194,7 +206,7 @@ export function ChatComposer(props: {
   }
   return (
     <form
-      className="shrink-0 space-y-3 border-t border-line p-4"
+      className="shrink-0 space-y-2 border-t border-line px-3 py-2.5"
       onSubmit={(e) => {
         e.preventDefault();
         void send();
@@ -231,65 +243,85 @@ export function ChatComposer(props: {
       <label className="sr-only" htmlFor={`chat-${c.id}`}>
         Tin nhắn
       </label>
-      <Textarea
-        id={`chat-${c.id}`}
-        placeholder="Nhập tin nhắn…"
-        rows={2}
-        maxLength={4000}
-        value={body}
-        disabled={locked}
-        onChange={(e) => setBody(e.target.value)}
-        onKeyDown={(event) => {
-          if (
-            event.key !== 'Enter' ||
-            event.shiftKey ||
-            event.nativeEvent.isComposing ||
-            event.nativeEvent.keyCode === 229
-          )
-            return;
-          event.preventDefault();
-          if (!busy && !processing && (pending || body.trim() || attachment)) void send();
-        }}
-        className="max-h-40 min-h-20 resize-y"
-      />
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          {c.capabilities.canAttach && (
-            <>
-              <input
-                ref={fileInput}
-                type="file"
-                className="sr-only"
-                aria-label="Chọn ảnh hoặc PDF"
-                accept="image/jpeg,image/png,image/webp,application/pdf"
-                disabled={locked}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) void upload(file);
-                }}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                aria-label="Đính kèm ảnh hoặc PDF"
-                disabled={locked || !!processing}
-                onClick={() => fileInput.current?.click()}
-              >
-                <Paperclip aria-hidden="true" />
-              </Button>
-            </>
-          )}
-          <span className="text-xs text-muted">{body.length}/4.000</span>
-        </div>
+      <div className="flex items-end gap-1.5">
+        {c.capabilities.canAttach && (
+          <>
+            <input
+              ref={fileInput}
+              type="file"
+              className="sr-only"
+              aria-label="Chọn ảnh hoặc PDF"
+              accept="image/jpeg,image/png,image/webp,application/pdf"
+              disabled={locked}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void upload(file);
+              }}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-lg"
+              aria-label="Đính kèm ảnh hoặc PDF"
+              title="Đính kèm ảnh hoặc PDF"
+              disabled={locked || !!processing}
+              onClick={() => fileInput.current?.click()}
+              className="shrink-0 rounded-full"
+            >
+              <Paperclip aria-hidden="true" />
+            </Button>
+          </>
+        )}
+        <Textarea
+          id={`chat-${c.id}`}
+          placeholder="Nhập tin nhắn… (Shift + Enter để xuống dòng)"
+          rows={1}
+          maxLength={4000}
+          value={body}
+          disabled={locked}
+          onChange={(e) => setBody(e.target.value)}
+          onDrop={(event) => {
+            // Code dragged out of the editor arrives wrapped as a fenced code block.
+            const language = event.dataTransfer.getData(CODE_DRAG_TYPE);
+            if (language !== 'javascript' && language !== 'java21') return;
+            event.preventDefault();
+            const el = event.currentTarget;
+            const block = codeFence(event.dataTransfer.getData('text/plain'), language);
+            const before = body.slice(0, el.selectionStart);
+            const after = body.slice(el.selectionEnd);
+            const glue = (side: string) => (side && !side.endsWith('\n') ? '\n' : '');
+            const next = `${before}${glue(before)}${block}\n${after}`;
+            if (next.length > CHAT_TEXT_MAX) {
+              setNotice('Đoạn code quá dài cho một tin nhắn (tối đa 4000 ký tự).');
+              return;
+            }
+            setBody(next);
+          }}
+          onKeyDown={(event) => {
+            if (
+              event.key !== 'Enter' ||
+              event.shiftKey ||
+              event.nativeEvent.isComposing ||
+              event.nativeEvent.keyCode === 229
+            )
+              return;
+            event.preventDefault();
+            if (!busy && !processing && (pending || body.trim() || attachment)) void send();
+          }}
+          className="max-h-32 min-h-10 flex-1 resize-none rounded-2xl py-2"
+        />
         <Button
           type="submit"
+          className="h-10 shrink-0 rounded-full px-4"
           disabled={busy || !!processing || (!pending && !body.trim() && !attachment)}
         >
           <Send aria-hidden="true" />
           {busy ? 'Đang xử lý…' : pending ? 'Thử gửi lại' : 'Gửi'}
         </Button>
       </div>
-      <p className="text-xs text-muted">Enter để gửi · Shift + Enter để xuống dòng</p>
+      {body.length > 3500 && (
+        <p className="text-right text-xs text-muted tabular-nums">{body.length}/4.000</p>
+      )}
       {notice && (
         <p role="status" className="text-xs text-muted">
           {notice}

@@ -8,6 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NameAvatar } from '@/components/ui/name-avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
+import { clearChatDraft, sendToChat } from '@/lib/store/ui-slice';
+import { toast } from 'sonner';
+import { CODE_DRAG_TYPE } from '@/features/whiteboard/lib/code-board';
+import { CHAT_TEXT_MAX, codeFence } from '../lib/chat-code';
 import { useChatInbox } from '../api/use-chat-inbox';
 import { conversationName } from '../lib/chat-display';
 import { ChatRoom } from './chat-room';
@@ -32,6 +37,15 @@ function ChatLauncher(props: { user: User }) {
     [selected, setSelected] = useState<string | null>(null),
     [search, setSearch] = useState('');
   const titleId = useId();
+  // "Gửi vào chat" from the code workspace: open the list so the user picks where to send it.
+  const draft = useAppSelector((state) => state.ui.chatDraft),
+    dispatch = useAppDispatch(),
+    [seenDraft, setSeenDraft] = useState<number | null>(null);
+  if (draft && draft.id !== seenDraft) {
+    setSeenDraft(draft.id);
+    setOpen(true);
+    setSelected(null);
+  }
   const basePath = props.user.role === 'MENTOR' ? '/mentor/messages' : '/user/messages';
   const unread = inbox.isError
     ? null
@@ -48,6 +62,10 @@ function ChatLauncher(props: { user: User }) {
         <Button
           className="fixed right-4 bottom-[max(5.5rem,env(safe-area-inset-bottom))] z-40 size-14 rounded-full bg-mint p-0 text-white shadow-lg shadow-forest/25 hover:bg-forest sm:right-6 sm:bottom-6"
           aria-label={open ? 'Thu gọn chat' : 'Mở chat'}
+          // Dragging code over the button opens the chat so it can be dropped on a conversation.
+          onDragEnter={(event) => {
+            if (event.dataTransfer.types.includes(CODE_DRAG_TYPE)) setOpen(true);
+          }}
         >
           <MessageCircle aria-hidden="true" className="size-7" />
           {!!unread && (
@@ -107,6 +125,22 @@ function ChatLauncher(props: { user: User }) {
             />
           ) : (
             <div className="flex h-full flex-col">
+              {draft && (
+                <div className="flex shrink-0 items-center gap-2 border-b border-line bg-mint/10 px-3 py-2 text-sm">
+                  <p className="min-w-0 flex-1">
+                    <b>Chọn cuộc trò chuyện</b> để gửi đoạn code (
+                    {draft.text.split('\n').length - 2} dòng).
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-label="Huỷ gửi code"
+                    onClick={() => dispatch(clearChatDraft())}
+                  >
+                    Huỷ
+                  </Button>
+                </div>
+              )}
               <div className="flex shrink-0 items-center gap-2 border-b border-line p-3">
                 <Search aria-hidden="true" className="size-4 text-muted" />
                 <Input
@@ -135,6 +169,28 @@ function ChatLauncher(props: { user: User }) {
                         type="button"
                         key={conversation.id}
                         onClick={() => setSelected(conversation.id)}
+                        onDragOver={(event) => {
+                          if (!event.dataTransfer.types.includes(CODE_DRAG_TYPE)) return;
+                          event.preventDefault();
+                          event.dataTransfer.dropEffect = 'copy';
+                        }}
+                        onDrop={(event) => {
+                          const language = event.dataTransfer.getData(CODE_DRAG_TYPE);
+                          if (language !== 'javascript' && language !== 'java21') return;
+                          event.preventDefault();
+                          const text = codeFence(
+                            event.dataTransfer.getData('text/plain'),
+                            language,
+                          );
+                          if (text.length > CHAT_TEXT_MAX)
+                            return void toast.error(
+                              'Đoạn code quá dài cho một tin nhắn (tối đa 4000 ký tự).',
+                            );
+                          // Open this conversation with the code waiting in its composer.
+                          const action = dispatch(sendToChat(text));
+                          setSeenDraft(action.payload.id);
+                          setSelected(conversation.id);
+                        }}
                         className="flex min-h-20 w-full cursor-pointer items-center gap-3 border-b border-line p-3 text-left hover:bg-soft focus-visible:outline-2 focus-visible:outline-mint"
                       >
                         <NameAvatar name={conversationName(conversation)} />

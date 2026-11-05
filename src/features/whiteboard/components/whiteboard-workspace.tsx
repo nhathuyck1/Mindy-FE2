@@ -25,6 +25,7 @@ import {
   Save,
   Scan,
   StickyNote,
+  MessageSquareCode,
   Trash2,
   Undo2,
 } from 'lucide-react';
@@ -46,6 +47,7 @@ import {
 } from '../schemas/whiteboard-contracts';
 import { WhiteboardCanvas, type BoardTool } from './whiteboard-canvas';
 import { CODE_DRAG_TYPE, CODE_MAX_CHARS, codeShape } from '../lib/code-board';
+import { useSendCodeToChat } from '@/features/chat/components/use-send-code-to-chat';
 import type { CodeLanguageKey } from '@/features/code-assignments/schemas/code-contracts';
 
 const palette = [
@@ -159,6 +161,7 @@ export function WhiteboardWorkspace(props: {
     [pages, setPages] = useState('1'),
     [message, setMessage] = useState(''),
     fileInput = useRef<HTMLInputElement>(null);
+  const sendCodeToChat = useSendCodeToChat();
   const media = useBoardMedia(connection.boardId),
     session = useSession();
   const board = state.state?.board ?? props.initial.board,
@@ -770,8 +773,19 @@ export function WhiteboardWorkspace(props: {
                   ? 'Văn bản'
                   : shapeLabel(selectedShape)}
             </span>
-            {(selectedShape.type === 'sticky' || selectedShape.type === 'text') && (
+            {(selectedShape.type === 'sticky' ||
+              selectedShape.type === 'text' ||
+              selectedShape.type === 'code') && (
               <span className="text-xs text-muted">Nhấp đúp để sửa</span>
+            )}
+            {selectedShape.type === 'code' && (
+              <button
+                aria-label="Gửi khối code vào chat"
+                title="Gửi khối code vào chat"
+                onClick={() => sendCodeToChat(selectedShape.text, selectedShape.language)}
+              >
+                <MessageSquareCode size={18} />
+              </button>
             )}
             <button
               aria-label="Xóa phần tử"
