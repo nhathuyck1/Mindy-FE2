@@ -86,10 +86,16 @@ function QuizAttempt(props: { initial: dto.Attempt }) {
     const session = sessionSignal();
     const stop = () => {
       local.abort();
-      engine.blocked = true;
       if (timer.current) clearTimeout(timer.current);
     };
-    session.addEventListener('abort', stop, { once: true });
+    // Only an ended auth session blocks editing; Strict Mode also runs effect cleanup on mount.
+    const endSession = () => {
+      engine.blocked = true;
+      stop();
+      render((n) => n + 1);
+    };
+    if (session.aborted) endSession();
+    else session.addEventListener('abort', endSession, { once: true });
     const interval = setInterval(() => setTick((n) => n + 1), 500);
     const unload = (e: BeforeUnloadEvent) => {
       if (engine.dirty || engine.saving) e.preventDefault();
@@ -151,7 +157,7 @@ function QuizAttempt(props: { initial: dto.Attempt }) {
       document.removeEventListener('click', navigate, true);
       window.removeEventListener('popstate', back, true);
       navigation?.removeEventListener('navigate', traverse);
-      session.removeEventListener('abort', stop);
+      session.removeEventListener('abort', endSession);
     };
   }, [engine]);
   const elapsed =

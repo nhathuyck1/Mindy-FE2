@@ -8,7 +8,9 @@ const envSchema = z.object({
 export function readServerEnv() {
   const env = envSchema.parse({
     API_BASE_URL: process.env.API_BASE_URL,
-    APP_ORIGIN: process.env.APP_ORIGIN,
+    APP_ORIGIN:
+      process.env.APP_ORIGIN ??
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined),
   });
   const api = new URL(env.API_BASE_URL);
   const app = new URL(env.APP_ORIGIN);

@@ -118,6 +118,9 @@ async function mockManager(
       const type = url.searchParams.get('contentType');
       const matching =
         !deleted &&
+        (!url.searchParams.get('courseId') || url.searchParams.get('courseId') === courseId) &&
+        (!url.searchParams.get('courseUnitId') ||
+          url.searchParams.get('courseUnitId') === unitId) &&
         (!unitList || unitList[1] === unitId) &&
         (!status || status === material.reviewStatus) &&
         (!type || type === material.contentType)
@@ -141,7 +144,13 @@ async function mockManager(
       const pageSize = Number(url.searchParams.get('pageSize') ?? 20);
       return route.fulfill({
         json: {
-          items: allItems.slice((pageNumber - 1) * pageSize, pageNumber * pageSize),
+          items: allItems.slice((pageNumber - 1) * pageSize, pageNumber * pageSize).map((item) => ({
+            ...item,
+            courseId,
+            courseTitle: 'Khóa học kiểm thử',
+            courseUnitTitle: 'JavaScript căn bản',
+            courseUnitNumber: 1,
+          })),
           page: pageNumber,
           pageSize,
           total: allItems.length,
@@ -230,7 +239,27 @@ async function mockManager(
       if (action === 'publish') material = { ...material, publishedAt: date };
       return route.fulfill({ json: material });
     }
-    if (path === `courses/${courseId}`)
+    if (path === 'manager/courses') {
+      return route.fulfill({
+        json: {
+          items: [
+            {
+              id: courseId,
+              code: 'JS-101',
+              title: 'Khóa học kiểm thử',
+              description: null,
+              imgUrl: null,
+              priceAmount: 100000,
+              category: { id: unitId, name: 'Web', slug: 'web' },
+            },
+          ],
+          page: 1,
+          pageSize: 100,
+          total: 1,
+        },
+      });
+    }
+    if (path === `courses/${courseId}` || path === `manager/courses/${courseId}`)
       return route.fulfill({
         json: {
           id: courseId,
@@ -282,6 +311,9 @@ test('Manager pending queue paginates and opens the selected material by URL', a
   const queue = page.getByRole('region', { name: 'Tài liệu chờ duyệt', exact: true });
   await expect(queue.locator('tbody tr')).toHaveCount(20);
   await expect(queue).toContainText('21 tài liệu');
+  await expect(queue.getByRole('columnheader', { name: 'Khóa học', exact: true })).toBeVisible();
+  await expect(queue.locator('tbody tr').first()).toContainText('Khóa học kiểm thử');
+  await expect(queue.locator('tbody tr').first()).toContainText('1. JavaScript căn bản');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: info.outputPath('manager-review-dashboard.png'), fullPage: true });
   await queue.getByRole('button', { name: 'Sau', exact: true }).click();
@@ -295,6 +327,103 @@ test('Manager pending queue paginates and opens the selected material by URL', a
   await page.screenshot({ path: info.outputPath('manager-review-detail.png'), fullPage: true });
   await page.getByRole('link', { name: 'Về tổng quan', exact: true }).click();
   await expect(page).toHaveURL('/manager');
+});
+
+test('Manager pending queue combines filters across pages and resets dependent selections', async ({
+  page,
+}, info) => {
+  const { calls } = await mockManager(page, { inventoryPaging: true });
+  await page.goto('/manager');
+  const queue = page.getByRole('region', { name: 'Tài liệu chờ duyệt', exact: true });
+  const courseFilter = queue.getByLabel('Lọc theo khóa học', { exact: true });
+  const unitFilter = queue.getByLabel('Lọc theo học phần', { exact: true });
+  const typeFilter = queue.getByLabel('Lọc theo loại tài liệu', { exact: true });
+  await expect(queue.locator('tbody tr')).toHaveCount(20);
+  await expect(unitFilter).toBeDisabled();
+  await queue.getByRole('button', { name: 'Sau', exact: true }).click();
+  await expect(queue).toContainText('Trang 2/2');
+  await courseFilter.selectOption(courseId);
+  await expect(queue).toContainText('Trang 1/2');
+  await expect(unitFilter).toBeEnabled();
+  await unitFilter.selectOption(unitId);
+  await typeFilter.selectOption('ARTICLE');
+  await expect
+    .poll(() =>
+      calls.some((call) => {
+        const params = new URLSearchParams(call.search);
+        return (
+          call.path === 'manager/materials' &&
+          params.get('courseId') === courseId &&
+          params.get('courseUnitId') === unitId &&
+          params.get('contentType') === 'ARTICLE' &&
+          params.get('reviewStatus') === 'PENDING_REVIEW' &&
+          params.get('page') === '1'
+        );
+      }),
+    )
+    .toBe(true);
+  await expect(queue.locator('tbody tr')).toHaveCount(20);
+  await page.screenshot({ path: info.outputPath('manager-pending-filters.png'), fullPage: true });
+  await unitFilter.selectOption(emptyUnitId);
+  await expect(queue).toContainText('Không có tài liệu chờ duyệt phù hợp với bộ lọc.');
+  await expect(queue).toContainText('0 tài liệu');
+  await courseFilter.selectOption('');
+  await expect(unitFilter).toHaveValue('');
+  await expect(unitFilter).toBeDisabled();
+  await typeFilter.selectOption('VIDEO');
+  await expect(queue).toContainText('Không có tài liệu chờ duyệt phù hợp với bộ lọc.');
+  await queue.getByRole('button', { name: 'Xóa bộ lọc', exact: true }).click();
+  await expect(typeFilter).toHaveValue('');
+  await expect(queue.locator('tbody tr')).toHaveCount(20);
+  await expect(queue).toContainText('Trang 1/2');
+  await page.setViewportSize({ width: 320, height: 850 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('Manager pending filters retry catalog errors and include later inactive course pages', async ({
+  page,
+}) => {
+  await mockManager(page);
+  const inactiveId = '44444444-4444-4444-8444-444444444444';
+  let fail = true;
+  await page.route('**/api/v1/manager/courses?**', (route) => {
+    if (fail) return route.fulfill({ status: 500, json: { message: 'Unavailable' } });
+    const pageNumber = Number(new URL(route.request().url()).searchParams.get('page'));
+    const inactive = pageNumber === 2;
+    return route.fulfill({
+      json: {
+        items: [
+          {
+            id: inactive ? inactiveId : courseId,
+            code: inactive ? 'DRAFT' : 'JS-101',
+            title: inactive ? 'Khóa chưa kích hoạt' : 'Khóa học kiểm thử',
+            description: null,
+            imgUrl: null,
+            priceAmount: 100000,
+            category: { id: unitId, name: 'Web', slug: 'web' },
+            isActive: !inactive,
+          },
+        ],
+        page: pageNumber,
+        pageSize: 100,
+        total: 101,
+      },
+    });
+  });
+  await page.goto('/manager');
+  const queue = page.getByRole('region', { name: 'Tài liệu chờ duyệt', exact: true });
+  const filter = queue.getByLabel('Lọc theo khóa học', { exact: true });
+  await expect(queue.locator('tbody tr')).toHaveCount(1);
+  await expect(filter).toBeDisabled();
+  await expect(queue.getByRole('alert')).toContainText('Chưa tải được bộ lọc');
+  fail = false;
+  await queue.getByRole('button', { name: 'Thử lại bộ lọc', exact: true }).click();
+  await expect(filter).toBeEnabled();
+  await expect(filter.locator('option')).toHaveCount(3);
+  await expect(filter.locator('option', { hasText: 'Khóa chưa kích hoạt' })).toHaveAttribute(
+    'value',
+    inactiveId,
+  );
 });
 
 test('Manager confirmations appear in the viewport above long chapter content and restore focus', async ({
@@ -1587,7 +1716,8 @@ test('manager lists courses first and opens the workspace only after choosing on
       (call) =>
         call.path === 'manager/materials' ||
         call.path === 'courses/' + courseId ||
-        call.path.startsWith('manager/course-units/'),
+        (call.path.startsWith('manager/course-units/') &&
+          new URLSearchParams(call.search).get('pageSize') !== '1'),
     ),
   ).toBe(false);
   await page.setViewportSize(
