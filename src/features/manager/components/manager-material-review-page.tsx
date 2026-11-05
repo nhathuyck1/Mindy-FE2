@@ -19,9 +19,6 @@ export function ManagerMaterialReviewPage(props: { materialId: string }) {
         </Link>
       </Button>
       <header>
-        <p className="mb-2 text-xs font-semibold tracking-widest text-mint uppercase">
-          Mindy / Quản lý tài liệu
-        </p>
         <h1 className="text-2xl font-bold sm:text-3xl">Xem và duyệt tài liệu</h1>
       </header>
       {validId.success ? (

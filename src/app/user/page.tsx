@@ -1,4 +1,5 @@
-import { redirect } from 'next/navigation';
+import { UserOverviewPage } from '@/features/user/components/user-overview-page';
+export const metadata = { title: 'Tổng quan' };
 export default function UserPage() {
-  redirect('/user/profile');
+  return <UserOverviewPage />;
 }

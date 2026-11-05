@@ -1,5 +1,69 @@
 # Quy tắc giao diện Mindy
 
+## Tài liệu chung và nội dung theo buổi — 06/11/2026
+
+- Mentor có tab Tài liệu chung giữa Chương và Bài tập, dùng lại bộ chọn chương. Tài liệu không gắn buổi chỉ nằm trong tab này; chi tiết không lặp khối Phạm vi tài liệu. Tab Buổi học riêng không còn ở lớp đang hoạt động.
+- Student giữ nội dung chung tại chương, không thêm tab. Nút Tài liệu buổi học ở bên phải tiêu đề chương mở/thu gọn nội dung theo buổi, có aria-expanded/aria-controls; mobile tự xuống dòng và không tràn 320px. Mặc định thu gọn, không mount viewer theo buổi khi đóng.
+
+## Workspace Manager và lịch riêng — 06/11/2026
+
+- Áp dụng impeccable ở chế độ Operate: giữ palette Mindy/Inter, bỏ eyebrow lặp phía trên tiêu đề; Manager có thang chữ 16px riêng, nền mint pha trắng 3%, vùng dữ liệu trắng, header bảng soft và ô nhập/nút tối thiểu 44px. CSS chỉ scope `.manager-workspace`, không đổi Admin/Mentor.
+- Lịch tuần/dời khai giảng nằm ở `/manager/schedule`, menu Lịch và khai giảng; Tổng quan chỉ dẫn sang trang mới. Chọn lớp trước, sau đó sửa lịch; ma trận ca có cột giờ sticky, vùng cuộn ngang riêng và hướng dẫn mobile. Ô ca giữ checkbox native cùng tên truy cập/focus, dấu chọn rõ; buổi đã tồn tại hiện nội dung đọc, không dùng input disabled.
+- Tổng quan đặt thống kê tài liệu trước analytics, bỏ khối hướng dẫn/lối đi lặp ở cuối. Danh sách tài liệu, thu tiền, đơn nghỉ và detail dùng chung mật độ, bảng và control Manager.
+
+## Dashboard vai trò và lớp Mentor — 06/11/2026
+
+- Manager dùng biểu đồ xu hướng thu tiền, donut phương thức và cột ngang top 10 khóa/lớp. Bảng đầy đủ nằm trong details; dữ liệu trống có thông báo, không tạo lát donut giả. Quy tắc này áp dụng DTO thu tiền mới, thay các ghi chú dashboard Manager đào tạo cũ bên dưới.
+- Mentor dùng cột số buổi theo chỉ số API, không cộng các nhóm hoặc suy tỷ lệ hoàn thành; donut đơn nghỉ có chú giải tiếng Việt và trạng thái trống. Lịch hôm nay dùng các dòng liên kết gọn với giờ bắt đầu/kết thúc, tên và trạng thái; chỉ hiện ngày Việt Nam hiện tại, có link xem lịch đầy đủ. Tổng quan đứng đầu sidebar ở mọi vai trò; Tin nhắn và Thông tin cá nhân nằm sau các mục nghiệp vụ.
+- Lớp của tôi dùng grid 1/2/3 cột responsive, thẻ nền trắng/đầu mint nhạt, tên lớp nổi bật và CTA mint; bộ lọc chung trong khung soft. Dùng token palette và giữ focus bàn phím, 320px không tràn ngang.
+
+## UI chung gọn và điều hướng theo ngữ cảnh — 06/11/2026
+
+- Không thay UI compiler/code editor/authoring/review, chat hoặc bảng vẽ trong lượt này. Giữ nguyên các component/CSS/shell liên quan từ HEAD đầu vào.
+- Bài tập Student có một bộ chọn lớp và danh sách theo hàng. Bộ lọc dùng đường phân cách; bỏ mô tả lặp. Danh sách lớp Mentor và thống kê role dashboard giảm card riêng lẻ.
+- Giữ accordion học liệu của dev; có bảng/buổi/bài tập theo quyền và tracking khi mở viewer. Dashboard Mentor mở đúng buổi; từ buổi về lớp. Return path giữ các trang học tập đã validate.
+- FULL_DAY vẫn có đổi ngày/giữ giờ và chọn slot. Ghi chú lịch sử về việc bỏ giữ giờ không áp dụng cho bản tích hợp này.
+
+## Không gian học Student gọn và mở tại chỗ — 05/11/2026
+
+- Dùng pattern khung chương của Mentor: sidebar 248px khi vùng nội dung đủ rộng, màn hẹp chọn chương bằng select thay danh sách dài phía trên. Header lớp/chương nhỏ, khung desktop cuộn nội dung riêng và giữ cột chương.
+- Buổi học gộp ngay trong chương, hiển thị tên/lịch và lối vào lớp/bảng vẽ; không thêm tab buổi học. Bài đọc/tệp/video là accordion có số, tên, loại và chevron: bấm mở ngay dưới tiêu đề, bấm lại thu gọn, mỗi lần mở một bài; bài đầu mở sẵn. Không lặp tiêu đề lớn ở vùng đọc. Tệp/video chính lấy quyền xem khi mục mở, tệp đính kèm vẫn tải theo nút riêng.
+- Nội dung chung và buổi chưa xác định giữ khu riêng, không tự gán buổi. Giữ quyền FULL/CASH_PREVIEW/chương khóa, các trạng thái lỗi/thử lại và bàn phím Enter/Space; responsive từ 320px.
+
+## Danh sách bài tập theo buổi — 05/11/2026
+
+- Cột Buổi học/Hạn nộp bỏ icon; Buổi học căn trái cả tiêu đề và nội dung, Hạn nộp căn giữa trên desktop. Mobile giữ nhãn và căn trái. Tiêu đề buổi đã có số không thêm tiền tố trùng. Nhãn cột chỉ ghi Hạn nộp.
+- Danh sách lớp dùng hàng gọn với cột Bài tập / Buổi học / Hạn nộp và Xem bài; tối đa 1152px, mobile xếp dọc có nhãn. Buổi hiển thị số/tên, chương và lịch học thật từ context lớp; không suy số thứ tự theo vị trí mảng. Bộ lọc có nhãn, lựa chọn buổi gồm lịch để phân biệt tên trùng.
+- Hạn nộp có giờ/ngày/năm theo Việt Nam và nhãn thời gian còn lại; trong 24 giờ dùng nền coral nhạt, hết hạn ghi Đã qua hạn. Nhãn cập nhật mỗi phút/khi focus, chỉ hiển thị với PUBLISHED; không suy tình trạng nộp bài từ hạn nộp. Null ghi Không giới hạn, metadata buổi thiếu/lỗi có thông báo và thử lại.
+
+## Thống kê tài liệu theo khóa — 05/11/2026
+
+- Trang danh sách khóa của quản lý tài liệu có ba thẻ count và donut Recharts theo khóa, kèm chú giải tên đầy đủ/số lượng/% và nút làm mới. Hàng khóa có count riêng: badge trên desktop, chữ dưới mã khóa ở mobile. Dùng token Mindy, không animation, 320px xếp dọc; lỗi không hiển thị tổng/tỷ lệ chưa đủ, tổng 0 có thông báo riêng.
+
+## Sắp xếp lịch bù Mentor — 05/11/2026
+
+- Slot giao với lịch bù đã chọn của buổi khác trong đơn bị disabled, nền nhạt và có chữ Trùng lịch bù buổi khác; cập nhật ngay cả khi hai bảng slot đã tải trước. Đổi/xóa lựa chọn mở lại các slot vừa được giải phóng. Hai buổi nối tiếp nhau được chọn; cùng giờ ở ngày khác vẫn hợp lệ.
+
+- Mỗi buổi nghỉ có khối riêng kể cả nghỉ cả ngày, không gom nhiều buổi theo ngày. Header có số thứ tự/trạng thái; tên buổi, ngày, giờ gốc và thời lượng nằm bên trái desktop; ngày/buổi dạy bù và khung giờ nằm bên phải. Mobile xếp dọc, control 48px, giữ token Mindy và vùng focus.
+- Ngày bù của FULL_DAY bắt đầu sau ngày kết thúc cả khoảng nghỉ; nghỉ theo buổi chặn ngày trước ngày buổi gốc. Cả hai đều không được trước hôm nay theo timezone backend, nhập tay cũng bị chặn tìm giờ. Có lựa chọn Cả ngày khi tìm giờ; chọn slot hiện tóm tắt ngày/giờ bù ngay trong buổi đó. Đổi ngày/period chỉ xóa mapping của buổi tương ứng. Tất cả buổi phải chọn slot hợp lệ trước khi gửi.
+
+## Bộ lọc tài liệu chờ duyệt — 05/11/2026
+
+- Bảng `/manager` thêm cột Khóa học và Học phần, có số thứ tự học phần. Ba bộ lọc khóa/học phần/loại nằm ngay trên bảng, control 48px, có Xóa bộ lọc; đổi khóa xóa lựa chọn học phần và mọi lần đổi lọc đưa về trang 1. Khóa chưa kích hoạt vẫn có trong bộ lọc Manager.
+- Bộ lọc xếp dọc ở mobile, bảng cuộn ngang trong panel. Có lỗi/thử lại riêng cho dữ liệu bộ lọc và thông báo không có kết quả; không thay đổi trạng thái chờ duyệt hay thao tác xem/duyệt.
+
+## Chi tiết bài tập Mentor — 05/11/2026
+
+- QUIZ/ZIP dùng hai card chính: thông tin, thanh thao tác và nội dung đề ở card đầu; bài đã nộp và học viên hiện tại ở card theo dõi. Các vùng con dùng padding và đường phân cách, không lồng thêm khung card. Trình sửa mở riêng khi cần.
+- Desktop rộng đặt lịch sử nộp và học viên cạnh nhau; mobile xếp dọc. Nhóm nút soạn đề và xuất bản tách rõ, viền nút dùng line/mint, nút Xuất bản là điểm nhấn. Header mục có icon mint; danh sách học viên dùng NameAvatar. Giữ quyền, API, bộ lọc URL và dialog xác nhận hiện có.
+- Bộ lọc bài đã nộp không có thanh nền riêng: ba ô nền trắng có nhãn phía trên, chia đều khi vùng nội dung rộng ít nhất 30rem và xếp dọc khi hẹp hơn. Checkbox Gồm lượt cũ ở góc phải cùng hàng với tiêu đề Bài đã nộp, vùng bấm tối thiểu 44px; giữ tên truy cập và tham số bộ lọc hiện hữu.
+- Trình soạn QUIZ có Nhập hàng loạt: dán văn bản hoặc chọn tệp .txt UTF-8, tải mẫu, kiểm tra lỗi theo dòng và xem trước ABCD với đáp án đúng. Mặc định thêm cuối bộ câu hỏi; thay toàn bộ là lựa chọn tường minh. Áp dụng chỉ cập nhật trình soạn, Lưu bộ câu hỏi mới ghi máy chủ. Dialog giữ tiêu đề/thao tác cố định và cuộn nội dung riêng trên mobile.
+
+## Chi tiết buổi học Student — 04/11/2026
+
+- Giữ dialog truy cập từ lịch, nền mint ở tiêu đề buổi; bảng vẽ/phòng học nền forest và bài tập đặt trước metadata để dễ tìm trên mobile. Danh sách bài tập ghi rõ QUIZ/ZIP/CODE, bài về nhà/kiểm tra, hạn nộp, có phân trang. Không có nút sửa link, bắt đầu buổi, điểm danh hoặc tạo bảng dành cho Mentor.
+- Meeting dùng URL an toàn từ API riêng tư, ưu tiên buổi rồi lớp, mở tab mới với noopener/noreferrer/no-referrer. Phân biệt chưa có link, đã kết thúc, đã hủy, chờ thanh toán, lỗi và danh sách bài tập trống; học bù giải thích giới hạn bài tập lớp đích. Giữ Escape/focus restore và cuộn dialog tại 320px.
+
 ## Ca học và lịch dạy bù — 04/11/2026
 
 - Dùng chung bảy ca trong teaching-slots: 07:30–09:00, 09:30–11:00, 12:00–14:00, 13:00–15:30, 16:00–17:30, 18:00–19:30, 20:00–21:30. Giữ giờ thực tế của buổi học từ BE; ca trưa mới không gộp mất ca 13:00.
@@ -366,3 +430,7 @@ Chữ chính dùng forest; chữ phụ dùng muted pha 90% forest. Theo ảnh m�
 
 - Trang /courses dùng chữ đen cho tiêu đề, breadcrumb, toolbar, nội dung card và học phí; bộ lọc giữ xanh, icon và nền nhạt giữ điểm nhấn Mindy. Bỏ câu mô tả dưới tiêu đề catalog. Quy tắc chỉ áp dụng catalog.
 - Điều chỉnh tiếp: chữ catalog dùng đen pha 15% trắng để dịu hơn; danh mục trên card giảm 14px xuống 12px, tên khóa học giảm 18px xuống 16px. Giữ cỡ chữ card homepage/related.
+
+## BE Change — 05/11/2026
+
+Giữ panel/token Mindy, controls có label và bảng cuộn trên320px. Lịch tuần preview trước save, swap xác nhận hai buổi/lý do, material bulk có dialog title/revision và không báo freed bytes trước cleanup. Dashboard role-specific; ảnh chat signed bypass image optimizer, modal trả focus và nút lấy lại URL.

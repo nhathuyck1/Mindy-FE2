@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { CalendarDays, Clock3, UserRound, ArrowRight, Filter, X } from 'lucide-react';
 import { MentorReportHeading } from './mentor-report-ui';
+import { SwapSessionsPanel } from '@/features/operations/components/swap-sessions-panel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useMentorQuery } from '../api/mentor-queries';
@@ -99,6 +100,9 @@ function Timetable(props: { classId: string; range: string }) {
       retry={query.refetch}
       empty={query.data?.total === 0}
     >
+      {query.data && (
+        <SwapSessionsPanel key={page} classId={props.classId} sessions={query.data.items} />
+      )}
       <ul className="overflow-hidden rounded-2xl border border-line bg-canvas divide-y divide-line">
         {query.data?.items.map((item) => (
           <li

@@ -182,9 +182,6 @@ export function ManagerLeaveDetailPage(props: { requestId: string }) {
 
       <header className="admin-page-heading">
         <div>
-          <p className="mb-2 text-xs font-semibold tracking-widest text-mint uppercase">
-            Mindy / Đơn xin nghỉ mentor
-          </p>
           <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight">
             <CalendarOff aria-hidden="true" className="size-7 text-mint" />
             Chi tiết đơn xin nghỉ

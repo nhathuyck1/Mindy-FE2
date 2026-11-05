@@ -10,6 +10,10 @@ test('mentor assignment filters, class shell and timetable use the new contracts
 }, info) => {
   const { calls } = await mockMentorWorkspace(page);
   await page.goto('/mentor/classes');
+  await expect(page.getByRole('heading', { name: 'Lớp JavaScript tháng 10' })).toBeVisible();
+  await page.setViewportSize({ width: info.project.name === 'mobile' ? 320 : 1440, height: 900 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: info.outputPath('mentor-classes.png'), fullPage: true });
   await page.getByLabel('Phân công', { exact: true }).selectOption('SUBSTITUTE');
   await expect
     .poll(() =>
@@ -17,7 +21,8 @@ test('mentor assignment filters, class shell and timetable use the new contracts
     )
     .toBe(true);
   await page.getByRole('link', { name: /Lớp JavaScript tháng 10/ }).click();
-  await page.getByRole('button', { name: 'Buổi học', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Buổi học', exact: true })).toHaveCount(0);
+  await page.goto(`/mentor/classes/${mentorIds.class}?tab=sessions`);
   await expect(page.getByRole('heading', { name: 'Buổi vòng lặp' })).toBeVisible();
   await page.getByLabel('Từ ngày', { exact: true }).fill('2026-10-26');
   await page.getByLabel('Đến ngày', { exact: true }).fill('2026-10-26');
@@ -47,6 +52,7 @@ test('substitute sees assigned teaching content without class roster, reports or
   await expect(page.getByText('Dạy thay · Chỉ xem chương', { exact: false })).toBeVisible();
   for (const name of ['Học viên', 'Chuyên cần', 'Tiến độ', 'Thêm nội dung', 'Quyền truy cập'])
     await expect(page.getByRole('button', { name, exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Tài liệu chung', exact: true }).click();
   await page.getByRole('button', { name: /Bài viết đầu tiên/ }).click();
   await expect(page.getByRole('button', { name: 'Chỉnh sửa', exact: true })).toHaveCount(0);
   expect(
@@ -265,11 +271,13 @@ test('stale leave creation keeps the proposed dates and reason without retrying 
     calls.filter((c) => c.path === 'mentor/leave-requests' && c.method === 'POST'),
   ).toHaveLength(1);
 });
-for (const period of ['FULL_DAY', 'MORNING'])
-  test(`leave ${period} preview, mapping, create, detail and withdrawal use current versions`, async ({
+for (const variant of ['FULL_DAY', 'MORNING', 'FULL_DAY_SLOT'])
+  test(`leave ${variant} preview, mapping, create, detail and withdrawal use current versions`, async ({
     page,
   }, info) => {
     const { calls } = await mockMentorWorkspace(page);
+    const period = variant === 'FULL_DAY_SLOT' ? 'FULL_DAY' : variant;
+    const keepTime = variant === 'FULL_DAY';
     await page.goto('/mentor/leave-requests');
     await page.getByRole('button', { name: 'Tạo đơn xin nghỉ', exact: true }).click();
     await page.getByLabel('Nghỉ từ ngày').fill('2026-10-26');
@@ -277,11 +285,16 @@ for (const period of ['FULL_DAY', 'MORNING'])
     await page.getByLabel('Khoảng nghỉ').selectOption(period);
     await page.getByRole('button', { name: 'Xem buổi bị ảnh hưởng' }).click();
     await expect(page.getByText('Có 1 buổi bị ảnh hưởng.', { exact: false })).toBeVisible();
-    if (period === 'FULL_DAY')
-      await page.getByLabel('Dạy bù cho ngày 2026-10-26').fill('2026-10-28');
+    if (keepTime) await page.getByLabel('Dạy bù cho ngày 2026-10-26').fill('2026-10-28');
     else {
+      if (variant === 'FULL_DAY_SLOT')
+        await page
+          .getByRole('combobox', { name: 'Cách đổi lịch', exact: true })
+          .selectOption('choose-slot');
       await page.getByLabel('Ngày dạy bù', { exact: true }).fill('2026-10-28');
-      await page.getByLabel('Buổi dạy bù', { exact: true }).selectOption('AFTERNOON');
+      await page
+        .getByRole('combobox', { name: 'Buổi dạy bù', exact: true })
+        .selectOption('AFTERNOON');
       await page.getByRole('button', { name: 'Tìm giờ phù hợp' }).click();
       await page.getByRole('radio').check();
     }
@@ -308,7 +321,7 @@ for (const period of ['FULL_DAY', 'MORNING'])
     const create = calls.find((c) => c.path === 'mentor/leave-requests' && c.method === 'POST');
     expect(create?.body?.sourceVersions).toEqual([{ sessionId: mentorIds.nextUnit, version: 4 }]);
     expect(create?.key).toBeTruthy();
-    if (period === 'FULL_DAY') {
+    if (keepTime) {
       expect(create?.body?.dayMappings).toEqual([
         { sourceDate: '2026-10-26', targetDate: '2026-10-28' },
       ]);

@@ -13,7 +13,6 @@ import {
   ErrorNotice,
   FileDownload,
   assignmentRootClass,
-  panelClass,
 } from './assignment-ui';
 import { AssignmentHistory } from './assignment-reports';
 
@@ -46,17 +45,17 @@ export function StudentAssignmentPage(props: { assignmentId: string }) {
       />
       <QueryState pending={query.isPending} error={query.error} retry={query.refetch}>
         {a && (
-          <>
-            <AssignmentMeta item={a} />
+          <div className="min-w-0 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-canvas">
+            <AssignmentMeta item={a} embedded />
             {a.instructionFiles.length > 0 && (
-              <section className={`${panelClass} space-y-3`}>
+              <section className="min-w-0 space-y-3 p-5 sm:p-6">
                 <h2 className="text-xl font-extrabold">Tệp đề bài</h2>
                 {a.instructionFiles.map((file) => (
                   <FileDownload file={file} key={file.id} />
                 ))}
               </section>
             )}
-            <section className={`${panelClass} space-y-4`}>
+            <section className="min-w-0 space-y-4 bg-soft/50 p-5 sm:p-6">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-extrabold">
@@ -130,8 +129,8 @@ export function StudentAssignmentPage(props: { assignmentId: string }) {
                 </Button>
               )}
             </section>
-            <AssignmentHistory assignmentId={a.id} />
-          </>
+            <AssignmentHistory assignmentId={a.id} embedded />
+          </div>
         )}
       </QueryState>
     </div>

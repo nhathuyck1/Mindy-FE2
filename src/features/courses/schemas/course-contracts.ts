@@ -23,6 +23,11 @@ export const categoryPageSchema = z.object({
   ...pagination,
 });
 export const publicClassSchema = z.object({
+  minStudents: z.number().int().optional(),
+  activeStudentCount: z.number().int().optional(),
+  scheduledStartAt: z.string().nullable().optional(),
+  startEligibility: z.string().optional(),
+  startIneligibilityReason: z.string().nullable().optional(),
   id: z.uuid(),
   courseId: z.uuid(),
   code: z.string(),

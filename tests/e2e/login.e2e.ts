@@ -80,9 +80,7 @@ test('Opens the account dropdown and handles dismissal and logout retry', async 
   await expect(dropdown).toContainText(testUser.email);
   await expect(trigger).toHaveAttribute('aria-expanded', 'true');
   await page.keyboard.press('Tab');
-  await expect(
-    dropdown.getByRole('link', { name: 'Thông tin cá nhân', exact: true }),
-  ).toBeFocused();
+  await expect(dropdown.getByRole('link', { name: 'Tổng quan', exact: true })).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(dropdown).not.toBeVisible();
   await expect(trigger).toBeFocused();

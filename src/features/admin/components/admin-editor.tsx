@@ -2,7 +2,7 @@
 
 import { useId, useState } from 'react';
 import Link from 'next/link';
-import { Eye, Pencil, Users, ShieldCheck } from 'lucide-react';
+import { CalendarDays, Eye, Pencil, Users, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { useAdminDetail } from '../api/admin-edit-queries';
@@ -12,6 +12,7 @@ import { AdminQueryState } from './admin-query-state';
 import { AdminCreateUserForm, AdminUserForm, AdminUserStatusAction } from './admin-user-form';
 import { AdminCourseForm } from './admin-course-form';
 import { AdminCreateClassForm, AdminClassForm } from './admin-class-form';
+import { AdminClassSessions } from './admin-class-sessions';
 
 function AdminEditorDialog(props: {
   resource: AdminResource;
@@ -19,6 +20,7 @@ function AdminEditorDialog(props: {
   onClose: () => void;
   returnFocus?: HTMLElement | null;
   embedded?: boolean;
+  schedule?: boolean;
 }) {
   const [id, setId] = useState(props.id);
   const query = useAdminDetail(props.resource, id);
@@ -26,9 +28,11 @@ function AdminEditorDialog(props: {
   return (
     <Modal
       title={
-        id && props.resource === 'users'
-          ? 'Trạng thái tài khoản'
-          : `${id ? 'Quản lý' : 'Tạo'} ${label}`
+        props.schedule
+          ? 'Lịch học của lớp'
+          : id && props.resource === 'users'
+            ? 'Trạng thái tài khoản'
+            : `${id ? 'Quản lý' : 'Tạo'} ${label}`
       }
       onClose={props.onClose}
       contentClassName="sm:max-w-3xl"
@@ -48,6 +52,11 @@ function AdminEditorDialog(props: {
             <AdminUserForm user={query.data.value} />
           ) : query.data.resource === 'courses' ? (
             <AdminCourseForm initial={query.data.value} onCreated={setId} />
+          ) : props.schedule ? (
+            <AdminClassSessions
+              classroom={query.data.value}
+              editable={!['COMPLETED', 'CANCELLED'].includes(query.data.value.status)}
+            />
           ) : (
             <AdminClassForm initial={query.data.value} />
           )
@@ -82,7 +91,7 @@ export function AdminEditorButton(props: { resource: AdminResource }) {
 }
 
 export function AdminRowActions(props: { resource: AdminResource; row: AdminRow }) {
-  const [action, setAction] = useState<'view' | 'edit' | null>(null);
+  const [action, setAction] = useState<'view' | 'edit' | 'schedule' | null>(null);
   const [returnFocus, setReturnFocus] = useState<HTMLButtonElement | null>(null);
   const popupId = useId();
   const label = adminResources[props.resource].singular;
@@ -101,6 +110,17 @@ export function AdminRowActions(props: { resource: AdminResource; row: AdminRow 
       color:
         'border-status-yellow/30 bg-status-yellow/8 text-status-yellow hover:bg-status-yellow/15 data-[active=true]:bg-status-yellow data-[active=true]:text-canvas',
     },
+    ...(props.resource === 'classes'
+      ? [
+          {
+            value: 'schedule' as const,
+            label: 'Xếp lịch',
+            icon: CalendarDays,
+            color:
+              'border-mint/30 bg-soft text-mint hover:bg-mint/15 data-[active=true]:bg-mint data-[active=true]:text-canvas',
+          },
+        ]
+      : []),
   ];
   const close = () => setAction(null);
   const studentsLabel = 'Danh sách học viên';
@@ -157,11 +177,13 @@ export function AdminRowActions(props: { resource: AdminResource; row: AdminRow 
         <Modal
           id={popupId}
           title={
-            action === 'view'
-              ? `Thông tin ${label}`
-              : props.resource === 'users'
-                ? 'Trạng thái tài khoản'
-                : `Quản lý ${label}`
+            action === 'schedule'
+              ? 'Lịch học của lớp'
+              : action === 'view'
+                ? `Thông tin ${label}`
+                : props.resource === 'users'
+                  ? 'Trạng thái tài khoản'
+                  : `Quản lý ${label}`
           }
           onClose={close}
           returnFocus={returnFocus}
@@ -176,9 +198,10 @@ export function AdminRowActions(props: { resource: AdminResource; row: AdminRow 
                 onClose={close}
               />
             )}
-            {action === 'edit' && (
+            {(action === 'edit' || action === 'schedule') && (
               <AdminEditorDialog
                 embedded
+                schedule={action === 'schedule'}
                 resource={props.resource}
                 id={props.row.id}
                 onClose={close}

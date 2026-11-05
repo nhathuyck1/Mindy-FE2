@@ -8,12 +8,39 @@ test('mentor loads lessons independently of empty unit detail and creates from t
   await page.goto(`/mentor/classes/${mentorIds.class}`);
   const first = page.getByRole('region', { name: 'Nội dung buổi 1', exact: true });
   const second = page.getByRole('region', { name: 'Nội dung buổi 2', exact: true });
-  const shared = page.getByRole('region', { name: 'Nội dung chưa gắn buổi học', exact: true });
+  const shared = page.getByRole('region', { name: 'Tài liệu chung', exact: true });
   await expect(first).toContainText('Bài viết đầu tiên');
   await expect(first).toContainText('Tài liệu thực hành HTML');
   await expect(first).not.toContainText('Video làm quen biểu mẫu');
   await expect(second).toContainText('Video làm quen biểu mẫu');
+  await expect(first).not.toContainText('Tài liệu dùng chung');
+  await expect(shared).toHaveCount(0);
+  const tabs = page.getByRole('group', { name: 'Nội dung lớp học' });
+  await expect(tabs.getByRole('button')).toHaveText([
+    'Chương',
+    'Tài liệu chung',
+    'Bài tập',
+    'Học viên',
+    'Chuyên cần',
+    'Tiến độ',
+  ]);
+  await tabs.getByRole('button', { name: 'Tài liệu chung', exact: true }).click();
+  await expect(first).toHaveCount(0);
   await expect(shared).toContainText('Tài liệu dùng chung');
+  await expect(shared).not.toContainText('Bài viết đầu tiên');
+  await expect(shared).not.toContainText('Nội dung cần kiểm tra buổi');
+  await expect(page.getByRole('button', { name: 'Buổi học', exact: true })).toHaveCount(0);
+  await shared.getByRole('button', { name: /Tài liệu dùng chung/ }).click();
+  await expect(page.getByRole('region', { name: 'Phạm vi tài liệu' })).toHaveCount(0);
+  await expect(page.getByText('Chưa gắn buổi học', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Về tài liệu chung' }).click();
+  await page.setViewportSize({
+    width: testInfo.project.name === 'mobile' ? 320 : 1440,
+    height: 900,
+  });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('general-materials.png'), fullPage: true });
+  await tabs.getByRole('button', { name: 'Chương', exact: true }).click();
   await expect(
     page.getByRole('region', { name: 'Nội dung có buổi học chưa xác định' }),
   ).toContainText('Nội dung cần kiểm tra buổi');
@@ -41,7 +68,7 @@ test('mentor loads lessons independently of empty unit detail and creates from t
     calls.find((call) => call.method === 'POST' && call.path.endsWith('/materials'))?.body
       ?.sessionId,
   ).toBe(mentorIds.nextUnit);
-  await page.getByRole('button', { name: 'Về danh sách buổi học' }).click();
+  await page.getByRole('button', { name: 'Về nội dung chương' }).click();
   await expect(second).toContainText('Hướng dẫn buổi 2');
   await page.getByLabel('Trạng thái nội dung').selectOption('APPROVED');
   await expect(first).toContainText('Tài liệu thực hành HTML');
@@ -50,7 +77,7 @@ test('mentor loads lessons independently of empty unit detail and creates from t
   await expect(
     page.getByRole('toolbar', { name: 'Thao tác nội dung' }).getByRole('button'),
   ).toHaveCount(0);
-  await page.getByRole('button', { name: 'Về danh sách buổi học' }).click();
+  await page.getByRole('button', { name: 'Về nội dung chương' }).click();
   await page.getByLabel('Trạng thái nội dung').selectOption('');
   if (testInfo.project.name === 'desktop')
     await page.setViewportSize({ width: 1440, height: 1000 });

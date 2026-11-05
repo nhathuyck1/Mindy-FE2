@@ -58,7 +58,7 @@ Tham khảo [AGENTS.md của ixartz/Next-js-Boilerplate](https://github.com/ixar
 ## Kiểm tra và tài liệu
 
 - Dùng npm và `package-lock.json`; không thêm lockfile thứ hai.
-- `npm run dev`: port 3001. `npm run start`: production ở port 3001.
+- `npm run dev`: port 3003. `npm run start`: production ở port 3003.
 - `npm run lint`, `npm run format:check`, `npm run check:types`, `npm run test`, `npm run build`.
 - `npm run test:e2e`: Playwright desktop/mobile trên production build, port 3103. Lần đầu chạy `npx playwright install chromium`.
 - `npm run check`: chuỗi kiểm tra đầy đủ. Sửa lỗi liên quan trước khi kết thúc.

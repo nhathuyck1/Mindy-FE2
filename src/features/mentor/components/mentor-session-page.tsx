@@ -124,6 +124,7 @@ export function MentorSessionPage(props: { sessionId: string }) {
         session={context.data?.session}
         status={session?.status}
         classTitle={workspace.data?.name}
+        classId={context.data?.session.classId ?? session?.classId}
         roomName={context.data?.roomName}
         online={Boolean(safeMeeting)}
       />

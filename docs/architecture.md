@@ -1,5 +1,56 @@
 # Kiến trúc Mindy FE2
 
+## Route lịch Manager — 06/11/2026
+
+- `/manager/schedule` compose ManagerSchedulePage → ManagerWeeklySchedule, kế thừa ManagerShell/guard. Component lịch không còn mount trong Tổng quan, query danh sách lớp chỉ phát sinh ở trang lịch. safeReturnPath cho phép route này sau đăng nhập.
+- Giữ DTO/proxy, preview/save, expectedVersion và retry cùng idempotency receipt hiện hữu. Đổi presentation của slot và tên buổi, không thay nghiệp vụ hoặc quyền API. `manager.css` import riêng tại layout Manager, scope workspace và để các feature giữ cấu trúc hiện tại.
+
+## Biểu đồ dashboard vai trò — 06/11/2026
+
+- `role-dashboard-charts.tsx` nhận DTO từ RoleDashboard, dùng ChartContainer/Recharts hiện có cho thu tiền Manager và hoạt động/đơn nghỉ Mentor; không sở hữu query hoặc state API riêng. Chỉ chuyển amount sang number cho hình học biểu đồ; bảng giữ chuỗi tiền và định dạng BigInt. Khóa/lớp sort theo BigInt, biểu đồ top 10 và bảng đầy đủ. Dữ liệu trống không sinh số liệu giả.
+- Danh sách lớp Mentor đổi presentation thành thẻ responsive, giữ URL filters/phân trang và API hiện có.
+
+## UI chung và đối chiếu nhánh FE — 06/11/2026
+
+- Theo yêu cầu mới nhất, giữ nguyên toàn bộ compiler/code workspace, chat và bảng vẽ so với HEAD đầu vào. Chỉ chọn các cải tiến UI chung từ dev 7e3dc7c; không nhập nguyên nhánh. Xem [báo cáo](fe-branch-audit-2026-11-06.md).
+- StudentAssignmentsPage nằm trong features/assignments, dùng bộ chọn lớp đủ trang qua useAssignmentClasses; chỉ nhận canViewClass/FULL và dedupe classId. Dùng AssignmentList chung, không sửa trang làm bài hoặc runner.
+- Giữ lịch tuần/swap/retention, tracking ARTICLE, ảnh chat và realtime portable của nhánh hiện tại. FULL_DAY tiếp tục có hai cách đổi lịch; kiểm overlap và ngày tối thiểu.
+- Bộ lọc Admin/phân công Mentor/loại tài liệu theo URL. Admin clamp page khi tổng giảm; xóa lọc bài tập giữ tab/lớp. Hàng chờ Manager chỉ gọi query courseUnitId được BE hỗ trợ.
+
+## Accordion học liệu Student — 05/11/2026
+
+- `LearningWorkspace` dùng khung chương theo container của Mentor, không nhập module staff. `LearningUnitContent` sở hữu query chương và state mục mở; ghép tài liệu bằng sessionId, tách nội dung chung/buổi không xác định. `LearningMaterialList` render trigger aria-expanded/aria-controls và panel gắn với từng tiêu đề, chỉ mount `MaterialViewer` đang mở; null là đã thu gọn, undefined mở bài đầu theo thứ tự hiển thị. Đổi chương remount state.
+- `MaterialViewer` giữ sanitizer, kiểm class/unit và luồng quyền tệp hiện hữu, bỏ heading lặp. File chính đọc signed access khi mount, refresh do người dùng; cleanup hủy request và gỡ media khi đóng mục. URL ký chỉ trong component memory. Preview/locked không mount list/detail/file access, lỗi list không render dữ liệu cũ. Không thêm API hoặc quyền Mentor vào Student.
+
+## Metadata buổi trong danh sách bài tập — 05/11/2026
+
+- `useAssignmentSessions` giữ số buổi/lịch/chương từ context Student và tên/lịch từ danh sách buổi Mentor hiện hữu, không thêm endpoint. `AssignmentListItem` ghép bằng sessionId; không tải detail từng bài hoặc suy trạng thái nộp từ assignment status. `assignment-deadline` chỉ tính nhãn hạn theo đồng hồ client; backend tiếp tục quyết định quyền làm/nộp bài.
+
+## Dashboard tài liệu theo khóa — 05/11/2026
+
+- `ManagerMaterialsDashboard` dùng `useManagerMaterialCounts` (`useQueries`) đọc detail Manager của mỗi khóa rồi cộng total từ danh sách tài liệu từng học phần, pageSize=1; không tải toàn bộ tài liệu hoặc gửi query courseId chưa được upstream hỗ trợ. Học phần được đọc tuần tự trong từng khóa, dùng AbortSignal chung. Danh sách khóa dùng `useManagerCourseOptions` đủ trang. Query key `manager/userId/material-count-by-course/courseId` dùng cơ chế invalidate Manager hiện hữu. Chart/tổng chỉ dựng khi đủ count, lỗi một học phần làm count cả khóa chưa xác định.
+
+## Lịch bù từng buổi Mentor — 05/11/2026
+
+- `leave-makeup` kiểm overlap bằng khoảng timestamp nửa mở, dùng chung giữa UI và schema/proxy. Parent sở hữu mapping đã chọn; từng slot component nhận selection và các mapping khác để khóa động, không giữ bản sao selection nội bộ. Functional update của parent chặn cả hai sự kiện chọn gần nhau tạo lịch chồng lấn.
+
+- `LeaveCreate` giữ mapping theo sessionId cho mọi period; không còn gom FULL_DAY theo source date. `SessionMakeupSlot` sở hữu việc tìm/chọn slot của riêng buổi; đổi điều kiện chỉ xóa mapping tương ứng. Schema/proxy đồng bộ khả năng sessionMappings cho FULL_DAY và targetPeriod FULL_DAY đã có ở BE.
+- `leave-display` cung cấp ngày tối thiểu kết hợp mốc lịch nghỉ với max(client time, preview.asOf) theo preview.timeZone: FULL_DAY sau toDate, nghỉ theo buổi từ ngày buổi gốc. Đồng hồ form cập nhật mỗi phút/focus và kiểm lại tại submit. Không thay server state/session recovery/idempotency hoặc quyền/nghiệp vụ backend.
+
+## Hàng chờ tài liệu Manager — 05/11/2026
+
+- `ManagerPendingMaterials` hiển thị tên khóa/học phần từ response list, lọc course/unit/type qua API trước phân trang. `useManagerCourseOptions` đọc đủ trang catalog Manager gồm khóa chưa kích hoạt; detail Manager cung cấp units. Query theo user, không tạo Redux state hoặc tải toàn bộ hàng chờ để lọc ở client. Proxy chỉ bổ sung hai GET catalog Manager và `courseId` trong filter tài liệu.
+
+## Người tham gia bảng trắng — 04/11/2026
+
+- BoardConnection nhận board:presence từ BE và kiểm Zod, giữ people riêng với peers/con trỏ có timeout; danh sách được xóa khi offline hoặc quyền bị thu hồi. WhiteboardPeople dedupe theo user ID, đặt tài khoản hiện tại đầu danh sách khi online và dùng NameAvatar cùng Popover có sẵn. Không tải danh sách lớp hoặc mở rộng quyền tài nguyên.
+
+## Tài nguyên buổi học Student — 04/11/2026
+
+- UserSchedulePage giữ dialog và metadata lịch; StudentSessionResources đặt bảng vẽ/meeting, tài liệu và danh sách bài tập ngay dưới tiêu đề. Hook useStudentSessionResources chỉ mount khi mở chi tiết, key theo user/class/session/accessMode, kiểm lại quyền bằng API riêng tư trước khi hiện thao tác.
+- FULL đọc me/classes/:id, tìm đúng buổi và ưu tiên meetingUrl buổi rồi đến lớp. SESSION_MAKEUP đọc class-sessions/:id/context theo quyền guest của BE, không tải toàn bộ lớp đích; CASH_PREVIEW/buổi hủy không gọi API nội dung. Helper studentMeetingUrl dùng chung với LearningPage, không hiện meeting khi lớp/buổi đã kết thúc hoặc hủy.
+- Bài tập sử dụng me/classes/:id/assignments?sessionId=... và phân trang chuẩn BE; liên kết về các trang Student QUIZ/ZIP/CODE hiện có. Không gọi endpoint me/class-sessions/:id/assignments vì BE chưa cung cấp. Quyền học bù hiện có chỉ mở bảng/meeting của buổi; bài tập lớp đích vẫn đòi enrollment ACTIVE, không mở rộng quyền BE.
+
 ## Presentation buổi học Mentor — 04/11/2026
 
 - mentor-session-ui.tsx chứa MentorSessionOverview và MentorSessionTools, chỉ nhận metadata/callback từ MentorSessionPage. Page tiếp tục sở hữu query/permissions/mutations và tất cả dialog, ghi chú, bài tập; không đổi API hoặc BE. Counters sử dụng totals backend, preview sử dụng candidates và giữ key enrollment/makeup/page.
@@ -290,10 +341,14 @@ Next config hỗ trợ `MINDY_DIST_DIR` cho build output riêng trong lúc previ
 
 ## Khu vực tài khoản học viên — 15/10/2026
 
-- Các route `/user/profile`, `/user/orders`, `/user/schedule`, `/user/courses` dùng UserShell và AuthGuard STUDENT ACTIVE. `/user` chuyển profile. Sidebar theo `origin/admin:src/components/layout/admin-shell.tsx`: desktop 228px/thu gọn 76px, active indicator, topbar và mobile dialog focus trap/Escape/scroll lock. Không nhập các module quản trị.
+- Các route `/user`, `/user/profile`, `/user/orders`, `/user/schedule`, `/user/courses` dùng UserShell và AuthGuard STUDENT ACTIVE. `/user` là Tổng quan, có TodaySchedule dùng me/schedule trong ngày Việt Nam; Mentor tái dùng component này với lịch tuần đã phân trang đầy đủ. Sidebar theo `origin/admin:src/components/layout/admin-shell.tsx`: desktop 228px/thu gọn 76px, active indicator, topbar và mobile dialog focus trap/Escape/scroll lock. Root Tổng quan chỉ active khi khớp chính xác. Không nhập các module quản trị.
 - Profile đọc session `/auth/me`, chưa có endpoint sửa hồ sơ nên không thêm form lưu giả. Đơn hàng dùng `/me/orders` + filter status/page; link order payOS tái sử dụng checkout để đọc trạng thái, không tự tạo đơn mới.
 - Khóa học dùng `/me/classes` với current/history/all và enrollmentId làm key. Không tự cấp quyền theo order PAID; accessReason/canViewSchedule từ backend quyết định trạng thái UI.
 - Lịch 7 cột ngang Thứ 2–Chủ nhật, tuần theo UTC+7, mobile cuộn bảng trong vùng riêng. GET `/me/schedule` lấy đủ các trang, giữ CANCELLED và buổi qua đêm theo overlap. Điểm danh thật lấy từ `attendanceStatus`; `UNMARKED`/null không suy thành Vắng, còn `creditedAttendanceStatus` không thay thế điểm danh vật lý. Mentor nullable và metadata buổi học bù được giữ trong DTO.
 - Browser vẫn same-origin `/api/v1`; proxy bổ sung đúng hai GET list, strict query, validate DTO và cookie access_token/no-store. Session/user ID nằm trong query key; dữ liệu riêng tư được xóa bởi luồng đổi phiên hiện có.
 
 Cập nhật 16/10: user orders/courses hiển thị dạng bảng, dữ liệu chi tiết từ list DTO mở qua `UserDetailsDialog`. Calendar dùng cùng dialog với ScheduleEvent đã tải; không phát sinh API hay quyền mới. Link payOS/schedule/public course nằm trong dialog và chỉ điều hướng khi bấm.
+
+## BE Change — 05/11/2026
+
+features/operations sở hữu schema/proxy mới và các panel lịch tuần/swap/retention. Dashboard manager/mentor có DTO và renderer riêng, Admin giữ analytics cũ. Server state vẫn TanStack Query theo user; retry mutation giữ receipt/body. Không mở manager/mentorId tùy ý.

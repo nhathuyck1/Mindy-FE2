@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { mockAssignments } from './assignment-fixtures';
 import { ids } from '../fixtures/assignment-data';
+import { quizBulkExample } from '../../src/features/assignments/lib/quiz-bulk-import';
 
 test('Mentor creates a ZIP from the session using labelled fields', async ({ page }) => {
   const { calls } = await mockAssignments(page, { mentor: true });
@@ -110,6 +111,35 @@ test('Student starts, autosaves, reloads and submits a QUIZ', async ({ page }, i
   for (const call of calls.filter((c) => c.method !== 'GET'))
     expect(call.key).toMatch(/^[\da-f-]{36}$/);
 });
+test('QUIZ answers stay editable after opening and reloading the attempt', async ({ page }) => {
+  const { calls } = await mockAssignments(page, { timed: true });
+  await page.goto(`/user/assignment-submissions/${ids.submission}`);
+  await expect(page.getByRole('heading', { name: 'Bài trắc nghiệm' })).toBeVisible({
+    timeout: 30_000,
+  });
+  const answers = page.getByRole('radio');
+  await expect(answers).toHaveCount(4);
+  for (const answer of await answers.all()) await expect(answer).toBeEnabled();
+  await page.getByText('B. 12.5', { exact: true }).click();
+  await expect(answers.nth(1)).toBeChecked();
+  await expect(page.getByText('1/1 câu đã chọn', { exact: true })).toBeVisible();
+  await expect(page.getByText('Đã lưu', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(answers.nth(1)).toBeChecked();
+  await expect(answers.nth(1)).toBeEnabled();
+  await answers.nth(1).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(answers.nth(2)).toBeChecked();
+  await expect(answers.nth(1)).not.toBeChecked();
+  await expect(page.getByText('Đã lưu', { exact: true })).toBeVisible();
+  const writes = calls.filter((c) => c.path.endsWith('/answers'));
+  expect(writes).toHaveLength(2);
+  expect(writes[1].body).toMatchObject({
+    expectedVersion: 2,
+    answers: [{ questionId: ids.question, selectedOption: 'C' }],
+  });
+});
+
 test('QUIZ submit waits for slow autosave; no late answer overwrite', async ({ page }) => {
   const { calls } = await mockAssignments(page, { slowSave: true, timed: true });
   await page.goto(`/user/assignment-submissions/${ids.submission}`);
@@ -156,6 +186,8 @@ test('expired QUIZ reads server result and sends no autosave', async ({ page }) 
 test('Mentor edits questions, previews and confirms publish', async ({ page }, info) => {
   const { calls } = await mockAssignments(page, { mentor: true, draft: true });
   await page.goto(`/mentor/assignments/${ids.assignment}`);
+  await expect(page.getByRole('button', { name: 'Soạn câu hỏi' })).toBeVisible();
+  await page.screenshot({ path: info.outputPath('mentor-assignment-draft.png'), fullPage: true });
   await page.getByRole('button', { name: 'Soạn câu hỏi' }).click();
   await page.getByRole('textbox', { name: 'Nội dung câu 1' }).fill('Kết quả của 6 + 6 là gì?');
   await page.getByRole('button', { name: 'Lưu bộ câu hỏi' }).click();
@@ -170,6 +202,92 @@ test('Mentor edits questions, previews and confirms publish', async ({ page }, i
   await expect(page.getByRole('button', { name: 'Lưu trữ bài' })).toBeVisible();
   await page.screenshot({ path: info.outputPath('mentor-assignment.png'), fullPage: true });
 });
+test('Mentor previews and appends bulk ABCD questions before saving the full set', async ({
+  page,
+}, info) => {
+  const { calls } = await mockAssignments(page, { mentor: true, draft: true });
+  await page.goto(`/mentor/assignments/${ids.assignment}`);
+  await page.getByRole('checkbox', { name: 'Gồm lượt cũ' }).click();
+  await expect(page).toHaveURL(/history-history=true/);
+  await expect(page.getByRole('checkbox', { name: 'Gồm lượt cũ' })).toBeChecked();
+  await page.getByRole('button', { name: 'Soạn câu hỏi' }).click();
+  await page
+    .getByRole('textbox', { name: 'Nội dung câu 1' })
+    .fill('Câu đã chỉnh sửa trước khi nhập');
+  await page.getByRole('button', { name: 'Nhập hàng loạt', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  const source = dialog.getByRole('textbox', { name: 'Nội dung câu hỏi', exact: true });
+  const check = dialog.getByRole('button', { name: 'Kiểm tra & xem trước' });
+  await source.fill(quizBulkExample.replace('Đáp án: B', 'Đáp án: E'));
+  await check.click();
+  await expect(dialog.getByRole('alert')).toContainText('phải là A, B, C hoặc D');
+  await expect(dialog.getByRole('button', { name: 'Thêm câu hỏi', exact: true })).toBeDisabled();
+  expect(calls.filter((c) => c.path.endsWith('/questions'))).toHaveLength(0);
+  await source.fill(Array(100).fill(quizBulkExample).join('\n\n'));
+  await check.click();
+  await expect(dialog.getByRole('alert')).toContainText('Tổng 201 câu vượt giới hạn 200');
+  await expect(
+    dialog.getByRole('button', { name: 'Thêm 200 câu hỏi', exact: true }),
+  ).toBeDisabled();
+  await source.fill(quizBulkExample);
+  await check.click();
+  await expect(dialog.getByRole('status')).toHaveText('2 câu hỏi hợp lệ');
+  await dialog.getByText('Câu 1. Kết quả của 2 + 2 là gì?', { exact: true }).click();
+  await expect(dialog.getByText('B. 4 · Đáp án đúng', { exact: true })).toBeVisible();
+  await page.screenshot({ path: info.outputPath('mentor-bulk-import.png'), fullPage: true });
+  await dialog.getByRole('button', { name: 'Thêm 2 câu hỏi', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('textbox', { name: 'Nội dung câu 1', exact: true })).toHaveValue(
+    'Câu đã chỉnh sửa trước khi nhập',
+  );
+  await expect(page.getByRole('textbox', { name: 'Nội dung câu 3', exact: true })).toHaveValue(
+    'Kiểu dữ liệu nào biểu diễn đúng/sai?',
+  );
+  expect(calls.filter((c) => c.path.endsWith('/questions'))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Lưu bộ câu hỏi', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Lưu bộ câu hỏi', exact: true })).toBeDisabled();
+  const writes = calls.filter((c) => c.path.endsWith('/questions'));
+  expect(writes).toHaveLength(1);
+  expect(writes[0].body).toMatchObject({
+    expectedRevision: 1,
+    questions: [
+      { id: ids.question, prompt: 'Câu đã chỉnh sửa trước khi nhập' },
+      { correctOption: 'B' },
+      { correctOption: 'C' },
+    ],
+  });
+});
+
+test('Mentor imports UTF-8 text and replaces questions only after applying the preview', async ({
+  page,
+}) => {
+  const { calls } = await mockAssignments(page, { mentor: true, draft: true });
+  await page.goto(`/mentor/assignments/${ids.assignment}`);
+  await page.getByRole('button', { name: 'Soạn câu hỏi' }).click();
+  const original = page.getByRole('textbox', { name: 'Nội dung câu 1', exact: true });
+  await page.getByRole('button', { name: 'Nhập hàng loạt', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Chọn tệp câu hỏi .txt').setInputFiles({
+    name: 'cau-hoi.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(quizBulkExample),
+  });
+  await expect(dialog.getByRole('textbox', { name: 'Nội dung câu hỏi', exact: true })).toHaveValue(
+    quizBulkExample,
+  );
+  await dialog.getByRole('button', { name: 'Kiểm tra & xem trước' }).click();
+  await dialog.getByRole('radio', { name: 'Thay toàn bộ 1 câu hiện có' }).check();
+  await page.keyboard.press('Escape');
+  await expect(original).toHaveValue('Giá trị nào là số nguyên?');
+  await page.getByRole('button', { name: 'Nhập hàng loạt', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Thay bằng 2 câu hỏi', exact: true }).click();
+  await expect(original).toHaveValue('Kết quả của 2 + 2 là gì?');
+  await expect(page.getByRole('textbox', { name: 'Nội dung câu 3', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Lưu bộ câu hỏi', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Lưu bộ câu hỏi', exact: true })).toBeDisabled();
+  expect(calls.find((c) => c.path.endsWith('/questions'))?.body?.questions).toHaveLength(2);
+});
+
 test('Student ZIP upload attaches before explicit submit; historical snapshot survives closed access', async ({
   page,
 }, info) => {
@@ -235,7 +353,7 @@ test('Mentor saves zero score, releases separately and reads grade audit', async
 });
 test('assignment screens stay usable at 320px and filters follow browser history', async ({
   page,
-}) => {
+}, info) => {
   await mockAssignments(page);
   await page.setViewportSize({ width: 320, height: 740 });
   await page.goto(`/user/classes/${ids.class}/assignments`);
@@ -253,4 +371,11 @@ test('assignment screens stay usable at 320px and filters follow browser history
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
+  await mockAssignments(page, { mentor: true, draft: true });
+  await page.goto(`/mentor/assignments/${ids.assignment}`);
+  await expect(page.getByRole('button', { name: 'Soạn câu hỏi' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await page.screenshot({ path: info.outputPath('mentor-assignment-320.png'), fullPage: true });
 });

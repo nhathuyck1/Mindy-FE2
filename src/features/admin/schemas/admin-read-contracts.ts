@@ -13,6 +13,8 @@ export const trackingSources = [
   'class_unit_release_audit',
   'session_meeting_audits',
   'attendance_recovery_audits',
+  'assignment_audits',
+  'assignment_zip_audits',
 ] as const;
 export const trackingSourceSchema = z.enum(trackingSources);
 

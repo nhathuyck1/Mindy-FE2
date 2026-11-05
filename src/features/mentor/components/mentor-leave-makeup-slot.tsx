@@ -4,7 +4,8 @@ import { Clock3, Search, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { useMentorCommand, mentorError } from '../api/mentor-queries';
+import { useMentorCommand, useMentorQuery, mentorError } from '../api/mentor-queries';
+import { teachingSlotsSchema } from '@/features/operations/schemas/operation-contracts';
 import {
   leaveSlotsSchema,
   type LeavePreview,
@@ -15,18 +16,40 @@ import { isTeachingSlot } from '@/lib/teaching-slots';
 import { mentorDate } from './mentor-shared';
 export function SessionMakeupSlot(props: {
   source: LeavePreview['affectedSessions'][number];
+  minDate: string;
   onSelect: (mapping: LeaveSessionMapping | null) => void;
 }) {
   const [date, setDate] = useState('');
+  const [now] = useState(() => Date.now());
   const [period, setPeriod] = useState('MORNING');
   const [selected, setSelected] = useState('');
   const slots = useMentorCommand(leaveSlotsSchema);
+  const catalogue = useMentorQuery('teaching-slots', teachingSlotsSchema);
+  const clock = (s: string) => {
+    const [hour, minute] = s.split(':').map(Number);
+    return hour * 60 + minute;
+  };
   const availableSlots =
-    slots.data?.slots.filter((slot) =>
-      isTeachingSlot(slot.startsAt, slot.endsAt, slots.data?.timeZone ?? 'Asia/Ho_Chi_Minh'),
+    slots.data?.slots.filter(
+      (slot) =>
+        Date.parse(slot.startsAt) > now &&
+        isTeachingSlot(
+          slot.startsAt,
+          slot.endsAt,
+          slots.data?.timeZone ?? 'Asia/Ho_Chi_Minh',
+          (catalogue.data ?? []).map((s) => ({ start: clock(s.startsAt), end: clock(s.endsAt) })),
+        ),
     ) ?? [];
   return (
     <div className="space-y-4 rounded-xl border border-line bg-canvas p-4 sm:p-5">
+      {catalogue.isError && (
+        <p role="alert">
+          Chưa tải được danh mục slot.{' '}
+          <Button variant="link" onClick={() => void catalogue.refetch()}>
+            Thử lại
+          </Button>
+        </p>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="font-bold">{props.source.title}</h3>
         {selected && (
@@ -64,6 +87,7 @@ export function SessionMakeupSlot(props: {
           <Input
             className="h-12"
             type="date"
+            min={props.minDate}
             required
             value={date}
             disabled={slots.isPending}

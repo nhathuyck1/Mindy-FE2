@@ -1,5 +1,9 @@
 import 'server-only';
 import { z } from 'zod';
+import {
+  coursePageSchema,
+  paginationQuerySchema,
+} from '@/features/courses/schemas/course-contracts';
 import * as dto from '@/features/manager/schemas/manager-contracts';
 import * as collections from '@/features/manager/schemas/manager-collections-contracts';
 import * as leave from '@/features/manager/schemas/manager-leave-contracts';
@@ -50,6 +54,10 @@ export function resolveManagerRule(method: string, path: string): ManagerRule | 
   if (path === 'files/upload-intents' && method === 'POST')
     return rule(dto.uploadIntentSchema, { body: dto.managerUploadSchema });
   if (p[0] !== 'manager') return;
+  if (method === 'GET' && path === 'manager/courses')
+    return rule(coursePageSchema, { query: paginationQuerySchema.strict() });
+  if (method === 'GET' && p[1] === 'courses' && p.length === 3 && z.uuid().safeParse(p[2]).success)
+    return rule(dto.managerCourseDetailSchema.refine((course) => course.id === p[2]));
   if (method === 'GET' && path === 'manager/mentors')
     return rule(leave.managerPeoplePageSchema, { query: leave.managerPeopleQuerySchema });
   if (method === 'GET' && p.length === 3 && z.uuid().safeParse(p[2]).success) {

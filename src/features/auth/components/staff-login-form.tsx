@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Brand } from '@/components/ui/brand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { useAudienceLogin } from '../api/use-audience-login';
 
 const fieldClass = 'h-12 rounded-lg border-transparent bg-ink/4 text-[14px] md:text-[14px]';
@@ -38,10 +39,9 @@ export function StaffLoginForm() {
           <label htmlFor="staff-password" className="block text-[14px] font-extrabold">
             Mật khẩu
           </label>
-          <Input
+          <PasswordInput
             id="staff-password"
             name="password"
-            type="password"
             autoComplete="current-password"
             required
             minLength={1}

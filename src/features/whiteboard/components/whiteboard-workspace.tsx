@@ -45,6 +45,7 @@ import {
   type BoardShape,
 } from '../schemas/whiteboard-contracts';
 import { WhiteboardCanvas, type BoardTool } from './whiteboard-canvas';
+import { WhiteboardPeople } from './whiteboard-people';
 
 const palette = [
   '#1d302e',
@@ -369,9 +370,16 @@ export function WhiteboardWorkspace(props: { initial: SessionBoard & { board: Bo
           <span>{status}</span>
           <span className="whiteboard-permission">{cap.canEdit ? 'Được vẽ' : 'Chỉ xem'}</span>
         </div>
-        <span className="whiteboard-people" title="Người có con trỏ đang hoạt động">
-          {new Set(state.peers.map((p) => p.id)).size + 1} đang hoạt động
-        </span>
+        <WhiteboardPeople
+          self={
+            state.state?.identity ?? {
+              id: session.data?.id ?? '',
+              name: session.data?.displayName ?? props.initial.context.displayName,
+            }
+          }
+          people={state.people}
+          online={state.status === 'online'}
+        />
         {cap.canControl && (
           <select
             aria-label="Chế độ bảng"

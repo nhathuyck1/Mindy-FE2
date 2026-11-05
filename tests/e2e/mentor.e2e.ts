@@ -6,7 +6,7 @@ test('mentor saved attachments show readable metadata and request access on dema
   page,
 }, testInfo) => {
   const { calls } = await mockMentor(page, { savedAttachment: true });
-  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  await page.goto(`/mentor/classes/${mentorIds.class}?tab=materials`);
   await page.getByRole('button', { name: /Bài viết đầu tiên/ }).click();
   const card = page.getByRole('region', { name: 'Invoice-FCPCKEXP-0002.pdf', exact: true });
   await expect(card).toBeVisible();
@@ -54,12 +54,14 @@ test('weekly timetable groups slots, stacks sessions and navigates whole weeks',
     page.getByRole('row').filter({ has: page.getByRole('rowheader', { name: /^2\s*09:30/ }) }),
   ).toContainText('JS101-A');
   await expect(
-    page.getByRole('row').filter({ has: page.getByRole('rowheader', { name: /^4\s*13:00/ }) }),
+    page.getByRole('row').filter({ has: page.getByRole('rowheader', { name: /^3\s*12:00/ }) }),
   ).toContainText('JS101-A');
   if (testInfo.project.name === 'desktop') {
     const emptyDay = await page.getByRole('columnheader', { name: /Thứ Hai/ }).boundingBox();
     const teachingDay = await page.getByRole('columnheader', { name: /Thứ Ba/ }).boundingBox();
-    expect(emptyDay && teachingDay && emptyDay.width < teachingDay.width).toBeTruthy();
+    expect(emptyDay).not.toBeNull();
+    expect(teachingDay).not.toBeNull();
+    expect(Math.abs(emptyDay!.width - teachingDay!.width)).toBeLessThan(1);
     const previous = await page
       .getByRole('button', { name: 'Tuần trước', exact: true })
       .boundingBox();
@@ -117,6 +119,10 @@ test('mentor attendance keeps student names readable and preserves the attendanc
   const { calls } = await mockMentor(page);
   await page.goto(`/mentor/sessions/${mentorIds.session}`);
   await expect(page.getByText('Phòng: Phòng 101', { exact: false })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Về lịch dạy', exact: true })).toHaveAttribute(
+    'href',
+    '/mentor',
+  );
   await expect(page.getByRole('region', { name: 'Danh sách học viên dự kiến' })).toBeVisible();
   await page.getByRole('button', { name: 'Bắt đầu buổi' }).click();
   const absentStat = page.getByRole('group', { name: 'Vắng mặt', exact: true });
@@ -193,6 +199,9 @@ test('mentor attendance keeps student names readable and preserves the attendanc
     ),
   ).toBe(true);
   expect(calls.some((c) => c.path.includes('cash-orders'))).toBe(false);
+  await page.getByRole('link', { name: 'Về lịch dạy', exact: true }).click();
+  await expect(page).toHaveURL('/mentor');
+  await expect(page.getByRole('heading', { name: 'Lịch dạy của bạn', exact: true })).toBeVisible();
 });
 
 test('class roster is read only and removed unit release is absent', async ({ page }) => {
@@ -213,7 +222,7 @@ test('mentor student table matches admin layout and supports scoped search, filt
   page,
 }, testInfo) => {
   const { calls } = await mockMentor(page, { rosterTable: true });
-  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  await page.goto(`/mentor/classes/${mentorIds.class}?tab=materials`);
   await page.getByRole('button', { name: 'Học viên', exact: true }).click();
   await expect(page.getByRole('table')).toHaveClass(/admin-data-table/);
   await expect(page.getByRole('columnheader')).toHaveCount(4);
@@ -313,7 +322,7 @@ test('mentor workspace keeps chapters beside content, edit toolbar and creation 
   page,
 }, testInfo) => {
   const { calls } = await mockMentor(page, { extraUnits: true });
-  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  await page.goto(`/mentor/classes/${mentorIds.class}?tab=materials`);
   const rail = page.getByRole('complementary', { name: 'Nội dung khóa học' });
   const chapterSelect = page.getByLabel('Chương đang xem');
   if (testInfo.project.name === 'desktop') await expect(rail.getByRole('button')).toHaveCount(2);
@@ -358,7 +367,9 @@ test('mentor workspace keeps chapters beside content, edit toolbar and creation 
     page.getByRole('heading', { name: 'State, sự kiện và render danh sách', exact: true }),
   ).toBeVisible();
   await expect(page.getByRole('toolbar', { name: 'Thao tác nội dung' })).toHaveCount(0);
-  await expect(page.getByText('Chương này chưa có buổi học.', { exact: false })).toBeVisible();
+  await expect(
+    page.getByText('Chưa có tài liệu chung trong chương này.', { exact: true }),
+  ).toBeVisible();
   await page.setViewportSize({ width: 320, height: 800 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole('button', { name: 'Thêm nội dung', exact: true }).click();
@@ -371,12 +382,12 @@ test('mentor material shows its linked lesson and lets the author attach one', a
   page,
 }, testInfo) => {
   const { calls } = await mockMentor(page);
-  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  await page.goto(`/mentor/classes/${mentorIds.class}?tab=materials`);
   const lesson = page.getByRole('region', { name: 'Buổi học của tài liệu', exact: true });
   await page.getByRole('button', { name: /Bài viết đầu tiên/ }).click();
-  await expect(lesson).toContainText('Chưa gắn buổi học');
-  await expect(lesson.getByRole('link')).toHaveCount(0);
-  await lesson.getByRole('button', { name: 'Gắn buổi học', exact: true }).click();
+  const shared = page.getByRole('region', { name: 'Phạm vi tài liệu', exact: true });
+  await expect(shared).toHaveCount(0);
+  await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
   const select = page.getByRole('combobox', { name: 'Gắn với buổi học (tùy chọn)', exact: true });
   await select.selectOption(mentorIds.session);
   await page.getByRole('button', { name: 'Lưu bản nháp', exact: true }).click();
@@ -386,7 +397,7 @@ test('mentor material shows its linked lesson and lets the author attach one', a
       (call) => call.method === 'PATCH' && call.path.endsWith(`/materials/${mentorIds.material}`),
     )?.body?.sessionId,
   ).toBe(mentorIds.session);
-  await page.reload();
+  await page.goto(`/mentor/classes/${mentorIds.class}`);
   await page.getByRole('button', { name: /Bài viết đầu tiên/ }).click();
   await expect(lesson).toContainText('Buổi 1: Làm quen JavaScript');
   await page.setViewportSize({ width: 1600, height: 1000 });
@@ -404,7 +415,7 @@ test('mentor cannot edit reviewed materials and preserves unsaved text on confli
   page,
 }) => {
   await mockMentor(page, { materialState: 'APPROVED' });
-  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  await page.goto(`/mentor/classes/${mentorIds.class}?tab=materials`);
   await page.getByRole('button', { name: /Bài viết đầu tiên/ }).click();
   await expect(
     page.locator('[data-slot="badge"]').getByText('Đã duyệt', { exact: true }),
@@ -412,7 +423,7 @@ test('mentor cannot edit reviewed materials and preserves unsaved text on confli
   await expect(page.getByRole('toolbar').getByRole('button')).toHaveCount(0);
   await page.unrouteAll({ behavior: 'wait' });
   const { calls } = await mockMentor(page, { materialConflict: true });
-  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  await page.goto(`/mentor/classes/${mentorIds.class}?tab=materials`);
   await page.getByRole('button', { name: /Bài viết đầu tiên/ }).click();
   await page.getByRole('button', { name: 'Chỉnh sửa', exact: true }).click();
   await page.getByLabel('Tiêu đề', { exact: true }).fill('Giữ thay đổi của tôi');
@@ -425,7 +436,7 @@ test('mentor cannot edit reviewed materials and preserves unsaved text on confli
 test('mentor waits for validated upload before saving FILE', async ({ page }, testInfo) => {
   const options = { fileFailure: false };
   const { calls } = await mockMentor(page, options);
-  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  await page.goto(`/mentor/classes/${mentorIds.class}?tab=materials`);
   await page.getByRole('button', { name: 'Chương', exact: true }).click();
   await page.getByRole('button', { name: 'Thêm nội dung', exact: true }).click();
   await page.getByLabel('Loại nội dung').selectOption('FILE');
@@ -475,7 +486,7 @@ test('mentor waits for validated upload before saving FILE', async ({ page }, te
 
 test('failed upload cannot be attached to a draft', async ({ page }, testInfo) => {
   const { calls } = await mockMentor(page, { fileFailure: true });
-  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  await page.goto(`/mentor/classes/${mentorIds.class}?tab=materials`);
   await page.getByRole('button', { name: 'Chương', exact: true }).click();
   await page.getByRole('button', { name: 'Thêm nội dung', exact: true }).click();
   await page.getByLabel('Loại nội dung').selectOption('FILE');
@@ -499,7 +510,7 @@ test('failed upload cannot be attached to a draft', async ({ page }, testInfo) =
 test('mentor can drop, cancel and retry a pending document upload', async ({ page }) => {
   const options = { filePending: true };
   const { calls } = await mockMentor(page, options);
-  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  await page.goto(`/mentor/classes/${mentorIds.class}?tab=materials`);
   await page.getByRole('button', { name: 'Thêm nội dung', exact: true }).click();
   await page.getByLabel('Loại nội dung').selectOption('FILE');
   await page.getByLabel('Tiêu đề', { exact: true }).fill('Tài liệu kéo thả');
@@ -528,7 +539,7 @@ test('mentor can drop, cancel and retry a pending document upload', async ({ pag
 
 test('mentor shows validated attachments as removable green file cards', async ({ page }) => {
   const { calls } = await mockMentor(page);
-  await page.goto(`/mentor/classes/${mentorIds.class}`);
+  await page.goto(`/mentor/classes/${mentorIds.class}?tab=materials`);
   await page.getByRole('button', { name: 'Thêm nội dung', exact: true }).click();
   await page.getByLabel('Tiêu đề', { exact: true }).fill('Bài đọc có tài liệu');
   await page.getByLabel('Nội dung bài viết', { exact: true }).fill('Nội dung bài đọc');

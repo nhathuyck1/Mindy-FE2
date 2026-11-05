@@ -29,7 +29,7 @@ test('Admin styles and portals do not change the public site after client naviga
   await page.getByRole('button', { name: `Tài khoản của ${adminUser.displayName}` }).click();
   await page.getByRole('link', { name: 'Trang quản trị', exact: true }).click();
   await expect(page).toHaveURL('/admin');
-  await expect(page.getByLabel('Tổng người dùng: 23', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Tổng quan đào tạo', exact: true })).toBeVisible();
   expect(await page.evaluate(() => getComputedStyle(document.body).fontFamily)).toContain('Inter');
   await page.goBack();
   await expect(page).toHaveURL('/');

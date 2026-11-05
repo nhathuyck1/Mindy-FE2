@@ -2,6 +2,28 @@ import { describe, expect, it } from 'vitest';
 import { safeReturnPath } from './return-path';
 
 describe('Post-login course return path', () => {
+  it('restores assignment, review and message destinations after login', () => {
+    const id = '11111111-1111-4111-8111-111111111111';
+    for (const path of [
+      '/user/assignments',
+      '/user/messages',
+      '/mentor/messages',
+      '/manager/schedule',
+      `/user/assignments/${id}`,
+      `/mentor/assignments/${id}/review`,
+      `/user/assignment-submissions/${id}`,
+      `/user/zip-submissions/${id}`,
+      `/mentor/code-submissions/${id}`,
+      `/user/classes/${id}/assignments`,
+    ])
+      expect(safeReturnPath(`${path}?redirect=https://evil.test`)).toBe(path);
+    expect(safeReturnPath(`/user/assignments/${id}?classId=${id}`)).toBe(
+      `/user/assignments/${id}?classId=${id}`,
+    );
+    expect(safeReturnPath('/mentor/assignments/bad/demo')).toBe('/');
+    expect(safeReturnPath(`/user/assignments/${id}/demo`)).toBe('/');
+    expect(safeReturnPath(`/user/code-submissions/${id}`)).toBe('/');
+  });
   it('Keeps cart, UUID checkout and the provider code while stripping untrusted redirect flags', () => {
     const id = '55555555-5555-4555-8555-555555555555';
     expect(safeReturnPath('/cart?redirect=https://evil.test')).toBe('/cart');

@@ -98,10 +98,47 @@
   font-weight: 700;
 }
 .whiteboard-people {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
-  padding: 8px 12px;
+  padding-left: 12px;
   border-left: 1px solid var(--color-line);
+  flex-shrink: 0;
+}
+.whiteboard-self {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.whiteboard-self-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 700;
+}
+.whiteboard-people-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.whiteboard-people-trigger:hover,
+.whiteboard-people-trigger[data-state='open'] {
+  background: var(--color-soft);
+}
+.whiteboard-people-avatars {
+  display: flex;
+}
+.whiteboard-people-avatars > span + span {
+  margin-left: -8px;
 }
 .whiteboard-workspace select,
 .whiteboard-dialog select {
@@ -403,7 +440,14 @@
     font-size: 11px;
   }
   .whiteboard-people {
-    display: none;
+    order: 3;
+    width: 100%;
+    padding-left: 6px;
+    border-left: 0;
+    justify-content: space-between;
+  }
+  .whiteboard-self-name {
+    max-width: 110px;
   }
   .whiteboard-status {
     order: 2;

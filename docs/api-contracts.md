@@ -1,5 +1,40 @@
 # API catalog, lớp học và tài khoản
 
+## Đổi giảng viên phụ trách — 06/11/2026
+
+- Admin sửa lớp gọi `GET /management/classes/:classId/available-mentors` với page/pageSize/search. Danh sách có assignmentVersion, affectedSessionCount, isCurrent; BE kiểm lịch dạy và nghỉ đã duyệt. Đã đối chiếu controller/service BE và Swagger live.
+- `PATCH /management/classes/:classId/mentor`: mentorId, reason (trim, 1–1000 ký tự), expectedVersion, kèm Idempotency-Key UUIDv4. Response có classId, primaryMentor, assignmentVersion, affectedSessionCount và asOf.
+- Proxy kiểm UUIDv4, query/body strict, Origin, cookie access_token và response đúng lớp. FE kiểm thêm mentor trả về đúng lựa chọn và phiên bản tăng. Không retry mutation tự động; lỗi kết quả chưa rõ cho gửi lại cùng body/key trong form, xung đột bắt tải lại danh sách và xác nhận mới. BE giữ nguyên override từng buổi và buổi đã bắt đầu; lớp hoàn thành/hủy không sửa.
+
+## Admin tracking — 06/11/2026
+
+- Swagger server `TrackingEventDto.source` có thêm `assignment_audits` và `assignment_zip_audits`. FE nhận cả hai trong list/detail và source filter; danh sách có audit bài tập không còn bị Zod từ chối thành 502 INVALID_RESPONSE.
+
+## Đối chiếu UI chung nhiều nhánh FE — 06/11/2026
+
+- Đọc Swagger deploy /docs-json và source BE dev 6dd944f; không sửa BE. manager/materials chưa nhận courseId: chọn khóa để tải học phần, chọn học phần rồi gửi courseUnitId. Proxy chặn courseId, kể cả UUID hợp lệ.
+- Student hub đọc me/classes?page&pageSize=100&view=all đủ trang, chỉ chọn canViewClass/FULL rồi gọi assignment list chung. Không thay API làm bài/runner hoặc compiler UI.
+- Giữ same-origin proxy, Zod, cookie HttpOnly, version/receipt và quyền BE hiện hữu. Swagger presence không thay nghiệm thu tài khoản thật.
+
+## Count tài liệu theo khóa — 05/11/2026
+
+- Dashboard `/manager/materials` đọc `GET /manager/courses/:id` lấy units, sau đó cộng `total` của `GET /manager/course-units/:unitId/materials?page=1&pageSize=1`. Không gửi courseId/reviewStatus/contentType; không cần nhãn courseId trong response. Khóa không có học phần có count 0; chỉ trả count khi mọi học phần tải thành công, lỗi không tạo tổng một phần. Không thêm endpoint, cookie hoặc proxy allowlist.
+- Ảnh Network thực tế cho thấy upstream từ chối query courseId với `property courseId should not exist`. Đã đối chiếu Swagger `https://api.quanh123.id.vn/docs-json` ngày 05/11: API tài liệu theo học phần và detail khóa Manager đã có. Dashboard dùng hai API này để tương thích với bản đang chạy; không yêu cầu deploy backend mới.
+
+## Lịch bù riêng cho từng buổi — 05/11/2026
+
+- Các sessionMappings trong cùng đơn không được trùng hoặc chồng lấn timestamp; UI, kiểm đủ mapping và schema proxy dùng cùng helper `leave-makeup`. Cho phép hai buổi nối tiếp đúng ranh giới. Proxy trả 422 trước upstream với payload chồng lấn; backend vẫn giữ kiểm xung đột lịch thật.
+
+- Đối chiếu Swagger live `https://api.quanh123.id.vn/docs-json` ngày 05/11: `CreateLeaveInput.sessionMappings` nhận một mapping cho mỗi buổi với mọi period; `LeaveSlotsInput.targetPeriod` có cả FULL_DAY. Source BE `LeavePlanningService.mappings` đã hỗ trợ, không cần sửa BE/endpoint.
+- FE tạo đơn luôn gửi `sessionMappings`, gồm cả nghỉ FULL_DAY; cho phép chọn ngày/giờ khác nhau giữa các buổi cùng ngày, giữ sourceVersions từ preview và thời lượng slot BE. Schema vẫn chấp nhận dayMappings FULL_DAY cũ, từ chối trộn hai dạng. Preview/slots không giữ chỗ; backend kiểm xung đột khi gửi/duyệt.
+- Input ngày bù dùng min theo lịch nghỉ: FULL_DAY phải sau ngày kết thúc khoảng nghỉ (11–14/11 → sớm nhất 15/11); nghỉ theo buổi không được trước ngày của buổi gốc, vẫn cho chọn khung giờ khác trong cùng ngày nếu BE cho phép. Mốc này không trước hôm nay theo preview.timeZone, lấy đồng hồ mới hơn giữa client và preview.asOf. Cập nhật khi focus/mỗi phút, kiểm lại cả mốc ngày và thời gian khi gửi. Lịch/giờ hiển thị theo timezone backend.
+
+## Hàng chờ duyệt Manager — 05/11/2026
+
+- `GET /manager/materials` nhận thêm `courseId` UUIDv4; kết hợp AND với `courseUnitId`, `contentType`, `reviewStatus` trước count/phân trang. List bổ sung `courseId`, `courseTitle`, `courseUnitTitle`, `courseUnitNumber`. FE giữ optional để đọc được response cũ, hiển thị thông tin chưa có/ID thay vì bịa tên. Cần backend mới để có nhãn và lọc khóa học; chưa xác nhận deploy upstream.
+- Bộ lọc đọc đủ trang `GET /manager/courses?page=...&pageSize=100`, gồm khóa chưa kích hoạt, và `GET /manager/courses/:id` lấy units. Hai GET đã có trong BE; proxy chỉ mở pagination cho list và UUID/detail khớp ID, access cookie/no-store; không mở mutation catalog. TanStack Query key thuộc Manager/user; đổi khóa xóa học phần, đổi filter về trang 1. Danh sách tài liệu vẫn phân trang 20 dòng trên server.
+- Đối chiếu controller/DTO/service và `../Mindy-BE/docs/api_flow/PHASE_3_3_flow-api-breakdown.md`; backend local chưa chạy nên chưa kiểm Swagger live trong lượt này.
+
 ## Realtime portable — 04/11/2026
 
 - POST /api/v1/auth/realtime-ticket: cookie access_token, Origin đúng APP_ORIGIN; body strict {channel: chat|whiteboards}, không query/URL đích từ client. BE cho MENTOR/STUDENT ACTIVE, channel phải bật, Origin phải nằm trong CORS_ORIGINS. HTTP 200 {ticket, expiresAt}; proxy FE bổ sung url từ REALTIME_ORIGIN runtime. private/no-store, không trả access/refresh token.
@@ -285,3 +320,7 @@ Tìm người dùng (03/11/2026): `GET /api/v1/admin/users` bổ sung query `q` 
 Response trực tiếp có scope, timeZone Asia/Ho_Chi_Minh, generatedAt/from/to ISO UTC; summary `{courses,classes,openClasses,activeClasses,registrations,students}`; courses/mentors/classes top 10 `{id,name,registrations,students,classes}`; trend `{date,registrations}` theo ngày VN có zero-fill; classStatuses `{status,count}`. Mentor trả mentors `[]`. Chỉ ACTIVE/COMPLETED, enrolled_at trong [from,to) được tính đăng ký; học viên đếm distinct, không cộng số theo từng khóa/mentor. Course/class totals mô tả hiện tại.
 
 Proxy chuyển access cookie/private no-store, từ chối query lạ/lặp, validate role response bằng Zod. Session recovery dùng apiRequest chung; 403 không retry, 422 sửa filter, lỗi/503/502 có Thử lại và không hiện số 0 thay lỗi. Chi tiết đầy đủ trong BE `docs/api_flow/DASHBOARD_flow-api-breakdown.md`. Các bảng công việc Manager và lịch Mentor giữ nguyên contract.
+
+## BE Change — source local 05/11/2026
+
+Contract source mới ở ../Mindy-BE/docs/api_flow/PHASE_BE_CHANGE_flow-api-breakdown.md. Bổ sung teaching-slots; management/classes/:id/weekly-schedule GET/POST và preview POST; mentor/classes/:id/sessions/swap; materials/:id/open; manager/materials/bulk-delete và storage-cleanup; manager materials unseen query; chat file-access disposition. Manager/Mentor dashboard dùng schema riêng. Có migration mới BE, chưa xác nhận deploy.

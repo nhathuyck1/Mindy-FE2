@@ -1,13 +1,15 @@
 import { z } from 'zod';
+import { courseDetailSchema } from '@/features/courses/schemas/course-contracts';
 import {
   materialsQuerySchema,
+  materialsSchema as baseMaterialsSchema,
+  materialSchema,
   uploadInputSchema,
 } from '@/features/mentor/schemas/mentor-contracts';
 
-// Material DTOs are identical for Manager and Mentor in the backend contract.
+// Share authoring/detail DTOs with Mentor; Manager lists retain course/unit labels below.
 export {
   materialDetailSchema,
-  materialsSchema,
   createMaterialSchema,
   patchMaterialSchema,
   revisionSchema,
@@ -21,8 +23,22 @@ export {
 } from '@/features/mentor/schemas/mentor-contracts';
 
 export const managerFiltersSchema = materialsQuerySchema
-  .extend({ courseUnitId: z.uuid().optional() })
+  .extend({
+    courseUnitId: z.uuid().optional(),
+    unseen: z.enum(['true', 'false']).optional(),
+  })
   .strict();
+export const managerCourseDetailSchema = courseDetailSchema.omit({ openClasses: true });
+export const materialsSchema = baseMaterialsSchema.extend({
+  items: z.array(
+    materialSchema.extend({
+      courseId: z.uuid().optional(),
+      courseTitle: z.string().optional(),
+      courseUnitTitle: z.string().optional(),
+      courseUnitNumber: z.number().int().positive().optional(),
+    }),
+  ),
+});
 export const rejectMaterialSchema = z
   .object({
     expectedRevision: z.number().int().min(1).max(2147483647),

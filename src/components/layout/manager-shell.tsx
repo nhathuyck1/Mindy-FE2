@@ -11,6 +11,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   LayoutDashboard,
+  CalendarDays,
 } from 'lucide-react';
 import { Brand } from '@/components/ui/brand';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ import { SessionControls } from '@/features/auth/components/session-controls';
 
 const navigation = [
   { href: '/manager', title: 'Tổng quan', icon: LayoutDashboard },
+  { href: '/manager/schedule', title: 'Lịch và khai giảng', icon: CalendarDays },
   { href: '/manager/materials', title: 'Quản lý tài liệu', icon: FolderOpen },
   { href: '/manager/leave-requests', title: 'Đơn xin nghỉ', icon: CalendarOff },
   { href: '/manager/collections', title: 'Thu tiền', icon: Wallet },
@@ -100,7 +102,9 @@ export function ManagerShell(props: { children: React.ReactNode }) {
   );
   return (
     <ManagerAccess>
-      <div className={`admin-workspace ${collapsed ? 'admin-workspace-collapsed' : ''}`}>
+      <div
+        className={`admin-workspace manager-workspace ${collapsed ? 'admin-workspace-collapsed' : ''}`}
+      >
         <a
           href="#manager-main"
           className="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:bg-canvas focus:p-4"

@@ -1,0 +1,88 @@
+@reference "../globals.css";
+
+@layer components {
+  .manager-workspace {
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
+    --text-3xl: 1.875rem;
+    font-size: 1rem;
+    background: color-mix(in srgb, var(--color-mint) 3%, var(--color-canvas));
+  }
+
+  .manager-workspace .admin-topbar {
+    min-height: 76px;
+  }
+
+  .manager-workspace .admin-sidebar {
+    overflow-y: auto;
+  }
+
+  .manager-workspace .admin-main {
+    @apply py-6 sm:py-8;
+  }
+
+  .manager-workspace .admin-main h1 {
+    @apply leading-tight font-extrabold tracking-tight;
+    text-wrap: balance;
+  }
+
+  .manager-workspace .admin-page-heading {
+    @apply mb-0 items-start;
+  }
+
+  .manager-workspace .admin-table-panel {
+    @apply rounded-2xl;
+  }
+
+  .manager-workspace .admin-data-table thead {
+    @apply bg-soft/70;
+  }
+
+  .manager-workspace .admin-data-table tr > th,
+  .manager-workspace .admin-data-table tr > td {
+    border-right: 0;
+  }
+
+  .manager-workspace .admin-data-table tbody td,
+  .manager-workspace .admin-data-table tbody th {
+    @apply py-3;
+  }
+
+  .manager-workspace :is([data-slot='input'], [data-slot='native-select'], [data-slot='textarea']) {
+    @apply rounded-lg border-line bg-canvas text-sm;
+    min-height: 44px;
+    caret-color: var(--color-mint);
+  }
+
+  .manager-workspace [data-slot='button'] {
+    min-height: 44px;
+    @apply rounded-lg;
+  }
+
+  .manager-workspace :is(input, select, textarea):focus-visible {
+    outline: 2px solid var(--color-mint);
+    outline-offset: 2px;
+  }
+
+  .manager-workspace :is(input, textarea)::placeholder {
+    color: var(--color-muted);
+    opacity: 1;
+  }
+
+  .manager-workspace input[type='checkbox'] {
+    accent-color: var(--color-mint);
+  }
+
+  .manager-workspace ::selection {
+    background: var(--color-mint);
+    color: var(--color-canvas);
+  }
+
+  .manager-workspace .admin-data-table {
+    font-variant-numeric: tabular-nums;
+  }
+}

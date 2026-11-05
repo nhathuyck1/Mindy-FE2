@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Download, ExternalLink, FileText, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/api/client';
@@ -12,6 +12,7 @@ import {
   safeResourceUrl,
 } from '../schemas/learning-contracts';
 import { LearningState } from './learning-state';
+import { MaterialOpen, recordMaterialOpen } from '@/features/operations/components/material-open';
 
 async function accessFile(
   classId: string,
@@ -159,13 +160,12 @@ function ArticleBody(props: { material: MaterialDetail }) {
 
 function FileViewer(props: { material: MaterialDetail; file: MaterialFile; attachment?: boolean }) {
   const [signed, setSigned] = useState<{ url: string; expiresAt: string } | null>(null);
-  const [pending, setPending] = useState(false);
+  const [pending, setPending] = useState(!props.attachment);
   const [linkExpired, setLinkExpired] = useState(false);
   const [error, setError] = useState<unknown>();
   const media = useRef<HTMLVideoElement & HTMLAudioElement>(null);
   const position = useRef({ time: 0, playing: false });
   const controller = useRef<AbortController | null>(null);
-  useEffect(() => () => controller.current?.abort(), []);
   useEffect(() => {
     if (!signed) return;
     const timer = setTimeout(
@@ -177,6 +177,17 @@ function FileViewer(props: { material: MaterialDetail; file: MaterialFile; attac
     );
     return () => clearTimeout(timer);
   }, [signed, props.attachment, props.file.kind]);
+  const request = useCallback(
+    (signal: AbortSignal) =>
+      accessFile(
+        props.material.classId,
+        props.material.id,
+        props.file.id,
+        props.material.revision,
+        signal,
+      ),
+    [props.material.classId, props.material.id, props.material.revision, props.file.id],
+  );
   async function open() {
     if (media.current)
       position.current = { time: media.current.currentTime, playing: !media.current.paused };
@@ -186,13 +197,7 @@ function FileViewer(props: { material: MaterialDetail; file: MaterialFile; attac
     setPending(true);
     setError(undefined);
     try {
-      const result = await accessFile(
-        props.material.classId,
-        props.material.id,
-        props.file.id,
-        props.material.revision,
-        abort.signal,
-      );
+      const result = await request(abort.signal);
       if (!abort.signal.aborted) {
         setSigned(result);
         setLinkExpired(false);
@@ -206,7 +211,29 @@ function FileViewer(props: { material: MaterialDetail; file: MaterialFile; attac
       if (!abort.signal.aborted) setPending(false);
     }
   }
+  useEffect(() => {
+    if (props.attachment) return () => controller.current?.abort();
+    const abort = new AbortController();
+    controller.current = abort;
+    void request(abort.signal)
+      .then((result) => {
+        if (!abort.signal.aborted) setSigned(result);
+      })
+      .catch((reason: unknown) => {
+        if (!abort.signal.aborted) setError(reason);
+      })
+      .finally(() => {
+        if (!abort.signal.aborted) setPending(false);
+      });
+    return () => controller.current?.abort();
+  }, [request, props.attachment]);
   const restore = () => {
+    if (!props.attachment)
+      void recordMaterialOpen(
+        props.material.classId,
+        props.material.id,
+        props.material.revision,
+      ).catch(() => undefined);
     if (media.current) {
       media.current.currentTime = position.current.time;
       if (position.current.playing) void media.current.play().catch(() => undefined);
@@ -259,6 +286,7 @@ function FileViewer(props: { material: MaterialDetail; file: MaterialFile; attac
           )}
           {!props.attachment && props.file.kind === 'PDF' && (
             <iframe
+              onLoad={restore}
               title={props.material.title}
               src={signed.url}
               referrerPolicy="no-referrer"
@@ -270,6 +298,7 @@ function FileViewer(props: { material: MaterialDetail; file: MaterialFile; attac
           {!props.attachment && props.file.kind === 'IMAGE' && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
+              onLoad={restore}
               src={signed.url}
               alt={props.material.title}
               referrerPolicy="no-referrer"
@@ -279,6 +308,14 @@ function FileViewer(props: { material: MaterialDetail; file: MaterialFile; attac
           {!linkExpired && (
             <a
               href={signed.url}
+              onClick={() => {
+                if (!props.attachment)
+                  void recordMaterialOpen(
+                    props.material.classId,
+                    props.material.id,
+                    props.material.revision,
+                  ).catch(() => undefined);
+              }}
               target="_blank"
               rel="noopener noreferrer"
               referrerPolicy="no-referrer"
@@ -303,19 +340,14 @@ export function MaterialViewer(props: { classId: string; materialId: string; uni
   if (item.classId !== props.classId || item.classUnitId !== props.unitId)
     return <LearningState>Nội dung không thuộc chương này.</LearningState>;
   return (
-    <article>
-      <p className="eyebrow font-bold text-mint">
-        {item.contentType === 'ARTICLE'
-          ? 'Bài đọc'
-          : item.contentType === 'VIDEO'
-            ? 'Video bài học'
-            : 'Tài liệu'}
-      </p>
-      <h2 className="mt-3 text-2xl font-bold sm:text-3xl">{item.title}</h2>
-      {item.description && (
-        <p className="mt-4 whitespace-pre-wrap text-muted">{item.description}</p>
+    <article aria-label={item.title} className="min-w-0 space-y-4">
+      {item.contentType === 'ARTICLE' && (
+        <MaterialOpen classId={props.classId} materialId={item.id} revision={item.revision} />
       )}
-      <div className="mt-7">
+      {item.description && (
+        <p className="text-sm whitespace-pre-wrap text-muted">{item.description}</p>
+      )}
+      <div>
         {item.contentType === 'ARTICLE' ? (
           <ArticleBody key={item.id + ':' + item.revision} material={item} />
         ) : item.file ? (
@@ -325,8 +357,8 @@ export function MaterialViewer(props: { classId: string; materialId: string; uni
         )}
       </div>
       {!!item.attachments.length && (
-        <section className="mt-8 space-y-3" aria-label="Tệp đính kèm">
-          <h3 className="text-lg font-bold">Tệp đính kèm</h3>
+        <section className="space-y-3 border-t border-line pt-4" aria-label="Tệp đính kèm">
+          <h5 className="text-sm font-bold">Tệp đính kèm</h5>
           {item.attachments.map((file) => (
             <FileViewer
               key={item.id + ':' + item.revision + ':' + file.id}

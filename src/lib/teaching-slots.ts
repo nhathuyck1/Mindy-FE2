@@ -8,7 +8,12 @@ export const teachingSlots = [
   { number: 7, start: 1200, end: 1290 },
 ] as const;
 
-export function isTeachingSlot(startsAt: string, endsAt: string, timeZone: string) {
+export function isTeachingSlot(
+  startsAt: string,
+  endsAt: string,
+  timeZone: string,
+  catalogue: readonly { start: number; end: number }[] = teachingSlots,
+) {
   const clock = new Intl.DateTimeFormat('en-GB', {
     timeZone,
     hour: '2-digit',
@@ -19,7 +24,7 @@ export function isTeachingSlot(startsAt: string, endsAt: string, timeZone: strin
     const [hour, minute] = clock.format(new Date(value)).split(':').map(Number);
     return hour * 60 + minute;
   };
-  return teachingSlots.some(
+  return catalogue.some(
     (slot) =>
       minutes(startsAt) === slot.start &&
       minutes(endsAt) === slot.end &&

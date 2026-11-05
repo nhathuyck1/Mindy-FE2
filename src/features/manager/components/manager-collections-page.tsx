@@ -60,9 +60,6 @@ export function ManagerCollectionsPage() {
     <div className="space-y-7">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="mb-2 text-xs font-semibold tracking-widest text-mint uppercase">
-            Mindy / Không gian Manager
-          </p>
           <h1 className="text-3xl font-bold tracking-tight">Thu tiền</h1>
           <p className="mt-2 text-sm text-muted">
             Theo dõi đơn tiền mặt và xác nhận khoản đã thu trên hệ thống.

@@ -70,6 +70,7 @@ async function sendRequest<T>(
       error.success ? (error.data.code ?? 'HTTP_ERROR') : 'HTTP_ERROR',
       Array.isArray(message) ? message.join(' ') : (message ?? 'Không thể kết nối hệ thống.'),
       error.success ? error.data.details?.[0]?.fields : undefined,
+      error.success ? error.data.details?.[0]?.conflicts : undefined,
     );
   }
   return props.schema.parse(body);

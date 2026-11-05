@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { PNG } from 'pngjs';
 import { testUser } from './api-fixtures';
 import type { ChatMessage } from '@/features/chat/schemas/chat-contracts';
 const id = '22222222-2222-4222-8222-222222222222',
@@ -44,11 +45,31 @@ const pageOf = (data: unknown[]) => ({
 });
 async function setup(
   page: Page,
-  options: { readonly?: boolean; role?: 'MENTOR' | 'STUDENT'; attachments?: boolean } = {},
+  options: {
+    readonly?: boolean;
+    role?: 'MENTOR' | 'STUDENT';
+    attachments?: boolean;
+    image?: boolean;
+  } = {},
 ) {
   const c = conversation(options.readonly);
   c.capabilities.canAttach = !!options.attachments;
   let messages = [message()];
+  if (options.image)
+    messages = [
+      {
+        ...message(),
+        type: 'IMAGE',
+        body: null,
+        file: {
+          id: peerId,
+          originalFilename: 'anh.png',
+          mimeType: 'image/png',
+          sizeBytes: 68,
+          kind: 'IMAGE',
+        },
+      },
+    ];
   let denied = false,
     sendCount = 0;
   const clientIds: string[] = [];
@@ -120,10 +141,10 @@ async function setup(
           file: input.fileObjectId
             ? {
                 id: input.fileObjectId,
-                originalFilename: 'bai-hoc.pdf',
-                mimeType: 'application/pdf',
+                originalFilename: input.type === 'IMAGE' ? 'anh.png' : 'bai-hoc.pdf',
+                mimeType: input.type === 'IMAGE' ? 'image/png' : 'application/pdf',
                 sizeBytes: 20,
-                kind: 'PDF',
+                kind: input.type === 'IMAGE' ? 'IMAGE' : 'PDF',
               }
             : null,
         };
@@ -372,4 +393,165 @@ test('waits for attachment readiness before sending and omits cookies on storage
   await page.getByRole('button', { name: 'Gửi', exact: true }).click();
   await expect(page.locator('article').filter({ hasText: 'bai-hoc.pdf' })).toBeVisible();
   expect(storageCookie).toBeUndefined();
+});
+
+test('inserts a composed emoji at the caret, preserves length limit, and sends/edits Unicode', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.goto(`/user/messages?conversation=${id}`);
+  const input = page.getByRole('textbox', { name: 'Tin nhắn', exact: true });
+  await input.fill('Xin !');
+  await input.evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(4, 4));
+  await page.getByLabel('Chọn emoji', { exact: true }).click();
+  await page.getByRole('button', { name: 'Chèn 👨‍👩‍👧‍👦', exact: true }).click();
+  await expect(input).toHaveValue('Xin 👨‍👩‍👧‍👦!');
+  await page.getByRole('button', { name: 'Gửi', exact: true }).click();
+  await expect(page.locator('article').filter({ hasText: 'Xin 👨‍👩‍👧‍👦!' })).toBeVisible();
+  await page.getByRole('button', { name: 'Tùy chọn tin nhắn', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Sửa', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Nội dung chỉnh sửa' }).fill('Cảm ơn 👩🏽‍💻');
+  await page.getByRole('button', { name: 'Lưu thay đổi' }).click();
+  await expect(page.locator('article').filter({ hasText: 'Cảm ơn 👩🏽‍💻' })).toBeVisible();
+  await input.fill('x'.repeat(3995));
+  await page.getByRole('button', { name: 'Chèn 👨‍👩‍👧‍👦', exact: true }).click();
+  await expect(input).toHaveValue('x'.repeat(3995));
+});
+
+const sampleImage = new PNG({ width: 128, height: 96 });
+for (let p = 0; p < sampleImage.data.length; p += 4) {
+  sampleImage.data.set([35, 160, 150, 255], p);
+}
+const png = PNG.sync.write(sampleImage);
+test('shows an image in the timeline, renews an expired URL, and restores focus after enlarge', async ({
+  page,
+}, info) => {
+  await setup(page, { image: true });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  let calls = 0;
+  await page.route('https://storage.example.test/**', (r) =>
+    r.fulfill({ contentType: 'image/png', body: png }),
+  );
+  await page.route('**/file-access?disposition=inline', (r) => {
+    calls++;
+    return r.fulfill({
+      json: {
+        url: 'https://storage.example.test/image-' + calls,
+        expiresAt: new Date(Date.now() + (calls === 1 ? -1000 : 60000)).toISOString(),
+      },
+    });
+  });
+  await page.goto(`/user/messages?conversation=${id}`);
+  const button = page.getByRole('button', { name: 'Mở lớn ảnh anh.png', exact: true });
+  await expect(button).toBeVisible();
+  await expect(button.locator('img')).toHaveJSProperty('naturalWidth', 128);
+  await button.press('Enter');
+  await expect.poll(() => calls).toBe(2);
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByRole('dialog').locator('img')).toHaveJSProperty('naturalWidth', 128);
+  await expect(page.getByRole('dialog')).toHaveCSS('opacity', '1');
+  expect(calls).toBe(2);
+  await page.screenshot({ path: info.outputPath('chat-image.png'), fullPage: true });
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(button).toBeFocused();
+});
+
+test('previews a selected image and leaves send disabled after upload fails', async ({ page }) => {
+  await setup(page, { attachments: true });
+  await page.route('**/attachments/upload-intents', (r) =>
+    r.fulfill({ status: 503, json: { message: 'Upload unavailable' } }),
+  );
+  await page.goto(`/user/messages?conversation=${id}`);
+  await page
+    .getByLabel('Chọn ảnh hoặc PDF')
+    .setInputFiles({ name: 'anh.png', mimeType: 'image/png', buffer: png });
+  await expect(page.getByAltText('Ảnh đã chọn: anh.png')).toHaveJSProperty('naturalWidth', 128);
+  await expect(page.getByRole('button', { name: 'Gửi', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Đính kèm ảnh hoặc PDF' })).toBeEnabled();
+});
+
+test('retries a failed image upload, previews and sends the image without text', async ({
+  page,
+}) => {
+  await setup(page, { attachments: true });
+  const fileId = '66666666-6666-4666-8666-666666666666';
+  let uploads = 0;
+  await page.route('https://storage.example.test/**', (route) => {
+    if (route.request().method() === 'PUT') {
+      uploads++;
+      return uploads === 1 ? route.abort('failed') : route.fulfill({ status: 200 });
+    }
+    return route.fulfill({ contentType: 'image/png', body: png });
+  });
+  await page.route('**/attachments/**', (route) =>
+    route.fulfill({
+      json: route.request().url().endsWith('/upload-intents')
+        ? {
+            fileId,
+            uploadUrl: 'https://storage.example.test/upload',
+            requiredHeaders: { 'content-type': 'image/png' },
+            uploadUrlExpiresAt: new Date(Date.now() + 60000).toISOString(),
+            intentExpiresAt: new Date(Date.now() + 60000).toISOString(),
+            replayed: false,
+          }
+        : {
+            id: fileId,
+            status: 'READY',
+            originalFilename: 'anh.png',
+            errorCode: null,
+            file: {
+              id: fileId,
+              originalFilename: 'anh.png',
+              mimeType: 'image/png',
+              sizeBytes: png.length,
+              kind: 'IMAGE',
+            },
+          },
+    }),
+  );
+  await page.route('**/file-access?disposition=inline', (route) =>
+    route.fulfill({
+      json: {
+        url: 'https://storage.example.test/image',
+        expiresAt: new Date(Date.now() + 60000).toISOString(),
+      },
+    }),
+  );
+  await page.goto(`/user/messages?conversation=${id}`);
+  const input = page.getByRole('textbox', { name: 'Tin nhắn', exact: true });
+  const send = page.getByRole('button', { name: 'Gửi', exact: true });
+  await page
+    .getByLabel('Chọn ảnh hoặc PDF')
+    .setInputFiles({ name: 'anh.png', mimeType: 'image/png', buffer: png });
+  await expect(page.getByAltText('Ảnh đã chọn: anh.png')).toHaveJSProperty('naturalWidth', 128);
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Chưa tải được tệp lên kho lưu trữ' }),
+  ).toBeVisible();
+  await expect(send).toBeDisabled();
+  await input.fill('Chú thích');
+  await input.press('Enter');
+  await expect(input).toHaveValue('Chú thích');
+  await input.clear();
+  await page.getByRole('button', { name: 'Thử tải lại tệp' }).click();
+  await expect(send).toBeEnabled();
+  await expect(input).toHaveValue('');
+  const sent = page.waitForRequest(
+    (request) => request.method() === 'POST' && request.url().endsWith('/messages'),
+  );
+  await input.press('Enter');
+  expect((await sent).postDataJSON()).toEqual({
+    clientMessageId: expect.any(String),
+    type: 'IMAGE',
+    fileObjectId: fileId,
+  });
+  await expect(page.getByAltText('Ảnh đã chọn: anh.png')).toHaveCount(0);
+  const image = page.getByRole('button', { name: 'Mở lớn ảnh anh.png', exact: true });
+  await expect(image.locator('img')).toHaveJSProperty('naturalWidth', 128);
+  await image.click();
+  await expect(page.getByRole('dialog').getByAltText('anh.png')).toHaveJSProperty(
+    'naturalWidth',
+    128,
+  );
+  expect(uploads).toBe(2);
 });

@@ -12,6 +12,7 @@ export async function mockMentorWorkspace(
     noteConflict?: boolean;
     noteTimeout?: boolean;
     leaveConflict?: boolean;
+    multipleLeaveSessions?: boolean;
     classStatus?: 'COMPLETED' | 'CANCELLED';
   } = {},
 ) {
@@ -45,6 +46,19 @@ export async function mockMentorWorkspace(
     timeZone: 'Asia/Ho_Chi_Minh',
   };
   const source = { ...session, sessionId: mentorIds.nextUnit, title: 'Buổi xin nghỉ', version: 4 };
+  const leaveSources = options.multipleLeaveSessions
+    ? [
+        source,
+        {
+          ...source,
+          sessionId: mentorIds.file,
+          title: 'Buổi chiều cùng ngày',
+          version: 2,
+          startsAt: '2026-10-26T08:00:00.000Z',
+          endsAt: '2026-10-26T10:00:00.000Z',
+        },
+      ]
+    : [source];
   const snapshot = () => ({
     ...session,
     permissions: {
@@ -147,6 +161,16 @@ export async function mockMentorWorkspace(
       key: request.headers()['idempotency-key'],
     });
     const ok = (json: unknown, status = 200) => route.fulfill({ status, json });
+    if (path === 'teaching-slots')
+      return ok([
+        { id: 1, startsAt: '07:30', endsAt: '09:00' },
+        { id: 2, startsAt: '09:30', endsAt: '11:00' },
+        { id: 3, startsAt: '12:00', endsAt: '14:00' },
+        { id: 4, startsAt: '13:00', endsAt: '15:30' },
+        { id: 5, startsAt: '16:00', endsAt: '17:30' },
+        { id: 6, startsAt: '18:00', endsAt: '19:30' },
+        { id: 7, startsAt: '20:00', endsAt: '21:30' },
+      ]);
     if (path === prefix)
       return ok({
         id: mentorIds.class,
@@ -412,20 +436,33 @@ export async function mockMentorWorkspace(
     }
     if (path === 'mentor/leave-requests/preview')
       return ok({
-        affectedSessions: [source],
-        sourceVersions: [{ sessionId: source.sessionId, version: source.version }],
+        affectedSessions: leaveSources,
+        sourceVersions: leaveSources.map((item) => ({
+          sessionId: item.sessionId,
+          version: item.version,
+        })),
         noticeEligible: true,
         noticeDeadline: '2026-10-24T17:00:00.000Z',
         asOf: workspaceDate,
         timeZone: session.timeZone,
       });
-    if (path === 'mentor/leave-requests/makeup-slots')
+    if (path === 'mentor/leave-requests/makeup-slots') {
+      const date = String(body?.targetDate);
+      const hour = body?.targetPeriod === 'AFTERNOON' ? '05' : '03';
       return ok({
-        slots: [{ startsAt: '2026-10-28T05:00:00.000Z', endsAt: '2026-10-28T07:00:00.000Z' }],
-        sessionVersion: source.version,
+        slots: [
+          {
+            startsAt: `${date}T${hour}:00:00.000Z`,
+            endsAt: `${date}T${String(Number(hour) + 2).padStart(2, '0')}:00:00.000Z`,
+          },
+        ],
+        sessionVersion:
+          leaveSources.find((item) => item.sessionId === body?.sourceSessionId)?.version ??
+          source.version,
         asOf: workspaceDate,
         timeZone: session.timeZone,
       });
+    }
     if (path === 'mentor/leave-requests') {
       if (method === 'GET')
         return ok({
