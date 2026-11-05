@@ -121,9 +121,11 @@ test('leave creation focuses on three steps and keeps the list separate', async 
   await expect(page.getByRole('heading', { name: 'Bạn chưa có đơn xin nghỉ' })).toHaveCount(0);
   await page.getByLabel('Nghỉ từ ngày').fill('2026-10-26');
   await page.getByLabel('Nghỉ đến ngày').fill('2026-10-26');
-  await page.getByRole('button', { name: 'Xem buổi bị ảnh hưởng' }).click();
+  await page.getByRole('button', { name: 'Kiểm tra lịch dạy' }).click();
   await expect(steps.locator('[aria-current="step"]')).toContainText('Lịch dạy bù');
-  await page.getByLabel('Dạy bù cho ngày 2026-10-26').fill('2026-10-28');
+  await page.getByLabel('Ngày dạy bù', { exact: true }).fill('2026-10-28');
+  await page.getByRole('button', { name: 'Tìm giờ phù hợp' }).click();
+  await page.getByRole('radio').check();
   await expect(steps.locator('[aria-current="step"]')).toContainText('Gửi đơn');
   await page.getByLabel('Lý do xin nghỉ').fill('Xin nghỉ để giải quyết việc gia đình.');
   await page.setViewportSize({ width: info.project.name === 'mobile' ? 320 : 1440, height: 1000 });

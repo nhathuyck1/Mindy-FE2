@@ -1,5 +1,20 @@
 # Kiến trúc Mindy FE2
 
+## Dashboard tài liệu theo khóa — 05/11/2026
+
+- `ManagerMaterialsDashboard` dùng `useManagerMaterialCounts` (`useQueries`) đọc detail Manager của mỗi khóa rồi cộng total từ danh sách tài liệu từng học phần, pageSize=1; không tải toàn bộ tài liệu hoặc gửi query courseId chưa được upstream hỗ trợ. Học phần được đọc tuần tự trong từng khóa, dùng AbortSignal chung. Danh sách khóa dùng `useManagerCourseOptions` đủ trang. Query key `manager/userId/material-count-by-course/courseId` dùng cơ chế invalidate Manager hiện hữu. Chart/tổng chỉ dựng khi đủ count, lỗi một học phần làm count cả khóa chưa xác định.
+
+## Lịch bù từng buổi Mentor — 05/11/2026
+
+- `leave-makeup` kiểm overlap bằng khoảng timestamp nửa mở, dùng chung giữa UI và schema/proxy. Parent sở hữu mapping đã chọn; từng slot component nhận selection và các mapping khác để khóa động, không giữ bản sao selection nội bộ. Functional update của parent chặn cả hai sự kiện chọn gần nhau tạo lịch chồng lấn.
+
+- `LeaveCreate` giữ mapping theo sessionId cho mọi period; không còn gom FULL_DAY theo source date. `SessionMakeupSlot` sở hữu việc tìm/chọn slot của riêng buổi; đổi điều kiện chỉ xóa mapping tương ứng. Schema/proxy đồng bộ khả năng sessionMappings cho FULL_DAY và targetPeriod FULL_DAY đã có ở BE.
+- `leave-display` cung cấp ngày tối thiểu kết hợp mốc lịch nghỉ với max(client time, preview.asOf) theo preview.timeZone: FULL_DAY sau toDate, nghỉ theo buổi từ ngày buổi gốc. Đồng hồ form cập nhật mỗi phút/focus và kiểm lại tại submit. Không thay server state/session recovery/idempotency hoặc quyền/nghiệp vụ backend.
+
+## Hàng chờ tài liệu Manager — 05/11/2026
+
+- `ManagerPendingMaterials` hiển thị tên khóa/học phần từ response list, lọc course/unit/type qua API trước phân trang. `useManagerCourseOptions` đọc đủ trang catalog Manager gồm khóa chưa kích hoạt; detail Manager cung cấp units. Query theo user, không tạo Redux state hoặc tải toàn bộ hàng chờ để lọc ở client. Proxy chỉ bổ sung hai GET catalog Manager và `courseId` trong filter tài liệu.
+
 ## Dashboard theo vai trò — 03/11/2026
 
 - `features/dashboard` sở hữu schema Zod, query và UI thống kê dùng chung. Server state có key `dashboard/userId/audience/days`; `apiRequest` dùng recovery phiên tập trung của dev, không tạo cơ chế refresh riêng.
@@ -28,6 +43,7 @@
 
 ## Assignment QUIZ / ZIP — 02/11/2026
 
+- Cập nhật 05/11: `lib/quiz-bulk-import.ts` chuyển văn bản ABCD đánh số thành `QuestionInput`, kiểm schema và trả lỗi theo dòng, không nhập một phần batch có lỗi. `QuizBulkImportDialog` đọc tệp .txt UTF-8 tối đa 8 MiB/dán văn bản, kiểm tối đa 200 câu sau khi thêm; dùng state của editor và PUT questions hiện hữu khi người dùng lưu. Câu cũ giữ ID/revision khi thêm cuối, thay toàn bộ là ý định riêng trong dialog; không thêm endpoint hoặc storage.
 - `features/assignments` chứa schema tách Mentor/Student, query theo user/role/path/filter, editor, bài làm, upload, chấm điểm và báo cáo. Sáu route mới chỉ kiểm UUIDv4, await params và compose feature; kế thừa guard ACTIVE của shell. Tab Bài tập nằm trong lớp Mentor; buổi học tải panel khi mở. Student đi từ khóa học hoặc không gian học FULL, không mount assignment trong CASH_PREVIEW.
 - `assignment-rules.server.ts` mở đúng 35 method/path. Proxy kiểm cookie, Origin, query strict/duplicate và receipt UUIDv4; chỉ bulk questions có 8 MiB/45s upstream/60s browser. Body đọc stream theo byte, payload assignment khác 64 KiB; giữ lỗi `{path,code}` qua proxy/client và loại rejected values. Student response loại keys, storage metadata và grade version riêng tư.
 - `QuizSession` serialize autosave/full replacement, debounce 800 ms, gộp thay đổi khi đang gửi; submit khóa nhập và đợi save. Lỗi/409 giữ lựa chọn, chặn write tiếp và yêu cầu xác nhận dùng bản máy chủ. Timer dựa serverNow/expiresAt + monotonic elapsed, đồng bộ khi focus; hết hạn dừng write, result polling tối đa 60s. Không dùng localStorage hoặc tính điểm phía FE.

@@ -126,6 +126,10 @@ describe('Manager material proxy', () => {
     );
     expect((await proxyApi(request(`${path}?reviewStatus=PAID`), path)).status).toBe(422);
     expect((await proxyApi(request(`${path}?page=1&page=2`), path)).status).toBe(422);
+    expect((await proxyApi(request(`${path}?courseId=invalid`), path)).status).toBe(422);
+    expect((await proxyApi(request(`${path}?courseId=${id}&courseId=${id}`), path)).status).toBe(
+      422,
+    );
     const action = `${path}/${id}/approve`;
     expect(
       (
@@ -153,14 +157,71 @@ describe('Manager material proxy', () => {
     fetchMock.mockResolvedValueOnce(Response.json({ items: [], page: 2, pageSize: 20, total: 0 }));
     const path = 'manager/materials';
     const response = await proxyApi(
-      request(`${path}?page=2&reviewStatus=PENDING_REVIEW&courseUnitId=${id}`),
+      request(`${path}?page=2&reviewStatus=PENDING_REVIEW&courseId=${id}&courseUnitId=${id}`),
       path,
     );
     expect(response.status).toBe(200);
     const [url, init] = fetchMock.mock.calls[0];
     expect(String(url)).toContain(`courseUnitId=${id}`);
+    expect(String(url)).toContain(`courseId=${id}`);
     expect(new Headers(init?.headers).get('Cookie')).toBe('access_token=opaque');
     expect(response.headers.get('cache-control')).toContain('no-store');
+  });
+  it('preserves course and unit labels in material list responses', async () => {
+    const item = {
+      ...approvedMaterial,
+      courseId: id,
+      courseTitle: 'Lập trình Web',
+      courseUnitTitle: 'JavaScript căn bản',
+      courseUnitNumber: 2,
+    };
+    fetchMock.mockResolvedValueOnce(
+      Response.json({ items: [item], page: 1, pageSize: 20, total: 1 }),
+    );
+    const response = await proxyApi(request('manager/materials'), 'manager/materials');
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      items: [
+        {
+          courseId: id,
+          courseTitle: item.courseTitle,
+          courseUnitTitle: item.courseUnitTitle,
+          courseUnitNumber: 2,
+        },
+      ],
+    });
+  });
+  it('allows read-only Manager course options, validates IDs and keeps unit metadata', async () => {
+    const course = {
+      id,
+      code: 'WEB-01',
+      title: 'Khóa học chưa kích hoạt',
+      description: null,
+      imgUrl: null,
+      priceAmount: 100000,
+      category: { id, name: 'Web', slug: 'web' },
+      units: [{ id, unitNumber: 1, title: 'Căn bản', description: null, requiredScorePercent: 80 }],
+    };
+    fetchMock.mockResolvedValueOnce(
+      Response.json({ items: [course], page: 1, pageSize: 100, total: 1 }),
+    );
+    const list = await proxyApi(request('manager/courses?page=1&pageSize=100'), 'manager/courses');
+    expect(list.status).toBe(200);
+    expect(await list.json()).toMatchObject({ items: [{ id, title: course.title }] });
+    fetchMock.mockResolvedValueOnce(Response.json(course));
+    const detail = await proxyApi(request(`manager/courses/${id}`), `manager/courses/${id}`);
+    expect(detail.status).toBe(200);
+    expect(await detail.json()).toMatchObject({ units: course.units });
+    expect((await proxyApi(request('manager/courses/bad'), 'manager/courses/bad')).status).toBe(
+      404,
+    );
+    expect(
+      (await proxyApi(request('manager/courses?isActive=true'), 'manager/courses')).status,
+    ).toBe(422);
+    expect((await proxyApi(request('manager/courses', 'POST', {}), 'manager/courses')).status).toBe(
+      404,
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
   it('keeps the reviewed revision on conflicts and does not retry', async () => {
     fetchMock.mockResolvedValueOnce(

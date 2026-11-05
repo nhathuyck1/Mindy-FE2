@@ -35,6 +35,33 @@ function request(
 }
 describe('Mentor adapter boundaries', () => {
   beforeEach(() => vi.stubGlobal('fetch', fetchMock));
+  it('rejects overlapping makeup proposals before contacting upstream', async () => {
+    const path = 'mentor/leave-requests';
+    const response = await proxyApi(
+      request(
+        path,
+        'POST',
+        {
+          fromDate: '2026-11-11',
+          toDate: '2026-11-14',
+          period: 'FULL_DAY',
+          reason: 'Việc gia đình',
+          sourceVersions: [id, key].map((sessionId) => ({ sessionId, version: 1 })),
+          sessionMappings: [id, key].map((sourceSessionId) => ({
+            sourceSessionId,
+            targetDate: '2026-11-15',
+            targetPeriod: 'EVENING',
+            startsAt: '2026-11-15T19:15:00+07:00',
+            endsAt: '2026-11-15T21:15:00+07:00',
+          })),
+        },
+        { 'Idempotency-Key': key },
+      ),
+      path,
+    );
+    expect(response.status).toBe(422);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
   afterEach(() => {
     vi.unstubAllGlobals();
     fetchMock.mockReset();

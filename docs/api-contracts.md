@@ -1,5 +1,24 @@
 # API catalog, lớp học và tài khoản
 
+## Count tài liệu theo khóa — 05/11/2026
+
+- Dashboard `/manager/materials` đọc `GET /manager/courses/:id` lấy units, sau đó cộng `total` của `GET /manager/course-units/:unitId/materials?page=1&pageSize=1`. Không gửi courseId/reviewStatus/contentType; không cần nhãn courseId trong response. Khóa không có học phần có count 0; chỉ trả count khi mọi học phần tải thành công, lỗi không tạo tổng một phần. Không thêm endpoint, cookie hoặc proxy allowlist.
+- Ảnh Network thực tế cho thấy upstream từ chối query courseId với `property courseId should not exist`. Đã đối chiếu Swagger `https://api.quanh123.id.vn/docs-json` ngày 05/11: API tài liệu theo học phần và detail khóa Manager đã có. Dashboard dùng hai API này để tương thích với bản đang chạy; không yêu cầu deploy backend mới.
+
+## Lịch bù riêng cho từng buổi — 05/11/2026
+
+- Các sessionMappings trong cùng đơn không được trùng hoặc chồng lấn timestamp; UI, kiểm đủ mapping và schema proxy dùng cùng helper `leave-makeup`. Cho phép hai buổi nối tiếp đúng ranh giới. Proxy trả 422 trước upstream với payload chồng lấn; backend vẫn giữ kiểm xung đột lịch thật.
+
+- Đối chiếu Swagger live `https://api.quanh123.id.vn/docs-json` ngày 05/11: `CreateLeaveInput.sessionMappings` nhận một mapping cho mỗi buổi với mọi period; `LeaveSlotsInput.targetPeriod` có cả FULL_DAY. Source BE `LeavePlanningService.mappings` đã hỗ trợ, không cần sửa BE/endpoint.
+- FE tạo đơn luôn gửi `sessionMappings`, gồm cả nghỉ FULL_DAY; cho phép chọn ngày/giờ khác nhau giữa các buổi cùng ngày, giữ sourceVersions từ preview và thời lượng slot BE. Schema vẫn chấp nhận dayMappings FULL_DAY cũ, từ chối trộn hai dạng. Preview/slots không giữ chỗ; backend kiểm xung đột khi gửi/duyệt.
+- Input ngày bù dùng min theo lịch nghỉ: FULL_DAY phải sau ngày kết thúc khoảng nghỉ (11–14/11 → sớm nhất 15/11); nghỉ theo buổi không được trước ngày của buổi gốc, vẫn cho chọn khung giờ khác trong cùng ngày nếu BE cho phép. Mốc này không trước hôm nay theo preview.timeZone, lấy đồng hồ mới hơn giữa client và preview.asOf. Cập nhật khi focus/mỗi phút, kiểm lại cả mốc ngày và thời gian khi gửi. Lịch/giờ hiển thị theo timezone backend.
+
+## Hàng chờ duyệt Manager — 05/11/2026
+
+- `GET /manager/materials` nhận thêm `courseId` UUIDv4; kết hợp AND với `courseUnitId`, `contentType`, `reviewStatus` trước count/phân trang. List bổ sung `courseId`, `courseTitle`, `courseUnitTitle`, `courseUnitNumber`. FE giữ optional để đọc được response cũ, hiển thị thông tin chưa có/ID thay vì bịa tên. Cần backend mới để có nhãn và lọc khóa học; chưa xác nhận deploy upstream.
+- Bộ lọc đọc đủ trang `GET /manager/courses?page=...&pageSize=100`, gồm khóa chưa kích hoạt, và `GET /manager/courses/:id` lấy units. Hai GET đã có trong BE; proxy chỉ mở pagination cho list và UUID/detail khớp ID, access cookie/no-store; không mở mutation catalog. TanStack Query key thuộc Manager/user; đổi khóa xóa học phần, đổi filter về trang 1. Danh sách tài liệu vẫn phân trang 20 dòng trên server.
+- Đối chiếu controller/DTO/service và `../Mindy-BE/docs/api_flow/PHASE_3_3_flow-api-breakdown.md`; backend local chưa chạy nên chưa kiểm Swagger live trong lượt này.
+
 ## Chat Student / Mentor — 02/11/2026
 
 - Đối chiếu Swagger local `http://localhost:3000/docs-json`, `../Mindy-BE/docs/api_flow/PHASE_6_FLOW.md`, controller/DTO/service. Chưa xác nhận deploy upstream.
@@ -74,7 +93,7 @@
 - Tiến độ: GET :classId/progress (optional unitId) và :classId/students/:studentId/progress. Chỉ đọc tracking lưu sẵn; UNTRACKED/null khác STORED zero, INVALID_PERCENT hiển thị cần kiểm tra. Không tạo completion write, phần trăm toàn khóa hay assignment counts.
 - Buổi: trước start dùng GET class-sessions/:sessionId/attendance-candidates, provisional=true. Sau start dùng snapshot attendance. PUT attendance/bulk gửi expectedVersion/checked, áp dụng toàn roster regular+guest qua mọi trang; false=ABSENT. PUT attendance cho một guest gửi records:[] và guestRecords:[{makeupPlacementId,status}], không dùng enrollmentId thay placement.
 - PATCH mentor/class-sessions/:sessionId/meeting-url gửi expectedVersion/meetingUrl; null xóa override. GET/PUT class-sessions/:sessionId/teaching-notes gửi expectedVersion/content/nextSteps; note version độc lập session. Draft giữ trong form, conflict tải bản máy chủ để người dùng quyết định; không autosave/overwrite. Deadline được kiểm lại khi submit.
-- Xin nghỉ: POST mentor/leave-requests/preview, POST makeup-slots, POST/GET mentor/leave-requests, GET :requestId và POST :requestId/withdraw. FULL_DAY dùng dayMappings; nghỉ theo buổi dùng sessionMappings từ slot. sourceVersions lấy preview; ngày và period theo timeZone của BE. Preview/slots không giữ chỗ. Tạo/rút không thay lịch; duyệt thuộc staff.
+- Xin nghỉ: POST mentor/leave-requests/preview, POST makeup-slots, POST/GET mentor/leave-requests, GET :requestId và POST :requestId/withdraw. Mọi period dùng sessionMappings từ slot để chọn lịch riêng từng buổi (cập nhật 05/11); dayMappings FULL_DAY cũ vẫn được schema chấp nhận. sourceVersions lấy preview; ngày và period theo timeZone của BE. Preview/slots không giữ chỗ. Tạo/rút không thay lịch; duyệt thuộc staff.
 - Cookie access_token qua same-origin proxy, JSON DTO trực tiếp, Zod request/response strict, no-store. Notes/bulk/create/withdraw/start/mark/sync/finalize dùng UUIDv4 Idempotency-Key; lỗi mạng giữ cùng key/body cho retry của cùng ý định. 409 business không tự retry. Notes body được nhận tối đa 64 KiB UTF-8 như BE. GET không ghi dữ liệu.
 - Đã bỏ proxy và UI PATCH mentor/classes/:classId/units/:unitId/release. Không dùng LOCKED/unlockAt để chặn nội dung mentor; material availableAt/publication và enrollment student vẫn do BE kiểm. Các route staff/admin và proposal Phase 5 nằm ngoài integration Mentor này.
 

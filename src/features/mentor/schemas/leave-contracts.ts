@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { hasOverlappingMakeupSlots } from '../lib/leave-makeup';
 import { mentorPaginationSchema, pageFields, teachingSessionSchema } from './mentor-contracts';
 
 const timestamp = z.iso.datetime({ offset: true });
@@ -35,7 +36,7 @@ export const leaveSlotsInputSchema = z
   .object({
     sourceSessionId: z.uuid(),
     targetDate: date,
-    targetPeriod: z.enum(['MORNING', 'AFTERNOON', 'EVENING']),
+    targetPeriod: leavePeriodSchema,
   })
   .strict();
 export const leaveSlotsSchema = z.object({
@@ -48,7 +49,7 @@ const sessionMapping = z
   .object({
     sourceSessionId: z.uuid(),
     targetDate: date,
-    targetPeriod: z.enum(['MORNING', 'AFTERNOON', 'EVENING']),
+    targetPeriod: leavePeriodSchema,
     startsAt: timestamp,
     endsAt: timestamp,
   })
@@ -71,10 +72,14 @@ export const createLeaveInputSchema = z
     (v) => v.toDate >= v.fromDate && Date.parse(v.toDate) - Date.parse(v.fromDate) < 93 * 86400000,
   )
   .refine((v) =>
-    v.period === 'FULL_DAY'
-      ? Boolean(v.dayMappings?.length) && v.sessionMappings === undefined
-      : Boolean(v.sessionMappings?.length) && v.dayMappings === undefined,
-  );
+    v.sessionMappings !== undefined
+      ? v.sessionMappings.length > 0 && v.dayMappings === undefined
+      : v.period === 'FULL_DAY' && Boolean(v.dayMappings?.length),
+  )
+  .refine((v) => !hasOverlappingMakeupSlots(v.sessionMappings ?? []), {
+    message: 'Các lịch dạy bù không được trùng hoặc chồng lấn giờ.',
+    path: ['sessionMappings'],
+  });
 export const withdrawLeaveInputSchema = z
   .object({ expectedVersion: version, reason: z.string().trim().min(1).max(1000) })
   .strict();

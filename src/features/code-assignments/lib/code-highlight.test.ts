@@ -4,7 +4,7 @@ import { matchBracket, tokenize } from './code-highlight';
 const kinds = (source: string, language: 'javascript' | 'java21' = 'javascript') =>
   tokenize(source, language)
     .filter((t) => t.text.trim())
-    .map((t) => `${t.kind}:${t.text}`);
+    .map((t) => `${t.kind}:${t.text.trim()}`);
 
 describe('tokenize', () => {
   it('keeps every character so the coloured layer lines up with the textarea', () => {

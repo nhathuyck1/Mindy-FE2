@@ -1,5 +1,28 @@
 # Quy tắc giao diện Mindy
 
+## Thống kê tài liệu theo khóa — 05/11/2026
+
+- Trang danh sách khóa của quản lý tài liệu có ba thẻ count và donut Recharts theo khóa, kèm chú giải tên đầy đủ/số lượng/% và nút làm mới. Hàng khóa có count riêng: badge trên desktop, chữ dưới mã khóa ở mobile. Dùng token Mindy, không animation, 320px xếp dọc; lỗi không hiển thị tổng/tỷ lệ chưa đủ, tổng 0 có thông báo riêng.
+
+## Sắp xếp lịch bù Mentor — 05/11/2026
+
+- Slot giao với lịch bù đã chọn của buổi khác trong đơn bị disabled, nền nhạt và có chữ Trùng lịch bù buổi khác; cập nhật ngay cả khi hai bảng slot đã tải trước. Đổi/xóa lựa chọn mở lại các slot vừa được giải phóng. Hai buổi nối tiếp nhau được chọn; cùng giờ ở ngày khác vẫn hợp lệ.
+
+- Mỗi buổi nghỉ có khối riêng kể cả nghỉ cả ngày, không gom nhiều buổi theo ngày. Header có số thứ tự/trạng thái; tên buổi, ngày, giờ gốc và thời lượng nằm bên trái desktop; ngày/buổi dạy bù và khung giờ nằm bên phải. Mobile xếp dọc, control 48px, giữ token Mindy và vùng focus.
+- Ngày bù của FULL_DAY bắt đầu sau ngày kết thúc cả khoảng nghỉ; nghỉ theo buổi chặn ngày trước ngày buổi gốc. Cả hai đều không được trước hôm nay theo timezone backend, nhập tay cũng bị chặn tìm giờ. Có lựa chọn Cả ngày khi tìm giờ; chọn slot hiện tóm tắt ngày/giờ bù ngay trong buổi đó. Đổi ngày/period chỉ xóa mapping của buổi tương ứng. Tất cả buổi phải chọn slot hợp lệ trước khi gửi.
+
+## Bộ lọc tài liệu chờ duyệt — 05/11/2026
+
+- Bảng `/manager` thêm cột Khóa học và Học phần, có số thứ tự học phần. Ba bộ lọc khóa/học phần/loại nằm ngay trên bảng, control 48px, có Xóa bộ lọc; đổi khóa xóa lựa chọn học phần và mọi lần đổi lọc đưa về trang 1. Khóa chưa kích hoạt vẫn có trong bộ lọc Manager.
+- Bộ lọc xếp dọc ở mobile, bảng cuộn ngang trong panel. Có lỗi/thử lại riêng cho dữ liệu bộ lọc và thông báo không có kết quả; không thay đổi trạng thái chờ duyệt hay thao tác xem/duyệt.
+
+## Chi tiết bài tập Mentor — 05/11/2026
+
+- QUIZ/ZIP dùng hai card chính: thông tin, thanh thao tác và nội dung đề ở card đầu; bài đã nộp và học viên hiện tại ở card theo dõi. Các vùng con dùng padding và đường phân cách, không lồng thêm khung card. Trình sửa mở riêng khi cần.
+- Desktop rộng đặt lịch sử nộp và học viên cạnh nhau; mobile xếp dọc. Nhóm nút soạn đề và xuất bản tách rõ, viền nút dùng line/mint, nút Xuất bản là điểm nhấn. Header mục có icon mint; danh sách học viên dùng NameAvatar. Giữ quyền, API, bộ lọc URL và dialog xác nhận hiện có.
+- Bộ lọc bài đã nộp không có thanh nền riêng: ba ô nền trắng có nhãn phía trên, chia đều khi vùng nội dung rộng ít nhất 30rem và xếp dọc khi hẹp hơn. Checkbox Gồm lượt cũ ở góc phải cùng hàng với tiêu đề Bài đã nộp, vùng bấm tối thiểu 44px; giữ tên truy cập và tham số bộ lọc hiện hữu.
+- Trình soạn QUIZ có Nhập hàng loạt: dán văn bản hoặc chọn tệp .txt UTF-8, tải mẫu, kiểm tra lỗi theo dòng và xem trước ABCD với đáp án đúng. Mặc định thêm cuối bộ câu hỏi; thay toàn bộ là lựa chọn tường minh. Áp dụng chỉ cập nhật trình soạn, Lưu bộ câu hỏi mới ghi máy chủ. Dialog giữ tiêu đề/thao tác cố định và cuộn nội dung riêng trên mobile.
+
 ## Dashboard ba vai trò — 03/11/2026
 
 - Phản hồi mới nhất: Manager chỉ giữ thẻ tổng quan, biểu đồ xu hướng và donut trạng thái, không hiển thị hai biểu đồ xếp hạng. Bỏ đoạn giải thích cách tính đăng ký/thời điểm cập nhật ở tất cả dashboard.

@@ -5,11 +5,11 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Files, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { useCourseCatalog } from '@/features/courses/api/course-queries';
-import { courseDetailSchema } from '@/features/courses/schemas/course-contracts';
+import { useManagerCourseOptions } from '../api/manager-course-queries';
+import { managerCourseDetailSchema } from '../schemas/manager-contracts';
 import { useManagerQuery } from '../api/manager-queries';
 import { ManagerCourseWorkspace } from './manager-course-workspace';
-import { ManagerCourseList } from './manager-course-list';
+import { ManagerMaterialsDashboard } from './manager-materials-dashboard';
 import { ManagerMaterialEditor } from './manager-material-editor';
 import { ManagerMaterialsInventory } from './manager-materials-inventory';
 import { ManagerState } from './manager-shared';
@@ -25,9 +25,13 @@ export function ManagerMaterialsPage() {
     : 'PENDING_REVIEW';
   const [courseId, setCourseId] = useState('');
   const [creating, setCreating] = useState(false);
-  const courses = useCourseCatalog({});
+  const courses = useManagerCourseOptions();
   const selectedCourse = courses.data?.find((item) => item.id === courseId);
-  const course = useManagerQuery(`courses/${courseId}`, courseDetailSchema, Boolean(courseId));
+  const course = useManagerQuery(
+    `manager/courses/${courseId}`,
+    managerCourseDetailSchema,
+    Boolean(courseId),
+  );
 
   const coursePicker = (
     <div className="min-w-0">
@@ -127,7 +131,9 @@ export function ManagerMaterialsPage() {
         </ManagerState>
       ) : (
         <ManagerState pending={courses.isPending} error={courses.error} retry={courses.refetch}>
-          {courses.data && <ManagerCourseList courses={courses.data} onSelect={setCourseId} />}
+          {courses.data && (
+            <ManagerMaterialsDashboard courses={courses.data} onSelect={setCourseId} />
+          )}
         </ManagerState>
       )}
       {creating && <ManagerMaterialEditor onClose={() => setCreating(false)} />}

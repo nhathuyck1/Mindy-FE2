@@ -2,7 +2,9 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { z } from 'zod';
+import { Inbox, Users } from 'lucide-react';
 import { NativeSelect } from '@/components/ui/native-select';
+import { NameAvatar } from '@/components/ui/name-avatar';
 import { Button } from '@/components/ui/button';
 import { useAssignmentQuery, useAssignmentPeople } from '../api/assignment-queries';
 import * as dto from '../schemas/assignment-contracts';
@@ -63,6 +65,7 @@ export function AssignmentHistory(props: {
   mentor?: boolean;
   type?: string;
   rosterAllowed?: boolean;
+  embedded?: boolean;
 }) {
   const { params, change } = useAssignmentReportFilters('history-');
   const people = useAssignmentPeople(props.assignmentId, !!props.mentor && !!props.rosterAllowed);
@@ -86,60 +89,99 @@ export function AssignmentHistory(props: {
         ['SUBMITTED', 'Đã nộp'],
         ['RELEASED', 'Đã trả điểm'],
       ];
+  const selectClass = props.embedded
+    ? 'h-11 bg-canvas text-ink shadow-none hover:border-mint/50'
+    : undefined;
+  const selectWrapperClass = props.embedded ? 'w-full' : undefined;
+  const filterLabelClass = props.embedded ? 'grid min-w-0 gap-2 text-sm' : undefined;
   return (
-    <section className={`${panelClass} space-y-5`}>
-      <h2 className="text-xl font-extrabold">{props.mentor ? 'Bài đã nộp' : 'Lịch sử nộp bài'}</h2>
-      <div className="flex flex-wrap items-center gap-3">
-        <NativeSelect
-          aria-label="Lọc bài nộp"
-          value={params.get('status') ?? ''}
-          onChange={(e) => change('status', e.target.value)}
+    <section className={`${props.embedded ? 'min-w-0 p-5 sm:p-7' : panelClass} space-y-5`}>
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <h2
+          className={`flex items-center gap-2.5 font-extrabold ${props.embedded ? 'text-lg' : 'text-xl'}`}
         >
-          <option value="">Mọi trạng thái</option>
-          {statuses.map(([value, label]) => (
-            <option value={value} key={value}>
-              {label}
-            </option>
-          ))}
-        </NativeSelect>
-        <NativeSelect
-          aria-label="Lượt nộp"
-          value={params.get('attemptNumber') ?? ''}
-          onChange={(e) => change('attemptNumber', e.target.value)}
-        >
-          <option value="">Mọi lượt</option>
-          {Array.from({ length: 10 }, (_, i) => (
-            <option key={i} value={i + 1}>
-              Lượt {i + 1}
-            </option>
-          ))}
-        </NativeSelect>
+          {props.embedded && <Inbox size={20} className="text-mint" aria-hidden="true" />}
+          {props.mentor ? 'Bài đã nộp' : 'Lịch sử nộp bài'}
+        </h2>
         {props.mentor && (
-          <>
-            <label className="flex min-h-11 items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={params.get('history') === 'true'}
-                onChange={(e) => change('history', e.target.checked ? 'true' : '')}
-              />
-              Gồm lượt cũ
-            </label>
-            {props.rosterAllowed && (
-              <NativeSelect
-                aria-label="Học viên"
-                value={params.get('studentId') ?? ''}
-                onChange={(e) => change('studentId', e.target.value)}
-              >
-                <option value="">Mọi học viên</option>
-                {people.data?.map((person) => (
-                  <option value={person.studentId} key={person.enrollmentId}>
-                    {person.displayName}
-                  </option>
-                ))}
-              </NativeSelect>
-            )}
-          </>
+          <label className="ml-auto flex min-h-11 shrink-0 cursor-pointer items-center gap-2 text-sm text-muted">
+            <input
+              type="checkbox"
+              className="size-4 shrink-0 accent-mint"
+              checked={params.get('history') === 'true'}
+              onChange={(e) => change('history', e.target.checked ? 'true' : '')}
+            />
+            Gồm lượt cũ
+          </label>
         )}
+      </div>
+      <div className={props.embedded ? '@container/submission-filters' : undefined}>
+        <fieldset
+          className={
+            props.embedded
+              ? 'grid min-w-0 grid-cols-1 gap-x-3 gap-y-4 @min-[30rem]/submission-filters:grid-cols-3'
+              : 'flex min-w-0 flex-wrap items-center gap-3'
+          }
+        >
+          <legend className="sr-only">Bộ lọc bài nộp</legend>
+          <label className={filterLabelClass}>
+            {props.embedded && <span className="font-semibold text-muted">Trạng thái</span>}
+            <NativeSelect
+              aria-label="Lọc bài nộp"
+              className={selectClass}
+              wrapperClassName={selectWrapperClass}
+              value={params.get('status') ?? ''}
+              onChange={(e) => change('status', e.target.value)}
+            >
+              <option value="">Mọi trạng thái</option>
+              {statuses.map(([value, label]) => (
+                <option value={value} key={value}>
+                  {label}
+                </option>
+              ))}
+            </NativeSelect>
+          </label>
+          <label className={filterLabelClass}>
+            {props.embedded && <span className="font-semibold text-muted">Lượt nộp</span>}
+            <NativeSelect
+              aria-label="Lượt nộp"
+              className={selectClass}
+              wrapperClassName={selectWrapperClass}
+              value={params.get('attemptNumber') ?? ''}
+              onChange={(e) => change('attemptNumber', e.target.value)}
+            >
+              <option value="">Mọi lượt</option>
+              {Array.from({ length: 10 }, (_, i) => (
+                <option key={i} value={i + 1}>
+                  Lượt {i + 1}
+                </option>
+              ))}
+            </NativeSelect>
+          </label>
+          {props.mentor && (
+            <>
+              {props.rosterAllowed && (
+                <label className={filterLabelClass}>
+                  {props.embedded && <span className="font-semibold text-muted">Học viên</span>}
+                  <NativeSelect
+                    aria-label="Học viên"
+                    className={selectClass}
+                    wrapperClassName={selectWrapperClass}
+                    value={params.get('studentId') ?? ''}
+                    onChange={(e) => change('studentId', e.target.value)}
+                  >
+                    <option value="">Mọi học viên</option>
+                    {people.data?.map((person) => (
+                      <option value={person.studentId} key={person.enrollmentId}>
+                        {person.displayName}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </label>
+              )}
+            </>
+          )}
+        </fieldset>
       </div>
       {!valid.success ? (
         <p role="alert">Bộ lọc không hợp lệ.</p>
@@ -191,7 +233,11 @@ export function AssignmentHistory(props: {
                   </li>
                 ))}
               </ul>
-              {!query.data.items.length && <p className="py-5 text-muted">Chưa có bài nộp.</p>}
+              {!query.data.items.length && (
+                <p className={`py-5 text-muted ${props.embedded ? 'text-center' : ''}`}>
+                  Chưa có bài nộp.
+                </p>
+              )}
               <Pager
                 page={query.data.page}
                 total={query.data.total}
@@ -204,7 +250,7 @@ export function AssignmentHistory(props: {
     </section>
   );
 }
-export function AssignmentRoster(props: { assignmentId: string }) {
+export function AssignmentRoster(props: { assignmentId: string; embedded?: boolean }) {
   const { params, change } = useAssignmentReportFilters('roster-');
   const valid = dto.mentorHistoryQuerySchema.safeParse(Object.fromEntries(params));
   const query = useAssignmentQuery(
@@ -214,8 +260,13 @@ export function AssignmentRoster(props: { assignmentId: string }) {
     'MENTOR',
   );
   return (
-    <section className={`${panelClass} space-y-5`}>
-      <h2 className="text-xl font-extrabold">Học viên hiện tại</h2>
+    <section className={`${props.embedded ? 'min-w-0 p-5 sm:p-7' : panelClass} space-y-5`}>
+      <h2
+        className={`flex items-center gap-2.5 font-extrabold ${props.embedded ? 'text-lg' : 'text-xl'}`}
+      >
+        {props.embedded && <Users size={20} className="text-mint" aria-hidden="true" />}
+        Học viên hiện tại
+      </h2>
       <QueryState pending={query.isPending} error={query.error} retry={query.refetch}>
         {query.data && (
           <>
@@ -225,7 +276,12 @@ export function AssignmentRoster(props: { assignmentId: string }) {
                   key={item.enrollmentId}
                   className="flex flex-wrap items-center justify-between gap-3 py-4"
                 >
-                  <span className="min-w-0 font-bold break-words">{item.displayName}</span>
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    {props.embedded && (
+                      <NameAvatar name={item.displayName} className="size-9 text-xs" />
+                    )}
+                    <span className="min-w-0 font-bold break-words">{item.displayName}</span>
+                  </div>
                   <span className="text-sm text-muted">
                     {item.missing
                       ? 'Quá hạn chưa nộp'
