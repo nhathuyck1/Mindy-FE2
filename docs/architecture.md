@@ -1,5 +1,15 @@
 # Kiến trúc Mindy FE2
 
+## Người tham gia bảng trắng — 04/11/2026
+
+- BoardConnection nhận board:presence từ BE và kiểm Zod, giữ people riêng với peers/con trỏ có timeout; danh sách được xóa khi offline hoặc quyền bị thu hồi. WhiteboardPeople dedupe theo user ID, đặt tài khoản hiện tại đầu danh sách khi online và dùng NameAvatar cùng Popover có sẵn. Không tải danh sách lớp hoặc mở rộng quyền tài nguyên.
+
+## Tài nguyên buổi học Student — 04/11/2026
+
+- UserSchedulePage giữ dialog và metadata lịch; StudentSessionResources đặt bảng vẽ/meeting, tài liệu và danh sách bài tập ngay dưới tiêu đề. Hook useStudentSessionResources chỉ mount khi mở chi tiết, key theo user/class/session/accessMode, kiểm lại quyền bằng API riêng tư trước khi hiện thao tác.
+- FULL đọc me/classes/:id, tìm đúng buổi và ưu tiên meetingUrl buổi rồi đến lớp. SESSION_MAKEUP đọc class-sessions/:id/context theo quyền guest của BE, không tải toàn bộ lớp đích; CASH_PREVIEW/buổi hủy không gọi API nội dung. Helper studentMeetingUrl dùng chung với LearningPage, không hiện meeting khi lớp/buổi đã kết thúc hoặc hủy.
+- Bài tập sử dụng me/classes/:id/assignments?sessionId=... và phân trang chuẩn BE; liên kết về các trang Student QUIZ/ZIP/CODE hiện có. Không gọi endpoint me/class-sessions/:id/assignments vì BE chưa cung cấp. Quyền học bù hiện có chỉ mở bảng/meeting của buổi; bài tập lớp đích vẫn đòi enrollment ACTIVE, không mở rộng quyền BE.
+
 ## Presentation buổi học Mentor — 04/11/2026
 
 - mentor-session-ui.tsx chứa MentorSessionOverview và MentorSessionTools, chỉ nhận metadata/callback từ MentorSessionPage. Page tiếp tục sở hữu query/permissions/mutations và tất cả dialog, ghi chú, bài tập; không đổi API hoặc BE. Counters sử dụng totals backend, preview sử dụng candidates và giữ key enrollment/makeup/page.

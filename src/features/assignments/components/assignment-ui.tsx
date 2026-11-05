@@ -170,10 +170,10 @@ export function Confirm(props: {
     </Modal>
   );
 }
-export function AssignmentMeta(props: { item: Assignment }) {
+export function AssignmentMeta(props: { item: Assignment; embedded?: boolean }) {
   const a = props.item;
   return (
-    <div className={panelClass}>
+    <div className={props.embedded ? 'min-w-0 p-5 sm:p-6' : panelClass}>
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <Status value={a.status} />
         <span className="text-sm text-muted">

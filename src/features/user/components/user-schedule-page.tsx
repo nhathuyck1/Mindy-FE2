@@ -17,6 +17,7 @@ import { useMySchedule } from '../api/user-queries';
 import { scheduleWeek } from '../lib/schedule-week';
 import { UserDataState } from './user-data-state';
 import { UserDetailsDialog } from './user-details-dialog';
+import { StudentSessionResources } from './student-session-resources';
 import type { ScheduleEvent } from '../schemas/user-contracts';
 const statuses = {
   SCHEDULED: 'Sắp diễn ra',
@@ -187,10 +188,12 @@ export function UserSchedulePage() {
       </section>
       {selected && (
         <UserDetailsDialog title="Chi tiết lớp học" onClose={() => setSelected(null)}>
-          <div>
+          <div className="rounded-2xl border border-mint/15 bg-mint/8 p-4 sm:p-5">
             <p className="text-sm font-bold text-mint">{selected.classCode}</p>
-            <h3 className="mt-2 text-xl font-extrabold">{selected.className}</h3>
-            <p className="mt-2 text-sm">{selected.courseTitle}</p>
+            <h3 className="mt-2 text-xl font-extrabold">{selected.sessionTitle}</h3>
+            <p className="mt-2 text-sm">
+              {selected.className} · {selected.courseTitle}
+            </p>
             <p
               className={
                 'mt-3 inline-flex rounded-lg px-3 py-2 text-xs font-bold ' +
@@ -205,6 +208,14 @@ export function UserSchedulePage() {
               </p>
             )}
           </div>
+          <StudentSessionResources
+            key={[
+              selected.sessionId,
+              selected.enrollmentId,
+              selected.makeupPlacementId ?? 'regular',
+            ].join(':')}
+            event={selected}
+          />
           <dl className="grid gap-5 border-t border-line pt-5 text-sm sm:grid-cols-2">
             {[
               ['Buổi học', String(selected.sessionNumber)],
@@ -227,9 +238,6 @@ export function UserSchedulePage() {
             ))}
           </dl>
           <p className="text-xs text-muted">Thời gian hiển thị theo giờ Việt Nam (UTC+7).</p>
-          {selected.accessMode === 'CASH_PREVIEW' && (
-            <p className="rounded-xl bg-peach p-4 text-sm">Chờ xác nhận thanh toán tiền mặt.</p>
-          )}
         </UserDetailsDialog>
       )}
     </>

@@ -23,6 +23,9 @@ const awarenessSchema = z.object({
   x: z.number().finite(),
   y: z.number().finite(),
 });
+const presenceSchema = z.object({
+  people: z.array(z.object({ id: z.uuidv4(), name: z.string() })),
+});
 export interface BoardPeer {
   connectionId: string;
   id: string;
@@ -38,6 +41,7 @@ export interface BoardConnectionState {
   state: BoardSync | null;
   notice: string;
   peers: BoardPeer[];
+  people: { id: string; name: string }[];
 }
 interface Pending {
   updateId: string;
@@ -71,6 +75,7 @@ export class BoardConnection {
     state: null,
     notice: '',
     peers: [],
+    people: [],
   };
   constructor(readonly boardId: string) {
     this.doc.on('update', this.changed);
@@ -104,6 +109,7 @@ export class BoardConnection {
         state: null,
         notice: '',
         peers: [],
+        people: [],
       };
     }
     this.stopped = false;
@@ -130,7 +136,7 @@ export class BoardConnection {
     this.doc.off('update', this.changed);
     this.undo.destroy();
     this.doc.destroy();
-    this.publish({ status: 'denied', shapes: [], state: null, peers: [] });
+    this.publish({ status: 'denied', shapes: [], state: null, peers: [], people: [] });
   }
   private changed = (bytes: Uint8Array, origin: unknown) => {
     if (origin !== REMOTE) {
@@ -158,7 +164,7 @@ export class BoardConnection {
       if (this.stopped || attempt !== this.connectionAttempt || this.snapshot.status === 'denied')
         return;
       this.sending = false;
-      this.publish({ status: 'offline', peers: [] });
+      this.publish({ status: 'offline', peers: [], people: [] });
       if (this.retries < 3) {
         clearTimeout(this.reconnectTimer);
         this.reconnectTimer = setTimeout(() => {
@@ -181,6 +187,10 @@ export class BoardConnection {
       return;
     }
     this.socket = socket;
+    socket.on('board:presence', (raw: unknown) => {
+      const parsed = presenceSchema.safeParse(raw);
+      if (parsed.success) this.publish({ people: parsed.data.people });
+    });
     socket.on('connect', () => {
       void this.join();
     });
@@ -283,7 +293,7 @@ export class BoardConnection {
   private deny(notice: string) {
     this.pending = [];
     this.replaceDocument();
-    this.publish({ status: 'denied', notice, shapes: [], state: null, peers: [] });
+    this.publish({ status: 'denied', notice, shapes: [], state: null, peers: [], people: [] });
     this.socket?.disconnect();
   }
   private async flush() {

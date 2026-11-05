@@ -60,6 +60,7 @@ export function useAssignmentReportFilters(prefix: string) {
 }
 export function AssignmentHistory(props: {
   assignmentId: string;
+  embedded?: boolean;
   mentor?: boolean;
   type?: string;
   rosterAllowed?: boolean;
@@ -87,7 +88,7 @@ export function AssignmentHistory(props: {
         ['RELEASED', 'Đã trả điểm'],
       ];
   return (
-    <section className={`${panelClass} space-y-5`}>
+    <section className={`${props.embedded ? 'min-w-0 p-5 sm:p-6' : panelClass} space-y-5`}>
       <h2 className="text-xl font-extrabold">{props.mentor ? 'Bài đã nộp' : 'Lịch sử nộp bài'}</h2>
       <div className="flex flex-wrap items-center gap-3">
         <NativeSelect

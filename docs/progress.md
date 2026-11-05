@@ -1,5 +1,31 @@
 # Tiến độ
 
+## 04/11/2026 — Gom khung chi tiết bài tập Student
+
+- QUIZ/ZIP dùng một khung bo góc có border chung cho thông tin, tệp đề bài, thao tác và lịch sử nộp; phân cách bằng đường kẻ, vùng thao tác nền soft nhẹ. Component metadata/lịch sử hỗ trợ nhúng, giữ giao diện mặc định ở các trang khác.
+- Kiểm chứng: ESLint/Prettier ba component, TypeScript, production build và 4 E2E desktop/mobile cho mở/nộp QUIZ và ZIP tạm ngừng vẫn xem được lịch sử.
+
+## 04/11/2026 — Thông báo xuất bảng thất bại
+
+- Job FAILED hiển thị lỗi máy chủ và mã lỗi được API trả về, bỏ hướng dẫn chọn vùng nhỏ hơn cho mọi lỗi. Chỉ BOARD_EXPORT_TOO_LARGE mới hướng dẫn thu nhỏ vùng. VPS đã render được PNG trống và PDF của job lỗi; bước ghi MinIO báo EPROTO do kết nối TLS tới cổng HTTP. Đã hướng dẫn cấu hình MINIO_USE_SSL=false cho MinIO nội bộ Compose, nạp lại env và tạo job mới; chưa xác nhận thành công sau thay đổi trên deploy.
+
+## 04/11/2026 — Người tham gia bảng trắng
+
+- Thanh bảng hiển thị NameAvatar và tên tài khoản hiện tại, avatar người khác và nút số người đang hoạt động. Popover rộng tối đa 288px, danh sách cao tối đa 240px rồi cuộn; hiện đầy đủ tên và nhãn Bạn, hỗ trợ Escape/trả focus và mobile.
+- BoardConnection nhận board:presence có kiểm schema, tách danh sách kết nối khỏi con trỏ awareness; dedupe theo user ID, xóa khi mất kết nối/thu hồi quyền. Dùng sự kiện BE hiện có, không đổi quyền xuất bảng.
+- Kiểm chứng: TypeScript, ESLint các file thay đổi, production build, 4 test thao tác bảng và E2E desktop/mobile với WebSocket fixture (15 người không di chuyển con trỏ, trùng ID, cuộn, Escape, người rời bảng). Đã xem ảnh desktop/mobile; chưa nghiệm thu nhiều tài khoản thật trên bản deploy.
+
+## 04/11/2026 — Hiện/ẩn mật khẩu khi đăng nhập
+
+- Thêm PasswordInput dùng chung cho /login và /admin/login trên Feat/FixUIstudent. Mặc định che mật khẩu, nút Eye/EyeOff có nhãn Hiện/Ẩn mật khẩu, aria-pressed/controls, vùng bấm 44px và focus bàn phím; type=button không gửi form. Giữ name, autocomplete, validation và luồng đăng nhập hiện có; trạng thái hiện chỉ ở component.
+
+## 04/11/2026 — Student mở tài nguyên từ lịch học
+
+- Code trên Feat/FixUIstudent tại checkout Mindy-FE2. Bổ sung không gian buổi học trong dialog lịch: Mở bảng vẽ, Vào phòng học, Tài liệu của lớp và danh sách bài tập đúng session, có phân trang và liên kết tới trang QUIZ/ZIP/CODE đã triển khai. Đưa thao tác lên trước metadata. LearningPage bổ sung link bài tập theo buổi và dùng meeting fallback của lớp.
+- Audit source BE và Swagger live: Student có endpoint bảng vẽ dùng chung, xem khi có enrollment ACTIVE hoặc guest học bù; chỉ được sửa khi buổi IN_PROGRESS và mentor bật COLLABORATIVE. Student không tạo/điều khiển/upload/snapshot/restore/export bảng. Bài tập lớp đích yêu cầu enrollment ACTIVE, chỉ trả PUBLISHED của buổi không hủy; học bù có context buổi/meeting nhưng không tự có quyền assignment lớp đích. CASH_PREVIEW không tải nội dung riêng tư.
+- Không thay source BE hoặc mở rộng quyền. TEST_DATABASE_URL chưa cấu hình và Docker daemon đang tắt nên chưa chạy integration/HTTP với DB/storage thật hoặc tài khoản production. Các kiểm tra browser dùng API fixture; Swagger chỉ xác nhận contract endpoint đang công bố.
+- Kiểm chứng: production build/TypeScript, lint, format và 70 unit tests API/schema/quiz PASS. Lượt E2E đầu 76/78 PASS, hai ca modal cũ thiếu mock me/classes/:id làm rơi vào refresh thật; bổ sung fixture lớp/bài tập, chạy lại hai ca PASS. Sau khi đưa thao tác lên trước metadata, 46/46 E2E Student/lịch/tài liệu PASS; 32 E2E QUIZ/ZIP/CODE trước đó PASS. Đã xem ảnh desktop/320px và xác nhận không tràn ngang, Escape trả focus. Chưa commit/push/deploy phần thay đổi này.
+
 ## 04/11/2026 — Gộp thay đổi để đưa lên GitHub
 
 - Gộp lịch Student/menu theo role từ codex/schedule-role-ui vào codex/portable-backend, giữ dashboard hiện có cùng chat/Whiteboard/CODE và giao diện buổi học mới. Logic lịch dùng chung ở lib/weekly-timetable, cấu hình bảy ca chuyển về lib/teaching-slots để cả Student/Mentor và chọn giờ dạy bù dùng cùng nguồn. Giữ các mục lịch sử bên dưới làm evidence của từng giai đoạn.

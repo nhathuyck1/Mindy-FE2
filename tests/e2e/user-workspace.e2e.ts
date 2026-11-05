@@ -31,6 +31,50 @@ const myClass = {
 async function fixture(page: import('@playwright/test').Page) {
   const state = await mockCommerce(page);
   state.hasOrder = true;
+  await page.route(`**/api/v1/me/classes/${classId}`, (route) =>
+    route.fulfill({
+      json: {
+        id: classId,
+        courseId,
+        code: myClass.classCode,
+        name: myClass.className,
+        startDate: myClass.startDate,
+        endDate: myClass.endDate,
+        deliveryMode: 'ONLINE',
+        maxStudents: 20,
+        availableSeats: 5,
+        mentor,
+        classStatus: 'IN_PROGRESS',
+        enrollmentId: myClass.enrollmentId,
+        enrollmentStatus: 'ACTIVE',
+        enrolledAt: myClass.enrolledAt,
+        accessMode: 'FULL',
+        meetingUrl: null,
+        units: [
+          {
+            id: '66666666-6666-4666-8666-666666666666',
+            position: 1,
+            title: 'Unit Web',
+            sessions: [
+              {
+                id: '88888888-8888-4888-8888-888888888888',
+                sessionNumber: 1,
+                title: 'Thực hành Web',
+                startsAt: '2026-10-13T12:00:00Z',
+                endsAt: '2026-10-13T14:00:00Z',
+                roomName: null,
+                status: 'SCHEDULED',
+                meetingUrl: null,
+              },
+            ],
+          },
+        ],
+      },
+    }),
+  );
+  await page.route(`**/api/v1/me/classes/${classId}/assignments?**`, (route) =>
+    route.fulfill({ json: { items: [], total: 0, page: 1, pageSize: 20 } }),
+  );
   await page.route('**/api/v1/me/classes?**', (route) =>
     route.fulfill({
       json: {

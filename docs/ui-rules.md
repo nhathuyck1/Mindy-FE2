@@ -1,5 +1,10 @@
 # Quy tắc giao diện Mindy
 
+## Chi tiết buổi học Student — 04/11/2026
+
+- Giữ dialog truy cập từ lịch, nền mint ở tiêu đề buổi; bảng vẽ/phòng học nền forest và bài tập đặt trước metadata để dễ tìm trên mobile. Danh sách bài tập ghi rõ QUIZ/ZIP/CODE, bài về nhà/kiểm tra, hạn nộp, có phân trang. Không có nút sửa link, bắt đầu buổi, điểm danh hoặc tạo bảng dành cho Mentor.
+- Meeting dùng URL an toàn từ API riêng tư, ưu tiên buổi rồi lớp, mở tab mới với noopener/noreferrer/no-referrer. Phân biệt chưa có link, đã kết thúc, đã hủy, chờ thanh toán, lỗi và danh sách bài tập trống; học bù giải thích giới hạn bài tập lớp đích. Giữ Escape/focus restore và cuộn dialog tại 320px.
+
 ## Ca học và lịch dạy bù — 04/11/2026
 
 - Dùng chung bảy ca trong teaching-slots: 07:30–09:00, 09:30–11:00, 12:00–14:00, 13:00–15:30, 16:00–17:30, 18:00–19:30, 20:00–21:30. Giữ giờ thực tế của buổi học từ BE; ca trưa mới không gộp mất ca 13:00.

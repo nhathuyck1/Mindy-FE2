@@ -235,7 +235,9 @@ export function useBoardMedia(boardId: string) {
         setMessage('File đã sẵn sàng để tải.');
         setRetry('export');
       } else if (job.status === 'FAILED') {
-        setMessage('Chưa xuất được file. Hãy chọn vùng nhỏ hơn và thử lại.');
+        setMessage(
+          `Máy chủ chưa xuất được file${job.error ? ` (${job.error})` : ''}. Vui lòng thử lại sau.`,
+        );
         exportJob.current = null;
       } else {
         setMessage('File vẫn đang được chuẩn bị. Bạn có thể kiểm tra lại.');

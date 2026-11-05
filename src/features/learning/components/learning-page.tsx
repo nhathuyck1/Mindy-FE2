@@ -7,6 +7,7 @@ import {
   ArrowRight,
   BookOpen,
   CalendarDays,
+  ClipboardList,
   ChevronLeft,
   FileText,
   LockKeyhole,
@@ -16,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { formatDate } from '@/features/courses/lib/course-format';
 import { useLearningClass, useUnitMaterials } from '../api/learning-queries';
 import type { LearningClass, LearningUnit } from '../schemas/learning-contracts';
+import { studentMeetingUrl } from '../lib/student-meeting';
 import { LearningState } from './learning-state';
 import { MaterialViewer } from './material-viewer';
 
@@ -150,9 +152,9 @@ function UnitContent(props: { context: LearningClass; unit: LearningUnit; previe
                       <ArrowRight aria-hidden="true" className="size-4" />
                     </Link>
                   )}
-                  {!props.preview && session.status !== 'CANCELLED' && session.meetingUrl && (
+                  {studentMeetingUrl(props.context, session) && (
                     <a
-                      href={session.meetingUrl}
+                      href={studentMeetingUrl(props.context, session) ?? undefined}
                       target="_blank"
                       rel="noopener noreferrer"
                       referrerPolicy="no-referrer"
@@ -161,6 +163,15 @@ function UnitContent(props: { context: LearningClass; unit: LearningUnit; previe
                       Tham gia buổi học
                       <ArrowRight aria-hidden="true" className="size-4" />
                     </a>
+                  )}
+                  {!props.preview && session.status !== 'CANCELLED' && (
+                    <Link
+                      href={`/user/classes/${props.context.id}/assignments?sessionId=${session.id}`}
+                      className="text-link mt-3 inline-flex min-h-11 items-center gap-2 font-semibold"
+                    >
+                      <ClipboardList aria-hidden="true" className="size-4" />
+                      Bài tập của buổi
+                    </Link>
                   )}
                 </li>
               ))}

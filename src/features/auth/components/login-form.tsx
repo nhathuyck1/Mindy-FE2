@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { PasswordInput } from '@/components/ui/password-input';
 import { useAudienceLogin } from '../api/use-audience-login';
 
 export function LoginForm() {
@@ -37,10 +38,9 @@ export function LoginForm() {
           <label htmlFor="password" className="mb-2 block text-sm font-bold">
             Mật khẩu
           </label>
-          <input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             autoComplete="current-password"
             required
             minLength={1}
