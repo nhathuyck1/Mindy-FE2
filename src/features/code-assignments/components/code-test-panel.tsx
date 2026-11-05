@@ -10,6 +10,16 @@ import type { CodeWorkspace } from './use-code-workspace';
 
 export type TestTab = 'cases' | 'result';
 
+/** What the test panel needs; the student workspace and the mentor demo both provide it. */
+export type TestPanelAssignment = {
+  samples: Pick<StudentCodeAssignment['samples'][number], 'position' | 'inputArgs'>[];
+  problem: { signature: StudentCodeAssignment['problem']['signature'] };
+};
+export type TestPanelWorkspace = Pick<
+  CodeWorkspace,
+  'testCase' | 'setTestCase' | 'custom' | 'setCustom' | 'run' | 'runError' | 'running' | 'runCount'
+>;
+
 function CaseChip(props: {
   selected: boolean;
   onClick: () => void;
@@ -50,7 +60,7 @@ function Field(props: { label: React.ReactNode; children: React.ReactNode }) {
   );
 }
 
-function Cases(props: { assignment: StudentCodeAssignment; ws: CodeWorkspace }) {
+function Cases(props: { assignment: TestPanelAssignment; ws: TestPanelWorkspace }) {
   const a = props.assignment;
   const { testCase, setTestCase, custom, setCustom } = props.ws;
   const sample = typeof testCase === 'number' ? a.samples[testCase] : null;
@@ -125,7 +135,7 @@ function headline(r: RunResult) {
       };
 }
 
-function Result(props: { ws: CodeWorkspace }) {
+function Result(props: { ws: TestPanelWorkspace }) {
   const { run, runError, running } = props.ws;
   const [picked, setPicked] = useState(0);
   if (running)
@@ -227,8 +237,8 @@ function Result(props: { ws: CodeWorkspace }) {
 }
 
 export function TestPanel(props: {
-  assignment: StudentCodeAssignment;
-  ws: CodeWorkspace;
+  assignment: TestPanelAssignment;
+  ws: TestPanelWorkspace;
   tab: TestTab;
   onTab: (tab: TestTab) => void;
   open: boolean;

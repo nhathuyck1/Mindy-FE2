@@ -67,6 +67,9 @@ function mentorRule(method: string, path: string, p: string[]): CodeProxyRule | 
       body: c.generateInputSchema,
       timeoutMs: RUNNER_TIMEOUT_MS,
     });
+  // "Mentor làm mẫu": run demo code on samples / custom input (draft or published), not stored.
+  if (method === 'POST' && p.length === 4 && action === 'code-runs')
+    return rule(c.runResultSchema, { body: c.runInputSchema, timeoutMs: RUNNER_TIMEOUT_MS });
   if (p.length === 3 && method === 'DELETE') return rule(z.null(), { body: c.revisionInputSchema });
   if (
     p.length !== 4 &&

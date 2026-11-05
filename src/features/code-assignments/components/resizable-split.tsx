@@ -3,6 +3,22 @@
 import { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
+/** A split ratio remembered per browser, for parents that control `ResizableSplit`. */
+export function useStoredRatio(key: string, fallback: number) {
+  const [ratio, setRatio] = useState(() =>
+    typeof window === 'undefined' ? fallback : readRatio(key, fallback),
+  );
+  function change(next: number) {
+    setRatio(next);
+    try {
+      window.localStorage.setItem(key, next.toFixed(4));
+    } catch {
+      // Storage can be unavailable (private mode); the split still works for this visit.
+    }
+  }
+  return [ratio, change] as const;
+}
+
 function readRatio(key: string, fallback: number) {
   try {
     const stored = Number(window.localStorage.getItem(key));
@@ -29,17 +45,26 @@ export function ResizableSplit(props: {
   first: React.ReactNode;
   second: React.ReactNode;
   className?: string;
+  /** Controlled ratio (0–1). The parent keeps and stores it; changes animate without remounting. */
+  ratio?: number;
+  onRatioChange?: (ratio: number) => void;
   firstClassName?: string;
   secondClassName?: string;
 }) {
   const horizontal = props.direction === 'horizontal';
   const box = useRef<HTMLDivElement>(null);
-  const [ratio, setRatio] = useState(() =>
+  const [ownRatio, setOwnRatio] = useState(() =>
     typeof window === 'undefined'
       ? props.defaultRatio
       : readRatio(props.storageKey, props.defaultRatio),
   );
   const [dragging, setDragging] = useState(false);
+  const controlled = props.ratio !== undefined;
+  const ratio = props.ratio ?? ownRatio;
+  function setRatio(next: number) {
+    if (controlled) props.onRatioChange?.(next);
+    else setOwnRatio(next);
+  }
 
   function clamp(next: number) {
     const size = horizontal ? box.current?.clientWidth : box.current?.clientHeight;
@@ -51,6 +76,7 @@ export function ResizableSplit(props: {
   function commit(next: number) {
     const value = clamp(next);
     setRatio(value);
+    if (controlled) return;
     try {
       window.localStorage.setItem(props.storageKey, value.toFixed(4));
     } catch {

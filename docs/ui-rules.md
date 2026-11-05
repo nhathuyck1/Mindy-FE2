@@ -372,3 +372,12 @@ Chữ chính dùng forest; chữ phụ dùng muted pha 90% forest. Theo ảnh m�
 
 - Trang /courses dùng chữ đen cho tiêu đề, breadcrumb, toolbar, nội dung card và học phí; bộ lọc giữ xanh, icon và nền nhạt giữ điểm nhấn Mindy. Bỏ câu mô tả dưới tiêu đề catalog. Quy tắc chỉ áp dụng catalog.
 - Điều chỉnh tiếp: chữ catalog dùng đen pha 15% trắng để dịu hơn; danh mục trên card giảm 14px xuống 12px, tên khóa học giảm 18px xuống 16px. Giữ cỡ chữ card homepage/related.
+
+## Màn code (compiler) — bộ UI dùng chung (04/11/2026)
+
+- Student làm bài, Mentor soạn đề (Studio) và Mentor chấm bài dùng chung một bộ: `code-chrome.tsx` (trang full màn hình, header 56px ba vùng, nhóm nút hành động, chip, thanh bước), `code-panel.tsx` (panel + tab có nền trượt), `resizable-split.tsx` (khung kéo được, nhớ tỉ lệ), `code-editor.tsx` (editor tô màu tự viết, không thêm thư viện), `code-theme.tsx` (theme editor).
+- Khi mở các màn này, shell gọi `useShellFocus()` (`components/layout/shell-focus.tsx`): sidebar thu gọn, topbar/footer ẩn, trang chiếm đúng 1 màn hình; mỗi panel tự cuộn.
+- Class `.code-ide` cố định thang chữ Student trong mọi shell (shell Mentor/Admin phóng to chữ).
+- Editor có 3 theme (Mindy tối mặc định, Đêm, Sáng), biến màu đặt trong `globals.css` theo `[data-code-theme]`; lựa chọn nhớ theo trình duyệt. Màu cú pháp (`--syn-*`) là ngoại lệ duy nhất ngoài palette vì IDE cần màu token phân biệt.
+- Studio soạn đề có 3 bước: Đề bài (gộp đề + hàm, có xem trước đúng như học viên thấy và code khởi đầu) → Lời giải & test (bố cục giống màn làm bài) → Giao đề (checklist bấm để sửa). Chuyển bước tự lưu phần Đề bài nếu có thay đổi.
+- Tab trái của các màn được khai báo bằng mảng; tab "Bảng vẽ" cho mentor dạy trên code của học viên sẽ thêm vào đây sau.

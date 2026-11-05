@@ -1,6 +1,20 @@
 @import 'tailwindcss';
 @import './admin/tokens.css';
 
+/* Code workspace screens use one type scale in every role shell (mentor shells enlarge text). */
+.code-ide {
+  --font-sans: var(--font-brand);
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  font-family: var(--font-brand);
+  font-size: 1rem;
+}
+
 /* Assignment screens follow the Student scale inside either role shell. */
 .assignment-workspace {
   --font-sans: var(--font-brand);
@@ -237,10 +251,11 @@
   .user-workspace-collapsed {
     @apply lg:grid-cols-[76px_minmax(0,1fr)];
   }
-  .user-workspace {
+  .user-workspace,
+  .admin-workspace {
     transition: grid-template-columns 260ms cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .user-main-focus {
+  .shell-main-focus {
     @apply min-h-dvh w-full lg:h-dvh lg:overflow-hidden;
   }
   .user-sidebar {

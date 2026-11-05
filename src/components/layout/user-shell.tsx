@@ -2,27 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, Menu, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { Brand } from '@/components/ui/brand';
 import { Button } from '@/components/ui/button';
 import { AuthGuard } from '@/features/auth/components/auth-guard';
 import { SessionControls } from '@/features/auth/components/session-controls';
 import { userNavigation } from '@/features/user/lib/user-navigation';
-
-const FocusContext = createContext<(on: boolean) => void>(() => {});
-
-/**
- * Full-height work screens (the code workspace) call this while mounted: the sidebar collapses to
- * icons and the top bar/footer step aside so the page owns the whole viewport.
- */
-export function useUserShellFocus() {
-  const setFocus = useContext(FocusContext);
-  useEffect(() => {
-    setFocus(true);
-    return () => setFocus(false);
-  }, [setFocus]);
-}
+import { ShellFocusProvider, useShellFocusState } from './shell-focus';
 
 function UserNavigation(props: { collapsed?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -106,17 +93,8 @@ function MobileUserNavigation(props: { onClose: () => void }) {
   );
 }
 export function UserShell(props: { children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, setCollapsed, focus, setFocus } = useShellFocusState();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [focus, setFocusState] = useState(false);
-  const collapsedBeforeFocus = useRef(false);
-  const setFocus = useCallback((on: boolean) => {
-    setFocusState(on);
-    setCollapsed((current) => {
-      if (on) collapsedBeforeFocus.current = current;
-      return on ? true : collapsedBeforeFocus.current;
-    });
-  }, []);
   const pathname = usePathname();
   const title =
     /^\/user\/(assignments|assignment-submissions|zip-submissions|classes\/[^/]+\/assignments)(\/|$)/.test(
@@ -128,7 +106,7 @@ export function UserShell(props: { children: React.ReactNode }) {
         )?.label ?? 'Tài khoản');
   return (
     <AuthGuard role="STUDENT">
-      <FocusContext value={setFocus}>
+      <ShellFocusProvider value={setFocus}>
         <div
           className={
             'user-workspace ' +
@@ -194,7 +172,7 @@ export function UserShell(props: { children: React.ReactNode }) {
               </div>
               <SessionControls />
             </header>
-            <main id="user-main" tabIndex={-1} className={focus ? 'user-main-focus' : 'user-main'}>
+            <main id="user-main" tabIndex={-1} className={focus ? 'shell-main-focus' : 'user-main'}>
               {props.children}
             </main>
             <footer className="px-4 py-5 text-sm text-muted sm:px-8" hidden={focus}>
@@ -203,7 +181,7 @@ export function UserShell(props: { children: React.ReactNode }) {
           </div>
           {mobileOpen && <MobileUserNavigation onClose={() => setMobileOpen(false)} />}
         </div>
-      </FocusContext>
+      </ShellFocusProvider>
     </AuthGuard>
   );
 }

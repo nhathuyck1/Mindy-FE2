@@ -21,7 +21,7 @@ import {
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
-import { useUserShellFocus } from '@/components/layout/user-shell';
+import { useShellFocus } from '@/components/layout/shell-focus';
 import { cn } from '@/lib/utils';
 import { codeError, useCodeQuery } from '../api/code-queries';
 import { timeLeft } from '../lib/code-format';
@@ -30,6 +30,7 @@ import {
   type StudentCodeAssignment,
   studentCodeAssignmentSchema,
 } from '../schemas/code-contracts';
+import { MetaChip } from './code-chrome';
 import { CodeEditor } from './code-editor';
 import { Kbd, Panel, PanelTabs, TabCount, ToolButton, type PanelTab } from './code-panel';
 import { DifficultyPill, ProblemDescription } from './code-problem-pane';
@@ -44,7 +45,7 @@ import { type CodeWorkspace, type SaveState, useCodeWorkspace } from './use-code
 type ProblemTab = 'problem' | 'history';
 
 export function StudentCodePage(props: { assignmentId: string }) {
-  useUserShellFocus();
+  useShellFocus();
   const base = `me/assignments/${props.assignmentId}`;
   const view = useCodeQuery('STUDENT', `${base}/code`, studentCodeAssignmentSchema, {
     refetchInterval: (query) => (query.state.data?.inFlightSubmissionId ? 1500 : false),
@@ -238,7 +239,7 @@ function CodeIde(props: {
         </div>
 
         <dl className="flex flex-wrap items-center gap-1.5 lg:flex-nowrap lg:justify-end">
-          <Meta
+          <MetaChip
             icon={Clock}
             label="Hạn nộp"
             value={timeLeft(a.dueAt, new Date(a.serverNow))}
@@ -250,8 +251,12 @@ function CodeIde(props: {
                   : null
             }
           />
-          <Meta icon={Ticket} label="Lượt còn" value={`${a.attemptsRemaining}/${a.maxAttempts}`} />
-          <Meta
+          <MetaChip
+            icon={Ticket}
+            label="Lượt còn"
+            value={`${a.attemptsRemaining}/${a.maxAttempts}`}
+          />
+          <MetaChip
             icon={Trophy}
             label="Điểm cao nhất"
             value={a.bestScore ? `${a.bestScore}/${a.maxScore}` : '—'}
@@ -404,34 +409,6 @@ function CodeIde(props: {
           </div>
         </Modal>
       )}
-    </div>
-  );
-}
-
-function Meta(props: {
-  icon: typeof Clock;
-  label: string;
-  value: string;
-  tone?: 'warn' | 'bad' | null;
-}) {
-  return (
-    <div
-      title={props.label}
-      className={cn(
-        'flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] ring-1 transition-colors',
-        props.tone === 'bad'
-          ? 'bg-peach text-headsup ring-headsup/25'
-          : props.tone === 'warn'
-            ? 'bg-peach text-black ring-coral/30'
-            : 'bg-canvas text-black ring-line',
-      )}
-    >
-      <dt className="sr-only">{props.label}</dt>
-      <props.icon
-        aria-hidden="true"
-        className={cn('size-3.5', props.tone ? 'text-current' : 'text-muted/60')}
-      />
-      <dd className="font-bold whitespace-nowrap tabular-nums">{props.value}</dd>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import { Brand } from '@/components/ui/brand';
+import { ShellFocusProvider, useShellFocusState } from './shell-focus';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { LoadingOverlay } from '@/components/ui/spinner';
@@ -76,7 +77,7 @@ function MentorAccess(props: { children: React.ReactNode }) {
   );
 }
 export function MentorShell(props: { children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, setCollapsed, focus, setFocus } = useShellFocusState();
   const [mobile, setMobile] = useState(false);
   const path = usePathname();
   const links = (compact = false) => (
@@ -102,53 +103,59 @@ export function MentorShell(props: { children: React.ReactNode }) {
   );
   return (
     <MentorAccess>
-      <div className={`admin-workspace ${collapsed ? 'admin-workspace-collapsed' : ''}`}>
-        <a
-          href="#mentor-main"
-          className="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:bg-canvas focus:p-4"
-        >
-          Đến nội dung chính
-        </a>
-        <aside className="admin-sidebar">
-          <div className="flex h-23 items-center justify-between border-b border-line px-4">
-            {!collapsed && <Brand />}
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={collapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
-              onClick={() => setCollapsed(!collapsed)}
-            >
-              {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
-            </Button>
-          </div>
-          <p
-            className={`px-5 pt-6 pb-2 text-xs font-bold tracking-wider text-muted uppercase ${collapsed ? 'sr-only' : ''}`}
+      <ShellFocusProvider value={setFocus}>
+        <div className={`admin-workspace ${collapsed ? 'admin-workspace-collapsed' : ''}`}>
+          <a
+            href="#mentor-main"
+            className="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:bg-canvas focus:p-4"
           >
-            Không gian giảng dạy
-          </p>
-          {links(collapsed)}
-        </aside>
-        <div className="min-w-0">
-          <header className="admin-topbar">
-            <div className="flex min-w-0 items-center gap-3">
+            Đến nội dung chính
+          </a>
+          <aside className="admin-sidebar">
+            <div className="flex h-23 items-center justify-between border-b border-line px-4">
+              {!collapsed && <Brand />}
               <Button
                 variant="ghost"
                 size="icon"
-                className="lg:hidden"
-                aria-label="Mở menu Mentor"
-                onClick={() => setMobile(true)}
+                aria-label={collapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
+                onClick={() => setCollapsed(!collapsed)}
               >
-                <Menu />
+                {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
               </Button>
-              <span className="font-bold">Không gian Mentor</span>
             </div>
-            <SessionControls />
-          </header>
-          <main id="mentor-main" className="admin-main" tabIndex={-1}>
-            {props.children}
-          </main>
+            <p
+              className={`px-5 pt-6 pb-2 text-xs font-bold tracking-wider text-muted uppercase ${collapsed ? 'sr-only' : ''}`}
+            >
+              Không gian giảng dạy
+            </p>
+            {links(collapsed)}
+          </aside>
+          <div className="min-w-0">
+            <header className="admin-topbar" hidden={focus}>
+              <div className="flex min-w-0 items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden"
+                  aria-label="Mở menu Mentor"
+                  onClick={() => setMobile(true)}
+                >
+                  <Menu />
+                </Button>
+                <span className="font-bold">Không gian Mentor</span>
+              </div>
+              <SessionControls />
+            </header>
+            <main
+              id="mentor-main"
+              className={focus ? 'shell-main-focus' : 'admin-main'}
+              tabIndex={-1}
+            >
+              {props.children}
+            </main>
+          </div>
         </div>
-      </div>
+      </ShellFocusProvider>
       {mobile && (
         <Modal title="Mindy Mentor" sheet onClose={() => setMobile(false)}>
           <div className="flex min-h-[70dvh] flex-col">{links()}</div>

@@ -145,3 +145,14 @@ export function matchBracket(tokens: Token[], caret: number): [number, number] |
   }
   return null;
 }
+
+/** Tokens split into lines (block comments and template strings may span several lines). */
+export function tokenLines(source: string, language: CodeLanguageKey): Omit<Token, 'from'>[][] {
+  const lines: Omit<Token, 'from'>[][] = [[]];
+  for (const token of tokenize(source, language))
+    token.text.split('\n').forEach((part, i) => {
+      if (i > 0) lines.push([]);
+      if (part) lines[lines.length - 1]?.push({ kind: token.kind, text: part });
+    });
+  return lines;
+}

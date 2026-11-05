@@ -93,56 +93,72 @@ export function MentorSessionAssignments(props: { sessionId: string; readonly?: 
         ))}
       </ul>
       {open && (
-        <Modal title="Tạo bài tập code" onClose={() => setOpen(false)}>
-          <form className="space-y-3" onSubmit={submit}>
-            <label className="block space-y-1 text-sm font-semibold">
-              Tên bài
-              <Input
-                required
-                maxLength={250}
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-              />
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="space-y-1 text-sm font-semibold">
-                Điểm tối đa
+        <Modal
+          title="Tạo bài tập code"
+          onClose={() => setOpen(false)}
+          contentClassName="assignment-workspace font-sans"
+        >
+          <form className="space-y-4 p-5" onSubmit={submit}>
+            <fieldset disabled={create.isPending} className="space-y-4">
+              <label className="block space-y-1 text-sm font-semibold">
+                Tên bài
                 <Input
                   required
-                  inputMode="decimal"
-                  pattern="^(0|[1-9]\d{0,5})(\.\d{1,2})?$"
-                  value={form.maxScore}
-                  onChange={(e) => setForm({ ...form, maxScore: e.target.value })}
+                  maxLength={250}
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
                 />
               </label>
-              <label className="space-y-1 text-sm font-semibold">
-                Số lần nộp (1–50)
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="space-y-1 text-sm font-semibold">
+                  Điểm tối đa
+                  <Input
+                    required
+                    inputMode="decimal"
+                    pattern="^(0|[1-9]\d{0,5})(\.\d{1,2})?$"
+                    value={form.maxScore}
+                    onChange={(e) => setForm({ ...form, maxScore: e.target.value })}
+                  />
+                </label>
+                <label className="space-y-1 text-sm font-semibold">
+                  Số lần nộp (1–50)
+                  <Input
+                    required
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={form.maxAttempts}
+                    onChange={(e) => setForm({ ...form, maxAttempts: e.target.value })}
+                  />
+                </label>
+              </div>
+              <label className="block space-y-1 text-sm font-semibold">
+                <span className="flex flex-wrap items-baseline justify-between gap-2">
+                  Hạn nộp
+                  <span className="text-xs font-normal text-muted-foreground">
+                    Ngày và giờ, theo giờ trên máy của bạn
+                  </span>
+                </span>
                 <Input
                   required
-                  type="number"
-                  min={1}
-                  max={50}
-                  value={form.maxAttempts}
-                  onChange={(e) => setForm({ ...form, maxAttempts: e.target.value })}
+                  type="datetime-local"
+                  value={form.dueAt}
+                  onChange={(e) => setForm({ ...form, dueAt: e.target.value })}
                 />
               </label>
-            </div>
-            <label className="block space-y-1 text-sm font-semibold">
-              Hạn nộp
-              <Input
-                required
-                type="datetime-local"
-                value={form.dueAt}
-                onChange={(e) => setForm({ ...form, dueAt: e.target.value })}
-              />
-            </label>
+            </fieldset>
             {error && <CodeMessage tone="error">{error}</CodeMessage>}
-            <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <div className="flex flex-wrap justify-end gap-3 pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={create.isPending}
+                onClick={() => setOpen(false)}
+              >
                 Huỷ
               </Button>
               <Button type="submit" disabled={create.isPending}>
-                Tạo và soạn đề
+                {create.isPending ? 'Đang tạo…' : 'Tạo và soạn đề'}
               </Button>
             </div>
           </form>

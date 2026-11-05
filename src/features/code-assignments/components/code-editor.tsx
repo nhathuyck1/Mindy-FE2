@@ -45,6 +45,10 @@ export type CodeEditorProps = {
   fill?: boolean;
   className?: string;
   onCursor?: (line: number, column: number) => void;
+  /** Selected text whenever the selection changes ('' when nothing is selected). */
+  onSelectionChange?: (text: string) => void;
+  /** Extra drag data for selections dragged out of the editor (e.g. onto the whiteboard). */
+  dragData?: Record<string, string>;
 };
 
 /** Replace a range through the browser's editing pipeline so native undo/redo keeps working. */
@@ -103,6 +107,7 @@ export function CodeEditor(props: CodeEditorProps) {
     const column = offset - before.lastIndexOf('\n');
     setCaret((c) => (c?.offset === offset && c.line === line ? c : { offset, line }));
     props.onCursor?.(line, column);
+    props.onSelectionChange?.(el.value.slice(el.selectionStart, el.selectionEnd));
   }
 
   function onKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -322,6 +327,12 @@ export function CodeEditor(props: CodeEditorProps) {
           onFocus={trackCaret}
           onBlur={() => setCaret(null)}
           onScroll={syncScroll}
+          onDragStart={(event) => {
+            if (!props.dragData) return;
+            for (const [type, value] of Object.entries(props.dragData))
+              event.dataTransfer.setData(type, value);
+            event.dataTransfer.effectAllowed = 'copyMove';
+          }}
           className="code-ide-dark-scroll absolute inset-0 m-0 size-full resize-none overflow-auto border-0 bg-transparent whitespace-pre text-transparent caret-coral outline-none selection:bg-mint/35 selection:text-transparent [-webkit-text-fill-color:transparent]"
           style={{
             padding: `${PAD}px 24px ${PAD}px 4px`,

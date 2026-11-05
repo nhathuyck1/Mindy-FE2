@@ -39,8 +39,26 @@ function Fact(props: { icon: typeof Cpu; children: React.ReactNode }) {
   );
 }
 
+/** What the problem page needs; the student view and the mentor's live preview both fit it. */
+export type ProblemView = {
+  problem: Pick<
+    StudentCodeAssignment['problem'],
+    | 'difficulty'
+    | 'cpuTimeLimitMs'
+    | 'memoryLimitMb'
+    | 'signature'
+    | 'statementMd'
+    | 'constraintsMd'
+  >;
+  samples: Pick<
+    StudentCodeAssignment['samples'][number],
+    'position' | 'display' | 'expected' | 'explanationMd'
+  >[];
+  hiddenTestCount: number;
+};
+
 /** Statement, samples and constraints, laid out like an online judge problem page. */
-export function ProblemDescription(props: { assignment: StudentCodeAssignment }) {
+export function ProblemDescription(props: { assignment: ProblemView; footnote?: boolean }) {
   const a = props.assignment;
   const sig = a.problem.signature;
   return (
@@ -52,7 +70,13 @@ export function ProblemDescription(props: { assignment: StudentCodeAssignment })
         <Fact icon={Cpu}>{a.problem.memoryLimitMb} MB</Fact>
       </div>
 
-      <Statement text={a.problem.statementMd} className="text-[15px] leading-7" />
+      {a.problem.statementMd.trim() ? (
+        <Statement text={a.problem.statementMd} className="text-[15px] leading-7" />
+      ) : (
+        <p className="rounded-lg border border-dashed border-line px-4 py-6 text-center text-sm text-muted/60">
+          Mô tả đề sẽ hiện ở đây.
+        </p>
+      )}
 
       <section aria-label="Hàm cần viết" className="space-y-2">
         <h3 className="text-sm font-extrabold">Hàm cần viết</h3>
@@ -115,11 +139,13 @@ export function ProblemDescription(props: { assignment: StudentCodeAssignment })
         </section>
       )}
 
-      <p className="flex gap-2 border-t border-line pt-4 text-xs leading-5 text-muted/80">
-        <Info aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
-        Điểm là lần nộp cao nhất. Lỗi biên dịch không tính lượt; bài bị mentor huỷ vẫn tính lượt.
-        Test ẩn chỉ hiện trạng thái và thời gian chạy.
-      </p>
+      {props.footnote !== false && (
+        <p className="flex gap-2 border-t border-line pt-4 text-xs leading-5 text-muted/80">
+          <Info aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+          Điểm là lần nộp cao nhất. Lỗi biên dịch không tính lượt; bài bị mentor huỷ vẫn tính lượt.
+          Test ẩn chỉ hiện trạng thái và thời gian chạy.
+        </p>
+      )}
     </article>
   );
 }

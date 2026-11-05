@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matchBracket, tokenize } from './code-highlight';
+import { matchBracket, tokenize, tokenLines } from './code-highlight';
 
 const kinds = (source: string, language: 'javascript' | 'java21' = 'javascript') =>
   tokenize(source, language)
@@ -86,5 +86,18 @@ describe('matchBracket', () => {
 
   it('returns null away from brackets', () => {
     expect(matchBracket(tokens, source.indexOf('b'))).toBeNull();
+  });
+});
+
+describe('tokenLines', () => {
+  it('splits tokens into lines and keeps a block comment coloured across lines', () => {
+    const lines = tokenLines('/* a\n b */\nreturn x;', 'javascript').map((line) =>
+      line.map((t) => `${t.kind}:${t.text}`),
+    );
+    expect(lines).toEqual([
+      ['comment:/* a'],
+      ['comment: b */'],
+      ['control:return', 'plain: x', 'operator:;'],
+    ]);
   });
 });

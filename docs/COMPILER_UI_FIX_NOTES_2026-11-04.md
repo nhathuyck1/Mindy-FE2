@@ -3,23 +3,23 @@
 - Ngày ghi nhận: **04/11/2026**.
 - Trang: [Chi tiết buổi học Mentor](https://mindy-fe-2.vercel.app/mentor/sessions/6a867a15-dcc8-4b5a-b7b8-9b8b8f4b897e).
 - Cách mở: Lớp của tôi → chọn lớp → Buổi học → mở buổi → Bài tập code → Tạo bài code.
-- Trạng thái: **Chưa sửa UI**. Tài liệu là checklist để xử lý sau.
+- Trạng thái: **Đã sửa 04/11/2026** (modal tạo bài CODE và modal Nộp bài?). UI-04 (kiểm tra responsive 320/390/768 px) cần chạy e2e/duyệt tay trên máy thật.
 - Bằng chứng: ảnh người dùng gửi và đối chiếu source local nhánh dev sau merge compiler. Chưa đo computed styles trên website, chưa kiểm tra lại trang bằng tài khoản Mentor.
 
 ![Modal tạo bài tập code được người dùng chụp](assets/compiler-ui-review/create-code-modal-2026-11-04.png)
 
 ## Tổng hợp
 
-| ID    | Ưu tiên | Vấn đề                                                | Bằng chứng                                       | Trạng thái        |
-| ----- | ------- | ----------------------------------------------------- | ------------------------------------------------ | ----------------- |
-| UI-01 | P2      | Nội dung form sát mép modal, không thẳng hàng tiêu đề | Thấy trong ảnh; source xác nhận thiếu padding    | [ ] Chưa sửa      |
-| UI-02 | P2      | Hàng nút sát mép phải và đáy modal                    | Thấy trong ảnh; source xác nhận thiếu khoảng đệm | [ ] Chưa sửa      |
-| UI-03 | P2      | Modal CODE chưa dùng scope typography của bài tập     | Source xác nhận; cần đối chiếu font/size thực tế | [ ] Chưa sửa      |
-| UI-04 | P3      | Cần kiểm tra bố cục và khoảng cách ở màn hình nhỏ     | Suy ra từ source; chưa tái hiện mobile           | [ ] Chưa kiểm tra |
-| UI-05 | P3      | Ô hạn nộp cần chỉ dẫn rõ ngày/giờ và múi giờ          | Ảnh có placeholder native; đề xuất cải thiện     | [ ] Chưa sửa      |
-| UI-06 | P3      | Nút tạo thiếu phản hồi bằng chữ lúc đang gửi          | Source xác nhận chỉ disable nút                  | [ ] Chưa sửa      |
+| ID    | Ưu tiên | Vấn đề                                                | Bằng chứng                                       | Trạng thái                                   |
+| ----- | ------- | ----------------------------------------------------- | ------------------------------------------------ | -------------------------------------------- |
+| UI-01 | P2      | Nội dung form sát mép modal, không thẳng hàng tiêu đề | Thấy trong ảnh; source xác nhận thiếu padding    | [x] Đã sửa 04/11                             |
+| UI-02 | P2      | Hàng nút sát mép phải và đáy modal                    | Thấy trong ảnh; source xác nhận thiếu khoảng đệm | [x] Đã sửa 04/11                             |
+| UI-03 | P2      | Modal CODE chưa dùng scope typography của bài tập     | Source xác nhận; cần đối chiếu font/size thực tế | [x] Đã sửa 04/11                             |
+| UI-04 | P3      | Cần kiểm tra bố cục và khoảng cách ở màn hình nhỏ     | Suy ra từ source; chưa tái hiện mobile           | [ ] Chưa kiểm tra                            |
+| UI-05 | P3      | Ô hạn nộp cần chỉ dẫn rõ ngày/giờ và múi giờ          | Ảnh có placeholder native; đề xuất cải thiện     | [x] Thêm chỉ dẫn "theo giờ trên máy của bạn" |
+| UI-06 | P3      | Nút tạo thiếu phản hồi bằng chữ lúc đang gửi          | Source xác nhận chỉ disable nút                  | [x] Đã sửa 04/11                             |
 
-**Bổ sung UI-07 (P2):** modal xác nhận nộp bài của Student cũng thiếu padding thân/footer và chưa áp scope typography bài tập; chi tiết và ảnh ở mục UI-07 bên dưới.
+**Bổ sung UI-07 (P2) — đã sửa 04/11:** modal xác nhận nộp bài của Student cũng thiếu padding thân/footer và chưa áp scope typography bài tập; chi tiết và ảnh ở mục UI-07 bên dưới.
 
 P2: lỗi trình bày nên sửa trong đợt UI tiếp theo. P3: cải thiện hoặc kiểm tra bổ sung. Không có bằng chứng từ ảnh rằng việc tạo bài/API đang lỗi.
 

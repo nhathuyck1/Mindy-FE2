@@ -16,6 +16,8 @@ import {
 } from '../lib/board-shapes';
 import type { BoardShape } from '../schemas/whiteboard-contracts';
 import { WhiteboardImage } from './whiteboard-image';
+import { WhiteboardCodeBlock } from './whiteboard-code-block';
+import { CODE_FONT, CODE_PALETTE, codeMetrics } from '../lib/code-board';
 
 export type BoardTool = 'select' | 'pan' | 'pen' | 'eraser';
 export type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
@@ -200,7 +202,8 @@ export function WhiteboardCanvas(props: {
   const editable = props.connection.editable() && !props.preview;
   const items = props.preview ?? props.state.shapes;
   const editing = items.find(
-    (s) => s.id === props.editing && (s.type === 'sticky' || s.type === 'text'),
+    (s): s is Extract<BoardShape, { type: 'sticky' | 'text' | 'code' }> =>
+      s.id === props.editing && (s.type === 'sticky' || s.type === 'text' || s.type === 'code'),
   );
   useEffect(() => {
     const element = root.current;
@@ -239,7 +242,10 @@ export function WhiteboardCanvas(props: {
   }
   function editAt(point: { x: number; y: number }) {
     const shape = shapeAt(point);
-    if (editable && (shape?.type === 'sticky' || shape?.type === 'text')) {
+    if (
+      editable &&
+      (shape?.type === 'sticky' || shape?.type === 'text' || shape?.type === 'code')
+    ) {
       props.select(shape.id);
       props.setTool('select');
       props.edit(shape.id);
@@ -384,8 +390,22 @@ export function WhiteboardCanvas(props: {
       setDrag({ id: g.id, x: g.initialX + world.x - g.x, y: g.initialY + world.y - g.y });
     if (g.type === 'resize' && editable) {
       const currentKeepRatio = event.shiftKey ? !g.keepRatio : g.keepRatio;
-      const minW = g.initialBox.type === 'sticky' ? 80 : g.initialBox.type === 'text' ? 40 : 20;
-      const minH = g.initialBox.type === 'sticky' ? 60 : g.initialBox.type === 'text' ? 30 : 20;
+      const minW =
+        g.initialBox.type === 'code'
+          ? 140
+          : g.initialBox.type === 'sticky'
+            ? 80
+            : g.initialBox.type === 'text'
+              ? 40
+              : 20;
+      const minH =
+        g.initialBox.type === 'code'
+          ? 70
+          : g.initialBox.type === 'sticky'
+            ? 60
+            : g.initialBox.type === 'text'
+              ? 30
+              : 20;
       const nextBox = computeResizedBox({
         handle: g.handle,
         initial: g.initialBox,
@@ -471,7 +491,7 @@ export function WhiteboardCanvas(props: {
       const step = event.shiftKey ? 10 : 1;
       if (event.altKey && selected.type !== 'stroke') {
         const nextW = Math.max(
-          selected.type === 'sticky' ? 80 : 20,
+          selected.type === 'code' ? 140 : selected.type === 'sticky' ? 80 : 20,
           Math.min(
             10000,
             selected.width +
@@ -479,7 +499,7 @@ export function WhiteboardCanvas(props: {
           ),
         );
         const nextH = Math.max(
-          selected.type === 'sticky' ? 60 : 20,
+          selected.type === 'code' ? 70 : selected.type === 'sticky' ? 60 : 20,
           Math.min(
             10000,
             selected.height +
@@ -551,11 +571,17 @@ export function WhiteboardCanvas(props: {
                 x={currentBox.x}
                 y={currentBox.y}
                 onDblClick={() => {
-                  if (editable && (shape.type === 'sticky' || shape.type === 'text'))
+                  if (
+                    editable &&
+                    (shape.type === 'sticky' || shape.type === 'text' || shape.type === 'code')
+                  )
                     props.edit(shape.id);
                 }}
                 onDblTap={() => {
-                  if (editable && (shape.type === 'sticky' || shape.type === 'text'))
+                  if (
+                    editable &&
+                    (shape.type === 'sticky' || shape.type === 'text' || shape.type === 'code')
+                  )
                     props.edit(shape.id);
                 }}
               >
@@ -623,6 +649,13 @@ export function WhiteboardCanvas(props: {
                     fontSize={shape.fontSize}
                     lineHeight={1.375}
                     fill={shape.color}
+                  />
+                )}
+                {shape.type === 'code' && (
+                  <WhiteboardCodeBlock
+                    shape={shape}
+                    width={currentBox.width}
+                    height={currentBox.height}
                   />
                 )}
                 {shape.type === 'image' && (
@@ -697,9 +730,11 @@ export function WhiteboardCanvas(props: {
             ))}
         </Layer>
       </Stage>
-      {(editing?.type === 'sticky' || editing?.type === 'text') && editable && (
+      {editing && editable && (
         <textarea
-          aria-label="Nội dung ghi chú"
+          aria-label={editing.type === 'code' ? 'Nội dung khối code' : 'Nội dung ghi chú'}
+          spellCheck={editing.type !== 'code'}
+          wrap={editing.type === 'code' ? 'off' : undefined}
           autoFocus
           maxLength={5000}
           value={composition ?? editing.text}
@@ -714,6 +749,18 @@ export function WhiteboardCanvas(props: {
           }}
           onKeyDown={(e) => {
             if (e.nativeEvent.isComposing) return;
+            // Code blocks: Tab indents instead of leaving the editor.
+            if (editing.type === 'code' && e.key === 'Tab' && !e.shiftKey) {
+              e.preventDefault();
+              const el = e.currentTarget,
+                start = el.selectionStart;
+              const next = `${el.value.slice(0, start)}  ${el.value.slice(el.selectionEnd)}`;
+              if (next.length <= 5000) {
+                replaceText(props.connection.doc, editing.id, next);
+                requestAnimationFrame(() => el.setSelectionRange(start + 2, start + 2));
+              }
+              return;
+            }
             if (e.key === 'Escape' || ((e.ctrlKey || e.metaKey) && e.key === 'Enter')) {
               props.edit(null);
               root.current?.focus();
@@ -729,9 +776,31 @@ export function WhiteboardCanvas(props: {
             top: props.view.y + editing.y * props.view.scale,
             width: editing.width * props.view.scale,
             height: editing.height * props.view.scale,
-            fontSize: (editing.type === 'text' ? editing.fontSize : 16) * props.view.scale,
-            backgroundColor: editing.type === 'sticky' ? editing.color : 'var(--color-canvas)',
-            color: editing.type === 'text' ? editing.color : 'var(--color-forest)',
+            fontSize: (editing.type === 'sticky' ? 16 : editing.fontSize) * props.view.scale,
+            backgroundColor:
+              editing.type === 'sticky'
+                ? editing.color
+                : editing.type === 'code'
+                  ? CODE_PALETTE.bg
+                  : 'var(--color-canvas)',
+            color:
+              editing.type === 'text'
+                ? editing.color
+                : editing.type === 'code'
+                  ? CODE_PALETTE.plain
+                  : 'var(--color-forest)',
+            ...(editing.type === 'code'
+              ? (() => {
+                  const m = codeMetrics(editing.fontSize);
+                  return {
+                    fontFamily: CODE_FONT,
+                    lineHeight: `${m.lineHeight * props.view.scale}px`,
+                    padding: `${(m.header + m.pad) * props.view.scale}px ${m.pad * props.view.scale}px`,
+                    whiteSpace: 'pre' as const,
+                    borderRadius: 10 * props.view.scale,
+                  };
+                })()
+              : {}),
           }}
         />
       )}
