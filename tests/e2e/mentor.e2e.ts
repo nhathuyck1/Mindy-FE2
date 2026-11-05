@@ -116,6 +116,10 @@ test('mentor attendance keeps student names readable and preserves the attendanc
   const { calls } = await mockMentor(page);
   await page.goto(`/mentor/sessions/${mentorIds.session}`);
   await expect(page.getByText('Phòng: Phòng 101', { exact: false })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Về lớp học/ })).toHaveAttribute(
+    'href',
+    `/mentor/classes/${mentorIds.class}`,
+  );
   await expect(page.getByRole('region', { name: 'Danh sách học viên dự kiến' })).toBeVisible();
   await page.getByRole('button', { name: 'Bắt đầu buổi' }).click();
   const absentStat = page.getByText('Vắng mặt', { exact: true }).first().locator('..');
@@ -192,6 +196,12 @@ test('mentor attendance keeps student names readable and preserves the attendanc
     ),
   ).toBe(true);
   expect(calls.some((c) => c.path.includes('cash-orders'))).toBe(false);
+  await page.getByRole('link', { name: /Về lớp học/ }).click();
+  await expect(page).toHaveURL(`/mentor/classes/${mentorIds.class}`);
+  await expect(page.getByRole('button', { name: 'Chương', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
 });
 
 test('class roster is read only and removed unit release is absent', async ({ page }) => {

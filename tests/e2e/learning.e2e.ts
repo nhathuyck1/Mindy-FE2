@@ -33,7 +33,7 @@ const baseMaterial = {
   description: 'Làm quen với những dòng mã đầu tiên.',
   sortOrder: 1,
   revision: 1,
-  sessionId: null,
+  sessionId: fileId,
   availableAt: null,
   publishedAt: now,
   updatedAt: now,
@@ -49,7 +49,10 @@ const video = {
   file: { ...file, kind: 'VIDEO', mimeType: 'video/mp4', originalFilename: 'bai-hoc.mp4' },
   attachmentCount: 0,
 };
-async function fixture(page: Page) {
+async function fixture(
+  page: Page,
+  options: { unassigned?: boolean; unresolved?: boolean; empty?: boolean } = {},
+) {
   await mockCommerce(page);
   const state = {
     preview: false,
@@ -59,7 +62,13 @@ async function fixture(page: Page) {
     pages: [] as string[],
     detailFailure: false,
     hiddenOnly: false,
+    details: [] as string[],
   };
+  const article = {
+    ...baseMaterial,
+    sessionId: options.unassigned ? null : baseMaterial.sessionId,
+  };
+  const clip = { ...video, sessionId: options.unresolved ? articleId : video.sessionId };
   const context = {
     id: classId,
     courseId,
@@ -172,10 +181,10 @@ async function fixture(page: Page) {
         });
       return route.fulfill({
         json: {
-          items: url.searchParams.get('page') === '1' ? [baseMaterial] : [video],
+          items: options.empty ? [] : url.searchParams.get('page') === '1' ? [article] : [clip],
           page: Number(url.searchParams.get('page')),
           pageSize: 100,
-          total: 101,
+          total: options.empty ? 0 : 101,
           asOf: now,
         },
       });
@@ -194,6 +203,7 @@ async function fixture(page: Page) {
         },
       });
     }
+    state.details.push(path);
     if (state.detailFailure)
       return route.fulfill({
         status: 404,
@@ -202,14 +212,14 @@ async function fixture(page: Page) {
     return route.fulfill({
       json: path.endsWith(videoId)
         ? {
-            ...video,
+            ...clip,
             contentHtml: null,
             contentSchemaVersion: null,
             inlineImages: [],
             attachments: [],
           }
         : {
-            ...baseMaterial,
+            ...article,
             contentHtml:
               '<h2>Mục tiêu bài học</h2><p>Hiểu cách khai báo biến và sử dụng kiểu dữ liệu.</p><ul><li>Đặt tên biến rõ ràng</li><li>Thực hành với ví dụ</li></ul><img data-file-id="' +
               imageId +
@@ -242,6 +252,12 @@ test('Student opens materials, reads article and attachments, changes lessons an
   await expect(page.getByRole('article')).toHaveCount(1);
   await page.getByRole('link', { name: 'Vào học', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Mục tiêu bài học' })).toBeVisible();
+  const first = page.getByRole('button', { name: /1\. Biến và kiểu dữ liệu/ });
+  await expect(first).toHaveAttribute('aria-expanded', 'true');
+  if (info.project.name === 'desktop')
+    await expect(page.getByRole('heading', { name: 'Mục tiêu bài học' })).toBeInViewport();
+  expect(state.details.every((path) => path.endsWith(articleId))).toBe(true);
+  await page.screenshot({ path: info.outputPath('learning-inline-initial.png'), fullPage: true });
   await expect(page.getByRole('img', { name: 'Sơ đồ biến' })).toBeVisible();
   expect(state.pages).toEqual(['1', '2']);
   expect(await page.evaluate(() => document.querySelector('.learning-article script'))).toBeNull();
@@ -258,16 +274,56 @@ test('Student opens materials, reads article and attachments, changes lessons an
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: info.outputPath('learning-article.png'), fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByRole('button', { name: 'Bài tiếp theo' }).click();
-  await expect(page.getByRole('heading', { name: 'Video thực hành', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Mở nội dung', exact: true }).click();
+  await first.click();
+  await expect(first).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('heading', { name: 'Mục tiêu bài học' })).toHaveCount(0);
+  await first.press('Enter');
+  await expect(first).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('heading', { name: 'Mục tiêu bài học' })).toBeVisible();
+  await page.getByRole('button', { name: /2\. Video thực hành/ }).click();
+  await expect(first).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('article', { name: 'Video thực hành', exact: true })).toBeVisible();
   await expect(page.locator('video')).toHaveAttribute('src', /signature=/);
   const before = state.signed;
   await page.getByRole('button', { name: 'Làm mới liên kết' }).click();
   await expect.poll(() => state.signed).toBeGreaterThan(before);
-  await page.getByRole('button', { name: /Cấu trúc điều khiển/ }).click();
+  await page.getByRole('button', { name: /2\. Video thực hành/ }).click();
+  await expect(page.locator('video')).toHaveCount(0);
+  if (info.project.name === 'mobile')
+    await page.getByRole('combobox', { name: 'Chương đang xem' }).selectOption(lockedId);
+  else await page.getByRole('button', { name: /Cấu trúc điều khiển/ }).click();
   await expect(page.getByRole('status')).toContainText('Chương chưa được mở');
   expect(state.lists.every((path) => path.includes(unitId))).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('shared and unresolved materials remain in their chapter and toggle inline', async ({
+  page,
+}, info) => {
+  await fixture(page, { unassigned: true, unresolved: true });
+  await page.goto(`/user/materials/${classId}`);
+  const shared = page.getByRole('region', { name: 'Nội dung chung của chương', exact: true });
+  const unknown = page.getByRole('region', { name: 'Buổi học chưa xác định', exact: true });
+  await expect(shared.getByRole('heading', { name: 'Mục tiêu bài học' })).toBeVisible();
+  if (info.project.name === 'desktop')
+    await expect(shared.getByRole('heading', { name: 'Mục tiêu bài học' })).toBeInViewport();
+  const second = unknown.getByRole('button', { name: /Video thực hành/ });
+  await second.click();
+  await expect(unknown.getByRole('article', { name: 'Video thực hành' })).toBeVisible();
+  await expect(shared.getByRole('heading', { name: 'Mục tiêu bài học' })).toHaveCount(0);
+  await second.press('Space');
+  await expect(second).toHaveAttribute('aria-expanded', 'false');
+  await expect(unknown.getByRole('article')).toHaveCount(0);
+});
+
+test('a session without published content keeps its schedule and meeting links', async ({
+  page,
+}) => {
+  const state = await fixture(page, { empty: true });
+  await page.goto(`/user/materials/${classId}`);
+  await expect(page.getByText('Chưa có nội dung được phát hành cho buổi học này.')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Tham gia buổi học' })).toBeVisible();
+  expect(state.details).toHaveLength(0);
 });
 
 test('Cash preview shows curriculum without loading private materials', async ({ page }) => {
