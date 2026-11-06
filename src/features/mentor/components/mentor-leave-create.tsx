@@ -1,6 +1,6 @@
 'use client';
-import { useState } from 'react';
-import { ArrowLeft, ArrowDown, Send, CheckCircle2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
 import { LeaveSteps, LeaveStepHeading } from './mentor-leave-ui';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,20 +15,26 @@ import {
   type LeavePreview,
   type LeaveSessionMapping,
 } from '../schemas/leave-contracts';
-import { localDate, leavePeriods, makeupMinDate } from '../lib/leave-display';
-import { hasOverlappingMakeupSlots } from '../lib/leave-makeup';
+import { makeupMinDate, leavePeriods } from '../lib/leave-display';
+import { hasOverlappingMakeupSlots, makeupSlotsOverlap } from '../lib/leave-makeup';
 import { mentorDate } from './mentor-shared';
 import { SessionMakeupSlot } from './mentor-leave-makeup-slot';
-import { ScheduleConflicts } from '@/features/operations/components/schedule-conflicts';
 export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string) => void }) {
-  const [now] = useState(() => Date.now());
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const update = () => setNow(Date.now());
+    const timer = window.setInterval(update, 60_000);
+    window.addEventListener('focus', update);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', update);
+    };
+  }, []);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [period, setPeriod] = useState('FULL_DAY');
-  const [mappingMode, setMappingMode] = useState('keep-time');
   const [reason, setReason] = useState('');
   const [preview, setPreview] = useState<LeavePreview | null>(null);
-  const [days, setDays] = useState<Record<string, string>>({});
   const [sessions, setSessions] = useState<Record<string, LeaveSessionMapping>>({});
   const [error, setError] = useState('');
   const read = useMentorCommand(leavePreviewSchema);
@@ -36,24 +42,32 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
   const busy = read.isPending || create.isPending;
   const resetPreview = () => {
     setPreview(null);
-    setDays({});
     setSessions({});
     setError('');
     read.reset();
     create.reset();
   };
-  const sourceDays = [
-    ...new Set(
-      preview?.affectedSessions.map((item) => localDate(item.startsAt, preview.timeZone)) ?? [],
-    ),
-  ];
-  const mappingsComplete =
+  const minMakeupDate = (sourceStartsAt: string, currentTime: number) =>
+    preview
+      ? makeupMinDate(preview.asOf, preview.timeZone, currentTime, {
+          period,
+          toDate,
+          sourceStartsAt,
+        })
+      : '';
+  const hasCompleteMappings = (currentTime: number) =>
     preview &&
     preview.affectedSessions.length > 0 &&
-    (period === 'FULL_DAY' && mappingMode === 'keep-time'
-      ? sourceDays.every((day) => days[day])
-      : !hasOverlappingMakeupSlots(Object.values(sessions)) &&
-        preview.affectedSessions.every((item) => sessions[item.sessionId]));
+    !hasOverlappingMakeupSlots(Object.values(sessions)) &&
+    preview.affectedSessions.every((item) => {
+      const mapping = sessions[item.sessionId];
+      return (
+        mapping &&
+        mapping.targetDate >= minMakeupDate(item.startsAt, currentTime) &&
+        Date.parse(mapping.startsAt) > Math.max(currentTime, Date.parse(preview.asOf))
+      );
+    });
+  const mappingsComplete = hasCompleteMappings(now);
   return (
     <section
       className="mx-auto mb-6 max-w-4xl space-y-6 rounded-2xl border border-line bg-canvas p-5 sm:p-8"
@@ -87,7 +101,6 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
           }
           setError('');
           setPreview(null);
-          setDays({});
           setSessions({});
           create.reset();
           try {
@@ -151,7 +164,7 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
           className="sm:col-span-2 lg:col-span-3 lg:justify-self-start"
           disabled={busy}
         >
-          {read.isPending ? 'Đang xem…' : 'Xem buổi bị ảnh hưởng'}
+          {read.isPending ? 'Đang kiểm tra…' : 'Kiểm tra lịch dạy'}
         </Button>
       </form>
       {(error || read.error) && (
@@ -180,92 +193,42 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
                 <LeaveStepHeading
                   step={2}
                   title="Sắp xếp lịch dạy bù"
-                  description="Chọn ngày hoặc khung giờ bù cho từng buổi bị ảnh hưởng."
+                  description="Mỗi buổi nghỉ có lịch bù riêng. Chọn ngày và giờ phù hợp cho từng buổi."
                 />
               </div>
-              {period === 'FULL_DAY' && (
-                <label className="block space-y-2 text-sm font-bold">
-                  Cách đổi lịch
-                  <NativeSelect
-                    value={mappingMode}
-                    disabled={busy}
-                    onChange={(e) => {
-                      setMappingMode(e.target.value);
-                      setDays({});
-                      setSessions({});
-                      create.reset();
-                    }}
-                  >
-                    <NativeSelectOption value="keep-time">Đổi ngày, giữ giờ</NativeSelectOption>
-                    <NativeSelectOption value="choose-slot">
-                      Đổi ngày, chọn slot cho từng buổi
-                    </NativeSelectOption>
-                  </NativeSelect>
-                </label>
-              )}
-              {period === 'FULL_DAY' && mappingMode === 'keep-time' ? (
-                <div className="space-y-3">
-                  {sourceDays.map((day) => (
-                    <div
-                      key={day}
-                      className="grid gap-4 rounded-xl border border-line p-4 sm:grid-cols-2 sm:gap-6"
-                    >
-                      <label className="order-2 block space-y-2 text-sm font-bold sm:order-2">
-                        Ngày dạy bù
-                        <Input
-                          className="h-12"
-                          aria-label={`Dạy bù cho ngày ${day}`}
-                          type="date"
-                          required
-                          value={days[day] ?? ''}
-                          disabled={busy}
-                          onChange={(e) => setDays({ ...days, [day]: e.target.value })}
-                        />
-                      </label>
-                      <div className="order-1 space-y-2 sm:order-1">
-                        <p className="text-sm font-bold">
-                          Buổi nghỉ · {mentorDate(`${day}T00:00:00+07:00`, false)}
-                        </p>
-                        <ul className="space-y-1 text-sm text-muted">
-                          {preview.affectedSessions
-                            .filter((item) => localDate(item.startsAt, preview.timeZone) === day)
-                            .map((item) => (
-                              <li key={item.sessionId}>
-                                {item.title} · {mentorDate(item.startsAt)}
-                              </li>
-                            ))}
-                        </ul>
-                        <p className="flex items-center gap-2 text-xs text-muted">
-                          <ArrowDown aria-hidden="true" className="size-3.5" />
-                          Giữ nguyên giờ và thời lượng dạy
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <fieldset disabled={busy} className="space-y-3">
-                  {preview.affectedSessions.map((source) => (
-                    <SessionMakeupSlot
-                      key={source.sessionId}
-                      source={source}
-                      minDate={makeupMinDate(preview.asOf, preview.timeZone, now, {
-                        period,
-                        toDate,
-                        sourceStartsAt: source.startsAt,
-                      })}
-                      onSelect={(mapping) =>
-                        setSessions((current) => {
-                          const next = { ...current };
-                          if (mapping) next[source.sessionId] = mapping;
-                          else delete next[source.sessionId];
-                          return next;
-                        })
-                      }
-                    />
-                  ))}
-                </fieldset>
-              )}
+              <fieldset disabled={busy} className="space-y-4">
+                <legend className="sr-only">Lịch dạy bù cho từng buổi nghỉ</legend>
+                {preview.affectedSessions.map((source, index) => (
+                  <SessionMakeupSlot
+                    key={source.sessionId}
+                    source={source}
+                    index={index + 1}
+                    minDate={minMakeupDate(source.startsAt, now)}
+                    timeZone={preview.timeZone}
+                    selection={sessions[source.sessionId]}
+                    otherMappings={Object.values(sessions).filter(
+                      (mapping) => mapping.sourceSessionId !== source.sessionId,
+                    )}
+                    onSelect={(mapping) =>
+                      setSessions((current) => {
+                        if (
+                          mapping &&
+                          Object.values(current).some(
+                            (other) =>
+                              other.sourceSessionId !== source.sessionId &&
+                              makeupSlotsOverlap(mapping, other),
+                          )
+                        )
+                          return current;
+                        const next = { ...current };
+                        if (mapping) next[source.sessionId] = mapping;
+                        else delete next[source.sessionId];
+                        return next;
+                      })
+                    }
+                  />
+                ))}
+              </fieldset>
               <div className="border-t border-line pt-6">
                 <LeaveStepHeading
                   step={3}
@@ -283,20 +246,15 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
                     period,
                     reason,
                     sourceVersions: preview.sourceVersions,
-                    ...(period === 'FULL_DAY' && mappingMode === 'keep-time'
-                      ? {
-                          dayMappings: sourceDays.map((sourceDate) => ({
-                            sourceDate,
-                            targetDate: days[sourceDate],
-                          })),
-                        }
-                      : {
-                          sessionMappings: preview.affectedSessions.map(
-                            (source) => sessions[source.sessionId],
-                          ),
-                        }),
+                    sessionMappings: preview.affectedSessions.map(
+                      (source) => sessions[source.sessionId],
+                    ),
                   });
-                  if (!input.success || !mappingsComplete || !preview.noticeEligible) {
+                  if (
+                    !input.success ||
+                    !hasCompleteMappings(Date.now()) ||
+                    !preview.noticeEligible
+                  ) {
                     setError('Điền đủ lý do và lịch bù cho mọi buổi bị ảnh hưởng.');
                     return;
                   }
@@ -330,7 +288,6 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
                     {mentorError(create.error)}
                   </p>
                 )}
-                <ScheduleConflicts error={create.error} />
                 <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-5">
                   <p className="max-w-sm text-xs leading-5 text-muted">
                     Lịch chỉ thay đổi sau khi đơn được quản lý duyệt.

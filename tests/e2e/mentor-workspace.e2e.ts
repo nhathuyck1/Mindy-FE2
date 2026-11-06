@@ -250,54 +250,208 @@ test('note drafts survive a failed conflict refresh and the edit window is check
     calls.filter((c) => c.path.endsWith('/teaching-notes') && c.method === 'PUT'),
   ).toHaveLength(1);
 });
-test('stale leave creation keeps the proposed dates and reason without retrying automatically', async ({
+test('full-day leave separates same-day sessions, blocks past dates and preserves independent makeup choices', async ({
   page,
-}) => {
-  const { calls } = await mockMentorWorkspace(page, { leaveConflict: true });
+}, info) => {
+  const { calls } = await mockMentorWorkspace(page, { multipleLeaveSessions: true });
+  await page.clock.setFixedTime(new Date('2026-10-22T03:00:00Z'));
   await page.goto('/mentor/leave-requests');
   await page.getByRole('button', { name: 'Tạo đơn xin nghỉ', exact: true }).click();
   await page.getByLabel('Nghỉ từ ngày').fill('2026-10-26');
   await page.getByLabel('Nghỉ đến ngày').fill('2026-10-26');
-  await page.getByRole('button', { name: 'Xem buổi bị ảnh hưởng' }).click();
-  await page.getByLabel('Dạy bù cho ngày 2026-10-26').fill('2026-10-28');
+  await page.getByRole('button', { name: 'Kiểm tra lịch dạy' }).click();
+  const first = page.getByRole('region', { name: 'Lịch bù: Buổi xin nghỉ', exact: true });
+  const second = page.getByRole('region', { name: 'Lịch bù: Buổi chiều cùng ngày', exact: true });
+  await expect(first).toContainText('10:00 – 12:00');
+  await expect(second).toContainText('15:00 – 17:00');
+  const date = first.getByLabel('Ngày dạy bù', { exact: true });
+  await expect(date).toHaveAttribute('min', '2026-10-27');
+  // These are future dates relative to today, but still before/on the leave day.
+  for (const invalidDate of ['2026-10-21', '2026-10-25', '2026-10-26']) {
+    await date.fill(invalidDate);
+    expect(
+      await date.evaluate((element: HTMLInputElement) => element.validity.rangeUnderflow),
+    ).toBe(true);
+    await expect(first.getByRole('button', { name: 'Tìm giờ phù hợp' })).toBeDisabled();
+    await expect(first).toContainText('Ngày dạy bù phải từ 27/10/2026 trở đi.');
+  }
+  expect(calls.filter((call) => call.path.endsWith('/makeup-slots'))).toHaveLength(0);
+  await date.fill('2026-10-28');
+  await first.getByRole('button', { name: 'Tìm giờ phù hợp' }).click();
+  await first.getByRole('radio').check();
+  await second.getByLabel('Ngày dạy bù', { exact: true }).fill('2026-10-29');
+  await second.getByLabel('Buổi dạy bù', { exact: true }).selectOption('AFTERNOON');
+  await second.getByRole('button', { name: 'Tìm giờ phù hợp' }).click();
+  await second.getByRole('radio').check();
+  await expect(first.getByRole('status')).toContainText('28/10/2026 · 10:00 – 12:00');
+  await expect(second.getByRole('status')).toContainText('29/10/2026 · 14:00 – 16:00');
+  await page.getByLabel('Lý do xin nghỉ').fill('Hai buổi bù riêng');
+  await second.getByLabel('Ngày dạy bù', { exact: true }).fill('2026-10-30');
+  await expect(first.getByRole('radio')).toBeChecked();
+  await expect(page.getByRole('button', { name: 'Gửi đơn xin nghỉ', exact: true })).toBeDisabled();
+  await second.getByLabel('Ngày dạy bù', { exact: true }).fill('2026-10-29');
+  await second.getByRole('button', { name: 'Tìm giờ phù hợp' }).click();
+  await second.getByRole('radio').check();
+  await page.setViewportSize({ width: info.project.name === 'mobile' ? 320 : 1440, height: 1000 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page
+    .getByRole('region', { name: 'Tạo đơn xin nghỉ' })
+    .screenshot({ path: info.outputPath('independent-makeup-sessions.png') });
+  await page.getByRole('button', { name: 'Gửi đơn xin nghỉ', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Chi tiết đơn xin nghỉ' })).toBeVisible();
+  const create = calls.find(
+    (call) => call.path === 'mentor/leave-requests' && call.method === 'POST',
+  );
+  expect(create?.body?.sessionMappings).toEqual([
+    {
+      sourceSessionId: mentorIds.nextUnit,
+      targetDate: '2026-10-28',
+      targetPeriod: 'FULL_DAY',
+      startsAt: '2026-10-28T03:00:00.000Z',
+      endsAt: '2026-10-28T05:00:00.000Z',
+    },
+    {
+      sourceSessionId: mentorIds.file,
+      targetDate: '2026-10-29',
+      targetPeriod: 'AFTERNOON',
+      startsAt: '2026-10-29T07:00:00.000Z',
+      endsAt: '2026-10-29T09:00:00.000Z',
+    },
+  ]);
+  expect(create?.body).not.toHaveProperty('dayMappings');
+});
+
+test('makeup slots block identical and overlapping proposals, allow adjacency and release cleared choices', async ({
+  page,
+}, info) => {
+  const { calls } = await mockMentorWorkspace(page, { multipleLeaveSessions: true });
+  await page.route('**/api/v1/mentor/leave-requests/makeup-slots', (route) => {
+    const body: Record<string, unknown> = route.request().postDataJSON();
+    return route.fulfill({
+      json: {
+        slots: [
+          { startsAt: '2026-10-28T03:00:00.000Z', endsAt: '2026-10-28T05:00:00.000Z' },
+          { startsAt: '2026-10-28T04:00:00.000Z', endsAt: '2026-10-28T06:00:00.000Z' },
+          { startsAt: '2026-10-28T05:00:00.000Z', endsAt: '2026-10-28T07:00:00.000Z' },
+        ],
+        sessionVersion: body.sourceSessionId === mentorIds.nextUnit ? 4 : 2,
+        asOf: '2026-10-22T03:00:00.000Z',
+        timeZone: 'Asia/Ho_Chi_Minh',
+      },
+    });
+  });
+  await page.goto('/mentor/leave-requests');
+  await page.getByRole('button', { name: 'Tạo đơn xin nghỉ', exact: true }).click();
+  await page.getByLabel('Nghỉ từ ngày').fill('2026-10-26');
+  await page.getByLabel('Nghỉ đến ngày').fill('2026-10-26');
+  await page.getByRole('button', { name: 'Kiểm tra lịch dạy' }).click();
+  const first = page.getByRole('region', { name: 'Lịch bù: Buổi xin nghỉ', exact: true });
+  const second = page.getByRole('region', { name: 'Lịch bù: Buổi chiều cùng ngày', exact: true });
+  for (const section of [first, second]) {
+    await section.getByLabel('Ngày dạy bù', { exact: true }).fill('2026-10-28');
+    await section.getByRole('button', { name: 'Tìm giờ phù hợp' }).click();
+  }
+  await first.getByRole('radio', { name: /^10:00 – 12:00/ }).check();
+  await expect(second.getByRole('radio', { name: /^10:00 – 12:00/ })).toBeDisabled();
+  await expect(second.getByRole('radio', { name: /^11:00 – 13:00/ })).toBeDisabled();
+  await expect(second).toContainText('Trùng lịch bù buổi khác');
+  await second.getByRole('radio', { name: /^12:00 – 14:00/ }).check();
+  await expect(first.getByRole('radio', { name: /^11:00 – 13:00/ })).toBeDisabled();
+  await page.getByLabel('Lý do xin nghỉ').fill('Lịch bù không trùng nhau');
+  await expect(page.getByRole('button', { name: 'Gửi đơn xin nghỉ', exact: true })).toBeEnabled();
+  await first.getByLabel('Ngày dạy bù', { exact: true }).fill('2026-10-29');
+  await expect(second.getByRole('radio', { name: /^10:00 – 12:00/ })).toBeEnabled();
+  await expect(second.getByRole('radio', { name: /^12:00 – 14:00/ })).toBeChecked();
+  await expect(page.getByRole('button', { name: 'Gửi đơn xin nghỉ', exact: true })).toBeDisabled();
+  await first.getByLabel('Ngày dạy bù', { exact: true }).fill('2026-10-28');
+  await first.getByRole('button', { name: 'Tìm giờ phù hợp' }).click();
+  await first.getByRole('radio', { name: /^10:00 – 12:00/ }).check();
+  await page.setViewportSize({ width: info.project.name === 'mobile' ? 320 : 1440, height: 1000 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await second.screenshot({ path: info.outputPath('blocked-overlapping-makeup.png') });
+  await page.getByRole('button', { name: 'Gửi đơn xin nghỉ', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Chi tiết đơn xin nghỉ' })).toBeVisible();
+  const create = calls.find(
+    (call) => call.path === 'mentor/leave-requests' && call.method === 'POST',
+  );
+  expect(create?.body?.sessionMappings).toMatchObject([
+    {
+      sourceSessionId: mentorIds.nextUnit,
+      startsAt: '2026-10-28T03:00:00.000Z',
+      endsAt: '2026-10-28T05:00:00.000Z',
+    },
+    {
+      sourceSessionId: mentorIds.file,
+      startsAt: '2026-10-28T05:00:00.000Z',
+      endsAt: '2026-10-28T07:00:00.000Z',
+    },
+  ]);
+});
+
+test('makeup calendar blocks future dates inside the whole full-day leave range', async ({
+  page,
+}) => {
+  const { calls } = await mockMentorWorkspace(page);
+  await page.goto('/mentor/leave-requests');
+  await page.getByRole('button', { name: 'Tạo đơn xin nghỉ', exact: true }).click();
+  await page.getByLabel('Nghỉ từ ngày').fill('2026-10-26');
+  await page.getByLabel('Nghỉ đến ngày').fill('2026-10-29');
+  await page.getByRole('button', { name: 'Kiểm tra lịch dạy' }).click();
+  const date = page.getByLabel('Ngày dạy bù', { exact: true });
+  await expect(date).toHaveAttribute('min', '2026-10-30');
+  for (const invalid of ['2026-10-25', '2026-10-26', '2026-10-28', '2026-10-29']) {
+    await date.fill(invalid);
+    expect(
+      await date.evaluate((element: HTMLInputElement) => element.validity.rangeUnderflow),
+    ).toBe(true);
+    await expect(page.getByRole('button', { name: 'Tìm giờ phù hợp' })).toBeDisabled();
+  }
+  expect(calls.filter((call) => call.path.endsWith('/makeup-slots'))).toHaveLength(0);
+  await date.fill('2026-10-30');
+  await expect(page.getByRole('button', { name: 'Tìm giờ phù hợp' })).toBeEnabled();
+});
+
+test('stale leave creation keeps the proposed dates and reason without retrying automatically', async ({
+  page,
+}) => {
+  const { calls } = await mockMentorWorkspace(page, { leaveConflict: true });
+  await page.clock.setFixedTime(new Date('2026-10-22T03:00:00Z'));
+  await page.goto('/mentor/leave-requests');
+  await page.getByRole('button', { name: 'Tạo đơn xin nghỉ', exact: true }).click();
+  await page.getByLabel('Nghỉ từ ngày').fill('2026-10-26');
+  await page.getByLabel('Nghỉ đến ngày').fill('2026-10-26');
+  await page.getByRole('button', { name: 'Kiểm tra lịch dạy' }).click();
+  await page.getByLabel('Ngày dạy bù', { exact: true }).fill('2026-10-28');
+  await page.getByRole('button', { name: 'Tìm giờ phù hợp' }).click();
+  await page.getByRole('radio').check();
   await page.getByLabel('Lý do xin nghỉ').fill('Lý do cần giữ');
   await page.getByRole('button', { name: 'Gửi đơn xin nghỉ', exact: true }).click();
   await expect(
     page.getByRole('alert').filter({ hasText: 'Lịch nguồn đã thay đổi.' }),
   ).toBeVisible();
-  await expect(page.getByLabel('Dạy bù cho ngày 2026-10-26')).toHaveValue('2026-10-28');
+  await expect(page.getByLabel('Ngày dạy bù', { exact: true })).toHaveValue('2026-10-28');
   await expect(page.getByRole('textbox', { name: 'Lý do xin nghỉ' })).toHaveValue('Lý do cần giữ');
   expect(
     calls.filter((c) => c.path === 'mentor/leave-requests' && c.method === 'POST'),
   ).toHaveLength(1);
 });
-for (const variant of ['FULL_DAY', 'MORNING', 'FULL_DAY_SLOT'])
-  test(`leave ${variant} preview, mapping, create, detail and withdrawal use current versions`, async ({
+for (const period of ['FULL_DAY', 'MORNING'])
+  test(`leave ${period} preview, mapping, create, detail and withdrawal use current versions`, async ({
     page,
   }, info) => {
     const { calls } = await mockMentorWorkspace(page);
-    const period = variant === 'FULL_DAY_SLOT' ? 'FULL_DAY' : variant;
-    const keepTime = variant === 'FULL_DAY';
+    await page.clock.setFixedTime(new Date('2026-10-22T03:00:00Z'));
     await page.goto('/mentor/leave-requests');
     await page.getByRole('button', { name: 'Tạo đơn xin nghỉ', exact: true }).click();
     await page.getByLabel('Nghỉ từ ngày').fill('2026-10-26');
     await page.getByLabel('Nghỉ đến ngày').fill('2026-10-26');
     await page.getByLabel('Khoảng nghỉ').selectOption(period);
-    await page.getByRole('button', { name: 'Xem buổi bị ảnh hưởng' }).click();
+    await page.getByRole('button', { name: 'Kiểm tra lịch dạy' }).click();
     await expect(page.getByText('Có 1 buổi bị ảnh hưởng.', { exact: false })).toBeVisible();
-    if (keepTime) await page.getByLabel('Dạy bù cho ngày 2026-10-26').fill('2026-10-28');
-    else {
-      if (variant === 'FULL_DAY_SLOT')
-        await page
-          .getByRole('combobox', { name: 'Cách đổi lịch', exact: true })
-          .selectOption('choose-slot');
-      await page.getByLabel('Ngày dạy bù', { exact: true }).fill('2026-10-28');
-      await page
-        .getByRole('combobox', { name: 'Buổi dạy bù', exact: true })
-        .selectOption('AFTERNOON');
-      await page.getByRole('button', { name: 'Tìm giờ phù hợp' }).click();
-      await page.getByRole('radio').check();
-    }
+    await page.getByLabel('Ngày dạy bù', { exact: true }).fill('2026-10-28');
+    await page.getByLabel('Buổi dạy bù', { exact: true }).selectOption(period);
+    await page.getByRole('button', { name: 'Tìm giờ phù hợp' }).click();
+    await page.getByRole('radio').check();
     await page.getByLabel('Lý do xin nghỉ').fill('Việc gia đình');
     await page.setViewportSize({ width: info.project.name === 'mobile' ? 320 : 1440, height: 900 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
@@ -321,23 +475,16 @@ for (const variant of ['FULL_DAY', 'MORNING', 'FULL_DAY_SLOT'])
     const create = calls.find((c) => c.path === 'mentor/leave-requests' && c.method === 'POST');
     expect(create?.body?.sourceVersions).toEqual([{ sessionId: mentorIds.nextUnit, version: 4 }]);
     expect(create?.key).toBeTruthy();
-    if (keepTime) {
-      expect(create?.body?.dayMappings).toEqual([
-        { sourceDate: '2026-10-26', targetDate: '2026-10-28' },
-      ]);
-      expect(create?.body).not.toHaveProperty('sessionMappings');
-    } else {
-      expect(create?.body?.sessionMappings).toEqual([
-        {
-          sourceSessionId: mentorIds.nextUnit,
-          targetDate: '2026-10-28',
-          targetPeriod: 'AFTERNOON',
-          startsAt: '2026-10-28T05:00:00.000Z',
-          endsAt: '2026-10-28T07:00:00.000Z',
-        },
-      ]);
-      expect(create?.body).not.toHaveProperty('dayMappings');
-    }
+    expect(create?.body?.sessionMappings).toEqual([
+      {
+        sourceSessionId: mentorIds.nextUnit,
+        targetDate: '2026-10-28',
+        targetPeriod: period,
+        startsAt: '2026-10-28T03:00:00.000Z',
+        endsAt: '2026-10-28T05:00:00.000Z',
+      },
+    ]);
+    expect(create?.body).not.toHaveProperty('dayMappings');
     await page.getByRole('button', { name: 'Rút đơn', exact: true }).click();
     await page.getByLabel('Lý do rút đơn').fill('Đã sắp xếp được');
     await page.getByRole('button', { name: 'Xác nhận rút đơn' }).click();

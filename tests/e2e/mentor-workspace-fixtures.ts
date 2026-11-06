@@ -448,7 +448,7 @@ export async function mockMentorWorkspace(
       });
     if (path === 'mentor/leave-requests/makeup-slots') {
       const date = String(body?.targetDate);
-      const hour = body?.targetPeriod === 'AFTERNOON' ? '05' : '03';
+      const hour = body?.targetPeriod === 'AFTERNOON' ? '07' : '03';
       return ok({
         slots: [
           {
