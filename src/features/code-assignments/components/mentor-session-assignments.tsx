@@ -7,6 +7,7 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
+import { Spinner } from '@/components/ui/spinner';
 import { codeError, useCodeCommand, useCodeQuery } from '../api/code-queries';
 import { assignmentPageSchema, assignmentSchema } from '../schemas/code-contracts';
 import { CodeBadge, CodeMessage, CodeSection } from './code-ui';
@@ -58,7 +59,12 @@ export function MentorSessionAssignments(props: { sessionId: string; readonly?: 
         )
       }
     >
-      {list.isPending && <p role="status">Đang tải…</p>}
+      {list.isPending && (
+        <p role="status" className="flex items-center gap-2 text-muted-foreground">
+          <Spinner />
+          Đang tải bài tập code…
+        </p>
+      )}
       {list.error && <CodeMessage tone="error">{codeError(list.error)}</CodeMessage>}
       {list.data && !list.data.items.length && (
         <p className="text-sm text-muted-foreground">Chưa có bài tập code.</p>
@@ -142,7 +148,8 @@ export function MentorSessionAssignments(props: { sessionId: string; readonly?: 
                 Huỷ
               </Button>
               <Button type="submit" disabled={create.isPending}>
-                Tạo và soạn đề
+                {create.isPending && <Spinner />}
+                {create.isPending ? 'Đang tạo bài code…' : 'Tạo và soạn đề'}
               </Button>
             </div>
           </form>

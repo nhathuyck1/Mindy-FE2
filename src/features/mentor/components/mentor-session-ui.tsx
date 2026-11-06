@@ -11,6 +11,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { LinkLoadingIcon } from '@/components/ui/link-loading-icon';
 import type { TeachingSession } from '../schemas/mentor-contracts';
 import { MentorStatus, mentorDate } from './mentor-shared';
 
@@ -28,7 +29,10 @@ export function MentorSessionOverview(props: {
         href="/mentor"
         className="mb-3 inline-flex min-h-9 items-center gap-2 text-sm font-bold text-forest hover:underline"
       >
-        <ArrowLeft aria-hidden="true" className="size-4" /> Về lịch dạy
+        <LinkLoadingIcon>
+          <ArrowLeft aria-hidden="true" className="size-4" />
+        </LinkLoadingIcon>
+        Về lịch dạy
       </Link>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span className="rounded-md bg-mint px-2.5 py-1 text-[11px] font-bold tracking-wider text-canvas uppercase">
@@ -80,11 +84,8 @@ export function MentorSessionTools(props: {
   meetingAllowed: boolean;
   meetingUrl?: string | null;
   onEditMeeting: () => void;
-  notesOpen: boolean;
-  onToggleNotes: () => void;
+  onOpenNotes: () => void;
   assignmentsAvailable: boolean;
-  assignmentsOpen: boolean;
-  onToggleAssignments: () => void;
 }) {
   return (
     <aside
@@ -101,7 +102,9 @@ export function MentorSessionTools(props: {
           </span>
           <h2 className="text-sm font-extrabold">Không gian giảng dạy</h2>
         </div>
-        <p className="mt-2 text-xs leading-6 text-canvas/75">Bảng vẽ và phòng học của buổi này.</p>
+        <p className="mt-2 text-xs leading-6 text-canvas/75">
+          Bảng vẽ, bài tập và phòng học của buổi này.
+        </p>
         <div className="mt-5 grid gap-2.5">
           {!props.cancelled && (
             <Button
@@ -110,8 +113,24 @@ export function MentorSessionTools(props: {
               className="justify-start rounded-xl bg-canvas text-forest hover:bg-soft"
             >
               <Link href={'/whiteboards/' + props.sessionId + '?audience=mentor'}>
-                <Presentation aria-hidden="true" className="size-4" />
+                <LinkLoadingIcon>
+                  <Presentation aria-hidden="true" className="size-4" />
+                </LinkLoadingIcon>
                 Mở bảng vẽ
+              </Link>
+            </Button>
+          )}
+          {props.assignmentsAvailable && (
+            <Button
+              variant="unstyled"
+              asChild
+              className="justify-start rounded-xl border border-canvas/25 bg-canvas/10 text-canvas hover:bg-canvas/20"
+            >
+              <Link href={`/mentor/sessions/${props.sessionId}/assignments`}>
+                <LinkLoadingIcon>
+                  <ClipboardList aria-hidden="true" className="size-4" />
+                </LinkLoadingIcon>
+                Bài tập của buổi
               </Link>
             </Button>
           )}
@@ -147,28 +166,13 @@ export function MentorSessionTools(props: {
         </p>
         <Button
           variant="outline"
-          className="mt-4 w-full justify-between rounded-xl border-coral/20 bg-canvas/80"
-          aria-expanded={props.notesOpen}
-          onClick={props.onToggleNotes}
+          className="mt-4 w-full justify-start rounded-xl border-coral/20 bg-canvas/80"
+          aria-haspopup="dialog"
+          onClick={props.onOpenNotes}
         >
-          Ghi chú giảng dạy <span aria-hidden="true">{props.notesOpen ? '−' : '+'}</span>
+          Ghi chú giảng dạy
         </Button>
       </section>
-      {props.assignmentsAvailable && (
-        <section className="min-w-0 rounded-2xl border border-line bg-soft p-5 sm:col-span-2 xl:col-span-1">
-          <ClipboardList aria-hidden="true" className="mb-3 size-5 text-mint" />
-          <h2 className="text-base font-extrabold">Bài tập</h2>
-          <p className="mt-2 text-xs leading-6 text-muted">Đề bài và bài nộp của học viên.</p>
-          <Button
-            variant="outline"
-            className="mt-4 w-full justify-between rounded-xl"
-            aria-expanded={props.assignmentsOpen}
-            onClick={props.onToggleAssignments}
-          >
-            Bài tập của buổi <span aria-hidden="true">{props.assignmentsOpen ? '−' : '+'}</span>
-          </Button>
-        </section>
-      )}
     </aside>
   );
 }

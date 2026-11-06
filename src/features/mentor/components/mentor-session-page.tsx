@@ -4,8 +4,6 @@ import { useState } from 'react';
 import type { z } from 'zod';
 import { useSession } from '@/features/auth/api/auth-queries';
 import { MentorTeachingNotes } from './mentor-teaching-notes';
-import { AssignmentList } from '@/features/assignments/components/assignment-list';
-import { MentorSessionAssignments } from '@/features/code-assignments/components/mentor-session-assignments';
 import { MentorMeetingEditor } from './mentor-meeting-editor';
 import { attendanceCandidatesSchema, workspaceSchema } from '../schemas/workspace-contracts';
 import {
@@ -33,7 +31,6 @@ import { useMentorQuery, useMentorCommand, mentorError } from '../api/mentor-que
 import { MentorQueryState, MentorPagination, mentorDate } from './mentor-shared';
 
 export function MentorSessionPage(props: { sessionId: string }) {
-  const [showAssignments, setShowAssignments] = useState(false);
   const [page, setPage] = useState(1);
   const [confirm, setConfirm] = useState<'finalize' | 'present' | 'absent' | null>(null);
   const [notes, setNotes] = useState(false);
@@ -159,7 +156,7 @@ export function MentorSessionPage(props: { sessionId: string }) {
           </p>
         )}
         <div className="grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_19rem]">
-          <div className="min-w-0 space-y-5">
+          <div className="min-w-0">
             <section
               aria-labelledby="attendance-heading"
               className="@container/attendance min-w-0 overflow-hidden rounded-2xl border border-line bg-canvas shadow-xs"
@@ -390,18 +387,6 @@ export function MentorSessionPage(props: { sessionId: string }) {
                 )}
               </div>
             </section>
-            <div>
-              <MentorSessionAssignments
-                sessionId={props.sessionId}
-                readonly={
-                  !context.data ||
-                  !workspace.data ||
-                  !(teaching || workspace.data.accessScope === 'CLASS') ||
-                  workspace.data.readonly ||
-                  !['SCHEDULED', 'IN_PROGRESS', 'COMPLETED'].includes(context.data.session.status)
-                }
-              />
-            </div>
           </div>
           <MentorSessionTools
             sessionId={props.sessionId}
@@ -409,31 +394,16 @@ export function MentorSessionPage(props: { sessionId: string }) {
             meetingAllowed={Boolean(meetingAllowed)}
             meetingUrl={safeMeeting ? meetingUrl : null}
             onEditMeeting={() => setMeeting(true)}
-            notesOpen={notes}
-            onToggleNotes={() => setNotes(!notes)}
+            onOpenNotes={() => setNotes(true)}
             assignmentsAvailable={Boolean(context.data && workspace.data)}
-            assignmentsOpen={showAssignments}
-            onToggleAssignments={() => setShowAssignments((value) => !value)}
           />
         </div>
         {notes && (
-          <div className="mt-5 rounded-2xl border border-line bg-canvas p-5">
-            <MentorTeachingNotes
-              sessionId={props.sessionId}
-              canWrite={canWriteNote && !busy}
-              editableUntil={session?.editableUntil ?? null}
-            />
-          </div>
-        )}
-        {showAssignments && context.data && workspace.data && (
-          <AssignmentList
+          <MentorTeachingNotes
             sessionId={props.sessionId}
-            mentor
-            canCreate={
-              (teaching || workspace.data.accessScope === 'CLASS') &&
-              !workspace.data.readonly &&
-              ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED'].includes(context.data.session.status)
-            }
+            canWrite={canWriteNote && !busy}
+            editableUntil={session?.editableUntil ?? null}
+            onClose={() => setNotes(false)}
           />
         )}
       </MentorQueryState>
