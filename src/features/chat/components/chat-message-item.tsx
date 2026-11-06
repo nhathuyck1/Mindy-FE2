@@ -1,4 +1,6 @@
 'use client';
+import { parseChatBody } from '../lib/chat-code';
+import { ChatCodeBlock } from './chat-code-block';
 import { useEffect, useRef, useState } from 'react';
 import { MoreVertical, Reply } from 'lucide-react';
 import {
@@ -113,7 +115,21 @@ export function ChatMessageItem(props: {
                     {m.replyTo.deleted ? ' · Tin nhắn đã xóa' : ''}
                   </p>
                 )}
-                {m.body && <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{m.body}</p>}
+                {m.body &&
+                  parseChatBody(m.body).map((part, i) =>
+                    part.kind === 'code' ? (
+                      <ChatCodeBlock
+                        key={i}
+                        code={part.code}
+                        language={part.language}
+                        label={part.label}
+                      />
+                    ) : (
+                      <p key={i} className="whitespace-pre-wrap [overflow-wrap:anywhere]">
+                        {part.text}
+                      </p>
+                    ),
+                  )}
                 {m.file && m.type === 'IMAGE' && (
                   <ChatImage
                     conversationId={m.conversationId}

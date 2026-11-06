@@ -6,7 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { LocalImagePreview } from './chat-image';
 import { apiRequest, ApiError } from '@/lib/api/client';
 import { sessionSignal } from '@/lib/api/session-coordinator';
+import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
+import { clearChatDraft } from '@/lib/store/ui-slice';
+import { CODE_DRAG_TYPE } from '@/features/whiteboard/lib/code-board';
 import { chatError, useRefreshChat } from '../api/chat-queries';
+import { CHAT_TEXT_MAX, codeFence } from '../lib/chat-code';
 import {
   chatMutationSchema,
   fileStatusSchema,
@@ -25,7 +29,10 @@ export function ChatComposer(props: {
 }) {
   const c = props.conversation,
     refresh = useRefreshChat();
-  const [body, setBody] = useState(''),
+  // A draft sent from the code workspace ("Gửi vào chat") fills a freshly opened composer.
+  const draft = useAppSelector((state) => state.ui.chatDraft),
+    dispatch = useAppDispatch();
+  const [body, setBody] = useState(() => (draft ? draft.text.slice(0, CHAT_TEXT_MAX) : '')),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState('');
   const [pending, setPending] = useState<SendInput | null>(null),
@@ -41,6 +48,11 @@ export function ChatComposer(props: {
   const lifetime = useRef<AbortController | null>(null),
     fileInput = useRef<HTMLInputElement>(null),
     sending = useRef(false);
+  useEffect(() => {
+    if (draft) dispatch(clearChatDraft());
+    // Consume the draft once, when this composer mounts with it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     lifetime.current = new AbortController();
     return () => lifetime.current?.abort();
@@ -289,6 +301,23 @@ export function ChatComposer(props: {
         value={body}
         disabled={locked}
         onChange={(e) => setBody(e.target.value)}
+        onDrop={(event) => {
+          // Code dragged out of the editor arrives wrapped as a fenced code block.
+          const language = event.dataTransfer.getData(CODE_DRAG_TYPE);
+          if (language !== 'javascript' && language !== 'java21') return;
+          event.preventDefault();
+          const el = event.currentTarget;
+          const block = codeFence(event.dataTransfer.getData('text/plain'), language);
+          const before = body.slice(0, el.selectionStart);
+          const after = body.slice(el.selectionEnd);
+          const glue = (side: string) => (side && !side.endsWith('\n') ? '\n' : '');
+          const next = `${before}${glue(before)}${block}\n${after}`;
+          if (next.length > CHAT_TEXT_MAX) {
+            setNotice('Đoạn code quá dài cho một tin nhắn (tối đa 4000 ký tự).');
+            return;
+          }
+          setBody(next);
+        }}
         onKeyDown={(event) => {
           if (
             event.key !== 'Enter' ||

@@ -76,6 +76,13 @@
 - Danh sách trước bắt đầu có avatar, số thứ tự theo trang, tên và nhãn học bù; không có nút điểm danh hoặc số chuyên cần giả. Sau bắt đầu dùng counters thật và roster hiện có. Bỏ câu Chỉ bắt đầu được trong ngày học / Hiện không thể sửa điểm danh và đoạn giải thích danh sách dự kiến theo yêu cầu; giữ deadline sửa, pending-payment count, lỗi/retry và toàn bộ permissions.
 - Tham khảo cách phân cấp màu/avatar của School Attendance App – Muhammad Dias: https://dribbble.com/shots/26268194-School-Attendance-App-Clean-and-Intuitive-UI-Design ; không sao chép asset hoặc palette ngoài Mindy.
 
+## Dashboard ba vai trò — 03/11/2026
+
+- Phản hồi mới nhất: Manager chỉ giữ thẻ tổng quan, biểu đồ xu hướng và donut trạng thái, không hiển thị hai biểu đồ xếp hạng. Bỏ đoạn giải thích cách tính đăng ký/thời điểm cập nhật ở tất cả dashboard.
+
+- Dùng token Mindy và admin-table-panel hiện hữu; bốn thẻ số liệu, Recharts AreaChart theo ngày, PieChart dạng donut cho trạng thái và BarChart ngang cho top khóa/mentor/lớp. Tooltip hiển thị tên đầy đủ và số liệu; bảng xếp hạng mở bằng details để đọc các tên dài. 320px xếp một cột, desktop chia cột, nhãn trục rút gọn một dòng và giữ số liệu đọc được.
+- Mỗi thống kê ghi rõ tổng hiện tại hoặc trong kỳ; học viên distinct khác lượt đăng ký. Ngày/giờ hiển thị theo Việt Nam. Có loading/error/retry/empty độc lập, bảng ngày mở bằng details/summary, không animation hoặc số demo lấp chỗ.
+
 ## Cửa sổ chat nổi — 02/11/2026
 
 - Launcher hình tròn mint ở góc phải dưới, có safe-area, badge headsup `99+` khi vượt 99 tin chưa đọc. Cửa sổ phía trên nút, rộng tối đa 416px, cao theo viewport và không che phủ bằng backdrop; 320px vẫn nằm gọn trong màn hình.
@@ -434,3 +441,12 @@ Chữ chính dùng forest; chữ phụ dùng muted pha 90% forest. Theo ảnh m�
 ## BE Change — 05/11/2026
 
 Giữ panel/token Mindy, controls có label và bảng cuộn trên320px. Lịch tuần preview trước save, swap xác nhận hai buổi/lý do, material bulk có dialog title/revision và không báo freed bytes trước cleanup. Dashboard role-specific; ảnh chat signed bypass image optimizer, modal trả focus và nút lấy lại URL.
+
+## Màn code (compiler) — bộ UI dùng chung (04/11/2026)
+
+- Student làm bài, Mentor soạn đề (Studio) và Mentor chấm bài dùng chung một bộ: `code-chrome.tsx` (trang full màn hình, header 56px ba vùng, nhóm nút hành động, chip, thanh bước), `code-panel.tsx` (panel + tab có nền trượt), `resizable-split.tsx` (khung kéo được, nhớ tỉ lệ), `code-editor.tsx` (editor tô màu tự viết, không thêm thư viện), `code-theme.tsx` (theme editor).
+- Khi mở các màn này, shell gọi `useShellFocus()` (`components/layout/shell-focus.tsx`): sidebar thu gọn, topbar/footer ẩn, trang chiếm đúng 1 màn hình; mỗi panel tự cuộn.
+- Class `.code-ide` cố định thang chữ Student trong mọi shell (shell Mentor/Admin phóng to chữ).
+- Editor có 3 theme (Mindy tối mặc định, Đêm, Sáng), biến màu đặt trong `globals.css` theo `[data-code-theme]`; lựa chọn nhớ theo trình duyệt. Màu cú pháp (`--syn-*`) là ngoại lệ duy nhất ngoài palette vì IDE cần màu token phân biệt.
+- Studio soạn đề có 3 bước: Đề bài (gộp đề + hàm, có xem trước đúng như học viên thấy và code khởi đầu) → Lời giải & test (bố cục giống màn làm bài) → Giao đề (checklist bấm để sửa). Chuyển bước tự lưu phần Đề bài nếu có thay đổi.
+- Tab trái của các màn được khai báo bằng mảng; tab "Bảng vẽ" cho mentor dạy trên code của học viên sẽ thêm vào đây sau.

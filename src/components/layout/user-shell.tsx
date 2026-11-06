@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { AuthGuard } from '@/features/auth/components/auth-guard';
 import { SessionControls } from '@/features/auth/components/session-controls';
 import { userNavigation } from '@/features/user/lib/user-navigation';
+import { ShellFocusProvider, useShellFocusState } from './shell-focus';
 
 function UserNavigation(props: { collapsed?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -96,7 +97,7 @@ function MobileUserNavigation(props: { onClose: () => void }) {
   );
 }
 export function UserShell(props: { children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, setCollapsed, focus, setFocus } = useShellFocusState();
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const title =
@@ -111,74 +112,82 @@ export function UserShell(props: { children: React.ReactNode }) {
         )?.label ?? 'Tài khoản');
   return (
     <AuthGuard role="STUDENT">
-      <div className={'user-workspace ' + (collapsed ? 'user-workspace-collapsed' : '')}>
-        <a
-          href="#user-main"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-canvas focus:p-3"
+      <ShellFocusProvider value={setFocus}>
+        <div
+          className={
+            'user-workspace ' +
+            (collapsed ? 'user-workspace-collapsed ' : '') +
+            (focus ? 'user-workspace-focus' : '')
+          }
         >
-          Đến nội dung chính
-        </a>
-        <aside className="user-sidebar" aria-label="Thanh điều hướng tài khoản">
-          <div
-            className={
-              'flex h-23 items-center border-b border-line ' +
-              (collapsed ? 'justify-center' : 'justify-between px-5')
-            }
+          <a
+            href="#user-main"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-canvas focus:p-3"
           >
-            {!collapsed && <Brand />}
-            <Button
-              variant="ghost"
-              size="icon-lg"
-              onClick={() => setCollapsed(!collapsed)}
-              aria-label={collapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
-              aria-expanded={!collapsed}
+            Đến nội dung chính
+          </a>
+          <aside className="user-sidebar" aria-label="Thanh điều hướng tài khoản">
+            <div
+              className={
+                'flex h-23 items-center border-b border-line ' +
+                (collapsed ? 'justify-center' : 'justify-between px-5')
+              }
             >
-              {collapsed ? (
-                <PanelLeftOpen aria-hidden="true" />
-              ) : (
-                <PanelLeftClose aria-hidden="true" />
-              )}
-            </Button>
-          </div>
-          <UserNavigation collapsed={collapsed} />
-          {!collapsed && (
-            <div className="m-4 mt-0 rounded-xl border border-line bg-soft p-4">
-              <p className="text-sm font-extrabold text-forest">Mindy Coding</p>
-              <p className="mt-2 text-sm leading-relaxed">Học hỏi mỗi ngày, tiến bộ từng bước.</p>
-            </div>
-          )}
-        </aside>
-        <div className="min-w-0">
-          <header className="user-topbar">
-            <div className="flex min-w-0 items-center gap-3">
+              {!collapsed && <Brand />}
               <Button
                 variant="ghost"
                 size="icon-lg"
-                className="shrink-0 lg:hidden"
-                onClick={() => setMobileOpen(true)}
-                aria-label="Mở menu tài khoản"
-                aria-expanded={mobileOpen}
+                onClick={() => setCollapsed(!collapsed)}
+                aria-label={collapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
+                aria-expanded={!collapsed}
               >
-                <Menu aria-hidden="true" />
+                {collapsed ? (
+                  <PanelLeftOpen aria-hidden="true" />
+                ) : (
+                  <PanelLeftClose aria-hidden="true" />
+                )}
               </Button>
-              <p className="min-w-0 text-sm sm:text-base">
-                <span className="hidden text-muted xl:inline">
-                  Tài khoản của tôi <span className="mx-3 text-line">/</span>
-                </span>
-                <span className="font-extrabold">{title}</span>
-              </p>
             </div>
-            <SessionControls />
-          </header>
-          <main id="user-main" tabIndex={-1} className="user-main">
-            {props.children}
-          </main>
-          <footer className="px-4 py-5 text-sm text-muted sm:px-8">
-            Mindy Coding · Học hỏi. Kết nối. Trưởng thành.
-          </footer>
+            <UserNavigation collapsed={collapsed} />
+            {!collapsed && !focus && (
+              <div className="m-4 mt-0 rounded-xl border border-line bg-soft p-4">
+                <p className="text-sm font-extrabold text-forest">Mindy Coding</p>
+                <p className="mt-2 text-sm leading-relaxed">Học hỏi mỗi ngày, tiến bộ từng bước.</p>
+              </div>
+            )}
+          </aside>
+          <div className="min-w-0">
+            <header className="user-topbar" hidden={focus}>
+              <div className="flex min-w-0 items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon-lg"
+                  className="shrink-0 lg:hidden"
+                  onClick={() => setMobileOpen(true)}
+                  aria-label="Mở menu tài khoản"
+                  aria-expanded={mobileOpen}
+                >
+                  <Menu aria-hidden="true" />
+                </Button>
+                <p className="min-w-0 text-sm sm:text-base">
+                  <span className="hidden text-muted xl:inline">
+                    Tài khoản của tôi <span className="mx-3 text-line">/</span>
+                  </span>
+                  <span className="font-extrabold">{title}</span>
+                </p>
+              </div>
+              <SessionControls />
+            </header>
+            <main id="user-main" tabIndex={-1} className={focus ? 'shell-main-focus' : 'user-main'}>
+              {props.children}
+            </main>
+            <footer className="px-4 py-5 text-sm text-muted sm:px-8" hidden={focus}>
+              Mindy Coding · Học hỏi. Kết nối. Trưởng thành.
+            </footer>
+          </div>
+          {mobileOpen && <MobileUserNavigation onClose={() => setMobileOpen(false)} />}
         </div>
-        {mobileOpen && <MobileUserNavigation onClose={() => setMobileOpen(false)} />}
-      </div>
+      </ShellFocusProvider>
     </AuthGuard>
   );
 }

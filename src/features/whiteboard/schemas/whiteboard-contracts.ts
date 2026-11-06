@@ -93,6 +93,13 @@ export const boardShapeSchema = z.discriminatedUnion('type', [
     text: z.string().max(5000),
     fontSize: z.number().min(12).max(96),
   }),
+  z.object({
+    ...shapeBase,
+    type: z.literal('code'),
+    text: z.string().max(5000),
+    fontSize: z.number().min(10).max(32),
+    language: z.enum(['javascript', 'java21']),
+  }),
 ]);
 export const boardProjectionSchema = z.array(boardShapeSchema).max(2000);
 export const boardSnapshotSchema = z.object({

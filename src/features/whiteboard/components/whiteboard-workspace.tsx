@@ -25,6 +25,7 @@ import {
   Save,
   Scan,
   StickyNote,
+  MessageSquareCode,
   Trash2,
   Undo2,
 } from 'lucide-react';
@@ -46,6 +47,9 @@ import {
 } from '../schemas/whiteboard-contracts';
 import { WhiteboardCanvas, type BoardTool } from './whiteboard-canvas';
 import { WhiteboardPeople } from './whiteboard-people';
+import { CODE_DRAG_TYPE, CODE_MAX_CHARS, codeShape } from '../lib/code-board';
+import { useSendCodeToChat } from '@/features/chat/components/use-send-code-to-chat';
+import type { CodeLanguageKey } from '@/features/code-assignments/schemas/code-contracts';
 
 const palette = [
   '#1d302e',
@@ -57,7 +61,17 @@ const palette = [
   '#f9d85f',
   '#ffffff',
 ];
+/** What the code workspace can do with an embedded board ("Gửi lên bảng", drag and drop). */
+export type BoardBridge = {
+  addCode: (
+    text: string,
+    language: CodeLanguageKey,
+    at?: { clientX: number; clientY: number },
+  ) => 'ok' | 'readonly' | 'busy' | 'too-long' | 'empty';
+};
+
 function shapeLabel(s: BoardShape) {
+  if (s.type === 'code') return `Khối code: ${s.text.split('\n')[0]?.slice(0, 30) ?? ''}`;
   return s.type === 'sticky'
     ? s.text.slice(0, 35)
     : s.type === 'text'
@@ -108,7 +122,17 @@ function fitContent(shapes: BoardShape[], size: { width: number; height: number 
     scale,
   };
 }
-export function WhiteboardWorkspace(props: { initial: SessionBoard & { board: BoardMetadata } }) {
+export function WhiteboardWorkspace(props: {
+  initial: SessionBoard & { board: BoardMetadata };
+  /** Fill the parent (code workspace tab) instead of the viewport; compact header. */
+  embedded?: boolean;
+  /** Embedded only: false while hidden — keeps syncing but takes no paste/input. */
+  active?: boolean;
+  /** Receives the bridge once the board is open (null on unmount). */
+  onReady?: (bridge: BoardBridge | null) => void;
+}) {
+  const root = useRef<HTMLElement>(null);
+  const active = props.active !== false;
   const [shapeMenu, setShapeMenu] = useState(false);
   const [connection] = useState(() => new BoardConnection(props.initial.board.id));
   const state = useSyncExternalStore(
@@ -138,6 +162,7 @@ export function WhiteboardWorkspace(props: { initial: SessionBoard & { board: Bo
     [pages, setPages] = useState('1'),
     [message, setMessage] = useState(''),
     fileInput = useRef<HTMLInputElement>(null);
+  const sendCodeToChat = useSendCodeToChat();
   const media = useBoardMedia(connection.boardId),
     session = useSession();
   const board = state.state?.board ?? props.initial.board,
@@ -188,12 +213,12 @@ export function WhiteboardWorkspace(props: { initial: SessionBoard & { board: Bo
   useEffect(() => {
     const element = container.current;
     if (!element) return;
-    const observer = new ResizeObserver(([entry]) =>
-      setSize({
-        width: Math.floor(entry.contentRect.width),
-        height: Math.floor(entry.contentRect.height),
-      }),
-    );
+    const observer = new ResizeObserver(([entry]) => {
+      const width = Math.floor(entry.contentRect.width),
+        height = Math.floor(entry.contentRect.height);
+      // A hidden tab reports 0×0; keep the last size so zoom and position survive.
+      if (width > 0 && height > 0) setSize({ width, height });
+    });
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
@@ -272,8 +297,11 @@ export function WhiteboardWorkspace(props: { initial: SessionBoard & { board: Bo
     latestUpload.current = chooseFile;
   });
   useEffect(() => {
-    if (!cap.canUpload) return;
+    if (!cap.canUpload || !active) return;
+    const embedded = props.embedded;
     const paste = (e: ClipboardEvent) => {
+      // Embedded next to the code editor: only paste into the board when focus is inside it.
+      if (embedded && !(e.target instanceof Node && root.current?.contains(e.target))) return;
       if (e.target instanceof Element && e.target.closest('input,textarea,[contenteditable=true]'))
         return;
       const file = [...(e.clipboardData?.files ?? [])].find((f) =>
@@ -286,7 +314,48 @@ export function WhiteboardWorkspace(props: { initial: SessionBoard & { board: Bo
     };
     window.addEventListener('paste', paste);
     return () => window.removeEventListener('paste', paste);
-  }, [cap.canUpload]);
+  }, [cap.canUpload, active, props.embedded]);
+  // Latest view/size/permission for the bridge without re-creating it every render.
+  const live = useRef({ view, size, editable, canEdit: cap.canEdit });
+  useEffect(() => {
+    live.current = { view, size, editable, canEdit: cap.canEdit };
+  });
+  function addCode(
+    text: string,
+    language: CodeLanguageKey,
+    at?: { clientX: number; clientY: number },
+  ): ReturnType<BoardBridge['addCode']> {
+    const { view: v, size: sz, editable: canWrite, canEdit } = live.current;
+    if (!canEdit) return 'readonly';
+    // Connected and allowed, but the local queue is full or a snapshot is being previewed.
+    if (!canWrite) return 'busy';
+    const body = text.replace(/\s+$/, '');
+    if (!body.trim()) return 'empty';
+    if (body.length > CODE_MAX_CHARS) return 'too-long';
+    const box = container.current?.getBoundingClientRect();
+    const point =
+      at && box
+        ? worldPoint(v, at.clientX - box.left, at.clientY - box.top)
+        : worldPoint(v, sz.width / 2, sz.height / 2);
+    const shape = codeShape(body, language, point);
+    addShape(connection.doc, shape);
+    select(shape.id);
+    setTool('select');
+    return 'ok';
+  }
+  const latestAddCode = useRef(addCode);
+  useEffect(() => {
+    latestAddCode.current = addCode;
+  });
+  const onReady = props.onReady;
+  // Offer the bridge only once the socket is online and the board state (with permissions) has
+  // arrived; before that a send would be refused as if the user could only view.
+  const ready = state.status === 'online' && state.state !== null;
+  useEffect(() => {
+    if (!onReady || !ready) return;
+    onReady({ addCode: (...args) => latestAddCode.current(...args) });
+    return () => onReady(null);
+  }, [onReady, ready]);
   const returnPath = props.initial.context.mentor
     ? `/mentor/sessions/${board.sessionId}`
     : `/user/materials/${props.initial.context.classId}`;
@@ -327,7 +396,10 @@ export function WhiteboardWorkspace(props: { initial: SessionBoard & { board: Bo
   }
   if (state.status === 'denied')
     return (
-      <main className="whiteboard-empty">
+      <main
+        className={props.embedded ? 'whiteboard-state' : 'whiteboard-empty'}
+        data-embedded={props.embedded ? '' : undefined}
+      >
         <div>
           <h1 className="text-xl font-bold">Đã dừng truy cập</h1>
           <p role="alert" className="my-4">
@@ -340,27 +412,38 @@ export function WhiteboardWorkspace(props: { initial: SessionBoard & { board: Bo
       </main>
     );
   return (
-    <main className="whiteboard-workspace">
+    <main
+      ref={root}
+      className="whiteboard-workspace"
+      data-whiteboard-root=""
+      data-embedded={props.embedded ? '' : undefined}
+      inert={props.embedded && !active ? true : undefined}
+      tabIndex={props.embedded ? -1 : undefined}
+    >
       <header className="whiteboard-topbar">
-        <Link
-          href={returnPath}
-          aria-label="Về buổi học"
-          title="Về buổi học"
-          className="whiteboard-icon"
-        >
-          <ArrowLeft size={20} />
-        </Link>
-        <span className="whiteboard-brand">
-          <Image
-            src="/brand/mindy-logo.jpg"
-            alt=""
-            width={32}
-            height={32}
-            className="size-8 rounded-lg"
-          />{' '}
-          Mindy
-          <span className="whiteboard-brand-dot" />
-        </span>
+        {!props.embedded && (
+          <Link
+            href={returnPath}
+            aria-label="Về buổi học"
+            title="Về buổi học"
+            className="whiteboard-icon"
+          >
+            <ArrowLeft size={20} />
+          </Link>
+        )}
+        {!props.embedded && (
+          <span className="whiteboard-brand">
+            <Image
+              src="/brand/mindy-logo.jpg"
+              alt=""
+              width={32}
+              height={32}
+              className="size-8 rounded-lg"
+            />{' '}
+            Mindy
+            <span className="whiteboard-brand-dot" />
+          </span>
+        )}
         <div className="whiteboard-heading">
           <h1 title={board.title}>{board.title}</h1>
           <p title={props.initial.context.className}>{props.initial.context.className}</p>
@@ -410,7 +493,25 @@ export function WhiteboardWorkspace(props: { initial: SessionBoard & { board: Bo
           <MoreHorizontal />
         </button>
       </header>
-      <div className="whiteboard-body" ref={container}>
+      <div
+        className="whiteboard-body"
+        ref={container}
+        onDragOver={(e) => {
+          if (!editable || !e.dataTransfer.types.includes(CODE_DRAG_TYPE)) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+        }}
+        onDrop={(e) => {
+          const language = e.dataTransfer.getData(CODE_DRAG_TYPE);
+          if (language !== 'javascript' && language !== 'java21') return;
+          e.preventDefault();
+          const result = addCode(e.dataTransfer.getData('text/plain'), language, {
+            clientX: e.clientX,
+            clientY: e.clientY,
+          });
+          if (result === 'too-long') setMessage('Đoạn code quá dài (tối đa 5000 ký tự).');
+        }}
+      >
         <WhiteboardCanvas
           connection={connection}
           state={state}
@@ -680,8 +781,19 @@ export function WhiteboardWorkspace(props: { initial: SessionBoard & { board: Bo
                   ? 'Văn bản'
                   : shapeLabel(selectedShape)}
             </span>
-            {(selectedShape.type === 'sticky' || selectedShape.type === 'text') && (
+            {(selectedShape.type === 'sticky' ||
+              selectedShape.type === 'text' ||
+              selectedShape.type === 'code') && (
               <span className="text-xs text-muted">Nhấp đúp để sửa</span>
+            )}
+            {selectedShape.type === 'code' && (
+              <button
+                aria-label="Gửi khối code vào chat"
+                title="Gửi khối code vào chat"
+                onClick={() => sendCodeToChat(selectedShape.text, selectedShape.language)}
+              >
+                <MessageSquareCode size={18} />
+              </button>
             )}
             <button
               aria-label="Xóa phần tử"

@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { dashboardFixture } from './dashboard-fixtures';
 
 export const testUser = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -26,6 +27,9 @@ export async function mockHomepageApi(page: Page) {
       status: 503,
       json: { code: 'TEST_ENDPOINT_NOT_MOCKED', message: 'Endpoint chưa được fixture mô phỏng.' },
     }),
+  );
+  await page.route('**/api/v1/manager/dashboard?**', (route) =>
+    route.fulfill({ json: dashboardFixture('MANAGER') }),
   );
   await page.route('**/api/v1/chat/conversations?**', (route) =>
     route.fulfill({ json: { data: [], meta: { hasMore: false, nextCursor: null } } }),

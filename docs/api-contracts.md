@@ -116,7 +116,7 @@
 - Tiến độ: GET :classId/progress (optional unitId) và :classId/students/:studentId/progress. Chỉ đọc tracking lưu sẵn; UNTRACKED/null khác STORED zero, INVALID_PERCENT hiển thị cần kiểm tra. Không tạo completion write, phần trăm toàn khóa hay assignment counts.
 - Buổi: trước start dùng GET class-sessions/:sessionId/attendance-candidates, provisional=true. Sau start dùng snapshot attendance. PUT attendance/bulk gửi expectedVersion/checked, áp dụng toàn roster regular+guest qua mọi trang; false=ABSENT. PUT attendance cho một guest gửi records:[] và guestRecords:[{makeupPlacementId,status}], không dùng enrollmentId thay placement.
 - PATCH mentor/class-sessions/:sessionId/meeting-url gửi expectedVersion/meetingUrl; null xóa override. GET/PUT class-sessions/:sessionId/teaching-notes gửi expectedVersion/content/nextSteps; note version độc lập session. Draft giữ trong form, conflict tải bản máy chủ để người dùng quyết định; không autosave/overwrite. Deadline được kiểm lại khi submit.
-- Xin nghỉ: POST mentor/leave-requests/preview, POST makeup-slots, POST/GET mentor/leave-requests, GET :requestId và POST :requestId/withdraw. FULL_DAY dùng dayMappings; nghỉ theo buổi dùng sessionMappings từ slot. sourceVersions lấy preview; ngày và period theo timeZone của BE. Preview/slots không giữ chỗ. Tạo/rút không thay lịch; duyệt thuộc staff.
+- Xin nghỉ: POST mentor/leave-requests/preview, POST makeup-slots, POST/GET mentor/leave-requests, GET :requestId và POST :requestId/withdraw. Mọi period dùng sessionMappings từ slot để chọn lịch riêng từng buổi (cập nhật 05/11); dayMappings FULL_DAY cũ vẫn được schema chấp nhận. sourceVersions lấy preview; ngày và period theo timeZone của BE. Preview/slots không giữ chỗ. Tạo/rút không thay lịch; duyệt thuộc staff.
 - Cookie access_token qua same-origin proxy, JSON DTO trực tiếp, Zod request/response strict, no-store. Notes/bulk/create/withdraw/start/mark/sync/finalize dùng UUIDv4 Idempotency-Key; lỗi mạng giữ cùng key/body cho retry của cùng ý định. 409 business không tự retry. Notes body được nhận tối đa 64 KiB UTF-8 như BE. GET không ghi dữ liệu.
 - Đã bỏ proxy và UI PATCH mentor/classes/:classId/units/:unitId/release. Không dùng LOCKED/unlockAt để chặn nội dung mentor; material availableAt/publication và enrollment student vẫn do BE kiểm. Các route staff/admin và proposal Phase 5 nằm ngoài integration Mentor này.
 
@@ -297,6 +297,16 @@ Proxy chỉ mở hai GET list mới, cookie access_token/private no-store; thi�
 | GET `/admin/payments/reconciliation`          | page/pageSize; response items có providerOrderCode, referenceCode, amount/currency, nullable paymentId/reason/actorId, source và createdAt. UI chỉ đọc; không allowlist POST `:paymentId/reconcile`.                                                                      |
 
 Proxy kiểm tra duplicate/unsupported query, Zod response, cookie access_token và `private, no-store`. Query hooks được enable duy nhất với ADMIN ACTIVE; tracking filters/page và reconciliation page/pageSize nằm trong query key cùng user ID. Kiểm thử API/E2E dùng fixture giả lập đúng DTO, không gọi mutation hoặc coi mock là xác nhận tài khoản thật.
+
+## Dashboard — 03/11/2026
+
+Contract mới triển khai đồng thời trong BE `codex/dashboard` từ `origin/dev`, chưa chứng minh đã deploy. Browser gọi same-origin `GET /api/v1/{admin|manager|mentor}/dashboard?days=30|90|365` (mặc định 90), chỉ role ACTIVE tương ứng; không body/mentorId. Backend giới hạn Mentor vào classes.mentor_id từ phiên, không gồm dạy thay.
+
+Tìm người dùng (03/11/2026): `GET /api/v1/admin/users` bổ sung query `q` tùy chọn, trim 2–100 ký tự, kết hợp page/pageSize/role/status. Tìm substring tên/email/điện thoại không phân biệt dấu/hoa thường; wildcard `%`, `_`, `\` được hiểu là ký tự literal. Total là toàn bộ kết quả phù hợp trước phân trang. Proxy validate q, bỏ q khi trống; FE debounce 250ms, bắt đầu từ 2 ký tự. Đã kiểm local; cần deploy BE mới trước khi dùng với upstream từ xa.
+
+Response trực tiếp có scope, timeZone Asia/Ho_Chi_Minh, generatedAt/from/to ISO UTC; summary `{courses,classes,openClasses,activeClasses,registrations,students}`; courses/mentors/classes top 10 `{id,name,registrations,students,classes}`; trend `{date,registrations}` theo ngày VN có zero-fill; classStatuses `{status,count}`. Mentor trả mentors `[]`. Chỉ ACTIVE/COMPLETED, enrolled_at trong [from,to) được tính đăng ký; học viên đếm distinct, không cộng số theo từng khóa/mentor. Course/class totals mô tả hiện tại.
+
+Proxy chuyển access cookie/private no-store, từ chối query lạ/lặp, validate role response bằng Zod. Session recovery dùng apiRequest chung; 403 không retry, 422 sửa filter, lỗi/503/502 có Thử lại và không hiện số 0 thay lỗi. Chi tiết đầy đủ trong BE `docs/api_flow/DASHBOARD_flow-api-breakdown.md`. Các bảng công việc Manager và lịch Mentor giữ nguyên contract.
 
 ## Bài tập lập trình (CODE) — 02/11/2026
 

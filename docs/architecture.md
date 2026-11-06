@@ -62,6 +62,13 @@
 - Vé ký riêng typ mindy-realtime+jwt, origin/channel/session-bound, hạn handshake tối đa 60s và không vượt access expiry. Vé chỉ ở memory/Socket.IO auth payload, không URL/Query cache/Web Storage; không đưa access/refresh token cho JavaScript. Mỗi reconnect xin vé mới; session abort/unmount dừng attempt cũ. BE vẫn kiểm session/role/resource và ngắt socket lúc access expiry.
 - Xem docs/backend-connectivity.md cho cấu hình và kiểm chứng; cần deploy BE hỗ trợ ticket trước FE.
 
+## Dashboard theo vai trò — 03/11/2026
+
+- `features/dashboard` sở hữu schema Zod, query và UI thống kê dùng chung. Server state có key `dashboard/userId/audience/days`; `apiRequest` dùng recovery phiên tập trung của dev, không tạo cơ chế refresh riêng.
+- `/admin` chọn endpoint Admin/Manager theo phiên đã được shell kiểm; `/manager` nhúng analytics phía dưới heading và giữ hàng chờ công việc; `/mentor/dashboard` dành riêng Mentor. Lịch dạy vẫn ở `/mentor`; thêm đường dẫn dashboard vào safeReturnPath.
+- Backend tổng hợp toàn bộ dữ liệu trong một statement; FE không tải danh sách học viên để tự tính. Proxy chỉ mở ba GET dashboard và days enum 30/90/365, kiểm scope response, không nhận mentorId từ client. Số đăng ký/học viên là trong kỳ theo ngày xác nhận; lớp/khóa/trạng thái là tổng hiện tại. Mentor dùng phân công chính hiện tại, không gồm lịch dạy thay.
+- Bar ranking là top 10, trend có bảng dữ liệu đọc bằng bàn phím và không animation. Không biến lỗi thành số 0 hoặc dùng danh sách chưa tải đủ làm tổng.
+
 ## CODE cùng QUIZ/ZIP, chat và Whiteboard — 03/11/2026
 
 - Nhánh `compiler` tích hợp trên `main` mới nhất. Giữ các module, route và proxy chat/Whiteboard/QUIZ/ZIP; CODE có rule riêng cho thao tác code, còn list/create/publish/archive dùng hợp đồng assignment chung.
@@ -83,6 +90,7 @@
 
 ## Assignment QUIZ / ZIP — 02/11/2026
 
+- Cập nhật 05/11: `lib/quiz-bulk-import.ts` chuyển văn bản ABCD đánh số thành `QuestionInput`, kiểm schema và trả lỗi theo dòng, không nhập một phần batch có lỗi. `QuizBulkImportDialog` đọc tệp .txt UTF-8 tối đa 8 MiB/dán văn bản, kiểm tối đa 200 câu sau khi thêm; dùng state của editor và PUT questions hiện hữu khi người dùng lưu. Câu cũ giữ ID/revision khi thêm cuối, thay toàn bộ là ý định riêng trong dialog; không thêm endpoint hoặc storage.
 - `features/assignments` chứa schema tách Mentor/Student, query theo user/role/path/filter, editor, bài làm, upload, chấm điểm và báo cáo. Sáu route mới chỉ kiểm UUIDv4, await params và compose feature; kế thừa guard ACTIVE của shell. Tab Bài tập nằm trong lớp Mentor; buổi học tải panel khi mở. Student đi từ khóa học hoặc không gian học FULL, không mount assignment trong CASH_PREVIEW.
 - `assignment-rules.server.ts` mở đúng 35 method/path. Proxy kiểm cookie, Origin, query strict/duplicate và receipt UUIDv4; chỉ bulk questions có 8 MiB/45s upstream/60s browser. Body đọc stream theo byte, payload assignment khác 64 KiB; giữ lỗi `{path,code}` qua proxy/client và loại rejected values. Student response loại keys, storage metadata và grade version riêng tư.
 - `QuizSession` serialize autosave/full replacement, debounce 800 ms, gộp thay đổi khi đang gửi; submit khóa nhập và đợi save. Lỗi/409 giữ lựa chọn, chặn write tiếp và yêu cầu xác nhận dùng bản máy chủ. Timer dựa serverNow/expiresAt + monotonic elapsed, đồng bộ khi focus; hết hạn dừng write, result polling tối đa 60s. Không dùng localStorage hoặc tính điểm phía FE.

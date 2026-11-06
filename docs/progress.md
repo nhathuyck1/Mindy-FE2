@@ -1,5 +1,11 @@
 # Tiến độ
 
+## 06/11/2026 — Merge dev vào main
+
+- Luồng compiler (mentor soạn đề, demo, chấm; học viên làm bài) lấy bản `dev`, kèm khối code trên whiteboard và gửi code vào chat.
+- Chat gộp cả xem trước ảnh (main) và gửi/kéo thả khối code (dev).
+- Giữ bản `main` cho nghỉ dạy/dạy bù, lọc tài liệu chờ duyệt (`courseUnitId` + `unseen`, không `courseId`), học liệu học viên, danh sách bài tập, trang buổi dạy, proxy và env.
+
 ## 06/11/2026 — Kiểm tra toàn bộ FE trước PR vào main
 
 - Lint toàn repo, TypeScript, production build và 353 unit tests PASS. E2E đầy đủ: 531 PASS, 5 SKIP và 10 lỗi assertion cũ; đã cập nhật theo nút Xếp lịch Admin, đích logout Admin, thứ tự menu Tổng quan, thống kê Manager và tab Tài liệu chung Mentor. Chạy lại đủ 10 trường hợp desktop/mobile: PASS; tổng 541 PASS, 5 SKIP.
@@ -103,6 +109,12 @@
 - Thu gọn danh sách bài tập của lớp thành các cột bài/buổi/hạn nộp, có số lượng từ total backend và Xem bài. Hiển thị số/tên buổi, chương và lịch học qua dữ liệu hiện hữu; bộ lọc buổi kèm ngày/giờ. Mobile xếp dọc, giữ URL lọc và phân trang.
 - Deadline dùng giờ Việt Nam, nhãn thời gian còn lại/Sắp đến hạn/Đã qua hạn cập nhật mỗi phút và khi focus. Không giới hạn, buổi thiếu, lỗi/thử lại và bài lưu trữ có trạng thái riêng; không suy đã nộp/chưa nộp từ deadline.
 - Kiểm chứng: lint, TypeScript, production build, 342 unit tests và 40 E2E desktop/mobile PASS; gồm metadata, UTC+7, chuyển qua deadline, null/archived, retry, điều hướng và viewport 320px. Prettier các file sửa PASS; format:check toàn repo báo 396 file ngoài phạm vi sửa (cây Git sạch trước thay đổi), không format lan rộng. API mock, không thay backend hoặc deploy.
+
+## 05/11/2026 — Deploy Vercel cho khách hàng test
+
+- Đã deploy toàn bộ mã nguồn hiện tại, gồm thay đổi chưa commit, vào project riêng `luonggiahao2005-2838s-projects/mindy-fe2`. Link khách hàng: `https://mindy-fe2.vercel.app`; deployment `dpl_7gxhJpSHcsYhsaYv7jofGHbFaNmY` READY. Project test mới cho truy cập bằng link; không thay project Vercel cũ, không commit/push Git hoặc deploy backend. Gói nguồn không chứa `.env`, node_modules hay build local.
+- Cấu hình Vercel: production `APP_ORIGIN=https://mindy-fe2.vercel.app`, API_BASE_URL cho production/preview trỏ API hiện hữu. `readServerEnv` dùng HTTPS VERCEL_URL khi chưa cấu hình APP_ORIGIN, vẫn ưu tiên cấu hình tường minh và giữ default localhost khi phát triển. Sửa helper test tô màu để chuẩn hóa khoảng trắng khi so loại token; test riêng vẫn kiểm giữ nguyên mọi ký tự nguồn.
+- Kiểm chứng: 340 unit tests, lint và build local PASS; cloud build READY. HTTP trang chủ/trang đăng nhập/API khóa học 200, auth/me và refresh không cookie trả 401 đúng dự kiến trên link ngắn. Browser Playwright mở trang chủ/đăng nhập nội bộ không có JavaScript error. Chưa thực hiện thao tác bằng tài khoản khách hàng thật.
 
 ## 05/11/2026 — Ẩn thanh cuộn chú giải tài liệu
 
@@ -243,6 +255,39 @@
 - BE tương ứng trên codex/portable-backend từ origin/dev: endpoint ticket có guard/strict DTO/Origin/feature flags; vé ký riêng typ/origin/channel và hạn60s, socket kiểm session/quyền như cũ. Chat chuẩn hóa path không trailing slash; vẫn nhận cookie client cũ. Không migration/dependency mới hoặc đổi auth cookie.
 - Kiểm chứng local: 303 unit tests FE, 10 unit tests auth BE, 20 E2E chat desktop/mobile, lint/format tệp sửa, type-check và production build cả hai repo PASS. HTTP/gateway smoke thật PASS; browser cùng build tại hai origin kiểm bảng online, update ACK, chat socket và reconnect vé mới PASS. Domain/session lookup/REST màn hình của smoke dùng fixture memory, không phải DB/production.
 - Xem backend-connectivity.md cho deploy BE trước FE và cấu hình khi đổi host. Chưa deploy/commit/push; chưa sửa môi trường production.
+
+## 04/11/2026 — Tích hợp compiler vào dev
+
+- Merge nhánh compiler vào dev, giữ dashboard đang có và toàn bộ CODE/QUIZ/ZIP/chat/Whiteboard từ nhánh compiler.
+- Giải quyết conflict proxy bằng cách giữ cả dashboard rules và assignment/chat/Whiteboard/CODE rules; menu Mentor có cả Tổng quan và Tin nhắn.
+- Đồng bộ fixture E2E với dashboard mới: mock API Manager dashboard để test không gọi upstream thật rồi làm hết phiên; assertion kiểm tra trang Admin chờ nội dung analytics hiện tại.
+- Kiểm tra: lint, format, TypeScript, 301 unit test và production build pass. Playwright toàn bộ sau khi đồng bộ fixture: 435 pass, 5 skip.
+
+## 03/11/2026 — Tìm người dùng qua API
+
+- `/admin/users` gửi `q` tới GET `/admin/users` thay vì lọc trang hiện tại. Bắt đầu từ 2 ký tự, debounce 250ms sau mỗi lần dừng gõ; hỗ trợ composition tiếng Việt, trim, tối đa 100 ký tự. Một ký tự không gửi search và có hướng dẫn; xóa hết trở về danh sách. Đổi từ khóa về trang 1/xóa selection, phân trang và role/status giữ từ khóa. Query key có q; request cũ dùng AbortSignal hiện hữu.
+- BE local trước đó chưa hỗ trợ q, đã bổ sung tìm tên/email/điện thoại không phân biệt hoa thường/dấu, escape ký tự wildcard và đếm total trước phân trang. Không thay search local của khóa/lớp. Đã kiểm tra UI thật với API local: `me` rồi `mentor.frontend`, tên không dấu, wildcard literal và xóa search PASS. BE build/type-check/3 unit tests và FE build/type-check/lint tệp sửa PASS.
+- E2E desktop/mobile kiểm đúng ngưỡng 2 ký tự, debounce 250ms, không gửi các từ khóa trung gian, reset trang 1 và tìm tài khoản ở trang khác: 2 PASS. Hồi quy bảng quản trị/CSV/bộ lọc: 2 PASS. Không mock trong lượt kiểm UI + API local nói trên; E2E kiểm chính xác thời gian dùng API fixture và đồng hồ kiểm thử.
+
+## 03/11/2026 — Tinh gọn dashboard theo phản hồi
+
+- Bỏ hai biểu đồ xếp hạng khóa học/mentor khỏi Manager, kể cả khi Manager mở `/admin`. Admin và Mentor giữ biểu đồ so sánh của mình. Xóa đoạn mô tả cách tính đăng ký và thời điểm cập nhật trên cả ba dashboard. API và cách tính số liệu giữ nguyên.
+- Lint các tệp sửa và kiểm tra trình duyệt với API local PASS: Manager còn 2 biểu đồ, Admin/Mentor giữ 4; đoạn mô tả không còn ở cả ba vai trò. Số liệu UI vẫn khớp API ở 30/90/365 ngày; desktop/320px không tràn ngang. FE và BE tiếp tục chạy local để người dùng kiểm tra.
+
+## 03/11/2026 — Recharts và kiểm tra FE với API local
+
+- Theo yêu cầu tiếp theo, chuyển thanh HTML so sánh thành Recharts BarChart thật cho khóa/mentor/lớp; PieChart donut trạng thái có tổng và phần trăm; AreaChart gradient theo ngày. Dùng thư viện/component ChartContainer đã cài, có tooltip, giá trị trên cột, nhãn trục một dòng, bảng ngày/ranking thay thế và trạng thái empty.
+- FE `.env.local` (ignored) trỏ `http://localhost:3000/api/v1`, APP_ORIGIN `http://localhost:3003`. BE chạy local với database `mindy_center` hiện có; apply 26 migration còn thiếu, tổng 36, không reset hay seed lại khóa/lớp/roster. Tạo một tài khoản Manager local để kiểm thử vai trò còn thiếu. Các jobs/email/payment provider tắt trong process kiểm thử.
+- Kiểm thử không mock: đăng nhập qua UI thật cho Admin/Manager/Mentor, đối chiếu 4 thẻ số liệu với response API ở 30/90/365 ngày, kiểm 4 biểu đồ được render, không lỗi trình duyệt hoặc tràn ngang 320px. Truy vấn PostgreSQL độc lập xác nhận API tổng lượt/học viên/lớp và tổng trend; Mentor bị 403 khi gọi endpoint Admin.
+- Dữ liệu local: Admin/Manager 6 khóa, 7 lớp, 44 đăng ký/44 học viên; mentor.frontend 4 khóa, 4 lớp, 20 đăng ký/20 học viên. Top JavaScript 24, HTML/CSS 20; Mentor Trần Quốc Bảo 24, Nguyễn Minh Anh 20. Đây là dữ liệu dev có sẵn, không phải giao dịch production. Ảnh kiểm tra trong `.next-local/screenshots/` (ignored).
+
+## 03/11/2026 — Dashboard Admin, Manager và Mentor
+
+- Nhánh `codex/dashboard` tách từ `origin/dev` cho cả FE2 và BE theo yêu cầu. `/admin` dùng dashboard mới; `/manager` bổ sung dashboard và giữ nguyên hàng chờ học liệu/đơn nghỉ; `/mentor/dashboard` thêm menu Tổng quan, giữ lịch dạy ở `/mentor`.
+- API tổng hợp mới `GET /admin/dashboard`, `/manager/dashboard`, `/mentor/dashboard`, cùng prefix `/api/v1`, lọc 30/90/365 ngày (mặc định 90). Hiển thị khóa/lớp hiện tại, đăng ký đã xác nhận và học viên riêng biệt trong kỳ, xu hướng ngày, trạng thái lớp, top 10 khóa theo lượt đăng ký và mentor theo học viên. Mentor chỉ thấy course/class được phụ trách chính; không nhận bảng mentor khác.
+- TanStack Query có key theo tài khoản/vai trò/kỳ, dùng phục hồi phiên chung từ dev; Zod đối chiếu response scope. Proxy chỉ GET, access cookie, strict query, chống lặp/đổi phạm vi, private/no-store. Không thêm dependency, dữ liệu demo trong UI, localStorage hoặc token JSON.
+- Kiểm chứng: 207 unit tests PASS; lint, TypeScript và production build PASS; Prettier các file code/test thay đổi PASS. Format toàn repo còn báo 332 file chưa chuẩn, không format lan sang các feature khác. 32 E2E dashboard/admin desktop+mobile đã PASS (28 lượt đầu và 4 ca sửa kỳ vọng cũ chạy lại PASS). Bao gồm ba vai trò, lọc kỳ, read-only, bảng số liệu, lỗi/retry, empty, sidebar và hồi quy quản trị. Đã xem ảnh desktop/320px; không tràn ngang. E2E dùng mock API theo contract.
+- BE: query PostgreSQL thật và HTTP controller đã kiểm riêng; chi tiết ở `../Mindy/docs/api_flow/DASHBOARD_flow-api-breakdown.md` và progress BE. Chưa deploy hoặc nghiệm thu tài khoản production; cần deploy BE mới trước khi FE trỏ upstream sử dụng endpoint mới. Không commit/push.
 
 ## 03/11/2026 — Tích hợp CODE trên main, chuẩn bị PR compiler
 

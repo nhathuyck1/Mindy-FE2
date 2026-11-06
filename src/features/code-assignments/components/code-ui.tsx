@@ -82,9 +82,9 @@ export function CodeMessage(props: { tone?: 'error' | 'info'; children: React.Re
 }
 
 /** Plain-text statement rendering (no HTML injection); paragraphs and `code` spans only. */
-export function Statement(props: { text: string }) {
+export function Statement(props: { text: string; className?: string }) {
   return (
-    <div className="space-y-2 text-sm leading-6">
+    <div className={cn('space-y-2 text-sm leading-6', props.className)}>
       {props.text.split(/\n{2,}/).map((block, i) =>
         block.startsWith('```') ? (
           <pre

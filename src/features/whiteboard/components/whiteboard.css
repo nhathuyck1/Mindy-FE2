@@ -591,3 +591,159 @@
     overflow: auto;
   }
 }
+
+/* Embedded next to the code editor: size and compact layout follow the panel, not the viewport.
+   The @container blocks below mirror the viewport @media rules above. */
+.whiteboard-workspace[data-embedded] {
+  height: 100%;
+  container: whiteboard / size;
+}
+.whiteboard-workspace[data-embedded] .whiteboard-topbar {
+  padding: 6px 10px;
+  gap: 8px;
+}
+.whiteboard-state {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 24px;
+  background: var(--color-soft);
+  font-family: var(--font-brand);
+  color: var(--color-forest);
+  text-align: center;
+}
+.whiteboard-state[data-embedded] {
+  min-height: 0;
+  height: 100%;
+  background: var(--color-canvas);
+}
+.whiteboard-state > div {
+  max-width: 420px;
+}
+@container whiteboard (max-width: 767px) {
+  .whiteboard-topbar {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 8px;
+  }
+  .whiteboard-brand {
+    font-size: 21px;
+  }
+  .whiteboard-heading {
+    padding-left: 8px;
+  }
+  .whiteboard-heading h1 {
+    font-size: 14px;
+  }
+  .whiteboard-heading p {
+    font-size: 11px;
+  }
+  .whiteboard-people {
+    display: none;
+  }
+  .whiteboard-status {
+    order: 2;
+    width: 100%;
+    padding: 0 6px;
+    justify-content: center;
+    min-height: 25px;
+  }
+  .whiteboard-topbar > select {
+    position: absolute;
+    right: 52px;
+    top: 56px;
+    max-width: 115px;
+    min-height: 28px;
+    font-size: 11px;
+    padding: 2px 4px;
+  }
+  .whiteboard-status {
+    justify-content: flex-start;
+    padding-right: 120px;
+    font-size: 11px;
+  }
+  .whiteboard-permission {
+    padding: 2px 4px;
+  }
+  .whiteboard-tools {
+    top: 12px;
+    left: 8px;
+    padding: 4px;
+    border-radius: 12px;
+    gap: 0;
+  }
+  .whiteboard-pen-settings {
+    left: 72px;
+    top: 12px;
+    width: min(248px, calc(100% - 84px));
+    padding: 12px;
+  }
+  .whiteboard-hint {
+    display: none;
+  }
+  .whiteboard-bottom {
+    left: 8px;
+    right: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+  }
+  .whiteboard-selection {
+    top: auto;
+    bottom: 64px;
+    left: 75px;
+    transform: none;
+    max-width: calc(100% - 86px);
+  }
+  .whiteboard-notice {
+    bottom: 123px;
+  }
+  .whiteboard-preview-banner {
+    left: 72px;
+    font-size: 12px;
+  }
+}
+
+@container whiteboard (max-width: 767px) {
+  .whiteboard-shape-settings {
+    left: 72px;
+    top: 120px;
+    width: 236px;
+    max-width: calc(100% - 84px);
+  }
+}
+
+@container whiteboard (max-height: 540px) {
+  .whiteboard-tools {
+    flex-direction: row;
+    top: 8px;
+    max-width: calc(100% - 16px);
+    max-height: none;
+    overflow-x: auto;
+  }
+  .whiteboard-tool-divider {
+    height: 26px;
+    width: 1px;
+    margin: 0 3px;
+  }
+  .whiteboard-pen-settings {
+    top: 68px;
+    left: 8px;
+    max-height: calc(100% - 130px);
+    overflow: auto;
+  }
+  .whiteboard-selection {
+    top: 70px;
+    bottom: auto;
+  }
+  .whiteboard-notice {
+    bottom: 65px;
+  }
+}
+
+@container whiteboard (max-height: 540px) {
+  .whiteboard-shape-settings {
+    top: 68px;
+    left: 8px;
+    max-height: calc(100% - 130px);
+    overflow: auto;
+  }
+}
