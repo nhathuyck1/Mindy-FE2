@@ -341,6 +341,8 @@ function QuizAttempt(props: { initial: dto.Attempt }) {
         <div className="min-w-0 space-y-5">
           {attempt.questions.map((q, index) => {
             const result = attempt.result?.results.find((r) => r.questionId === q.id);
+            const incorrect = result?.isCorrect === false;
+            const questionTone = incorrect ? 'text-status-red' : '';
             return (
               <fieldset
                 id={`question-${q.id}`}
@@ -349,16 +351,21 @@ function QuizAttempt(props: { initial: dto.Attempt }) {
                 className={`${panelClass} scroll-mt-5 space-y-3`}
               >
                 <legend className="sr-only">Câu {index + 1}</legend>
-                <h2 className="font-extrabold">Câu {index + 1}</h2>
-                <p className="whitespace-pre-wrap break-words">{q.prompt}</p>
+                <h2 className={`font-extrabold ${questionTone}`}>Câu {index + 1}</h2>
+                <p className={`whitespace-pre-wrap break-words ${questionTone}`}>{q.prompt}</p>
                 {q.options.map((option) => {
                   const selected = engine.answers.some(
                     (a) => a.questionId === q.id && a.selectedOption === option.label,
                   );
+                  const showCorrectAnswer = incorrect && result.correctOption === option.label;
+                  let optionTone = selected ? 'border-mint bg-mint/10' : 'border-line';
+                  if (showCorrectAnswer) {
+                    optionTone = 'border-status-red/30 bg-status-red/8 font-bold text-status-red';
+                  }
                   return (
                     <label
                       key={option.label}
-                      className={`flex min-h-12 cursor-pointer items-start gap-3 rounded-lg border p-3 ${selected ? 'border-mint bg-mint/10' : 'border-line'}`}
+                      className={`flex min-h-12 cursor-pointer items-start gap-3 rounded-lg border p-3 ${optionTone}`}
                     >
                       <input
                         className="mt-1 accent-mint"
@@ -374,7 +381,7 @@ function QuizAttempt(props: { initial: dto.Attempt }) {
                   );
                 })}
                 {result && (
-                  <p className="font-bold text-forest">
+                  <p className={`font-bold ${incorrect ? 'text-status-red' : 'text-forest'}`}>
                     {result.isCorrect ? 'Đúng' : `Sai · Đáp án đúng: ${result.correctOption}`}
                   </p>
                 )}
