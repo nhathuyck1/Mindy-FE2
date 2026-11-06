@@ -170,9 +170,9 @@ export function safeReturnPath(value: string | null | undefined): string {
     )
       return url.pathname;
     if (
-      parts.length === 4 &&
       parts[1] === 'mentor' &&
-      ['classes', 'sessions'].includes(parts[2]) &&
+      ((parts.length === 4 && ['classes', 'sessions'].includes(parts[2])) ||
+        (parts.length === 5 && parts[2] === 'sessions' && parts[4] === 'assignments')) &&
       z.uuid().safeParse(parts[3]).success
     )
       return url.pathname;

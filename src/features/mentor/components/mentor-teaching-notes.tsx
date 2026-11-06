@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import type { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/ui/modal';
 import { Textarea } from '@/components/ui/textarea';
 import { ApiError } from '@/lib/api/client';
 import { useMentorCommand, useMentorQuery, mentorError } from '../api/mentor-queries';
@@ -75,7 +76,7 @@ function NoteEditor(props: {
         Nội dung đã dạy
         <Textarea
           aria-label="Nội dung đã dạy"
-          className="min-h-36 bg-canvas text-base"
+          className="min-h-36 bg-canvas text-base font-normal"
           placeholder="Tóm tắt kiến thức và hoạt động trong buổi học…"
           maxLength={10000}
           rows={6}
@@ -92,7 +93,7 @@ function NoteEditor(props: {
         Việc cần làm tiếp
         <Textarea
           aria-label="Việc cần làm tiếp"
-          className="min-h-28 bg-canvas text-base"
+          className="min-h-28 bg-canvas text-base font-normal"
           placeholder="Nội dung cần ôn tập hoặc chuẩn bị tiếp…"
           maxLength={5000}
           rows={4}
@@ -173,36 +174,42 @@ export function MentorTeachingNotes(props: {
   sessionId: string;
   canWrite: boolean;
   editableUntil: string | null;
+  onClose: () => void;
 }) {
   const query = useMentorQuery(
     `class-sessions/${props.sessionId}/teaching-notes`,
     teachingNoteSchema,
   );
   return (
-    <section className="mt-4 rounded-2xl border border-line bg-canvas p-5 sm:p-6">
-      <h2 className="mb-5 text-xl font-bold">Ghi chú giảng dạy</h2>
-      {query.data && query.error && (
-        <p role="alert" className="mb-4 text-status-red">
-          Chưa tải lại được ghi chú. Bản nháp được giữ nguyên.{' '}
-          <Button variant="outline" onClick={() => query.refetch()}>
-            Thử tải lại
-          </Button>
-        </p>
-      )}
-      <MentorQueryState
-        pending={!query.data && query.isPending}
-        error={!query.data ? query.error : null}
-        retry={query.refetch}
-      >
-        {query.data && (
-          <NoteEditor
-            note={query.data}
-            latest={query.data}
-            canWrite={props.canWrite && !query.error}
-            editableUntil={props.editableUntil}
-          />
+    <Modal
+      title="Ghi chú giảng dạy"
+      onClose={props.onClose}
+      contentClassName="max-w-[calc(100%-2rem)] sm:max-w-2xl"
+    >
+      <div className="p-4 sm:p-6">
+        {query.data && query.error && (
+          <p role="alert" className="mb-4 text-status-red">
+            Chưa tải lại được ghi chú. Bản nháp được giữ nguyên.{' '}
+            <Button variant="outline" onClick={() => query.refetch()}>
+              Thử tải lại
+            </Button>
+          </p>
         )}
-      </MentorQueryState>
-    </section>
+        <MentorQueryState
+          pending={!query.data && query.isPending}
+          error={!query.data ? query.error : null}
+          retry={query.refetch}
+        >
+          {query.data && (
+            <NoteEditor
+              note={query.data}
+              latest={query.data}
+              canWrite={props.canWrite && !query.error}
+              editableUntil={props.editableUntil}
+            />
+          )}
+        </MentorQueryState>
+      </div>
+    </Modal>
   );
 }

@@ -10,7 +10,7 @@ test('session design keeps scheduled roster read only and tools usable at deskto
   session.title = 'Tuần 4 · Buổi 1: React Router và gọi API';
   if (info.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 780 });
   else await page.setViewportSize({ width: 1600, height: 1000 });
-  await page.route('**/api/v1/mentor/class-sessions/*/assignments?**', (route) =>
+  await page.route(/\/api\/v1\/mentor\/class-sessions\/[^/]+\/assignments(?:\?|$)/, (route) =>
     route.fulfill({ json: { items: [], total: 0, page: 1, pageSize: 50 } }),
   );
   await page.goto('/mentor/sessions/' + mentorIds.session);
@@ -42,4 +42,30 @@ test('session design keeps scheduled roster read only and tools usable at deskto
   ).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: info.outputPath('mentor-session-started.png'), fullPage: true });
+
+  const notes = tools.getByRole('button', { name: 'Ghi chú giảng dạy', exact: true });
+  await notes.click();
+  const notesDialog = page.getByRole('dialog', { name: 'Ghi chú giảng dạy', exact: true });
+  await expect(notesDialog.getByLabel('Nội dung đã dạy')).toBeVisible();
+  await page.screenshot({ path: info.outputPath('mentor-session-notes.png') });
+  await page.keyboard.press('Escape');
+  await expect(notesDialog).toBeHidden();
+  await expect(notes).toBeFocused();
+
+  const assignments = tools.getByRole('link', { name: 'Bài tập của buổi', exact: true });
+  const sessionPath = '/mentor/sessions/' + mentorIds.session;
+  await expect(page.getByRole('heading', { name: 'Bài tập code', exact: true })).toHaveCount(0);
+  await assignments.click();
+  await expect(page).toHaveURL(sessionPath + '/assignments');
+  await expect(page.getByRole('heading', { name: 'Bài tập', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Bài tập code', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Bảng điểm danh', exact: true })).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({
+    path: info.outputPath('mentor-session-assignments.png'),
+    fullPage: true,
+  });
+  await page.getByRole('link', { name: 'Quay lại buổi học', exact: true }).click();
+  await expect(page).toHaveURL(sessionPath);
+  await expect(page.getByRole('heading', { name: 'Bảng điểm danh', exact: true })).toBeVisible();
 });

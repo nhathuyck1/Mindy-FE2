@@ -6,7 +6,7 @@ import { quizBulkExample } from '../../src/features/assignments/lib/quiz-bulk-im
 test('Mentor creates a ZIP from the session using labelled fields', async ({ page }) => {
   const { calls } = await mockAssignments(page, { mentor: true });
   await page.goto(`/mentor/sessions/${ids.session}`);
-  await page.getByRole('button', { name: 'Bài tập của buổi', exact: true }).click();
+  await page.getByRole('link', { name: 'Bài tập của buổi', exact: true }).click();
   await page.getByRole('button', { name: 'Tạo bài tập', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Loại bài', { exact: true }).selectOption('ZIP');

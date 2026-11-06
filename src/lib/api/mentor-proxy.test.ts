@@ -208,6 +208,9 @@ describe('Mentor adapter boundaries', () => {
     fetchMock.mockResolvedValueOnce(Response.json({ items: [], total: 'bad' }));
     expect((await proxyApi(request('mentor/classes'), 'mentor/classes')).status).toBe(502);
     expect(safeReturnPath(`/mentor/sessions/${id}`)).toBe(`/mentor/sessions/${id}`);
+    expect(safeReturnPath(`/mentor/sessions/${id}/assignments`)).toBe(
+      `/mentor/sessions/${id}/assignments`,
+    );
     expect(safeReturnPath(`/mentor/classes/${id}`)).toBe(`/mentor/classes/${id}`);
     expect(safeReturnPath('/mentor/cash-orders')).toBe('/');
     expect(safeReturnPath('//evil.test/mentor')).toBe('/');
