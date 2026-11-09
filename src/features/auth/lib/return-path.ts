@@ -34,6 +34,7 @@ export function safeReturnPath(value: string | null | undefined): string {
         '/admin/classes',
         '/admin/workflow',
         '/admin/tracking',
+        '/admin/settings',
         '/admin/payments/reconciliation',
         '/manager',
         '/manager/schedule',

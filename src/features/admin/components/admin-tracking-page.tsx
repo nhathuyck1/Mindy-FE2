@@ -11,10 +11,12 @@ import { AdminQueryState } from './admin-query-state';
 import {
   trackingSources,
   trackingSourceSchema,
+  trackingActorRoleSchema,
   type AdminTrackingEvent,
 } from '../schemas/admin-read-contracts';
 
 const sourceLabels: Record<(typeof trackingSources)[number], string> = {
+  system_rule_audits: 'Cấu hình hệ thống',
   material_audit_events: 'Tài liệu',
   teaching_assignment_audits: 'Phân công giảng dạy',
   session_lifecycle_audits: 'Trạng thái buổi học',
@@ -29,6 +31,12 @@ const sourceLabels: Record<(typeof trackingSources)[number], string> = {
   attendance_recovery_audits: 'Khôi phục điểm danh',
   assignment_audits: 'Bài tập',
   assignment_zip_audits: 'Bài tập ZIP',
+};
+const roleLabels = {
+  ADMIN: 'Quản trị viên',
+  MANAGER: 'Quản lý',
+  MENTOR: 'Giảng viên',
+  STUDENT: 'Học viên',
 };
 const actionLabels: Record<string, string> = {
   CREATE: 'Tạo mới',
@@ -86,6 +94,14 @@ function TrackingDetail(props: { event: AdminTrackingEvent; onClose: () => void 
                 </dd>
               </div>
               <div>
+                <dt className="text-muted">Vai trò hiện tại</dt>
+                <dd className="mt-1 font-bold">
+                  {query.data.actor?.role
+                    ? roleLabels[query.data.actor.role]
+                    : 'Không có thông tin'}
+                </dd>
+              </div>
+              <div>
                 <dt className="text-muted">Thời gian (UTC+7)</dt>
                 <dd className="mt-1 font-bold">{formatUtc7(query.data.occurredAt)}</dd>
               </div>
@@ -124,6 +140,8 @@ function TrackingDetail(props: { event: AdminTrackingEvent; onClose: () => void 
 }
 
 export function AdminTrackingPage() {
+  const [roleDraft, setRoleDraft] = useState('');
+  const [actorRole, setActorRole] = useState('');
   const [sourceDraft, setSourceDraft] = useState('');
   const [fromDraft, setFromDraft] = useState('');
   const [toDraft, setToDraft] = useState('');
@@ -138,6 +156,7 @@ export function AdminTrackingPage() {
     page,
     pageSize,
     ...(source ? { source: trackingSourceSchema.parse(source) } : {}),
+    ...(actorRole ? { actorRole: trackingActorRoleSchema.parse(actorRole) } : {}),
     ...(from ? { from } : {}),
     ...(to ? { to } : {}),
   });
@@ -151,11 +170,14 @@ export function AdminTrackingPage() {
     }
     setRangeError('');
     setSource(sourceDraft);
+    setActorRole(roleDraft);
     setFrom(nextFrom);
     setTo(nextTo);
     setPage(1);
   };
   const clearFilters = () => {
+    setRoleDraft('');
+    setActorRole('');
     setSourceDraft('');
     setFromDraft('');
     setToDraft('');
@@ -183,7 +205,7 @@ export function AdminTrackingPage() {
       </header>
 
       <section className="admin-table-panel p-4 sm:p-5" aria-label="Bộ lọc lịch sử hoạt động">
-        <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(180px,1fr)_minmax(180px,1fr)_minmax(180px,1fr)_auto_auto] xl:items-end">
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4 xl:items-end">
           <label className="min-w-0 text-sm font-bold">
             Nhóm hoạt động
             <NativeSelect
@@ -197,6 +219,23 @@ export function AdminTrackingPage() {
               {trackingSources.map((item) => (
                 <NativeSelectOption key={item} value={item}>
                   {sourceLabels[item]}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          </label>
+          <label className="min-w-0 text-sm font-bold">
+            Vai trò người thực hiện
+            <NativeSelect
+              aria-label="Vai trò người thực hiện"
+              wrapperClassName="mt-2 w-full"
+              className="h-12 w-full py-2 text-base leading-6"
+              value={roleDraft}
+              onChange={(event) => setRoleDraft(event.target.value)}
+            >
+              <NativeSelectOption value="">Tất cả vai trò</NativeSelectOption>
+              {trackingActorRoleSchema.options.map((role) => (
+                <NativeSelectOption key={role} value={role}>
+                  {roleLabels[role]}
                 </NativeSelectOption>
               ))}
             </NativeSelect>
@@ -228,6 +267,10 @@ export function AdminTrackingPage() {
             Xóa lọc
           </Button>
         </div>
+        <p className="mt-3 text-xs text-muted">
+          Lọc theo vai trò hiện tại của người thực hiện. Sự kiện hệ thống xuất hiện khi chọn tất cả
+          vai trò.
+        </p>
         {rangeError && (
           <p className="mt-3 text-sm font-semibold text-coral" role="alert">
             {rangeError}
@@ -307,6 +350,11 @@ export function AdminTrackingPage() {
                       </td>
                       <td className="whitespace-normal">
                         {item.actor?.displayName || item.actor?.id || 'Hệ thống'}
+                        {item.actor?.role && (
+                          <span className="block text-xs text-muted">
+                            {roleLabels[item.actor.role]}
+                          </span>
+                        )}
                       </td>
                       <td className="whitespace-normal">
                         {item.entityType}

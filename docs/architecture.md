@@ -360,3 +360,12 @@ Cập nhật 16/10: user orders/courses hiển thị dạng bảng, dữ liệu 
 ## BE Change — 05/11/2026
 
 features/operations sở hữu schema/proxy mới và các panel lịch tuần/swap/retention. Dashboard manager/mentor có DTO và renderer riêng, Admin giữ analytics cũ. Server state vẫn TanStack Query theo user; retry mutation giữ receipt/body. Không mở manager/mentorId tùy ý.
+
+# Cấu hình hệ thống — 09/11/2026
+
+- `/admin/settings` compose AdminOnlyAccess và AdminSystemRulesPage. Query theo Admin ID sở hữu server state; mutation không retry, gửi expectedVersion và lý do; luôn invalidate cấu hình sau kết quả để đối chiếu. Schema/proxy chỉ mở GET danh sách và PATCH rule đã khai báo.
+- Backend sở hữu bảng rule/audit và thực thi ngày/giờ ở attendance/lifecycle; FE không có flag bypass riêng. Thay đổi toàn hệ thống áp dụng khi request tiếp theo đọc DB. Quy tắc mặc định bật; không cache giá trị trên process.
+
+## Audit chung và vai trò — 09/11/2026
+
+AdminTrackingPage dùng lại query server theo user và các filter; actorRole được kiểm bằng Zod/proxy rồi gửi BE, không lọc tập kết quả đã phân trang trên client. Nguồn system_rule_audits được lưu trong audit_events chung, view giữ đường ghi cũ. UI dùng role hiện tại do BE trả, không suy vai trò từ loại audit.

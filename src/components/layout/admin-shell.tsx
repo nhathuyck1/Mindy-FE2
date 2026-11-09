@@ -30,6 +30,7 @@ function AdminNavigation(props: { collapsed?: boolean; onNavigate?: () => void }
     session.data?.role === 'ADMIN'
       ? [
           ...navigation,
+          { href: '/admin/settings', label: 'Cấu hình hệ thống', icon: 'shield' as const },
           { href: '/admin/tracking', label: 'Lịch sử hoạt động', icon: 'list' as const },
           {
             href: '/admin/payments/reconciliation',
@@ -79,6 +80,7 @@ export function AdminShell(props: { children: React.ReactNode }) {
     session.data?.role === 'ADMIN'
       ? [
           ...navigation,
+          { href: '/admin/settings', label: 'Cấu hình hệ thống', icon: 'shield' as const },
           { href: '/admin/tracking', label: 'Lịch sử hoạt động', icon: 'list' as const },
           {
             href: '/admin/payments/reconciliation',

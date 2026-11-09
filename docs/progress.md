@@ -1,10 +1,21 @@
 # Tiến độ
 
+## 09/11/2026 — Đồng bộ main và tách nhánh cấu hình
+
+- Nhánh `codex/admin-system-rules` bắt đầu từ origin/main `8f2b23b`, gồm 15 commit main mới nhất ở thời điểm fetch. Giữ toàn bộ thay đổi rule/audit local; giải quyết conflict docs/progress bằng cách giữ nội dung hai phía. Không sửa lại compiler/chat/whiteboard hoặc luồng Mentor mới của main.
+- Type-check, production build và 374 unit tests PASS sau đồng bộ (Vitest giới hạn 2 worker để tránh thiếu bộ nhớ máy chạy). Chưa commit/push.
+
 ## 06/11/2026 — Merge dev vào main
 
 - Luồng compiler (mentor soạn đề, demo, chấm; học viên làm bài) lấy bản `dev`, kèm khối code trên whiteboard và gửi code vào chat.
 - Chat gộp cả xem trước ảnh (main) và gửi/kéo thả khối code (dev).
 - Giữ bản `main` cho nghỉ dạy/dạy bù, lọc tài liệu chờ duyệt (`courseUnitId` + `unseen`, không `courseId`), học liệu học viên, danh sách bài tập, trang buổi dạy, proxy và env.
+
+## 09/11/2026 — Audit cấu hình và lọc theo vai trò
+
+- Lịch sử hoạt động nhận nguồn Cấu hình hệ thống (`system_rule_audits`) từ audit_events chung. Chi tiết giữ khóa rule, giá trị cũ/mới, người thực hiện, lý do và version.
+- Bộ lọc Vai trò người thực hiện gồm Admin/Quản lý/Giảng viên/Học viên, kết hợp nguồn/thời gian và áp dụng trước phân trang tại BE; xóa lọc xóa cả vai trò, áp dụng quay về trang 1. Hiển thị vai trò ở danh sách/chi tiết. Vai trò là giá trị hiện tại trong users, không snapshot tại thời điểm sự kiện.
+- Cần BE mới và migration 1794182400001-consolidate-system-rule-audits; chưa chạy database/deploy thực. Kiểm chứng bằng unit/proxy và E2E fixture desktop/mobile.
 
 ## 06/11/2026 — Kiểm tra toàn bộ FE trước PR vào main
 
@@ -1021,3 +1032,9 @@ Course detail/lớp/lịch public, email registration/verification, cart/checkou
 ### Checkpoint tạm dừng sau build — 05/11/2026
 
 User yêu cầu pause để restart máy/bật Docker. FE production build cuối PASS (compile/TypeScript/35 static pages), dùng CIRCLE_NODE_TOTAL=2 để giới hạn1 page worker. Lượt15-worker trước gây OOM; không coi OOM là test nghiệp vụ fail. Unit312 PASS ở lượt trước thay đổi cuối; còn chạy lại lint/type/unit và E2E dashboard/chat/leave/materials/weekly/swap sau restart. Chưa deploy/commit/push. Checkpoint chi tiết và thứ tự tiếp tục ở ../Mindy-BE/docs/progress/BE_CHANGE_PROGRESS.md, mục CHECKPOINT.
+
+# Cấu hình rule bắt đầu buổi — 09/11/2026
+
+- Admin `/admin/settings` bật/tắt rule kiểm tra ngày/giờ, bắt buộc lý do; mặc định bật. Demo ngoài lịch vẫn giữ điều kiện khai giảng (tối thiểu 3 học viên đã thanh toán ACTIVE), quyền và kiểm tra xung đột. Buổi demo ghi dữ liệu thật; UI nhắc bật lại sau demo.
+- BE bổ sung system_rules/system_rule_audits, API Admin có version check và audit transaction. FE dùng Query theo user, strict Zod/proxy, không retry mutation; lỗi/409 tải lại trạng thái trước khi thử lại. Menu và return path đã thêm.
+- Đã kiểm tra build/type/lint và Playwright bật/tắt trên desktop, mobile 320px bằng fixture. Contract từ source local, chưa kiểm Swagger live/deploy; cần chạy migration 1794182400000-system-rules trước khi dùng backend mới.

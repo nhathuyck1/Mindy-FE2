@@ -334,3 +334,15 @@ Proxy chuyển access cookie/private no-store, từ chối query lạ/lặp, val
 ## BE Change — source local 05/11/2026
 
 Contract source mới ở ../Mindy-BE/docs/api_flow/PHASE_BE_CHANGE_flow-api-breakdown.md. Bổ sung teaching-slots; management/classes/:id/weekly-schedule GET/POST và preview POST; mentor/classes/:id/sessions/swap; materials/:id/open; manager/materials/bulk-delete và storage-cleanup; manager materials unseen query; chat file-access disposition. Manager/Mentor dashboard dùng schema riêng. Có migration mới BE, chưa xác nhận deploy.
+
+# Cấu hình hệ thống — 09/11/2026
+
+- Admin ACTIVE: GET `/admin/system-rules` trả array `{key,value,version,updatedAt,updatedBy}`. PATCH `/admin/system-rules/session_start_time_enforced` nhận strict `{value:boolean,expectedVersion:positive integer,reason:trimmed string 1..1000}`, trả rule mới; 409 khi version cũ. Cookie access_token, Origin tin cậy, private/no-store. Không cho key tùy ý, không tự retry mutation.
+- `true` giữ kiểm tra lịch; `false` cho bắt đầu buổi ngoài ngày/giờ nhưng vẫn giữ điều kiện khai giảng và phân quyền. Nút Mentor dùng permissions.canStart từ BE, làm mới trang buổi sau khi Admin đổi rule. Không thêm bypass do client gửi ở API start.
+- Nguồn: controller/service/DTO và docs/api_flow/SYSTEM_RULES.md trong Mindy-BE local. Chưa có Swagger live/deploy; phải chạy migration 1794182400000-system-rules trước BE mới.
+
+## Audit cấu hình và vai trò — 09/11/2026
+
+GET /admin/tracking/events nhận source=system_rule_audits và actorRole=ADMIN|MANAGER|MENTOR|STUDENT, kết hợp AND với filter cũ trước count/phân trang. actor trong list/detail có thêm role (FE optional để tương thích response cũ). Role là vai trò hiện tại của actor trong users; sự kiện hệ thống chỉ xuất hiện khi không lọc role. Detail giữ data.rule_key, old_value, new_value, reason, version; entityType=system_rule, entityId=null. Không đổi quyền Admin-only.
+
+Nguồn local: tracking DTO/service và docs/api_flow/SYSTEM_RULES.md ở BE. Cần migration 1794182400001-consolidate-system-rule-audits và BE mới; chưa xác minh Swagger live/deploy.

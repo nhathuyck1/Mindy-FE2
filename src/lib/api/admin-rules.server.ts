@@ -1,4 +1,9 @@
 import 'server-only';
+import {
+  systemRuleSchema,
+  systemRulesSchema,
+  updateSystemRuleSchema,
+} from '@/features/admin/schemas/system-rule-contracts';
 import { z } from 'zod';
 import { userSchema } from './contracts';
 import {
@@ -55,6 +60,12 @@ export function resolveAdminCrudRule(method: string, path: string): Rule | undef
   const parts = path.split('/');
   if (parts[0] !== 'admin') return undefined;
   const resource = parts[1];
+  if (resource === 'system-rules') {
+    if (method === 'GET' && parts.length === 2) return rule(systemRulesSchema);
+    if (method === 'PATCH' && parts.length === 3 && parts[2] === 'session_start_time_enforced')
+      return rule(systemRuleSchema, updateSystemRuleSchema);
+    return undefined;
+  }
   if (method === 'GET' && resource === 'tracking' && parts[2] === 'events') {
     if (parts.length === 3)
       return { ...rule(adminTrackingPageSchema), query: adminTrackingQuerySchema };

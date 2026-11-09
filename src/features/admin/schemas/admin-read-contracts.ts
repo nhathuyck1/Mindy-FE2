@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const trackingSources = [
+  'system_rule_audits',
   'material_audit_events',
   'teaching_assignment_audits',
   'session_lifecycle_audits',
@@ -17,6 +18,7 @@ export const trackingSources = [
   'assignment_zip_audits',
 ] as const;
 export const trackingSourceSchema = z.enum(trackingSources);
+export const trackingActorRoleSchema = z.enum(['ADMIN', 'MANAGER', 'MENTOR', 'STUDENT']);
 
 const pageQuery = {
   page: z.coerce.number().int().min(1).max(1_000_000).default(1),
@@ -27,6 +29,7 @@ export const adminTrackingQuerySchema = z
     ...pageQuery,
     source: trackingSourceSchema.optional(),
     actorId: z.uuid().optional(),
+    actorRole: trackingActorRoleSchema.optional(),
     entityId: z.uuid().optional(),
     classId: z.uuid().optional(),
     sessionId: z.uuid().optional(),
@@ -50,7 +53,13 @@ export const adminTrackingEventSchema = z.object({
   id: z.uuid(),
   source: trackingSourceSchema,
   action: z.string(),
-  actor: z.object({ id: z.uuid(), displayName: z.string().nullable() }).nullable(),
+  actor: z
+    .object({
+      id: z.uuid(),
+      displayName: z.string().nullable(),
+      role: trackingActorRoleSchema.nullable().optional(),
+    })
+    .nullable(),
   entityType: z.string(),
   entityId: z.uuid().nullable(),
   classId: z.uuid().nullable(),
