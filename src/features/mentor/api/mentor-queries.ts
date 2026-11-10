@@ -74,11 +74,11 @@ export function useMentorUnitSessions(unit: ContentUnit) {
   });
 }
 
-export function useMentorUnitIndex(classId: string) {
+export function useMentorUnitIndex(classId: string, enabled = true) {
   const session = useSession();
   return useQuery({
     queryKey: ['mentor', session.data?.id, 'unit-index', classId],
-    enabled: session.data?.role === 'MENTOR' && session.data.status === 'ACTIVE',
+    enabled: enabled && session.data?.role === 'MENTOR' && session.data.status === 'ACTIVE',
     retry: false,
     queryFn: async ({ signal }) => {
       const read = (page: number) =>

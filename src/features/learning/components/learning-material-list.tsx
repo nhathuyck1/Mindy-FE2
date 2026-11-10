@@ -1,6 +1,14 @@
+import dynamic from 'next/dynamic';
 import { ChevronDown, FileText, Paperclip, PlayCircle } from 'lucide-react';
 import type { Material } from '../schemas/learning-contracts';
-import { MaterialViewer } from './material-viewer';
+import { LearningState } from './learning-state';
+
+const MaterialViewer = dynamic(
+  () => import('./material-viewer').then((mod) => mod.MaterialViewer),
+  {
+    loading: () => <LearningState>Đang tải nội dung học…</LearningState>,
+  },
+);
 
 export function LearningMaterialList(props: {
   items: Material[];

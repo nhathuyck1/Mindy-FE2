@@ -31,6 +31,7 @@ export function ChatMessageItem(props: {
 }) {
   const m = props.message,
     refresh = useRefreshChat();
+  const image = !m.deletedAt && m.type === 'IMAGE' ? m.file : null;
   const menuTrigger = useRef<HTMLButtonElement>(null);
   const [returnFocus, setReturnFocus] = useState<HTMLButtonElement | null>(null);
   const [mode, setMode] = useState<'edit' | 'delete' | null>(null),
@@ -101,8 +102,9 @@ export function ChatMessageItem(props: {
         <div className={cn('flex items-center gap-1', props.own && 'flex-row-reverse')}>
           <div
             className={cn(
-              'min-w-0 rounded-2xl border border-line bg-canvas px-4 py-3 text-sm',
-              props.own && 'border-mint/20 bg-mint/10',
+              'min-w-0 text-sm',
+              image ? 'space-y-2' : 'rounded-2xl border border-line bg-canvas px-4 py-3',
+              !image && props.own && 'border-mint/20 bg-mint/10',
             )}
           >
             {m.deletedAt ? (
@@ -130,21 +132,21 @@ export function ChatMessageItem(props: {
                       </p>
                     ),
                   )}
-                {m.file && m.type === 'IMAGE' && (
+                {image && (
                   <ChatImage
                     conversationId={m.conversationId}
                     messageId={m.id}
-                    name={m.file.originalFilename}
+                    name={image.originalFilename}
                   />
                 )}
-                {m.file && (
+                {m.file && m.type === 'FILE' && (
                   <Button
                     variant="link"
                     className="max-w-full whitespace-normal break-all px-0 text-left"
                     disabled={busy}
                     onClick={() => void download()}
                   >
-                    {m.type === 'IMAGE' ? 'Xem ảnh' : 'Tải PDF'} · {m.file.originalFilename}
+                    Tải PDF · {m.file.originalFilename}
                   </Button>
                 )}
               </>
@@ -270,7 +272,7 @@ export function ChatMessageItem(props: {
                 }
                 onClick={() => void change()}
               >
-                {busy ? 'Đang lưu…' : mode === 'delete' ? 'Xóa tin nhắn' : 'Lưu thay đổi'}
+                {mode === 'delete' ? 'Xóa tin nhắn' : 'Lưu thay đổi'}
               </Button>
             </div>
           </div>

@@ -208,10 +208,10 @@ test('Dropdown opens personal workspace, four navigation entries and collapsible
   for (const label of ['Thông tin cá nhân', 'Đơn hàng của tôi', 'Lịch học', 'Khóa học của tôi'])
     await expect(nav.getByRole('link', { name: label, exact: true })).toBeVisible();
   await nav.getByRole('link', { name: 'Khóa học của tôi', exact: true }).click();
-  await expect(page.getByRole('row').filter({ hasText: 'Khóa học Web cá nhân' })).toBeVisible();
+  await expect(page.getByRole('article').filter({ hasText: 'Khóa học Web cá nhân' })).toBeVisible();
   await expect(page.getByText('Đang học', { exact: true })).toBeVisible();
   await expect(
-    page.getByRole('row').filter({ hasText: 'Khóa học Web cá nhân' }).getByRole('link', {
+    page.getByRole('article').filter({ hasText: 'Khóa học Web cá nhân' }).getByRole('link', {
       name: 'Vào học',
     }),
   ).toHaveAttribute('href', `/user/materials/${classId}`);
@@ -318,16 +318,16 @@ test('Workspace blocks guests before any private data request and handles errors
   await expect(page.getByText('Tuần này bạn chưa có lịch học.')).toBeVisible();
 });
 
-test('Compact course rows open full details and restore focus on Escape at desktop and 320px', async ({
+test('Course cards open full details and restore focus on Escape at desktop and 320px', async ({
   page,
 }, testInfo) => {
   await fixture(page);
   if (testInfo.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 780 });
   await page.goto('/user/courses');
-  const row = page.getByRole('row').filter({ hasText: 'Khóa học Web cá nhân' });
+  const row = page.getByRole('article').filter({ hasText: 'Khóa học Web cá nhân' });
   await expect(row).toBeVisible();
-  expect((await row.boundingBox())!.height).toBeLessThan(110);
-  await page.screenshot({ path: testInfo.outputPath('compact-courses.png'), fullPage: true });
+  await expect(row.getByRole('heading', { name: 'Khóa học Web cá nhân' })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('course-cards.png'), fullPage: true });
   const trigger = row.getByRole('button', { name: 'Xem chi tiết', exact: true });
   await trigger.click();
   const dialog = page.getByRole('dialog', { name: 'Chi tiết khóa học của tôi', exact: true });
@@ -342,13 +342,13 @@ test('Compact course rows open full details and restore focus on Escape at deskt
     '/user/schedule',
   );
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.screenshot({ path: testInfo.outputPath('course-row-details.png') });
+  await page.screenshot({ path: testInfo.outputPath('course-card-details.png') });
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
   await expect(trigger).toBeFocused();
 });
 
-test('Course rows open only the class access granted by the API', async ({ page }) => {
+test('Course cards open only the class access granted by the API', async ({ page }) => {
   await fixture(page);
   await page.route('**/api/v1/me/classes?**', (route) =>
     route.fulfill({
@@ -384,17 +384,17 @@ test('Course rows open only the class access granted by the API', async ({ page 
     }),
   );
   await page.goto('/user/courses');
-  const full = page.getByRole('row').filter({ hasText: 'Khóa học Web cá nhân' });
+  const full = page.getByRole('article').filter({ hasText: 'Khóa học Web cá nhân' });
   await expect(full.getByRole('link', { name: 'Vào học' })).toHaveAttribute(
     'href',
     `/user/materials/${classId}`,
   );
-  const preview = page.getByRole('row').filter({ hasText: 'Khóa học xem trước' });
+  const preview = page.getByRole('article').filter({ hasText: 'Khóa học xem trước' });
   await expect(preview.getByRole('link', { name: 'Xem trước chương' })).toHaveAttribute(
     'href',
     '/user/materials/44444444-4444-4444-8444-444444444445?preview=true',
   );
-  const none = page.getByRole('row').filter({ hasText: 'Khóa học chưa cấp quyền' });
+  const none = page.getByRole('article').filter({ hasText: 'Khóa học chưa cấp quyền' });
   await expect(none.getByRole('link', { name: 'Vào học' })).toHaveCount(0);
   await expect(none.getByRole('link', { name: 'Xem trước chương' })).toHaveCount(0);
   await expect(none.getByRole('button', { name: 'Xem chi tiết' })).toBeVisible();

@@ -45,7 +45,17 @@ export function MentorSessionAssignmentsPage(props: { sessionId: string }) {
       >
         {session && workspace.data && (
           <>
-            <AssignmentList sessionId={props.sessionId} mentor canCreate={Boolean(canCreate)} />
+            <AssignmentList
+              session={{
+                id: session.sessionId,
+                title: session.title,
+                startsAt: session.startsAt,
+                sessionNumber: null,
+                unitTitle: null,
+              }}
+              mentor
+              canCreate={Boolean(canCreate)}
+            />
             <MentorSessionAssignments sessionId={props.sessionId} readonly={!canCreate} />
           </>
         )}

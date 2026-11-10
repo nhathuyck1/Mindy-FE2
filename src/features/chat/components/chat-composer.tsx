@@ -164,7 +164,7 @@ export function ChatComposer(props: {
       setNotice('Tệp không được chấp nhận. Vui lòng chọn tệp khác.');
     } else {
       setProcessing(id);
-      setNotice('Tệp đang được kiểm tra. Nhấn Kiểm tra tệp để cập nhật.');
+      setNotice('');
     }
   }
   async function upload(file: File) {
@@ -183,7 +183,7 @@ export function ChatComposer(props: {
     setPreviewFile(file.type.startsWith('image/') ? file : null);
     setAttachment(null);
     setProcessing(null);
-    setNotice('Đang tải tệp…');
+    setNotice('');
     let stage: 'intent' | 'storage' | 'complete' = 'intent';
     try {
       const active = signal();
@@ -417,7 +417,7 @@ export function ChatComposer(props: {
           }
         >
           <Send aria-hidden="true" />
-          {busy ? 'Đang xử lý…' : pending ? 'Thử gửi lại' : 'Gửi'}
+          {pending && !busy ? 'Thử gửi lại' : 'Gửi'}
         </Button>
       </div>
       <p className="text-xs text-muted">Enter để gửi · Shift + Enter để xuống dòng</p>

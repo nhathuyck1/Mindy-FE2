@@ -263,6 +263,16 @@ function QuizAttempt(props: { initial: dto.Attempt }) {
       setBusy(false);
     }
   }
+  const resultsByQuestion = new Map(
+    attempt.result?.results.map((result) => [result.questionId, result]),
+  );
+  const selectedOptions = new Map(
+    engine.answers.map((answer) => [answer.questionId, answer.selectedOption]),
+  );
+  for (const result of resultsByQuestion.values()) {
+    if (result.selectedOption) selectedOptions.set(result.questionId, result.selectedOption);
+    else selectedOptions.delete(result.questionId);
+  }
   return (
     <>
       <AssignmentHeading
@@ -275,7 +285,8 @@ function QuizAttempt(props: { initial: dto.Attempt }) {
             value={expired && attempt.status === 'IN_PROGRESS' ? 'FINALIZING' : attempt.status}
           />
           <span className="text-sm">
-            {engine.answers.length}/{attempt.totalQuestions} câu đã chọn
+            {attempt.result?.answeredCount ?? engine.answers.length}/{attempt.totalQuestions} câu đã
+            chọn
           </span>
         </div>
         {remaining !== null && active && (
@@ -340,9 +351,8 @@ function QuizAttempt(props: { initial: dto.Attempt }) {
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_220px]">
         <div className="min-w-0 space-y-5">
           {attempt.questions.map((q, index) => {
-            const result = attempt.result?.results.find((r) => r.questionId === q.id);
-            const incorrect = result?.isCorrect === false;
-            const questionTone = incorrect ? 'text-status-red' : '';
+            const result = resultsByQuestion.get(q.id);
+            const selectedOption = selectedOptions.get(q.id);
             return (
               <fieldset
                 id={`question-${q.id}`}
@@ -351,17 +361,19 @@ function QuizAttempt(props: { initial: dto.Attempt }) {
                 className={`${panelClass} scroll-mt-5 space-y-3`}
               >
                 <legend className="sr-only">Câu {index + 1}</legend>
-                <h2 className={`font-extrabold ${questionTone}`}>Câu {index + 1}</h2>
-                <p className={`whitespace-pre-wrap break-words ${questionTone}`}>{q.prompt}</p>
+                <h2 className="font-extrabold">Câu {index + 1}</h2>
+                <p className="whitespace-pre-wrap break-words">{q.prompt}</p>
                 {q.options.map((option) => {
-                  const selected = engine.answers.some(
-                    (a) => a.questionId === q.id && a.selectedOption === option.label,
-                  );
-                  const showCorrectAnswer = incorrect && result.correctOption === option.label;
-                  let optionTone = selected ? 'border-mint bg-mint/10' : 'border-line';
-                  if (showCorrectAnswer) {
-                    optionTone = 'border-status-red/30 bg-status-red/8 font-bold text-status-red';
-                  }
+                  const selected = selectedOption === option.label;
+                  const correct = result?.correctOption === option.label;
+                  const wrong = Boolean(result && selected && !correct);
+                  const optionTone = correct
+                    ? 'border-status-green/35 bg-status-green/10 text-status-green'
+                    : wrong
+                      ? 'border-status-red/35 bg-status-red/10 text-status-red'
+                      : selected
+                        ? 'border-mint bg-mint/10'
+                        : 'border-line';
                   return (
                     <label
                       key={option.label}
@@ -376,13 +388,17 @@ function QuizAttempt(props: { initial: dto.Attempt }) {
                       />
                       <span className="min-w-0 whitespace-pre-wrap break-words">
                         <strong>{option.label}.</strong> {option.text}
+                        {correct && <span className="block text-sm font-bold">Đáp án đúng</span>}
+                        {wrong && <span className="block text-sm font-bold">Bạn chọn sai</span>}
                       </span>
                     </label>
                   );
                 })}
                 {result && (
-                  <p className={`font-bold ${incorrect ? 'text-status-red' : 'text-forest'}`}>
-                    {result.isCorrect ? 'Đúng' : `Sai · Đáp án đúng: ${result.correctOption}`}
+                  <p
+                    className={`font-bold ${result.isCorrect ? 'text-status-green' : result.selectedOption ? 'text-status-red' : 'text-muted'}`}
+                  >
+                    {result.isCorrect ? 'Đúng' : result.selectedOption ? 'Sai' : 'Chưa trả lời'}
                   </p>
                 )}
               </fieldset>
@@ -396,8 +412,8 @@ function QuizAttempt(props: { initial: dto.Attempt }) {
               <a
                 key={q.id}
                 href={`#question-${q.id}`}
-                className={`flex size-11 items-center justify-center rounded-lg border text-sm font-bold ${engine.answers.some((a) => a.questionId === q.id) ? 'border-mint bg-mint/10' : 'border-line'}`}
-                aria-label={`Câu ${i + 1}${engine.answers.some((a) => a.questionId === q.id) ? ', đã chọn' : ', chưa chọn'}`}
+                className={`flex size-11 items-center justify-center rounded-lg border text-sm font-bold ${selectedOptions.has(q.id) ? 'border-mint bg-mint/10' : 'border-line'}`}
+                aria-label={`Câu ${i + 1}${selectedOptions.has(q.id) ? ', đã chọn' : ', chưa chọn'}`}
               >
                 {i + 1}
               </a>

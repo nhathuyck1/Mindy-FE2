@@ -4,7 +4,11 @@ import { useEffect, useState } from 'react';
 import { ClipboardList, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
-import { useAssignmentQuery, useAssignmentSessions } from '../api/assignment-queries';
+import {
+  type AssignmentSession,
+  useAssignmentQuery,
+  useAssignmentSessions,
+} from '../api/assignment-queries';
 import * as dto from '../schemas/assignment-contracts';
 import { AssignmentListItem } from './assignment-list-item';
 import {
@@ -20,7 +24,7 @@ import { AssignmentCounts } from './assignment-reports';
 
 export function AssignmentList(props: {
   classId?: string;
-  sessionId?: string;
+  session?: AssignmentSession;
   mentor?: boolean;
   canCreate?: boolean;
   reports?: boolean;
@@ -30,6 +34,7 @@ export function AssignmentList(props: {
   const pathname = usePathname();
   const router = useRouter();
   const role = props.mentor ? 'MENTOR' : 'STUDENT';
+  const sessionId = props.session?.id;
   const sessions = useAssignmentSessions(props.classId, Boolean(props.mentor));
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -48,9 +53,9 @@ export function AssignmentList(props: {
   }
   const parsed = dto.assignmentQuerySchema.safeParse(Object.fromEntries(queryParams));
   const page = parsed.success ? parsed.data.page : 1;
-  const id = props.sessionId ?? props.classId;
+  const id = sessionId ?? props.classId;
   const valid = dto.uuid.safeParse(id).success && parsed.success;
-  const path = `${props.mentor ? 'mentor' : 'me'}/${props.sessionId ? 'class-sessions' : 'classes'}/${id}/assignments?${queryParams}`;
+  const path = `${props.mentor ? 'mentor' : 'me'}/${sessionId ? 'class-sessions' : 'classes'}/${id}/assignments?${queryParams}`;
   const query = useAssignmentQuery(
     path,
     props.mentor ? dto.mentorAssignmentPageSchema : dto.studentAssignmentPageSchema,
@@ -73,8 +78,8 @@ export function AssignmentList(props: {
           back={props.mentor ? undefined : '/user/courses'}
           backLabel="Khóa học của tôi"
         >
-          {props.canCreate && props.sessionId && (
-            <AssignmentCreate sessionId={props.sessionId} onCreated={() => query.refetch()} />
+          {props.canCreate && sessionId && (
+            <AssignmentCreate sessionId={sessionId} onCreated={() => query.refetch()} />
           )}
         </AssignmentHeading>
       )}
@@ -124,7 +129,7 @@ export function AssignmentList(props: {
               </NativeSelect>
             </label>
           )}
-          {!props.sessionId && (
+          {!sessionId && (
             <label>
               Buổi học
               <NativeSelect
@@ -200,9 +205,12 @@ export function AssignmentList(props: {
                         <AssignmentListItem
                           key={item.id}
                           item={item}
-                          session={sessions.data?.find((s) => s.id === item.sessionId)}
-                          sessionsPending={sessions.isPending}
-                          sessionId={props.sessionId}
+                          session={
+                            sessionId === item.sessionId
+                              ? props.session
+                              : sessions.data?.find((s) => s.id === item.sessionId)
+                          }
+                          sessionsPending={Boolean(props.classId) && sessions.isPending}
                           classId={props.classId}
                           mentor={props.mentor}
                           now={now}

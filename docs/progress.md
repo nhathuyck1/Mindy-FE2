@@ -1,5 +1,13 @@
 # Tiến độ
 
+## 10/11/2026 — Đồng bộ lớp và học liệu Student với Mentor
+
+- Dùng chung thẻ lớp responsive, tách Tài liệu chung khỏi nội dung theo buổi và đưa lối Bài tập lên thanh tab của lớp. Giữ điều kiện xem trước tiền mặt, quyền xem tài liệu và nút chi tiết đăng ký.
+- Khóa nút làm QUIZ khi đã tới hạn hoặc server trả `ASSIGNMENT_DEADLINE_PASSED`. Kiểm tra với bài thật trên frontend local xác nhận nút bị khóa trước khi gửi `POST /start`.
+- TypeScript, lint, Prettier và 26 lượt E2E liên quan trên desktop/mobile đạt sau khi chạy lại luồng học liệu. Thao tác mở tài liệu gửi một yêu cầu tracking trong dev Strict Mode.
+- Chi tiết lớp hiện lịch buổi trước. Mở buổi mới tải tài liệu và tái sử dụng dữ liệu trong cùng chương. Mở từng mục mới tải viewer và chi tiết. Kết quả QUIZ tô xanh đáp án đúng và tô đỏ lựa chọn sai của học viên theo dữ liệu chấm.
+- 32 lượt E2E liên quan trên desktop/mobile đạt với API mô phỏng, gồm tải theo buổi, thử lại khi lỗi, quyền xem trước và phản hồi đáp án sau khi chấm.
+
 ## 09/11/2026 — Đồng bộ main và tách nhánh cấu hình
 
 - Nhánh `codex/admin-system-rules` bắt đầu từ origin/main `8f2b23b`, gồm 15 commit main mới nhất ở thời điểm fetch. Giữ toàn bộ thay đổi rule/audit local; giải quyết conflict docs/progress bằng cách giữ nội dung hai phía. Không sửa lại compiler/chat/whiteboard hoặc luồng Mentor mới của main.

@@ -87,6 +87,10 @@ test('cancelled class opens history and prevents teaching mutations', async ({ p
   await expect(page.getByText('Chưa có dữ liệu chuyên cần')).toBeVisible();
   await page.goto(`/mentor/sessions/${mentorIds.session}`);
   await expect(page.getByRole('heading', { name: 'Bảng điểm danh' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Về lớp học', exact: true })).toHaveAttribute(
+    'href',
+    `/mentor/classes/${mentorIds.class}`,
+  );
   for (const name of ['Bắt đầu buổi', 'Tất cả có mặt', 'Sửa link buổi học'])
     await expect(page.getByRole('button', { name, exact: true })).toHaveCount(0);
   expect(calls.some((c) => c.path.endsWith('/attendance-candidates'))).toBe(false);
@@ -100,32 +104,18 @@ test('completed class allows internal notes within the editing window', async ({
   await page.getByRole('button', { name: 'Lưu ghi chú giảng dạy' }).click();
   await expect(page.getByText('Đã lưu ghi chú giảng dạy.')).toBeVisible();
 });
-test('stored progress preserves zero, missing data and invalid values without writes', async ({
-  page,
-}) => {
+test('old roster and progress links open the chapter tab', async ({ page }) => {
   const { calls } = await mockMentorWorkspace(page);
-  await page.goto(`/mentor/classes/${mentorIds.class}`);
-  await page.getByRole('button', { name: 'Tiến độ', exact: true }).click();
-  await page.getByLabel('Lọc chương').selectOption(mentorIds.unit);
-  await expect
-    .poll(() =>
-      calls.some(
-        (c) => c.path.endsWith('/progress') && c.query.includes(`unitId=${mentorIds.unit}`),
-      ),
-    )
-    .toBe(true);
-  await page.getByRole('button', { name: 'Xem tiến độ học viên' }).click();
-  await expect(page.getByRole('dialog').getByRole('progressbar').first()).toHaveAttribute(
-    'aria-valuenow',
-    '0',
-  );
-  await expect(
-    page.getByRole('dialog').getByText('Chưa có dữ liệu', { exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole('dialog').getByText('Cần kiểm tra dữ liệu', { exact: true }),
-  ).toBeVisible();
-  expect(calls.some((c) => c.method !== 'GET')).toBe(false);
+  for (const tab of ['students', 'progress']) {
+    await page.goto(`/mentor/classes/${mentorIds.class}?tab=${tab}`);
+    const tabs = page.getByRole('group', { name: 'Nội dung lớp học' });
+    await expect(tabs.getByRole('button', { name: 'Chương', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(page.getByRole('heading', { name: 'Nội dung theo buổi học' })).toBeVisible();
+  }
+  expect(calls.some((call) => /\/(students|progress)$/.test(call.path))).toBe(false);
 });
 test('preview is read only and bulk attendance includes guests across all pages', async ({
   page,

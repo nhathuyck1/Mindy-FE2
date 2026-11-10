@@ -445,16 +445,73 @@ test('shows an image in the timeline, renews an expired URL, and restores focus 
   const button = page.getByRole('button', { name: 'Mở lớn ảnh anh.png', exact: true });
   await expect(button).toBeVisible();
   await expect(button.locator('img')).toHaveJSProperty('naturalWidth', 128);
+  await expect(button.locator('..')).toHaveCSS('border-top-width', '0px');
+  await expect(page.getByRole('button', { name: 'Xem ảnh · anh.png' })).toHaveCount(0);
   await button.press('Enter');
   await expect.poll(() => calls).toBe(2);
-  await expect(page.getByRole('dialog')).toBeVisible();
-  await expect(page.getByRole('dialog').locator('img')).toHaveJSProperty('naturalWidth', 128);
-  await expect(page.getByRole('dialog')).toHaveCSS('opacity', '1');
+  const viewer = page.getByRole('dialog', { name: 'Xem ảnh', exact: true });
+  await expect(viewer).toBeVisible();
+  await expect(viewer.locator('img')).toHaveJSProperty('naturalWidth', 128);
+  await expect(viewer.getByText('anh.png', { exact: true })).toHaveCount(0);
+  await expect(viewer).toHaveCSS('border-top-width', '0px');
   expect(calls).toBe(2);
   await page.screenshot({ path: info.outputPath('chat-image.png'), fullPage: true });
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(button).toBeFocused();
+  await button.click();
+  await viewer.click({ position: { x: 4, y: 4 } });
+  await expect(viewer).toHaveCount(0);
+});
+
+test('keeps image loading silent, reports failure and lets the user retry in floating chat', async ({
+  page,
+}) => {
+  await setup(page, { image: true });
+  let allowResponse = () => {};
+  const responseGate = new Promise<void>((resolve) => {
+    allowResponse = resolve;
+  });
+  let requests = 0;
+  let fail = true;
+  await page.route('**/file-access?disposition=inline', async (route) => {
+    requests++;
+    if (fail) {
+      await responseGate;
+      return route.fulfill({ status: 503, json: { message: 'Unavailable' } });
+    }
+    return route.fulfill({
+      json: {
+        url: 'https://storage.example.test/image',
+        expiresAt: new Date(Date.now() + 60000).toISOString(),
+      },
+    });
+  });
+  await page.route('https://storage.example.test/image', (route) =>
+    route.fulfill({ contentType: 'image/png', body: png }),
+  );
+  await page.goto('/user/messages');
+  await page.getByRole('button', { name: 'Mở chat', exact: true }).click();
+  const popup = page.getByRole('dialog', { name: 'Tin nhắn', exact: true });
+  await popup.getByRole('button', { name: /Lớp Web buổi tối/ }).click();
+  try {
+    await expect.poll(() => requests).toBeGreaterThan(0);
+    await expect(page.getByText('Đang tải ảnh…', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Không tải được ảnh. Vui lòng thử lại.')).toHaveCount(0);
+  } finally {
+    allowResponse();
+  }
+  await expect(page.getByText('Không tải được ảnh. Vui lòng thử lại.')).toBeVisible();
+  fail = false;
+  await popup.getByRole('button', { name: 'Tải lại ảnh', exact: true }).click();
+  const thumbnail = popup.getByRole('button', { name: 'Mở lớn ảnh anh.png', exact: true });
+  await expect(thumbnail).toBeVisible();
+  await thumbnail.click();
+  const viewer = page.getByRole('dialog', { name: 'Xem ảnh', exact: true });
+  await expect(viewer.getByAltText('anh.png')).toBeVisible();
+  await viewer.getByRole('button', { name: 'Đóng ảnh', exact: true }).click();
+  await expect(viewer).toHaveCount(0);
+  await expect(thumbnail).toBeFocused();
 });
 
 test('previews a selected image and leaves send disabled after upload fails', async ({ page }) => {

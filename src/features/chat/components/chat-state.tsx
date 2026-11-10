@@ -6,15 +6,10 @@ export function ChatState(props: {
   retry?: () => unknown;
   empty?: string;
 }) {
+  if (props.pending) return null;
   return (
     <div className="p-6 text-sm text-muted" role={props.error ? 'alert' : 'status'}>
-      <p>
-        {props.pending
-          ? 'Đang tải cuộc trò chuyện…'
-          : props.error
-            ? chatError(props.error)
-            : props.empty}
-      </p>
+      <p>{props.error ? chatError(props.error) : props.empty}</p>
       {!!props.error && props.retry && (
         <Button variant="outline" className="mt-3" onClick={() => props.retry?.()}>
           Thử lại

@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { classOverviewGrid } from '@/components/ui/class-overview-card';
+import { StudentClassCard, classAccessLabels } from './student-class-card';
 import type { MyClass } from '../schemas/user-contracts';
 import { UserDetailsDialog } from './user-details-dialog';
 import { Pagination } from '@/features/courses/components/shared/pagination';
@@ -14,16 +16,6 @@ const views = [
   { value: 'history', label: 'Lịch sử' },
   { value: 'all', label: 'Tất cả' },
 ] as const;
-const reasons = {
-  ACTIVE_ENROLLMENT: 'Đang học',
-  PENDING_CASH: 'Chờ xác nhận tiền mặt',
-  PENDING_PAYOS: 'Chờ thanh toán',
-  HOLD_EXPIRED: 'Đã hết thời gian giữ chỗ',
-  ENROLLMENT_CANCELLED: 'Đã hủy đăng ký',
-  ENROLLMENT_COMPLETED: 'Đã hoàn thành',
-  CLASS_CANCELLED: 'Lớp đã hủy',
-  STATE_MISMATCH: 'Cần kiểm tra đăng ký',
-};
 export function MyCoursesPage() {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<MyClass | null>(null);
@@ -31,9 +23,16 @@ export function MyCoursesPage() {
   const query = useMyCourses(page, view);
   return (
     <>
-      <h1 className="text-2xl font-extrabold sm:text-3xl">Khóa học của tôi</h1>
-      <p className="mt-2 text-sm sm:text-base">Các lớp bạn đã đăng ký và tình trạng học tập.</p>
-      <div role="group" aria-label="Lọc khóa học của tôi" className="my-6 flex flex-wrap gap-2">
+      <header className="mb-7">
+        <p className="eyebrow text-mint">Mindy · Học viên</p>
+        <h1 className="mt-2 text-3xl font-extrabold sm:text-4xl">Khóa học của tôi</h1>
+        <p className="mt-3 text-base text-muted">Các lớp bạn đã đăng ký và tình trạng học tập.</p>
+      </header>
+      <div
+        role="group"
+        aria-label="Lọc khóa học của tôi"
+        className="mb-6 flex flex-wrap gap-2 rounded-2xl border border-line bg-soft/50 p-4 sm:p-5"
+      >
         {views.map((item) => (
           <Button
             key={item.value}
@@ -57,86 +56,14 @@ export function MyCoursesPage() {
         <UserDataState empty="Chưa có khóa học trong danh sách này." />
       ) : (
         <>
-          <div className="overflow-hidden rounded-2xl border border-line bg-canvas">
-            <div
-              role="region"
-              aria-label="Bảng khóa học của tôi"
-              tabIndex={0}
-              className="max-w-full overflow-x-auto"
-            >
-              <table className="w-full min-w-[1000px] border-collapse text-left text-sm">
-                <caption className="sr-only">Danh sách khóa học đã đăng ký</caption>
-                <thead className="border-b border-line bg-soft">
-                  <tr>
-                    {[
-                      'Khóa học',
-                      'Lớp học',
-                      'Hình thức',
-                      'Thời gian',
-                      'Trạng thái',
-                      'Thao tác',
-                    ].map((label) => (
-                      <th
-                        key={label}
-                        scope="col"
-                        className="px-5 py-4 font-extrabold whitespace-nowrap"
-                      >
-                        {label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line">
-                  {query.data.items.map((item) => (
-                    <tr key={item.enrollmentId} className="hover:bg-soft/50">
-                      <th scope="row" className="max-w-64 px-5 py-3 font-normal">
-                        <p className="text-xs font-bold text-mint">{item.courseCode}</p>
-                        <p className="mt-1 line-clamp-2 font-bold">{item.courseTitle}</p>
-                      </th>
-                      <td className="max-w-64 px-5 py-3">
-                        <p className="line-clamp-2">{item.className}</p>
-                        <p className="mt-1 text-xs text-muted">{item.classCode}</p>
-                      </td>
-                      <td className="px-5 py-3 whitespace-nowrap">
-                        {deliveryLabel(item.deliveryMode)}
-                      </td>
-                      <td className="px-5 py-3 text-xs whitespace-nowrap">
-                        <p>{formatDate(item.startDate)}</p>
-                        <p className="mt-1">– {formatDate(item.endDate)}</p>
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className="inline-flex rounded-lg bg-soft px-3 py-2 text-xs font-bold">
-                          {reasons[item.accessReason]}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 whitespace-nowrap">
-                        <div className="flex flex-wrap items-center gap-2">
-                          {item.canViewClass && item.accessMode === 'FULL' && (
-                            <Button asChild variant="outline">
-                              <Link href={`/user/classes/${item.classId}/assignments`}>
-                                Bài tập
-                              </Link>
-                            </Button>
-                          )}
-                          {item.canViewClass && item.accessMode !== 'NONE' && (
-                            <Button asChild>
-                              <Link
-                                href={`/user/materials/${item.classId}${item.accessMode === 'CASH_PREVIEW' ? '?preview=true' : ''}`}
-                              >
-                                {item.accessMode === 'FULL' ? 'Vào học' : 'Xem trước chương'}
-                              </Link>
-                            </Button>
-                          )}
-                          <Button variant="outline" onClick={() => setSelected(item)}>
-                            Xem chi tiết
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className={classOverviewGrid}>
+            {query.data.items.map((item) => (
+              <StudentClassCard
+                key={item.enrollmentId}
+                item={item}
+                onDetails={() => setSelected(item)}
+              />
+            ))}
           </div>
           <Pagination
             page={page}
@@ -155,7 +82,7 @@ export function MyCoursesPage() {
             <p className="text-sm font-bold text-mint">{selected.courseCode}</p>
             <h3 className="mt-2 text-xl font-extrabold">{selected.courseTitle}</h3>
             <p className="mt-3 inline-flex rounded-lg bg-soft px-3 py-2 text-xs font-bold">
-              {reasons[selected.accessReason]}
+              {classAccessLabels[selected.accessReason]}
             </p>
           </div>
           <dl className="grid gap-5 border-t border-line pt-5 text-sm sm:grid-cols-2">

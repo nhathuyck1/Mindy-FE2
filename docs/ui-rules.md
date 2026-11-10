@@ -1,5 +1,12 @@
 # Quy tắc giao diện Mindy
 
+## Khóa học và học liệu Student — 10/11/2026
+
+- Khóa học của tôi, Tài liệu học tập và Lớp của tôi của Mentor dùng cùng mẫu thẻ lớp và lưới 1/2/3 cột. Thao tác trên thẻ Student dựa trên quyền của lớp.
+- Không gian học Student dùng tab Chương, Tài liệu chung và lối sang Bài tập. Chương hiện lịch các buổi theo thứ tự và tải danh sách tài liệu khi học viên mở buổi. Tài liệu chung hiện tài liệu không gắn buổi. Chế độ xem trước chỉ hiện cấu trúc chương.
+- Bài trắc nghiệm quá hạn hiển thị nút khóa “Vượt quá deadline”. Kết quả đã nộp vẫn nằm trong lịch sử nộp bài.
+- Trong kết quả đã chấm, đáp án đúng có nền xanh và nhãn “Đáp án đúng”. Lựa chọn sai của học viên có nền đỏ và nhãn “Bạn chọn sai”. Câu bỏ trống hiện “Chưa trả lời”.
+
 ## Tài liệu chung và nội dung theo buổi — 06/11/2026
 
 - Mentor có tab Tài liệu chung giữa Chương và Bài tập, dùng lại bộ chọn chương. Tài liệu không gắn buổi chỉ nằm trong tab này; chi tiết không lặp khối Phạm vi tài liệu. Tab Buổi học riêng không còn ở lớp đang hoạt động.

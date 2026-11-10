@@ -159,7 +159,10 @@ function Studio(props: {
     <IdeHeader
       start={
         <>
-          <BackLink href={`/mentor/sessions/${data.assignment.sessionId}`} label="Về buổi học" />
+          <BackLink
+            href={`/mentor/sessions/${data.assignment.sessionId}/assignments`}
+            label="Về bài tập của buổi học"
+          />
           <IdeTitle>{data.assignment.title}</IdeTitle>
           <StatusPill tone={status.tone}>{status.label}</StatusPill>
         </>

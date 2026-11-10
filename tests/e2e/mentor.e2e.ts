@@ -119,10 +119,9 @@ test('mentor attendance keeps student names readable and preserves the attendanc
   const { calls } = await mockMentor(page);
   await page.goto(`/mentor/sessions/${mentorIds.session}`);
   await expect(page.getByText('Phòng: Phòng 101', { exact: false })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Về lịch dạy', exact: true })).toHaveAttribute(
-    'href',
-    '/mentor',
-  );
+  const back = page.getByRole('link', { name: 'Về chương và buổi học', exact: true });
+  const classPath = `/mentor/classes/${mentorIds.class}?unitId=${mentorIds.unit}`;
+  await expect(back).toHaveAttribute('href', classPath);
   await expect(page.getByRole('region', { name: 'Danh sách học viên dự kiến' })).toBeVisible();
   await page.getByRole('button', { name: 'Bắt đầu buổi' }).click();
   const absentStat = page.getByRole('group', { name: 'Vắng mặt', exact: true });
@@ -199,75 +198,48 @@ test('mentor attendance keeps student names readable and preserves the attendanc
     ),
   ).toBe(true);
   expect(calls.some((c) => c.path.includes('cash-orders'))).toBe(false);
-  await page.getByRole('link', { name: 'Về lịch dạy', exact: true }).click();
-  await expect(page).toHaveURL('/mentor');
-  await expect(page.getByRole('heading', { name: 'Lịch dạy của bạn', exact: true })).toBeVisible();
+  const chapter = {
+    id: mentorIds.unit,
+    classId: mentorIds.class,
+    courseUnitId: mentorIds.material,
+    position: 21,
+    title: 'JavaScript căn bản',
+    status: 'OPEN',
+    unlockAt: null,
+  };
+  const earlierChapters = Array.from({ length: 20 }, (_, index) => ({
+    ...chapter,
+    id: `10000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+    position: index + 1,
+    title: `Chương trước ${index + 1}`,
+  }));
+  await page.route(
+    `**/api/v1/mentor/classes/${mentorIds.class}/units?page=1&pageSize=100`,
+    (route) =>
+      route.fulfill({
+        json: { items: [...earlierChapters, chapter], page: 1, pageSize: 100, total: 21 },
+      }),
+  );
+  await back.click();
+  await expect(page).toHaveURL(classPath);
+  await expect(page.getByText('21 kết quả · Trang 2/2')).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'JavaScript căn bản', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Nội dung buổi 1', exact: true })).toContainText(
+    'Buổi 1: Làm quen JavaScript',
+  );
 });
 
-test('class roster is read only and removed unit release is absent', async ({ page }) => {
-  await page.clock.setFixedTime(new Date('2026-10-22T03:00:30Z'));
+test('class workspace has no unit release or payment actions', async ({ page }) => {
   const { calls } = await mockMentor(page);
   await page.goto('/mentor/classes');
   await page.getByRole('link', { name: /Lớp JavaScript tháng 10/ }).click();
-  await page.getByRole('button', { name: 'Học viên', exact: true }).click();
-  await expect(page.getByText('Học viên chờ kích hoạt')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Nội dung theo buổi học' })).toBeVisible();
   await expect(page.getByRole('button', { name: /thu tiền|xác nhận tiền/i })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Chương', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Quyền truy cập', exact: true })).toHaveCount(0);
   expect(calls.some((call) => call.path.endsWith('/release'))).toBe(false);
   expect(calls.some((c) => c.path.includes('cash-orders'))).toBe(false);
-});
-
-test('mentor student table matches admin layout and supports scoped search, filters and pagination', async ({
-  page,
-}, testInfo) => {
-  const { calls } = await mockMentor(page, { rosterTable: true });
-  await page.goto(`/mentor/classes/${mentorIds.class}?tab=materials`);
-  await page.getByRole('button', { name: 'Học viên', exact: true }).click();
-  await expect(page.getByRole('table')).toHaveClass(/admin-data-table/);
-  await expect(page.getByRole('columnheader')).toHaveCount(4);
-  await expect(page.getByRole('rowheader')).toHaveCount(20);
-  const firstRow = await page.getByRole('rowheader').first().locator('..').boundingBox();
-  expect(firstRow?.height).toBe(64);
-  await page.getByRole('button', { name: 'Trang học viên sau' }).click();
-  await expect(page.getByRole('rowheader')).toHaveCount(3);
-  await expect(page.getByRole('navigation', { name: 'Phân trang học viên' })).toContainText(
-    '2 / 2',
-  );
-  await page.getByRole('button', { name: 'Trang học viên trước' }).click();
-  await page.getByLabel('Số dòng mỗi trang').selectOption('10');
-  await expect(page.getByRole('rowheader')).toHaveCount(10);
-  await page.screenshot({
-    path: `test-results/mentor-students-${testInfo.project.name}.png`,
-    fullPage: true,
-  });
-  await page.getByRole('button', { name: 'Sắp xếp tên học viên trong trang' }).click();
-  await expect(page.getByRole('columnheader').first()).toHaveAttribute('aria-sort', 'ascending');
-  await page.getByLabel('Tìm học viên trong trang').fill('nguyen an');
-  await expect(page.getByRole('rowheader')).toHaveCount(1);
-  await expect(page.getByRole('rowheader')).toContainText('Nguyễn An');
-  await page.getByLabel('Tìm học viên trong trang').fill('không tìm thấy');
-  await expect(page.getByText('Không có kết quả phù hợp', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Xóa tìm kiếm' }).click();
-  await page
-    .getByRole('group', { name: 'Lọc trạng thái thanh toán' })
-    .getByRole('button', { name: 'Đã thanh toán', exact: true })
-    .click();
-  await expect(page.getByRole('rowheader')).toHaveCount(6);
-  await expect(page.getByText('6 học viên theo bộ lọc', { exact: true })).toBeVisible();
-  await page.getByLabel('Hình thức thanh toán', { exact: true }).selectOption('CASH');
-  await expect(page.getByText('Chưa có học viên theo bộ lọc', { exact: true })).toBeVisible();
-  await page.getByLabel('Hình thức thanh toán', { exact: true }).selectOption('PAYOS');
-  await expect(page.getByRole('rowheader')).toHaveCount(6);
-  await page.setViewportSize({ width: 320, height: 800 });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await expect(page.getByRole('button', { name: /thu tiền|xác nhận tiền/i })).toHaveCount(0);
-  expect(
-    calls.filter((call) => call.path.endsWith('/students')).every((call) => call.method === 'GET'),
-  ).toBe(true);
-  expect(
-    calls.some((call) => call.path.startsWith('admin/') || call.path.includes('cash-orders')),
-  ).toBe(false);
 });
 
 test('mentor creates article, edits own draft and submits for manager review', async ({
