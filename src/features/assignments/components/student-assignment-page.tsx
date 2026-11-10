@@ -1,6 +1,6 @@
 'use client';
 import { StudentCodePage } from '@/features/code-assignments/components/student-code-page';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ApiError } from '@/lib/api/client';
@@ -27,9 +27,24 @@ export function StudentAssignmentPage(props: { assignmentId: string }) {
   const draft = useAssignmentCommand(dto.studentZipSchema);
   const [startedRevision, setStartedRevision] = useState<number | null>(null);
   const [error, setError] = useState<unknown>(null);
+  const [rejectedRevision, setRejectedRevision] = useState<number | null>(null);
+  const [now, setNow] = useState(Date.now);
   const router = useRouter();
   const classId = useSearchParams().get('classId');
   const a = query.data;
+  const dueAt = a?.type === 'QUIZ' && a.dueAt ? Date.parse(a.dueAt) : null;
+  useEffect(() => {
+    if (dueAt === null) return;
+    const refresh = () => setNow(Date.now());
+    const timer = window.setInterval(refresh, 60_000);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [dueAt]);
+  const deadlinePassed =
+    rejectedRevision === a?.revision || (dueAt !== null && now >= dueAt && !start.hasUnresolved);
   if (!valid) return <p>Không tìm thấy bài tập.</p>;
   if (a?.type === 'CODE') return <StudentCodePage assignmentId={props.assignmentId} />;
   return (
@@ -61,20 +76,31 @@ export function StudentAssignmentPage(props: { assignmentId: string }) {
                   <h2 className="text-xl font-extrabold">
                     {a.type === 'QUIZ' ? 'Làm bài trắc nghiệm' : 'Nộp bài ZIP'}
                   </h2>
-                  <p className="mt-1 text-sm text-muted">
-                    {a.type === 'QUIZ'
-                      ? 'Tiếp tục cùng lượt nếu bạn đã bắt đầu.'
-                      : 'Chọn tệp, chờ kiểm tra rồi xác nhận nộp.'}
+                  <p
+                    className="mt-1 text-sm text-muted"
+                    role={deadlinePassed ? 'status' : undefined}
+                  >
+                    {deadlinePassed
+                      ? 'Bài tập đã khóa. Bạn vẫn có thể xem kết quả trong lịch sử nộp bài.'
+                      : a.type === 'QUIZ'
+                        ? 'Tiếp tục cùng lượt nếu bạn đã bắt đầu.'
+                        : 'Chọn tệp, chờ kiểm tra rồi xác nhận nộp.'}
                   </p>
                 </div>
                 <Button
                   disabled={
                     start.isPending ||
                     draft.isPending ||
+                    deadlinePassed ||
                     a.status !== 'PUBLISHED' ||
                     (a.type === 'ZIP' && !a.capabilities.zipMutationsEnabled)
                   }
                   onClick={async () => {
+                    const clickedAt = Date.now();
+                    if (dueAt !== null && clickedAt >= dueAt && !start.hasUnresolved) {
+                      setNow(clickedAt);
+                      return;
+                    }
                     const revision = startedRevision ?? a.revision;
                     setStartedRevision(revision);
                     try {
@@ -98,16 +124,21 @@ export function StudentAssignmentPage(props: { assignmentId: string }) {
                       }
                       setError(null);
                     } catch (e) {
-                      setError(e);
+                      if (e instanceof ApiError && e.code === 'ASSIGNMENT_DEADLINE_PASSED') {
+                        setRejectedRevision(revision);
+                        setError(null);
+                      } else setError(e);
                       if (e instanceof ApiError && e.status < 500) setStartedRevision(null);
                     }
                   }}
                 >
-                  {start.isPending || draft.isPending
-                    ? 'Đang mở bài…'
-                    : a.type === 'QUIZ'
-                      ? 'Bắt đầu / tiếp tục'
-                      : 'Tạo / tiếp tục bài nộp'}
+                  {deadlinePassed
+                    ? 'Vượt quá deadline'
+                    : start.isPending || draft.isPending
+                      ? 'Đang mở bài…'
+                      : a.type === 'QUIZ'
+                        ? 'Bắt đầu / tiếp tục'
+                        : 'Tạo / tiếp tục bài nộp'}
                 </Button>
               </div>
               {a.type === 'ZIP' && !a.capabilities.zipMutationsEnabled && (

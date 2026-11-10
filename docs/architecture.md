@@ -1,5 +1,11 @@
 # Kiến trúc Mindy FE2
 
+## Thẻ lớp và học liệu Student — 10/11/2026
+
+- `ClassOverviewCard` dùng chung giữa Mentor và Student. `StudentClassCard` ánh xạ dữ liệu đăng ký và quyền vào các thao tác Student. Hai danh sách Student giữ nguồn dữ liệu, bộ lọc và phân trang hiện có.
+- `LearningUnitContent` hiện lịch buổi từ context lớp. Mở buổi kích hoạt query tài liệu theo chương và chia sẻ cache giữa các buổi. Chương chưa có lịch vẫn kiểm tra tài liệu chưa khớp buổi. `LearningMaterialList` tải mã viewer và mở tài liệu khi học viên chọn từng mục.
+- `StudentAssignmentPage` khóa thao tác bắt đầu QUIZ theo hạn đã tải hoặc mã `ASSIGNMENT_DEADLINE_PASSED`. Từ chối của server được giữ theo revision để dữ liệu mới có thể cập nhật quyền bắt đầu.
+
 ## Route lịch Manager — 06/11/2026
 
 - `/manager/schedule` compose ManagerSchedulePage → ManagerWeeklySchedule, kế thừa ManagerShell/guard. Component lịch không còn mount trong Tổng quan, query danh sách lớp chỉ phát sinh ở trang lịch. safeReturnPath cho phép route này sau đăng nhập.

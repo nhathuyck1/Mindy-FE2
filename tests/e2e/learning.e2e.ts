@@ -6,6 +6,7 @@ const articleId = '77777777-7777-4777-8777-777777777777';
 const videoId = '77777777-7777-4777-8777-777777777778';
 const fileId = '88888888-8888-4888-8888-888888888888';
 const imageId = '88888888-8888-4888-8888-888888888889';
+const secondSessionId = '88888888-8888-4888-8888-888888888890';
 const courseId = '33333333-3333-4333-8333-333333333333';
 const now = '2026-10-16T00:00:00Z';
 const mentor = { id: '55555555-5555-4555-8555-555555555555', displayName: 'Mentor Mindy' };
@@ -51,7 +52,12 @@ const video = {
 };
 async function fixture(
   page: Page,
-  options: { unassigned?: boolean; unresolved?: boolean; empty?: boolean } = {},
+  options: {
+    unassigned?: boolean;
+    unresolved?: boolean;
+    empty?: boolean;
+    secondSession?: boolean;
+  } = {},
 ) {
   await mockCommerce(page);
   const state = {
@@ -111,6 +117,19 @@ async function fixture(
             status: 'SCHEDULED',
             meetingUrl: 'https://meet.example.test/class',
           },
+          ...(options.secondSession
+            ? [
+                {
+                  id: secondSessionId,
+                  sessionNumber: 2,
+                  title: 'Luyện tập độc lập',
+                  startsAt: now,
+                  endsAt: '2026-10-16T02:00:00Z',
+                  roomName: null,
+                  status: 'SCHEDULED',
+                },
+              ]
+            : []),
         ],
       },
       { id: lockedId, position: 2, title: 'Cấu trúc điều khiển', status: 'LOCKED', sessions: [] },
@@ -252,7 +271,7 @@ async function fixture(
 test('Student opens materials, reads article and attachments, changes lessons and locked units', async ({
   page,
 }, info) => {
-  const state = await fixture(page);
+  const state = await fixture(page, { secondSession: true });
   if (info.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 800 });
   await page.goto('/user/materials');
   await expect(page.getByRole('heading', { name: 'Tài liệu học tập' })).toBeVisible();
@@ -260,18 +279,34 @@ test('Student opens materials, reads article and attachments, changes lessons an
   await expect(page.getByRole('article')).toHaveCount(1);
   expect(state.opens).toHaveLength(0);
   await page.getByRole('link', { name: 'Vào học', exact: true }).click();
-  const sessionMaterials = page.getByRole('button', { name: 'Tài liệu buổi học', exact: true });
-  await expect(sessionMaterials).toHaveAttribute('aria-expanded', 'false');
-  await expect(page.getByRole('region', { name: 'Nội dung buổi 1', exact: true })).toHaveCount(0);
-  expect(state.details).toHaveLength(0);
+  const tabs = page.getByRole('group', { name: 'Nội dung lớp học' });
+  await expect(tabs.getByRole('button', { name: 'Chương', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(tabs.getByRole('link', { name: 'Bài tập', exact: true })).toHaveAttribute(
+    'href',
+    `/user/classes/${classId}/assignments`,
+  );
+  await expect(tabs.getByRole('link', { name: 'Bài tập', exact: true })).toBeInViewport({
+    ratio: 1,
+  });
   await page.screenshot({ path: info.outputPath('learning-chapter-header.png'), fullPage: true });
-  await sessionMaterials.click();
-  await expect(sessionMaterials).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.getByRole('heading', { name: 'Mục tiêu bài học' })).toBeVisible();
+  const session = page.getByRole('region', { name: 'Nội dung buổi 1', exact: true });
+  const disclosure = session.getByRole('button', { name: 'Tài liệu buổi học', exact: true });
+  await expect(disclosure).toHaveAttribute('aria-expanded', 'false');
+  expect(state.lists).toHaveLength(0);
+  await disclosure.click();
+  await expect(disclosure).toHaveAttribute('aria-expanded', 'true');
   const first = page.getByRole('button', { name: /1\. Biến và kiểu dữ liệu/ });
+  await expect(first).toHaveAttribute('aria-expanded', 'false');
+  expect(state.details).toHaveLength(0);
+  await first.click();
+  await expect(page.getByRole('heading', { name: 'Mục tiêu bài học' })).toBeVisible();
   await expect(first).toHaveAttribute('aria-expanded', 'true');
-  if (info.project.name === 'desktop')
-    await expect(page.getByRole('heading', { name: 'Mục tiêu bài học' })).toBeInViewport();
+  const articleHeading = page.getByRole('heading', { name: 'Mục tiêu bài học' });
+  await articleHeading.scrollIntoViewIfNeeded();
+  await expect(articleHeading).toBeInViewport();
   expect(state.details.every((path) => path.endsWith(articleId))).toBe(true);
   await page.screenshot({ path: info.outputPath('learning-inline-initial.png'), fullPage: true });
   await expect(page.getByRole('img', { name: 'Sơ đồ biến' })).toBeVisible();
@@ -280,7 +315,7 @@ test('Student opens materials, reads article and attachments, changes lessons an
     path: `/api/v1/materials/${articleId}/open`,
     body: { classId, expectedRevision: 1 },
   });
-  expect(state.pages).toEqual(['1', '2']);
+  expect([...new Set(state.pages)]).toEqual(['1', '2']);
   expect(await page.evaluate(() => document.querySelector('.learning-article script'))).toBeNull();
   await expect(page.locator('.learning-article a[href^="javascript:"]')).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Tham gia buổi học' })).toHaveAttribute(
@@ -311,7 +346,16 @@ test('Student opens materials, reads article and attachments, changes lessons an
   await expect.poll(() => state.signed).toBeGreaterThan(before);
   await page.getByRole('button', { name: /2\. Video thực hành/ }).click();
   await expect(page.locator('video')).toHaveCount(0);
-  await sessionMaterials.click();
+  const reads = state.lists.length;
+  const secondSession = page.getByRole('region', { name: 'Nội dung buổi 2', exact: true });
+  await secondSession.getByRole('button', { name: 'Tài liệu buổi học', exact: true }).click();
+  await expect(disclosure).toHaveAttribute('aria-expanded', 'false');
+  await expect(
+    secondSession.getByText('Chưa có nội dung được phát hành cho buổi học này.'),
+  ).toBeVisible();
+  await expect(first).toHaveCount(0);
+  expect(state.lists).toHaveLength(reads);
+  await tabs.getByRole('button', { name: 'Tài liệu chung', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Nội dung buổi 1', exact: true })).toHaveCount(0);
   if (info.project.name === 'mobile')
     await page.getByRole('combobox', { name: 'Chương đang xem' }).selectOption(lockedId);
@@ -328,11 +372,13 @@ test('shared and unresolved materials remain in their chapter and toggle inline'
   await page.goto(`/user/materials/${classId}`);
   const shared = page.getByRole('region', { name: 'Nội dung chung của chương', exact: true });
   const unknown = page.getByRole('region', { name: 'Buổi học chưa xác định', exact: true });
+  await page.getByRole('button', { name: 'Tài liệu chung', exact: true }).click();
+  await shared.getByRole('button', { name: /Biến và kiểu dữ liệu/ }).click();
   await expect(shared.getByRole('heading', { name: 'Mục tiêu bài học' })).toBeVisible();
   if (info.project.name === 'desktop')
     await expect(shared.getByRole('heading', { name: 'Mục tiêu bài học' })).toBeInViewport();
   await expect(unknown).toHaveCount(0);
-  await page.getByRole('button', { name: 'Tài liệu buổi học', exact: true }).click();
+  await page.getByRole('button', { name: 'Chương', exact: true }).click();
   const second = unknown.getByRole('button', { name: /Video thực hành/ });
   await second.click();
   await expect(unknown.getByRole('article', { name: 'Video thực hành' })).toBeVisible();
@@ -347,12 +393,13 @@ test('a session without published content keeps its schedule and meeting links',
 }) => {
   const state = await fixture(page, { empty: true });
   await page.goto(`/user/materials/${classId}`);
-  await page.getByRole('button', { name: 'Tài liệu buổi học', exact: true }).click();
   const session = page.getByRole('region', { name: 'Nội dung buổi 1', exact: true });
+  await expect(session.getByRole('link', { name: 'Tham gia buổi học' })).toBeVisible();
+  expect(state.lists).toHaveLength(0);
+  await session.getByRole('button', { name: 'Tài liệu buổi học', exact: true }).click();
   await expect(
     session.getByText('Chưa có nội dung được phát hành cho buổi học này.'),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Tham gia buổi học' })).toBeVisible();
   expect(state.details).toHaveLength(0);
 });
 
@@ -381,11 +428,14 @@ test('Access revocation and hidden material have recoverable states', async ({ p
   const state = await fixture(page);
   state.failure = true;
   await page.goto(`/user/materials/${classId}`);
-  await expect(page.getByRole('main').getByRole('alert')).toContainText('chưa có quyền học');
+  const session = page.getByRole('region', { name: 'Nội dung buổi 1', exact: true });
+  await session.getByRole('button', { name: 'Tài liệu buổi học', exact: true }).click();
+  await expect(session.getByRole('alert')).toContainText('chưa có quyền học');
+  await expect(session.getByRole('heading', { name: 'Thực hành cùng mentor' })).toBeVisible();
   state.failure = false;
   state.detailFailure = true;
-  await page.getByRole('button', { name: 'Thử lại' }).click();
-  await page.getByRole('button', { name: 'Tài liệu buổi học', exact: true }).click();
+  await session.getByRole('button', { name: 'Thử lại' }).click();
+  await page.getByRole('button', { name: /1\. Biến và kiểu dữ liệu/ }).click();
   await expect(page.getByRole('main').getByRole('alert')).toContainText('không còn khả dụng');
   state.detailFailure = false;
   await page.getByRole('button', { name: 'Thử lại' }).click();

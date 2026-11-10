@@ -73,3 +73,42 @@ test('session details can be retried without hiding assignments', async ({ page 
   await expect(page.getByText('Chương 1', { exact: true })).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Buổi học', exact: true })).toBeEnabled();
 });
+
+test('mentor session assignments show the session name and can be reopened from the compiler', async ({
+  page,
+}) => {
+  await mockAssignments(page, { mentor: true });
+  const code = { ...assignment, type: 'CODE', title: 'Cộng hai số' };
+  await page.route(`**/api/v1/mentor/class-sessions/${ids.session}/assignments?*`, (route) =>
+    route.fulfill({ json: pageOf([code]) }),
+  );
+  await page.route(`**/api/v1/mentor/assignments/${ids.assignment}`, (route) =>
+    route.fulfill({ json: code }),
+  );
+  await page.route(`**/api/v1/mentor/assignments/${ids.assignment}/code`, (route) =>
+    route.fulfill({
+      json: {
+        assignment: code,
+        problem: null,
+        languages: [],
+        tests: [],
+        references: [],
+        validatedRevision: null,
+        publishBlockers: [],
+        availableLanguages: [],
+      },
+    }),
+  );
+
+  const path = `/mentor/sessions/${ids.session}/assignments`;
+  await page.goto(path);
+  const list = page.getByRole('region', { name: 'Bài tập', exact: true });
+  const row = list.getByRole('listitem').filter({ hasText: code.title });
+  const sessionTitle = row.getByText('Buổi 1: Làm quen JavaScript', { exact: true });
+  await expect(sessionTitle).toBeVisible();
+  await row.getByRole('link').click();
+  await expect(page).toHaveURL(`/mentor/assignments/${ids.assignment}`);
+  await page.getByRole('link', { name: 'Về bài tập của buổi học', exact: true }).click();
+  await expect(page).toHaveURL(path);
+  await expect(sessionTitle).toBeVisible();
+});

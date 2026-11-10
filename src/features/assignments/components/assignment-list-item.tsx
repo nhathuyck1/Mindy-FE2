@@ -9,7 +9,6 @@ export function AssignmentListItem(props: {
   item: Assignment;
   session?: AssignmentSession;
   sessionsPending: boolean;
-  sessionId?: string;
   classId?: string;
   mentor?: boolean;
   now: number;
@@ -61,8 +60,6 @@ export function AssignmentListItem(props: {
                     : ''}
                   {session.title}
                 </>
-              ) : props.sessionId === item.sessionId ? (
-                'Buổi học hiện tại'
               ) : props.sessionsPending ? (
                 'Đang tải buổi học…'
               ) : (

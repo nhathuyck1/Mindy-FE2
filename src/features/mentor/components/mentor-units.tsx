@@ -3,27 +3,43 @@
 import { useState } from 'react';
 import { BookOpen } from 'lucide-react';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { useMentorQuery } from '../api/mentor-queries';
+import { useMentorQuery, useMentorUnitIndex } from '../api/mentor-queries';
 import { unitsSchema } from '../schemas/mentor-contracts';
 import { MentorPagination, MentorQueryState } from './mentor-shared';
 import { MentorMaterials } from './mentor-materials';
 
-export function MentorUnits(props: { classId: string; canAuthor: boolean; general?: boolean }) {
-  const [page, setPage] = useState(1);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+const pageSize = 20;
+
+export function MentorUnits(props: {
+  classId: string;
+  canAuthor: boolean;
+  general?: boolean;
+  initialUnitId?: string;
+}) {
+  const [selectedPage, setSelectedPage] = useState<number>();
+  const [selectedId, setSelectedId] = useState(props.initialUnitId);
+  const hasInitialUnit = Boolean(props.initialUnitId);
+  const index = useMentorUnitIndex(props.classId, hasInitialUnit);
+  const initialIndex = index.data?.findIndex((unit) => unit.id === props.initialUnitId) ?? -1;
+  const page = selectedPage ?? Math.floor(Math.max(0, initialIndex) / pageSize) + 1;
   const units = useMentorQuery(
-    `mentor/classes/${props.classId}/units?page=${page}&pageSize=20`,
+    `mentor/classes/${props.classId}/units?page=${page}&pageSize=${pageSize}`,
     unitsSchema,
+    !hasInitialUnit,
   );
-  const items = [...(units.data?.items ?? [])].sort((a, b) => a.position - b.position);
+  const query = hasInitialUnit ? index : units;
+  const total = hasInitialUnit ? index.data?.length : units.data?.total;
+  const items = hasInitialUnit
+    ? (index.data?.slice((page - 1) * pageSize, page * pageSize) ?? [])
+    : [...(units.data?.items ?? [])].sort((a, b) => a.position - b.position);
   const selected = items.find((unit) => unit.id === selectedId) ?? items[0];
   return (
     <>
       <MentorQueryState
-        pending={units.isPending}
-        error={units.error}
-        retry={units.refetch}
-        empty={units.data?.items.length === 0}
+        pending={query.isPending}
+        error={query.error}
+        retry={query.refetch}
+        empty={items.length === 0}
       >
         <div className="@container/mentor-course min-w-0">
           <div className="grid min-w-0 overflow-hidden rounded-2xl border border-line bg-canvas @3xl/mentor-course:h-[min(800px,calc(100dvh-2rem))] @3xl/mentor-course:grid-cols-[248px_minmax(0,1fr)]">
@@ -78,14 +94,15 @@ export function MentorUnits(props: { classId: string; canAuthor: boolean; genera
                   </button>
                 ))}
               </nav>
-              {units.data && units.data.total > 20 && (
+              {total !== undefined && total > pageSize && (
                 <div className="shrink-0 border-t border-line p-3">
                   <MentorPagination
                     page={page}
-                    total={units.data.total}
+                    total={total}
+                    pageSize={pageSize}
                     onChange={(next) => {
-                      setPage(next);
-                      setSelectedId(null);
+                      setSelectedPage(next);
+                      setSelectedId(undefined);
                     }}
                   />
                 </div>

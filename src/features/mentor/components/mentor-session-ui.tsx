@@ -20,19 +20,21 @@ export function MentorSessionOverview(props: {
   status?: TeachingSession['status'];
   classTitle?: string;
   classId?: string;
+  classUnitId?: string;
   roomName?: string | null;
   online: boolean;
 }) {
+  const classPath = props.classId ? `/mentor/classes/${props.classId}` : '/mentor/classes';
   return (
     <header className="relative mb-6 overflow-hidden rounded-3xl border border-mint/20 bg-linear-to-br from-mint/15 via-soft to-mint/5 p-5 sm:p-6">
       <Link
-        href="/mentor"
+        href={props.classUnitId ? `${classPath}?unitId=${props.classUnitId}` : classPath}
         className="mb-3 inline-flex min-h-9 items-center gap-2 text-sm font-bold text-forest hover:underline"
       >
         <LinkLoadingIcon>
           <ArrowLeft aria-hidden="true" className="size-4" />
         </LinkLoadingIcon>
-        Về lịch dạy
+        {props.classUnitId ? 'Về chương và buổi học' : 'Về lớp học'}
       </Link>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span className="rounded-md bg-mint px-2.5 py-1 text-[11px] font-bold tracking-wider text-canvas uppercase">

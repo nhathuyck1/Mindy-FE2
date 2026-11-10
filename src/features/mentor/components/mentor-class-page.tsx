@@ -5,20 +5,18 @@ import {
   BookOpen,
   FolderOpen,
   CalendarDays,
-  Users,
   ChartNoAxesCombined,
-  TrendingUp,
   RefreshCw,
   GraduationCap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMentorQuery } from '../api/mentor-queries';
+import { unitSchema } from '../schemas/mentor-contracts';
 import { workspaceSchema } from '../schemas/workspace-contracts';
 import { MentorHeading, MentorQueryState } from './mentor-shared';
 import { MentorUnits } from './mentor-units';
-import { MentorClassStudents } from './mentor-class-students';
 import { MentorClassTimetable } from './mentor-class-timetable';
-import { MentorClassAttendance, MentorClassProgress } from './mentor-class-reports';
+import { MentorClassAttendance } from './mentor-class-reports';
 import { AssignmentList } from '@/features/assignments/components/assignment-list';
 
 export function MentorClassPage(props: { classId: string }) {
@@ -48,22 +46,17 @@ export function MentorClassPage(props: { classId: string }) {
       allowed: item?.status === 'CANCELLED',
     },
     { icon: BookOpen, id: 'assignments', title: 'Bài tập', allowed: true },
-    { icon: Users, id: 'students', title: 'Học viên', allowed: item?.capabilities.readClassRoster },
     {
       icon: ChartNoAxesCombined,
       id: 'attendance',
       title: 'Chuyên cần',
       allowed: item?.capabilities.readClassReports,
     },
-    {
-      icon: TrendingUp,
-      id: 'progress',
-      title: 'Tiến độ',
-      allowed: item?.capabilities.readClassReports,
-    },
   ].filter((entry) => entry.allowed);
   // Keep existing timetable URLs usable after removing the redundant navigation tab.
   const active = tab === 'sessions' || tabs.some((entry) => entry.id === tab) ? tab : tabs[0]?.id;
+  const unitId =
+    active === 'units' ? unitSchema.shape.id.safeParse(search.get('unitId')).data : undefined;
   return (
     <>
       <Link href="/mentor/classes" className="mb-6 inline-block text-sm font-bold text-mint">
@@ -123,8 +116,9 @@ export function MentorClassPage(props: { classId: string }) {
             </div>
             {(active === 'units' || active === 'materials') && (
               <MentorUnits
-                key={active}
+                key={unitId ?? active}
                 classId={props.classId}
+                initialUnitId={unitId}
                 general={active === 'materials'}
                 canAuthor={item.capabilities.authorMaterials && !item.readonly}
               />
@@ -137,9 +131,7 @@ export function MentorClassPage(props: { classId: string }) {
                 reports={item.capabilities.readClassReports}
               />
             )}
-            {active === 'students' && <MentorClassStudents classId={props.classId} />}
             {active === 'attendance' && <MentorClassAttendance classId={props.classId} />}
-            {active === 'progress' && <MentorClassProgress classId={props.classId} />}
           </>
         )}
       </MentorQueryState>

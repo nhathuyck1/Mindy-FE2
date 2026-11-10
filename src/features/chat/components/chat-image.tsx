@@ -1,8 +1,11 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { X } from 'lucide-react';
+import { Dialog } from 'radix-ui';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Modal } from '@/components/ui/modal';
 import { apiRequest } from '@/lib/api/client';
+import { cn } from '@/lib/utils';
 import { accessSchema } from '../schemas/chat-contracts';
 
 export function ChatImage(props: { conversationId: string; messageId: string; name: string }) {
@@ -10,39 +13,60 @@ export function ChatImage(props: { conversationId: string; messageId: string; na
   const [error, setError] = useState(false),
     [large, setLarge] = useState(false),
     [busy, setBusy] = useState(false);
-  const [returnFocus, setReturnFocus] = useState<HTMLButtonElement | null>(null);
+  const [loadedUrl, setLoadedUrl] = useState<string>();
+  const trigger = useRef<HTMLButtonElement>(null);
+  const lifetime = useRef<AbortController>(null);
   const path = `chat/conversations/${props.conversationId}/messages/${props.messageId}/file-access?disposition=inline`;
+  const showError = useCallback(() => {
+    setError(true);
+    setLoadedUrl(undefined);
+    toast.error('Không tải được ảnh. Vui lòng thử lại.', { id: `chat-image-${props.messageId}` });
+  }, [props.messageId]);
   useEffect(() => {
     const controller = new AbortController();
+    lifetime.current = controller;
     apiRequest({ path, method: 'POST', schema: accessSchema, signal: controller.signal })
-      .then(setAccess)
+      .then((next) => {
+        if (!controller.signal.aborted) setAccess(next);
+      })
       .catch(() => {
-        if (!controller.signal.aborted) setError(true);
+        if (!controller.signal.aborted) showError();
       });
     return () => controller.abort();
-  }, [path]);
+  }, [path, showError]);
   async function refresh(open = false) {
+    const signal = lifetime.current?.signal;
+    if (busy || !signal || signal.aborted) return;
     setBusy(true);
-    setError(false);
     try {
-      setAccess(await apiRequest({ path, method: 'POST', schema: accessSchema }));
+      const next = await apiRequest({ path, method: 'POST', schema: accessSchema, signal });
+      if (signal.aborted) return;
+      setAccess(next);
+      setError(false);
       if (open) setLarge(true);
     } catch {
-      setError(true);
-      setAccess(null);
+      if (!signal.aborted) {
+        showError();
+        setAccess(null);
+      }
     } finally {
-      setBusy(false);
+      if (!signal.aborted) setBusy(false);
     }
   }
   return (
-    <div className="mt-2 space-y-2">
-      {access && !error ? (
+    <Dialog.Root open={large} onOpenChange={setLarge}>
+      {access && !error && (
         <button
+          ref={trigger}
           type="button"
-          className="block max-w-full rounded-xl focus-visible:outline-2 focus-visible:outline-mint"
+          className={cn(
+            'block max-w-full cursor-zoom-in rounded-xl focus-visible:outline-2 focus-visible:outline-mint',
+            loadedUrl !== access.url && 'invisible',
+          )}
           aria-label={`Mở lớn ảnh ${props.name}`}
-          onClick={(event) => {
-            setReturnFocus(event.currentTarget);
+          aria-disabled={busy}
+          onClick={() => {
+            if (busy) return;
             if (Date.parse(access.expiresAt) <= Date.now()) void refresh(true);
             else setLarge(true);
           }}
@@ -51,40 +75,62 @@ export function ChatImage(props: { conversationId: string; messageId: string; na
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={access.url}
-            alt={props.name}
+            alt=""
             className="max-h-64 max-w-full rounded-xl object-contain"
-            onError={() => setError(true)}
+            onLoad={() => setLoadedUrl(access.url)}
+            onError={showError}
           />
         </button>
-      ) : (
-        <p className="text-xs text-muted">
-          {error ? 'Ảnh chưa tải được hoặc liên kết đã hết hạn.' : 'Đang tải ảnh…'}
-        </p>
       )}
       {error && (
-        <Button variant="link" disabled={busy} onClick={() => void refresh()}>
+        <Button ref={trigger} variant="link" disabled={busy} onClick={() => void refresh()}>
           Tải lại ảnh
         </Button>
       )}
-      {large && access && (
-        <Modal title={props.name} returnFocus={returnFocus} onClose={() => setLarge(false)}>
-          <div className="p-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-ink" />
+        <Dialog.Content
+          aria-describedby={undefined}
+          className="fixed inset-0 z-50 flex items-center justify-center px-4 py-16 outline-none"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setLarge(false);
+          }}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            trigger.current?.focus({ preventScroll: true });
+          }}
+        >
+          <Dialog.Title className="sr-only">Xem ảnh</Dialog.Title>
+          <Dialog.Close asChild>
+            <Button
+              variant="ghost"
+              aria-label="Đóng ảnh"
+              className="absolute top-3 right-3 size-11 rounded-full p-0 text-canvas hover:bg-canvas/10 hover:text-canvas"
+            >
+              <X aria-hidden="true" />
+            </Button>
+          </Dialog.Close>
+          {access && !error && (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={access.url}
               alt={props.name}
-              className="max-h-[75dvh] w-full object-contain"
-              onError={() => setError(true)}
+              className={cn(
+                'max-h-full max-w-full object-contain',
+                loadedUrl !== access.url && 'invisible',
+              )}
+              onLoad={() => setLoadedUrl(access.url)}
+              onError={showError}
             />
-            {error && (
-              <Button disabled={busy} onClick={() => void refresh()}>
-                Lấy lại ảnh
-              </Button>
-            )}
-          </div>
-        </Modal>
-      )}
-    </div>
+          )}
+          {error && (
+            <Button disabled={busy} onClick={() => void refresh()}>
+              Tải lại ảnh
+            </Button>
+          )}
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 export function LocalImagePreview(props: { file: File }) {

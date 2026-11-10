@@ -20,9 +20,7 @@ test('mentor loads lessons independently of empty unit detail and creates from t
     'Chương',
     'Tài liệu chung',
     'Bài tập',
-    'Học viên',
     'Chuyên cần',
-    'Tiến độ',
   ]);
   await tabs.getByRole('button', { name: 'Tài liệu chung', exact: true }).click();
   await expect(first).toHaveCount(0);
@@ -44,10 +42,9 @@ test('mentor loads lessons independently of empty unit detail and creates from t
   await expect(
     page.getByRole('region', { name: 'Nội dung có buổi học chưa xác định' }),
   ).toContainText('Nội dung cần kiểm tra buổi');
-  await expect(first.getByRole('link', { name: 'Điểm danh' })).toHaveAttribute(
-    'href',
-    `/mentor/sessions/${mentorIds.session}`,
-  );
+  await expect(
+    first.getByRole('link', { name: 'Thông tin buổi học', exact: true }),
+  ).toHaveAttribute('href', `/mentor/sessions/${mentorIds.session}`);
   await expect(first.getByRole('button', { name: /bài tập/i })).toHaveCount(0);
   await expect(first).toContainText('10:00 16/10/26');
   expect(

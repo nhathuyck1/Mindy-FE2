@@ -56,6 +56,7 @@ export function MentorSessionPage(props: { sessionId: string }) {
   );
   const command = useMentorCommand(attendanceWriteSchema);
   const session = attendance.data?.session;
+  const classSession = context.data?.session ?? session;
   const busy =
     command.isPending ||
     attendance.isFetching ||
@@ -121,7 +122,8 @@ export function MentorSessionPage(props: { sessionId: string }) {
         session={context.data?.session}
         status={session?.status}
         classTitle={workspace.data?.name}
-        classId={context.data?.session.classId ?? session?.classId}
+        classId={classSession?.classId}
+        classUnitId={workspace.data?.status === 'CANCELLED' ? undefined : classSession?.classUnitId}
         roomName={context.data?.roomName}
         online={Boolean(safeMeeting)}
       />

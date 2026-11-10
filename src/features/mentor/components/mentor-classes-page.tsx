@@ -1,7 +1,7 @@
 'use client';
-import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { BookOpen, ArrowUpRight, CalendarDays, Users, Video, MapPin } from 'lucide-react';
+import { ArrowUpRight, Users } from 'lucide-react';
+import { ClassOverviewCard, classOverviewGrid } from '@/components/ui/class-overview-card';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { useMentorQuery } from '../api/mentor-queries';
 import { mentorClassPageSchema } from '../schemas/mentor-contracts';
@@ -85,55 +85,37 @@ export function MentorClassesPage() {
         retry={classes.refetch}
         empty={classes.data?.items.length === 0}
       >
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div className={classOverviewGrid}>
           {classes.data?.items.map((item) => (
-            <Link
+            <ClassOverviewCard
               key={item.id}
               href={`/mentor/classes/${item.id}`}
-              className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-line bg-canvas transition-colors hover:border-mint hover:bg-soft/30 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-mint"
-            >
-              <div className="flex items-center justify-between gap-3 bg-soft/70 px-5 py-4">
-                <span className="grid size-11 place-items-center rounded-xl bg-canvas text-mint">
-                  <BookOpen aria-hidden="true" className="size-6" />
-                </span>
-                <MentorStatus value={item.status} />
-              </div>
-              <div className="flex flex-1 flex-col p-5">
-                <p className="text-xs font-semibold text-muted">
-                  {item.assignmentType === 'SUBSTITUTE'
-                    ? 'Dạy thay · Theo buổi'
-                    : item.assignmentType === 'BOTH'
-                      ? 'Mentor chính và dạy thay'
-                      : 'Mentor chính'}
-                </p>
-                <p className="mt-4 text-xs font-bold tracking-wide text-mint">{item.code}</p>
-                <h2 className="mt-2 text-lg leading-7 font-extrabold break-words">{item.name}</h2>
-                <p className="mt-5 flex items-start gap-2 text-sm text-muted">
-                  <CalendarDays aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-mint" />
-                  <span>
-                    {mentorDate(item.startDate, false)} – {mentorDate(item.endDate, false)}
+              code={item.code}
+              title={item.name}
+              subtitle={
+                item.assignmentType === 'SUBSTITUTE'
+                  ? 'Dạy thay · Theo buổi'
+                  : item.assignmentType === 'BOTH'
+                    ? 'Mentor chính và dạy thay'
+                    : 'Mentor chính'
+              }
+              status={<MentorStatus value={item.status} />}
+              dates={`${mentorDate(item.startDate, false)} – ${mentorDate(item.endDate, false)}`}
+              online={item.deliveryMode === 'ONLINE'}
+              delivery={item.deliveryMode === 'ONLINE' ? 'Trực tuyến' : 'Tại lớp'}
+              footer={
+                <>
+                  <span className="mr-auto inline-flex items-center gap-2 text-muted">
+                    <Users aria-hidden="true" className="size-4" />
+                    Sĩ số tối đa: {item.maxStudents}
                   </span>
-                </p>
-                <p className="mt-3 flex items-center gap-2 text-sm text-muted">
-                  {item.deliveryMode === 'ONLINE' ? (
-                    <Video aria-hidden="true" className="size-4 shrink-0 text-mint" />
-                  ) : (
-                    <MapPin aria-hidden="true" className="size-4 shrink-0 text-mint" />
-                  )}
-                  {item.deliveryMode === 'ONLINE' ? 'Trực tuyến' : 'Tại lớp'}
-                </p>
-              </div>
-              <div className="mx-5 flex flex-wrap items-center justify-between gap-3 border-t border-line py-4 text-sm">
-                <span className="inline-flex items-center gap-2 text-muted">
-                  <Users aria-hidden="true" className="size-4" />
-                  Sĩ số tối đa: {item.maxStudents}
-                </span>
-                <span className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-mint px-3 font-bold text-white transition-colors group-hover:bg-forest">
-                  Vào lớp
-                  <ArrowUpRight className="size-4" />
-                </span>
-              </div>
-            </Link>
+                  <span className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-mint px-3 font-bold text-white transition-colors group-hover:bg-forest">
+                    Vào lớp
+                    <ArrowUpRight aria-hidden="true" className="size-4" />
+                  </span>
+                </>
+              }
+            />
           ))}
         </div>
       </MentorQueryState>

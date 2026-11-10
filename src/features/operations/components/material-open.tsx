@@ -20,13 +20,17 @@ export function recordMaterialOpen(
 export function MaterialOpen(props: { classId: string; materialId: string; revision: number }) {
   useEffect(() => {
     const controller = new AbortController();
-    void recordMaterialOpen(
-      props.classId,
-      props.materialId,
-      props.revision,
-      controller.signal,
-    ).catch(() => {
-      /* A failed tracking command must not interrupt authorized content. */
+    // Skip the discarded mount when development Strict Mode replays effects.
+    queueMicrotask(() => {
+      if (controller.signal.aborted) return;
+      void recordMaterialOpen(
+        props.classId,
+        props.materialId,
+        props.revision,
+        controller.signal,
+      ).catch(() => {
+        /* A failed tracking command must not interrupt authorized content. */
+      });
     });
     return () => controller.abort();
   }, [props.classId, props.materialId, props.revision]);

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { mockAssignments } from './assignment-fixtures';
-import { ids } from '../fixtures/assignment-data';
+import { attempt, ids, now, question, result } from '../fixtures/assignment-data';
 import { quizBulkExample } from '../../src/features/assignments/lib/quiz-bulk-import';
 
 test('Mentor creates a ZIP from the session using labelled fields', async ({ page }) => {
@@ -97,6 +97,7 @@ test('Student starts, autosaves, reloads and submits a QUIZ', async ({ page }, i
   await expect(page.getByText('Giá trị nào là số nguyên?')).toHaveCount(0);
   await page.getByRole('button', { name: 'Bắt đầu / tiếp tục' }).click();
   await expect(page).toHaveURL(`/user/assignment-submissions/${ids.submission}`);
+  await expect(page.getByText('Đáp án đúng', { exact: true })).toHaveCount(0);
   await page.getByRole('radio').first().check();
   await expect.poll(() => calls.filter((c) => c.path.endsWith('/answers')).length).toBe(1);
   await expect(page.getByText('Đã lưu', { exact: true })).toBeVisible();
@@ -107,9 +108,61 @@ test('Student starts, autosaves, reloads and submits a QUIZ', async ({ page }, i
   await page.getByRole('button', { name: 'Xác nhận nộp bài' }).click();
   await expect(page.getByRole('heading', { name: 'Kết quả bài làm' })).toBeVisible();
   await expect(page.getByText('1/1 câu đúng')).toBeVisible();
+  await expect(page.locator('label').filter({ hasText: 'Đáp án đúng' })).toHaveClass(
+    /bg-status-green/,
+  );
   await page.screenshot({ path: info.outputPath('quiz-result.png'), fullPage: true });
   for (const call of calls.filter((c) => c.method !== 'GET'))
     expect(call.key).toMatch(/^[\da-f-]{36}$/);
+});
+
+test('graded QUIZ marks the correct answer green and only the selected wrong answer red', async ({
+  page,
+}, info) => {
+  await mockAssignments(page);
+  await page.route(`**/api/v1/me/assignment-submissions/${ids.submission}`, (route) =>
+    route.fulfill({
+      json: {
+        ...attempt,
+        status: 'GRADED',
+        submittedAt: now,
+        questions: [question, { ...question, id: ids.file, position: 1 }],
+        totalQuestions: 2,
+        answeredCount: 1,
+        result: {
+          ...result,
+          totalQuestions: 2,
+          correctCount: 0,
+          wrongCount: 1,
+          score: '0.00',
+          results: [
+            { questionId: question.id, selectedOption: 'B', correctOption: 'A', isCorrect: false },
+            { questionId: ids.file, selectedOption: null, correctOption: 'A', isCorrect: false },
+          ],
+        },
+      },
+    }),
+  );
+  await page.goto(`/user/assignment-submissions/${ids.submission}`);
+  const answered = page.getByRole('group', { name: 'Câu 1', exact: true });
+  const unanswered = page.getByRole('group', { name: 'Câu 2', exact: true });
+  await expect(answered.locator('label').filter({ hasText: 'Đáp án đúng' })).toHaveClass(
+    /bg-status-green/,
+  );
+  const wrong = answered.locator('label').filter({ hasText: 'Bạn chọn sai' });
+  await expect(wrong).toHaveClass(/bg-status-red/);
+  await expect(wrong.getByRole('radio')).toBeChecked();
+  await expect(answered.locator('label').filter({ hasText: /^C\./ })).not.toHaveClass(
+    /bg-status-(red|green)/,
+  );
+  await expect(unanswered.getByText('Chưa trả lời', { exact: true })).toBeVisible();
+  await expect(unanswered.locator('label').filter({ hasText: 'Đáp án đúng' })).toHaveClass(
+    /bg-status-green/,
+  );
+  await expect(unanswered.getByText('Bạn chọn sai')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Câu 1, đã chọn', exact: true })).toBeVisible();
+  await expect(page.getByText('1/2 câu đã chọn', { exact: true })).toBeVisible();
+  await page.screenshot({ path: info.outputPath('quiz-answer-feedback.png'), fullPage: true });
 });
 test('QUIZ answers stay editable after opening and reloading the attempt', async ({ page }) => {
   const { calls } = await mockAssignments(page, { timed: true });
@@ -138,6 +191,30 @@ test('QUIZ answers stay editable after opening and reloading the attempt', async
     expectedVersion: 2,
     answers: [{ questionId: ids.question, selectedOption: 'C' }],
   });
+});
+
+test('an expired QUIZ stays locked after a deadline rejection and on reload', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-10T05:00:00Z'));
+  await mockAssignments(page);
+  let starts = 0;
+  await page.route(`**/api/v1/me/assignments/${ids.assignment}/start`, (route) => {
+    starts++;
+    return route.fulfill({
+      status: 409,
+      json: { code: 'ASSIGNMENT_DEADLINE_PASSED', message: 'Deadline passed' },
+    });
+  });
+  const href = `/user/assignments/${ids.assignment}`;
+  await page.goto(href);
+  await page.getByRole('button', { name: 'Bắt đầu / tiếp tục' }).click();
+  const locked = page.getByRole('button', { name: 'Vượt quá deadline', exact: true });
+  await expect(locked).toBeDisabled();
+  await expect(page.getByRole('heading', { name: 'Lịch sử nộp bài' })).toBeVisible();
+  await expect(page).toHaveURL(href);
+  await page.clock.setFixedTime(new Date('2027-01-02T05:00:00Z'));
+  await page.reload();
+  await expect(locked).toBeDisabled();
+  expect(starts).toBe(1);
 });
 
 test('QUIZ submit waits for slow autosave; no late answer overwrite', async ({ page }) => {

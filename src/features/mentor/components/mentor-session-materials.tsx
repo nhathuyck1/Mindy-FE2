@@ -137,7 +137,7 @@ export function MentorSessionMaterials(props: {
                     asChild
                   >
                     <Link href={`/mentor/sessions/${session.id}`}>
-                      Điểm danh
+                      Thông tin buổi học
                       <ChevronRight aria-hidden="true" className="size-4" />
                     </Link>
                   </Button>
