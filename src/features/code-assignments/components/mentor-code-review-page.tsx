@@ -23,6 +23,7 @@ import { useShellFocus } from '@/components/layout/shell-focus';
 import { cn } from '@/lib/utils';
 import { codeError, useCodeCommand, useCodeQuery } from '../api/code-queries';
 import { formatValue, isPending, submissionStatusLabels, verdictLabels } from '../lib/code-format';
+import { languageIndent, languageName } from '../lib/code-languages';
 import {
   codeSummarySchema,
   mentorSubmissionDetailSchema,
@@ -74,7 +75,6 @@ function labelOf(status: string | null, verdict: string | null) {
     ? (verdictLabels[verdict] ?? verdict)
     : (submissionStatusLabels[status] ?? status);
 }
-const languageName = (k: string) => (k === 'java21' ? 'Java' : 'JavaScript');
 const initials = (name: string) =>
   name
     .split(/\s+/)
@@ -532,7 +532,7 @@ export function SubmissionViewer(props: {
               label="Code học viên"
               value={s.sourceCode ?? ''}
               language={s.languageKey}
-              indent={s.languageKey === 'java21' ? '    ' : '  '}
+              indent={languageIndent(s.languageKey)}
             />
           </div>
         </section>

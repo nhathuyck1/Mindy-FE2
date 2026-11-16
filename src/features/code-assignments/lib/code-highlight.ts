@@ -1,6 +1,6 @@
 import type { CodeLanguageKey } from '../schemas/code-contracts';
 
-/** Lightweight syntax highlighting for the code editor (JavaScript and Java). */
+/** Lightweight syntax highlighting for the code editor (every judge language). */
 
 export type TokenKind =
   | 'keyword'
@@ -31,23 +31,47 @@ const keywords: Record<CodeLanguageKey, Set<string>> = {
   java21: words(
     'public private protected static final abstract class interface enum record extends implements new instanceof import package var void throws synchronized volatile transient native strictfp sealed permits non-sealed assert',
   ),
+  python3: words(
+    'def class lambda import from as global nonlocal pass del in is not and or with async elif except raise assert',
+  ),
+  csharp: words(
+    'public private protected internal static readonly const sealed abstract virtual override class struct interface enum record namespace using new is as in out ref params void var get set async',
+  ),
 };
 const literals: Record<CodeLanguageKey, Set<string>> = {
   javascript: words('true false null undefined this super NaN Infinity arguments'),
   java21: words('true false null this super'),
+  python3: words('True False None self'),
+  csharp: words('true false null this base'),
 };
-const javaTypes = words('int long double float boolean char byte short');
+const builtinTypes: Partial<Record<CodeLanguageKey, Set<string>>> = {
+  java21: words('int long double float boolean char byte short'),
+  python3: words('int float str bool list dict set tuple object bytes'),
+  csharp: words('int long double float bool char byte short string object decimal'),
+};
 
-const pattern = new RegExp(
+const tail = [
+  String.raw`(?<number>(?:0[xX][\da-fA-F_]+|0[bB][01_]+|\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?)[lLfFdDmMn]?(?![\w$]))`,
+  String.raw`(?<annotation>@[A-Za-z_]\w*)`,
+  String.raw`(?<word>[A-Za-z_$][\w$]*)`,
+  String.raw`(?<space>\s+)`,
+  String.raw`(?<bracket>[()[\]{}])`,
+  String.raw`(?<other>[\s\S])`,
+];
+const cStyle = new RegExp(
   [
     String.raw`(?<comment>\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$))`,
     String.raw`(?<string>"(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?|\x60(?:\\[\s\S]|[^\x60\\])*\x60?)`,
-    String.raw`(?<number>(?:0[xX][\da-fA-F_]+|0[bB][01_]+|\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?)[lLfFdDn]?(?![\w$]))`,
-    String.raw`(?<annotation>@[A-Za-z_]\w*)`,
-    String.raw`(?<word>[A-Za-z_$][\w$]*)`,
-    String.raw`(?<space>\s+)`,
-    String.raw`(?<bracket>[()[\]{}])`,
-    String.raw`(?<other>[\s\S])`,
+    ...tail,
+  ].join('|'),
+  'g',
+);
+// Python: `#` comments, triple-quoted strings, and `//` is floor division, not a comment.
+const python = new RegExp(
+  [
+    String.raw`(?<comment>#[^\n]*)`,
+    String.raw`(?<string>"""[\s\S]*?(?:"""|$)|'''[\s\S]*?(?:'''|$)|"(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?)`,
+    ...tail,
   ].join('|'),
   'g',
 );
@@ -69,7 +93,7 @@ export function tokenize(source: string, language: CodeLanguageKey): Token[] {
     if (last && last.kind === kind && (kind === 'plain' || kind === 'operator')) last.text += text;
     else tokens.push({ kind, text, from });
   };
-  for (const match of source.matchAll(pattern)) {
+  for (const match of source.matchAll(language === 'python3' ? python : cStyle)) {
     const text = match[0];
     const from = match.index;
     const g = match.groups ?? {};
@@ -87,7 +111,8 @@ export function tokenize(source: string, language: CodeLanguageKey): Token[] {
       }
     } else if (g.string !== undefined) push('string', text, from);
     else if (g.number !== undefined) push('number', text, from);
-    else if (g.annotation !== undefined) push(language === 'java21' ? 'type' : 'plain', text, from);
+    else if (g.annotation !== undefined)
+      push(language === 'javascript' ? 'plain' : 'type', text, from);
     else if (g.word !== undefined) {
       const before = prevChar(tokens);
       const after = nextChar(source, from + text.length);
@@ -95,7 +120,7 @@ export function tokenize(source: string, language: CodeLanguageKey): Token[] {
       if (control.has(text)) kind = 'control';
       else if (keywords[language].has(text)) kind = 'keyword';
       else if (literals[language].has(text)) kind = 'literal';
-      else if (language === 'java21' && javaTypes.has(text)) kind = 'type';
+      else if (builtinTypes[language]?.has(text)) kind = 'type';
       else if (after === '(') kind = 'function';
       else if (before?.text.endsWith('.') && before.kind === 'operator') kind = 'property';
       else if (/^[A-Z]/.test(text)) kind = 'type';

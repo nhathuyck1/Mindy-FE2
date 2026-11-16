@@ -17,6 +17,7 @@ import { useChatInbox } from '../api/use-chat-inbox';
 import { conversationName } from '../lib/chat-display';
 import { ChatRoom } from './chat-room';
 import { ChatState } from './chat-state';
+import { isCodeLanguage } from '@/features/code-assignments/lib/code-languages';
 
 export function FloatingChat() {
   const session = useSession();
@@ -176,7 +177,7 @@ function ChatLauncher(props: { user: User }) {
                         }}
                         onDrop={(event) => {
                           const language = event.dataTransfer.getData(CODE_DRAG_TYPE);
-                          if (language !== 'javascript' && language !== 'java21') return;
+                          if (!isCodeLanguage(language)) return;
                           event.preventDefault();
                           const text = codeFence(
                             event.dataTransfer.getData('text/plain'),

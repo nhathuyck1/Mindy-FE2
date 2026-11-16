@@ -22,6 +22,7 @@ import { useSendCodeToChat } from '@/features/chat/components/use-send-code-to-c
 import type { BoardBridge } from '@/features/whiteboard/components/whiteboard-workspace';
 import { codeError, useCodeCommand, useCodeQuery } from '../api/code-queries';
 import { formatValue, parseCustomArgs } from '../lib/code-format';
+import { languageIndent, languageName } from '../lib/code-languages';
 import {
   type CodeLanguageKey,
   type CodeProblem,
@@ -53,7 +54,6 @@ import type { CaseSelection } from './use-code-workspace';
 
 /** Left panel tabs. "board" will host the session whiteboard next to the code. */
 type DemoTab = 'problem' | 'board';
-const languageName = (k: CodeLanguageKey) => (k === 'java21' ? 'Java' : 'JavaScript');
 
 /**
  * "Mentor làm mẫu": the student compiler layout for a mentor to code live in class. The code is
@@ -260,7 +260,7 @@ function DemoIde(props: {
     { id: 'problem', label: 'Đề bài', icon: FileText, tone: 'text-mint' },
     { id: 'board', label: 'Bảng vẽ', icon: PenLine, tone: 'text-coral' },
   ];
-  const indent = language === 'java21' ? '    ' : '  ';
+  const indent = languageIndent(language);
   const boardHref = `/whiteboards/${data.assignment.sessionId}?audience=mentor`;
 
   return (

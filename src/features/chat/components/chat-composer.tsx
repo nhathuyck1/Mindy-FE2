@@ -11,6 +11,7 @@ import { clearChatDraft } from '@/lib/store/ui-slice';
 import { CODE_DRAG_TYPE } from '@/features/whiteboard/lib/code-board';
 import { chatError, useRefreshChat } from '../api/chat-queries';
 import { CHAT_TEXT_MAX, codeFence } from '../lib/chat-code';
+import { isCodeLanguage } from '@/features/code-assignments/lib/code-languages';
 import {
   chatMutationSchema,
   fileStatusSchema,
@@ -304,7 +305,7 @@ export function ChatComposer(props: {
         onDrop={(event) => {
           // Code dragged out of the editor arrives wrapped as a fenced code block.
           const language = event.dataTransfer.getData(CODE_DRAG_TYPE);
-          if (language !== 'javascript' && language !== 'java21') return;
+          if (!isCodeLanguage(language)) return;
           event.preventDefault();
           const el = event.currentTarget;
           const block = codeFence(event.dataTransfer.getData('text/plain'), language);

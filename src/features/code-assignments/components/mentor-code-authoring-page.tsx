@@ -32,6 +32,7 @@ import {
   type WizardStep,
 } from '../lib/code-authoring';
 import { blockerLabels } from '../lib/code-format';
+import { languageName } from '../lib/code-languages';
 import {
   assignmentSchema,
   mentorAuthoringSchema,
@@ -306,12 +307,7 @@ function SettingsList(props: { data: MentorAuthoring }) {
     ['Hạn nộp', a.dueAt ? new Date(a.dueAt).toLocaleString('vi-VN') : '—'],
     ['Số lượt nộp', String(a.maxAttempts)],
     ['Điểm tối đa', a.maxScore],
-    [
-      'Ngôn ngữ',
-      props.data.languages
-        .map((l) => (l.languageKey === 'java21' ? 'Java' : 'JavaScript'))
-        .join(', ') || '—',
-    ],
+    ['Ngôn ngữ', props.data.languages.map((l) => languageName(l.languageKey)).join(', ') || '—'],
     [
       'Test',
       `${props.data.tests.filter((t) => t.visibility === 'SAMPLE').length} ví dụ · ${

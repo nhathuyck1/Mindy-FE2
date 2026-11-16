@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { useCodeCommand } from '../api/code-queries';
 import { type ProblemForm, formProblems, typeLabels } from '../lib/code-authoring';
 import { formatValue } from '../lib/code-format';
+import { languageIndent, languageName } from '../lib/code-languages';
 import {
   type CodeLanguageKey,
   type CodeSignature,
@@ -22,7 +23,6 @@ import { type CodeThemeId, codeThemeScheme, CodeThemePicker } from './code-theme
 import { ResizableSplit } from './resizable-split';
 
 type SetForm = (update: (form: ProblemForm) => ProblemForm) => void;
-const languageName = (k: CodeLanguageKey) => (k === 'java21' ? 'Java' : 'JavaScript');
 
 export const fieldClass =
   'w-full rounded-lg border border-transparent bg-soft/80 px-3 text-[13.5px] text-black transition-colors outline-none placeholder:text-muted/40 hover:border-line focus:border-mint focus:bg-canvas disabled:opacity-60';
@@ -596,7 +596,7 @@ function StarterPreview(props: {
   onTheme: (theme: CodeThemeId) => void;
 }) {
   const preview = useCodeCommand(starterPreviewSchema);
-  const [starter, setStarter] = useState<{ javascript: string; java21: string } | null>(null);
+  const [starter, setStarter] = useState<Partial<Record<CodeLanguageKey, string>> | null>(null);
   const [picked, setPicked] = useState<CodeLanguageKey | null>(null);
   const lang =
     picked && props.languages.includes(picked) ? picked : (props.languages[0] ?? 'javascript');
@@ -649,14 +649,14 @@ function StarterPreview(props: {
           <div className="flex h-full items-center justify-center px-6 text-center text-sm text-ide-muted">
             Chọn ít nhất một ngôn ngữ.
           </div>
-        ) : starter ? (
+        ) : starter?.[lang] !== undefined ? (
           <CodeEditor
             fill
             readOnly
             label={`Code khởi đầu ${languageName(lang)}`}
-            value={lang === 'java21' ? starter.java21 : starter.javascript}
+            value={starter[lang]}
             language={lang}
-            indent={lang === 'java21' ? '    ' : '  '}
+            indent={languageIndent(lang)}
           />
         ) : (
           <div role="status" className="space-y-2.5 px-14 py-4">
@@ -770,7 +770,7 @@ export function StudentPreview(props: {
                 label="Code khởi đầu"
                 value={current.starterCode}
                 language={current.languageKey}
-                indent={current.languageKey === 'java21' ? '    ' : '  '}
+                indent={languageIndent(current.languageKey)}
               />
             )}
           </div>

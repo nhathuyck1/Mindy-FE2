@@ -1,14 +1,21 @@
+import type { CodeLanguageKey } from '@/features/code-assignments/schemas/code-contracts';
+
 /**
  * Code in chat messages travels as plain TEXT with a markdown fence (```js … ```), so older
  * clients still show readable text and the backend needs no new message type.
  */
-export type ChatCodeLanguage = 'javascript' | 'java21';
+export type ChatCodeLanguage = CodeLanguageKey;
 
 export type ChatSegment =
   | { kind: 'text'; text: string }
   | { kind: 'code'; code: string; language: ChatCodeLanguage | null; label: string };
 
-const fenceLabel: Record<ChatCodeLanguage, string> = { javascript: 'js', java21: 'java' };
+const fenceLabel: Record<ChatCodeLanguage, string> = {
+  javascript: 'js',
+  java21: 'java',
+  python3: 'python',
+  csharp: 'csharp',
+};
 const fromLabel: Record<string, ChatCodeLanguage> = {
   js: 'javascript',
   javascript: 'javascript',
@@ -16,6 +23,10 @@ const fromLabel: Record<string, ChatCodeLanguage> = {
   ts: 'javascript',
   typescript: 'javascript',
   java: 'java21',
+  py: 'python3',
+  python: 'python3',
+  cs: 'csharp',
+  csharp: 'csharp',
 };
 
 /** Same limit as a chat TEXT message. */

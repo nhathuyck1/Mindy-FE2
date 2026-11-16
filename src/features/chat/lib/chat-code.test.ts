@@ -18,7 +18,9 @@ describe('parseChatBody', () => {
   });
 
   it('shows unknown languages without colours and leaves an unclosed fence as text', () => {
-    expect(parseChatBody('```py\nprint(1)\n```')[0]).toMatchObject({ language: null, label: 'py' });
+    expect(parseChatBody('```rb\nputs 1\n```')[0]).toMatchObject({ language: null, label: 'rb' });
+    expect(parseChatBody('```py\nprint(1)\n```')[0]).toMatchObject({ language: 'python3' });
+    expect(parseChatBody('```cs\nint x;\n```')[0]).toMatchObject({ language: 'csharp' });
     expect(parseChatBody('```js\nchưa đóng')).toEqual([{ kind: 'text', text: '```js\nchưa đóng' }]);
   });
 });

@@ -50,6 +50,7 @@ import { WhiteboardPeople } from './whiteboard-people';
 import { CODE_DRAG_TYPE, CODE_MAX_CHARS, codeShape } from '../lib/code-board';
 import { useSendCodeToChat } from '@/features/chat/components/use-send-code-to-chat';
 import type { CodeLanguageKey } from '@/features/code-assignments/schemas/code-contracts';
+import { isCodeLanguage } from '@/features/code-assignments/lib/code-languages';
 
 const palette = [
   '#1d302e',
@@ -503,7 +504,7 @@ export function WhiteboardWorkspace(props: {
         }}
         onDrop={(e) => {
           const language = e.dataTransfer.getData(CODE_DRAG_TYPE);
-          if (language !== 'javascript' && language !== 'java21') return;
+          if (!isCodeLanguage(language)) return;
           e.preventDefault();
           const result = addCode(e.dataTransfer.getData('text/plain'), language, {
             clientX: e.clientX,

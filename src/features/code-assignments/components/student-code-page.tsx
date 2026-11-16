@@ -27,6 +27,7 @@ import { useShellFocus } from '@/components/layout/shell-focus';
 import { cn } from '@/lib/utils';
 import { codeError, useCodeQuery } from '../api/code-queries';
 import { timeLeft } from '../lib/code-format';
+import { languageIndent } from '../lib/code-languages';
 import {
   type CodeLanguageKey,
   type StudentCodeAssignment,
@@ -505,7 +506,7 @@ function EditorPane(props: {
   const [selection, setSelection] = useState('');
   const a = props.assignment;
   const current = a.languages.find((l) => l.key === props.language);
-  const indent = props.language === 'java21' ? '    ' : '  ';
+  const indent = languageIndent(props.language);
   return (
     <section
       aria-label="Bài làm"

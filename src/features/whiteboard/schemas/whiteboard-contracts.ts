@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { codeLanguageKeySchema } from '@/features/code-assignments/schemas/code-contracts';
 
 export const boardUuid = z.uuidv4();
 export const boardVersion = z.string().regex(/^\d{1,18}$/);
@@ -98,7 +99,7 @@ export const boardShapeSchema = z.discriminatedUnion('type', [
     type: z.literal('code'),
     text: z.string().max(5000),
     fontSize: z.number().min(10).max(32),
-    language: z.enum(['javascript', 'java21']),
+    language: codeLanguageKeySchema,
   }),
 ]);
 export const boardProjectionSchema = z.array(boardShapeSchema).max(2000);

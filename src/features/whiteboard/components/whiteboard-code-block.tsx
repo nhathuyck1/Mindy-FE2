@@ -3,6 +3,7 @@ import { Group, Rect, Text } from 'react-konva';
 import { tokenLines } from '@/features/code-assignments/lib/code-highlight';
 import { CODE_FONT, CODE_PALETTE, codeMetrics } from '../lib/code-board';
 import type { BoardShape } from '../schemas/whiteboard-contracts';
+import { languageName } from '@/features/code-assignments/lib/code-languages';
 
 /** A code block on the board: dark card, language header, monospace tokens coloured per kind. */
 export function WhiteboardCodeBlock(props: {
@@ -29,7 +30,7 @@ export function WhiteboardCodeBlock(props: {
         y={0}
         height={m.header}
         verticalAlign="middle"
-        text={shape.language === 'java21' ? 'Java' : 'JavaScript'}
+        text={languageName(shape.language)}
         fontFamily={CODE_FONT}
         fontSize={Math.round(shape.fontSize * 0.85)}
         fill={CODE_PALETTE.muted}

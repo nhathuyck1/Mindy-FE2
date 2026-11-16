@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import type { CodeLanguageKey } from '../schemas/code-contracts';
 import { matchBracket, tokenize, tokenLines } from './code-highlight';
 
-const kinds = (source: string, language: 'javascript' | 'java21' = 'javascript') =>
+const kinds = (source: string, language: CodeLanguageKey = 'javascript') =>
   tokenize(source, language)
     .filter((t) => t.text.trim())
     .map((t) => `${t.kind}:${t.text.trim()}`);
@@ -67,6 +68,54 @@ describe('tokenize', () => {
       'string:"a\\"b"',
       'operator:;',
       'bracket:}',
+    ]);
+  });
+  it('colours Python: # comments, floor division, triple-quoted strings, builtins', () => {
+    expect(
+      kinds('def sum(self, a: int) -> int:  # hi\n    return a // 2 or None', 'python3'),
+    ).toEqual([
+      'keyword:def',
+      'function:sum',
+      'bracket:(',
+      'literal:self',
+      'operator:,',
+      'plain:a',
+      'operator::',
+      'type:int',
+      'bracket:)',
+      'operator:->',
+      'type:int',
+      'operator::',
+      'comment:# hi',
+      'control:return',
+      'plain:a',
+      'operator://',
+      'number:2',
+      'keyword:or',
+      'literal:None',
+    ]);
+    expect(kinds('x = """a\n# not a comment"""', 'python3')).toContain(
+      'string:"""a\n# not a comment"""',
+    );
+  });
+
+  it('colours C# keywords, built-in types and comments', () => {
+    expect(kinds('public long sum(int a) { string s = null; } // c', 'csharp')).toEqual([
+      'keyword:public',
+      'type:long',
+      'function:sum',
+      'bracket:(',
+      'type:int',
+      'plain:a',
+      'bracket:)',
+      'bracket:{',
+      'type:string',
+      'plain:s',
+      'operator:=',
+      'literal:null',
+      'operator:;',
+      'bracket:}',
+      'comment:// c',
     ]);
   });
 });

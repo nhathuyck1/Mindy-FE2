@@ -114,7 +114,7 @@ describe('CODE assignment proxy rules', () => {
     for (const [method, path] of [
       ['GET', `mentor/assignments/${id}/code-secret`],
       ['PUT', `mentor/assignments/${id}/code-tests/31`],
-      ['PUT', `mentor/assignments/${id}/code-reference/python3`],
+      ['PUT', `mentor/assignments/${id}/code-reference/ruby`],
       ['GET', 'me/assignments/not-a-uuid/code'],
       ['DELETE', `me/code-submissions/${id}`],
       ['POST', `me/assignments/${id}/code-drafts/javascript`],

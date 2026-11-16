@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { matchBracket, tokenize, type TokenKind } from '../lib/code-highlight';
+import { codeLanguageMeta } from '../lib/code-languages';
 import type { CodeLanguageKey } from '../schemas/code-contracts';
 
 const LINE = 22;
@@ -160,10 +161,12 @@ export function CodeEditor(props: CodeEditorProps) {
       const lineEnd = value.indexOf('\n', end);
       const block = value.slice(lineStart, lineEnd === -1 ? value.length : lineEnd);
       const rows = block.split('\n');
-      const commented = rows.filter((r) => r.trim()).every((r) => /^\s*\/\//.test(r));
+      const mark = codeLanguageMeta[language].lineComment;
+      const markRe = new RegExp(`^(\\s*)${mark} ?`); // `//` and `#` have no regex meaning
+      const commented = rows.filter((r) => r.trim()).every((r) => markRe.test(r));
       const next = rows
         .map((r) =>
-          commented ? r.replace(/^(\s*)\/\/ ?/, '$1') : r.trim() ? r.replace(/^(\s*)/, '$1// ') : r,
+          commented ? r.replace(markRe, '$1') : r.trim() ? r.replace(/^(\s*)/, `$1${mark} `) : r,
         )
         .join('\n');
       const delta = next.length - block.length;
@@ -172,7 +175,7 @@ export function CodeEditor(props: CodeEditorProps) {
         lineStart,
         lineStart + block.length,
         next,
-        Math.max(lineStart, start + (commented ? -3 : 3)),
+        Math.max(lineStart, start + (commented ? -1 : 1) * (mark.length + 1)),
         end + delta,
       );
       return;
@@ -182,7 +185,8 @@ export function CodeEditor(props: CodeEditorProps) {
       event.preventDefault();
       const current = value.slice(lineStart, start);
       const base = current.match(/^\s*/)?.[0] ?? '';
-      const opens = /[{[(]\s*$/.test(current);
+      // Python blocks open with a trailing colon.
+      const opens = (language === 'python3' ? /[:{[(]\s*$/ : /[{[(]\s*$/).test(current);
       const closes = /^\s*[}\])]/.test(value.slice(end));
       if (opens && closes) {
         const insert = `\n${base}${indent}\n${base}`;

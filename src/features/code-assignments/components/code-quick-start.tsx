@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import type { useAuthoringActions } from '../api/code-authoring-actions';
 import { codeError, useCodeQuery } from '../api/code-queries';
 import { codeTemplates } from '../lib/code-templates';
+import { languageName } from '../lib/code-languages';
 import { codeLibraryPageSchema, type MentorAuthoring } from '../schemas/code-contracts';
 import { fieldClass } from './code-authoring-steps';
 
@@ -195,7 +196,7 @@ function LibraryList(props: {
                 <span className="block truncate text-[13px] font-extrabold">{item.title}</span>
                 <span className="block truncate text-[11.5px] text-muted/70">
                   {item.classCode} · Buổi {item.sessionNumber} · {item.testCount} test ·{' '}
-                  {item.languages.map((l) => (l === 'java21' ? 'Java' : 'JavaScript')).join(', ')}
+                  {item.languages.map(languageName).join(', ')}
                 </span>
               </span>
               <span className="inline-flex items-center gap-1 text-[12px] font-bold text-mint">
