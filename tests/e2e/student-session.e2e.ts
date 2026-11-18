@@ -45,7 +45,7 @@ async function fixture(
     makeupRootSessionId: null,
     sourceClassId: null,
     sourceSessionId: null,
-    makeupPlacementId: null,
+    makeupPlacementId: options.mode === 'SESSION_MAKEUP' ? ids.file : null,
     accessMode: options.mode ?? 'FULL',
   });
   const context = {
@@ -66,6 +66,7 @@ async function fixture(
     accessMode: 'FULL',
     meetingUrl: 'https://meet.example.test/class',
     units: [
+      { id: ids.assignment, position: 2, title: 'Nội dung khác', sessions: [] },
       {
         id: ids.question,
         position: 1,
@@ -130,6 +131,33 @@ async function fixture(
           timeZone: 'Asia/Ho_Chi_Minh',
           from: url.searchParams.get('from'),
           to: url.searchParams.get('to'),
+        },
+      });
+    if (path === `me/classes/${ids.class}/units/${ids.question}/materials`)
+      return route.fulfill({
+        json: {
+          items: [
+            { id: ids.file, sessionId: ids.session, title: 'Tài liệu đúng buổi' },
+            { id: ids.student, sessionId: ids.assignment, title: 'Tài liệu buổi khác' },
+          ].map((item) => ({
+            ...item,
+            classId: ids.class,
+            classUnitId: ids.question,
+            courseUnitId: ids.question,
+            contentType: 'ARTICLE',
+            description: null,
+            sortOrder: 1,
+            revision: 1,
+            availableAt: null,
+            publishedAt: now,
+            updatedAt: now,
+            file: null,
+            attachmentCount: 0,
+          })),
+          page: 1,
+          pageSize: 100,
+          total: 2,
+          asOf: now,
         },
       });
     if (path === `me/classes/${ids.class}`)
@@ -218,7 +246,8 @@ async function fixture(
     return route.fallback();
   });
   await page.goto('/user/schedule');
-  await page.getByRole('button', { name: `Xem chi tiết ${event.sessionTitle}` }).click();
+  await page.getByRole('link', { name: `Xem chi tiết ${event.sessionTitle}` }).click();
+  await expect(page).toHaveURL(new RegExp(`/user/sessions/${ids.session}`));
   return { state, calls };
 }
 
@@ -227,7 +256,14 @@ test('student schedule opens meeting, whiteboard and all three assignment types 
 }, info) => {
   if (info.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 780 });
   const { calls } = await fixture(page);
-  const dialog = page.getByRole('dialog', { name: 'Chi tiết lớp học' });
+  const dialog = page.locator('main');
+  await expect(page).toHaveURL(new RegExp(`/user/sessions/${ids.session}`));
+  await expect(page.getByRole('heading', { name: 'Chương 1: Gọi API' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Chương 2: Nội dung khác' })).toHaveCount(0);
+  await expect(page.getByText('Buổi học chưa bắt đầu', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Tài liệu đúng buổi/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Tài liệu buổi khác/ })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Bảng vẽ buổi học', exact: true })).toBeVisible();
   await expect(dialog.getByRole('link', { name: 'Vào phòng học' })).toHaveAttribute(
     'href',
     'https://meet.example.test/session',
@@ -247,11 +283,10 @@ test('student schedule opens meeting, whiteboard and all three assignment types 
   await dialog.getByRole('button', { name: 'Sau', exact: true }).click();
   await expect(dialog.getByText('Bài trang sau', { exact: true })).toBeVisible();
   expect(calls.some((path) => path.startsWith('mentor/'))).toBe(false);
-  await page.keyboard.press('Escape');
-  await expect(dialog).toHaveCount(0);
-  await expect(
-    page.getByRole('button', { name: 'Xem chi tiết React Router và gọi API' }),
-  ).toBeFocused();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Thông tin buổi học' })).toBeVisible();
+  await page.getByRole('link', { name: 'Về lịch học' }).click();
+  await expect(page).toHaveURL('/user/schedule');
 });
 
 test('student follows a session assignment into its existing quiz page', async ({ page }) => {
@@ -269,7 +304,6 @@ test('student uses the class meeting fallback and handles an absent link', async
   );
   state.classMeeting = false;
   await page.reload();
-  await page.getByRole('button', { name: 'Xem chi tiết React Router và gọi API' }).click();
   await expect(page.getByText('Mentor chưa cập nhật link phòng học.')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Vào phòng học' })).toHaveCount(0);
 });
@@ -309,6 +343,8 @@ test('makeup student uses session scope for board and meeting without loading th
   page,
 }) => {
   const { calls } = await fixture(page, { mode: 'SESSION_MAKEUP' });
+  await expect(page).toHaveURL(new RegExp(`makeupPlacementId=${ids.file}`));
+  await page.reload();
   await expect(page.getByRole('link', { name: 'Vào phòng học' })).toHaveAttribute(
     'href',
     'https://meet.example.test/makeup',
@@ -327,7 +363,6 @@ test('assignment errors recover and empty results remain distinct from failures'
   const { state } = await fixture(page);
   state.assignmentError = true;
   await page.reload();
-  await page.getByRole('button', { name: 'Xem chi tiết React Router và gọi API' }).click();
   await expect(page.getByText('Chưa tải được bài tập của buổi học.')).toBeVisible();
   state.assignmentError = false;
   state.empty = true;
@@ -351,7 +386,6 @@ test('revoked class access hides private actions and can recover', async ({ page
   const { state } = await fixture(page);
   state.denied = true;
   await page.reload();
-  await page.getByRole('button', { name: 'Xem chi tiết React Router và gọi API' }).click();
   await expect(
     page.getByText('Bạn chưa có quyền truy cập nội dung của buổi học này.'),
   ).toBeVisible();

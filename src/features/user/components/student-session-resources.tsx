@@ -2,19 +2,14 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import {
-  ArrowUpRight,
-  BookOpen,
-  ClipboardList,
-  ExternalLink,
-  PanelsTopLeft,
-  Video,
-} from 'lucide-react';
+import { ArrowUpRight, ClipboardList, ExternalLink, PanelsTopLeft, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAssignmentQuery } from '@/features/assignments/api/assignment-queries';
 import { studentAssignmentPageSchema } from '@/features/assignments/schemas/assignment-contracts';
 import { dateLabel, Pager } from '@/features/assignments/components/assignment-ui';
 import { ApiError } from '@/lib/api/client';
+import { SessionBoardPanel } from '@/features/whiteboard/components/session-board-panel';
+import { StudentSessionMaterials } from './student-session-materials';
 import { useStudentSessionResources } from '../api/student-session';
 import type { ScheduleEvent } from '../schemas/user-contracts';
 
@@ -155,15 +150,22 @@ export function StudentSessionResources(props: { event: ScheduleEvent }) {
             </p>
           )}
         </div>
-        {props.event.accessMode === 'FULL' && (
-          <Link
-            href={`/user/materials/${props.event.classId}`}
-            className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-bold underline underline-offset-4"
-          >
-            <BookOpen aria-hidden="true" className="size-4" />
-            Tài liệu của lớp
-          </Link>
-        )}
+      </section>
+      {query.data.unit && (
+        <StudentSessionMaterials
+          classId={props.event.classId}
+          sessionId={props.event.sessionId}
+          unit={query.data.unit}
+        />
+      )}
+      <section
+        aria-label="Bảng vẽ buổi học"
+        className="min-w-0 overflow-hidden rounded-2xl border border-line"
+      >
+        <h2 className="border-b border-line p-4 text-lg font-extrabold">Bảng vẽ buổi học</h2>
+        <div className="h-[32rem] min-w-0">
+          <SessionBoardPanel sessionId={props.event.sessionId} embedded />
+        </div>
       </section>
       {query.data.canViewAssignments ? (
         <SessionAssignments key={props.event.sessionId} event={props.event} />

@@ -1,5 +1,10 @@
 # Quy tắc giao diện Mindy
 
+## Trang chi tiết buổi học Student — 18/11/2026
+
+- Thay dialog của lịch bằng trang chi tiết có lối Về lịch học. Thông tin/điểm danh, đúng một chương chứa tài liệu chung và buổi đã chọn, bảng vẽ nhúng cùng bài tập được xếp theo chiều dọc; metadata chia 2/3 cột khi đủ rộng. Giữ palette Mindy và các trạng thái lỗi/thử lại, chưa có bảng, buổi hủy/chờ tiền mặt/học bù.
+- Nút Theo giảng viên nằm phía trên cụm zoom để không ép thanh công cụ trên màn hẹp. Nhãn Chờ giảng viên/Đang theo/Theo giảng viên và aria-pressed thể hiện trạng thái. Zoom/kéo bảng chuyển sang tự xem; bật lại khớp FOV mới nhất, căn giữa và chứa đủ vùng nhìn trên mobile. Khi mất tín hiệu tạm thời, đổi sang Chờ giảng viên và giữ nguyên vùng nhìn cuối để bảng không nhảy về gốc.
+
 ## Khóa học và học liệu Student — 10/11/2026
 
 - Khóa học của tôi, Tài liệu học tập và Lớp của tôi của Mentor dùng cùng mẫu thẻ lớp và lưới 1/2/3 cột. Thao tác trên thẻ Student dựa trên quyền của lớp.

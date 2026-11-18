@@ -46,6 +46,7 @@ import {
   type BoardShape,
 } from '../schemas/whiteboard-contracts';
 import { WhiteboardCanvas, type BoardTool } from './whiteboard-canvas';
+import { presenterView } from '../lib/presenter-view';
 import { WhiteboardPeople } from './whiteboard-people';
 import { CODE_DRAG_TYPE, CODE_MAX_CHARS, codeShape } from '../lib/code-board';
 import { useSendCodeToChat } from '@/features/chat/components/use-send-code-to-chat';
@@ -147,6 +148,7 @@ export function WhiteboardWorkspace(props: {
   const [view, setView] = useState<BoardView>({ x: 0, y: 0, scale: 1 }),
     [size, setSize] = useState({ width: 320, height: 500 }),
     container = useRef<HTMLDivElement>(null);
+  const [following, setFollowing] = useState(true);
   const [selected, select] = useState<string | null>(null),
     [editing, edit] = useState<string | null>(null),
     [menu, setMenu] = useState(false),
@@ -169,6 +171,29 @@ export function WhiteboardWorkspace(props: {
     cap = state.state?.capabilities ?? props.initial.capabilities;
   const editable = connection.editable() && !preview,
     canCommand = state.status === 'online' && state.pending === 0 && !preview;
+  const followingPresenter = !cap.canControl && following && !preview && state.presenter;
+  const followedViewport = !cap.canControl && following && !preview && state.presenterViewport;
+  const canvasView = followedViewport ? presenterView(followedViewport, size) : view;
+  function changeView(next: BoardView) {
+    setFollowing(false);
+    setView(next);
+  }
+  useEffect(() => {
+    if (!cap.canControl || !active || preview || state.status !== 'online') return;
+    const publish = () =>
+      connection.viewport({
+        epoch: board.epoch,
+        x: -view.x / view.scale,
+        y: -view.y / view.scale,
+        width: size.width,
+        height: size.height,
+        scale: view.scale,
+      });
+    publish();
+    // Refresh stationary FOVs for late joiners and expire disconnected presenters.
+    const timer = setInterval(publish, 2000);
+    return () => clearInterval(timer);
+  }, [connection, board.epoch, cap.canControl, state.status, active, preview, view, size]);
   const receipt = useRef<{ signature: string; key: string } | null>(null);
   const command = useMutation({
     retry: false,
@@ -234,7 +259,7 @@ export function WhiteboardWorkspace(props: {
   }, [connection]);
   function addNote() {
     if (!editable) return;
-    const p = worldPoint(view, size.width / 2, size.height / 2),
+    const p = worldPoint(canvasView, size.width / 2, size.height / 2),
       id = crypto.randomUUID();
     addShape(connection.doc, {
       id,
@@ -251,7 +276,7 @@ export function WhiteboardWorkspace(props: {
   }
   function addPreset(type: 'rectangle' | 'ellipse' | 'text', square = false) {
     if (!editable) return;
-    const center = worldPoint(view, size.width / 2, size.height / 2),
+    const center = worldPoint(canvasView, size.width / 2, size.height / 2),
       id = crypto.randomUUID();
     const width = type === 'text' ? 280 : type === 'ellipse' || square ? 160 : 220,
       height = type === 'text' ? 96 : type === 'ellipse' || square ? 160 : 140;
@@ -269,7 +294,7 @@ export function WhiteboardWorkspace(props: {
   }
   function placeImages(images: ReadyBoardImage[]) {
     if (!editable) return;
-    const p = worldPoint(view, size.width / 2, size.height / 2);
+    const p = worldPoint(canvasView, size.width / 2, size.height / 2);
     for (const [i, a] of images.entries()) {
       const scale = Math.min(1, 480 / a.width, 360 / a.height);
       addShape(connection.doc, {
@@ -316,9 +341,9 @@ export function WhiteboardWorkspace(props: {
     return () => window.removeEventListener('paste', paste);
   }, [cap.canUpload, active, props.embedded]);
   // Latest view/size/permission for the bridge without re-creating it every render.
-  const live = useRef({ view, size, editable, canEdit: cap.canEdit });
+  const live = useRef({ view: canvasView, size, editable, canEdit: cap.canEdit });
   useEffect(() => {
-    live.current = { view, size, editable, canEdit: cap.canEdit };
+    live.current = { view: canvasView, size, editable, canEdit: cap.canEdit };
   });
   function addCode(
     text: string,
@@ -515,8 +540,8 @@ export function WhiteboardWorkspace(props: {
         <WhiteboardCanvas
           connection={connection}
           state={state}
-          view={view}
-          setView={setView}
+          view={canvasView}
+          setView={changeView}
           size={size}
           tool={tool}
           setTool={setTool}
@@ -816,25 +841,47 @@ export function WhiteboardWorkspace(props: {
             <HelpCircle size={20} />
           </button>
           <span className="whiteboard-hint">Kéo để chọn · Cuộn để phóng to · Dán ảnh để thêm</span>
+          {!cap.canControl && !preview && (
+            <button
+              className="whiteboard-follow"
+              aria-label="Theo giảng viên"
+              aria-pressed={following}
+              title={
+                followingPresenter
+                  ? `Đang theo ${followingPresenter.identity.name}`
+                  : 'Theo vùng nhìn của giảng viên'
+              }
+              onClick={() => {
+                if (following) setView(canvasView);
+                setFollowing(!following);
+              }}
+            >
+              {following ? (state.presenter ? 'Đang theo' : 'Chờ giảng viên') : 'Theo giảng viên'}
+            </button>
+          )}
           <div className="whiteboard-zoom">
             <button
               aria-label="Thu nhỏ"
               onClick={() =>
-                setView(zoomAt(view, size.width / 2, size.height / 2, view.scale / 1.2))
+                changeView(
+                  zoomAt(canvasView, size.width / 2, size.height / 2, canvasView.scale / 1.2),
+                )
               }
             >
               <Minus size={18} />
             </button>
             <button
               aria-label="Đặt lại mức phóng"
-              onClick={() => setView(zoomAt(view, size.width / 2, size.height / 2, 1))}
+              onClick={() => changeView(zoomAt(canvasView, size.width / 2, size.height / 2, 1))}
             >
-              {Math.round(view.scale * 100)}%
+              {Math.round(canvasView.scale * 100)}%
             </button>
             <button
               aria-label="Phóng to"
               onClick={() =>
-                setView(zoomAt(view, size.width / 2, size.height / 2, view.scale * 1.2))
+                changeView(
+                  zoomAt(canvasView, size.width / 2, size.height / 2, canvasView.scale * 1.2),
+                )
               }
             >
               <Plus size={18} />
@@ -842,7 +889,7 @@ export function WhiteboardWorkspace(props: {
             <button
               aria-label="Vừa nội dung"
               title="Vừa nội dung"
-              onClick={() => setView(fitContent(preview?.projection ?? state.shapes, size))}
+              onClick={() => changeView(fitContent(preview?.projection ?? state.shapes, size))}
             >
               <Scan size={18} />
             </button>
@@ -1073,7 +1120,7 @@ export function WhiteboardWorkspace(props: {
             <Button
               disabled={media.busy || state.pending > 0}
               onClick={() => {
-                void media.exportFile(board, format, scope, view, size);
+                void media.exportFile(board, format, scope, canvasView, size);
                 setExportDialog(false);
               }}
             >

@@ -434,7 +434,7 @@ test('Compact orders include details for CASH and PAYOS without initiating a pay
   await expect(trigger).toBeFocused();
 });
 
-test('Schedule tiles stay compact and open full class/session details in a modal', async ({
+test('Schedule tiles stay compact and open the session details page', async ({
   page,
 }, testInfo) => {
   await fixture(page);
@@ -448,20 +448,18 @@ test('Schedule tiles stay compact and open full class/session details in a modal
   await expect(tile).not.toContainText('Lớp Web buổi tối');
   expect((await tile.boundingBox())!.height).toBeLessThan(210);
   await page.screenshot({ path: testInfo.outputPath('compact-schedule.png'), fullPage: true });
-  const trigger = tile.getByRole('button', { name: 'Xem chi tiết Thực hành Web', exact: true });
+  const trigger = tile.getByRole('link', { name: 'Xem chi tiết Thực hành Web', exact: true });
   await trigger.click();
-  const dialog = page.getByRole('dialog', { name: 'Chi tiết lớp học', exact: true });
+  const dialog = page.locator('main');
   await expect(dialog).toContainText('Lớp Web buổi tối');
   await expect(dialog).toContainText('Thực hành Web');
   await expect(dialog).toContainText('Mentor Mindy');
   await expect(dialog).toContainText('19:00');
   await expect(dialog).toContainText('21:00');
-  await expect(dialog).toContainText('Điểm danh: Có mặt');
+  await expect(dialog.getByText('Có mặt', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('schedule-class-details.png') });
-  await page.keyboard.press('Escape');
-  await expect(dialog).toHaveCount(0);
-  await expect(trigger).toBeFocused();
-  await page.getByRole('article', { name: 'Buổi đã hủy', exact: true }).getByRole('button').click();
+  await page.getByRole('link', { name: 'Về lịch học' }).click();
+  await page.getByRole('article', { name: 'Buổi đã hủy', exact: true }).getByRole('link').click();
   await expect(dialog).toContainText('Đã hủy');
 });

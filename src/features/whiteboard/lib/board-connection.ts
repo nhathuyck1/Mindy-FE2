@@ -9,6 +9,8 @@ import {
   boardSyncSchema,
   type BoardSync,
   type BoardShape,
+  presenterViewportSchema,
+  type PresenterViewport,
 } from '../schemas/whiteboard-contracts';
 import { LOCAL_BOARD_ORIGIN, fromBase64, readShapes, toBase64 } from './board-shapes';
 
@@ -26,6 +28,11 @@ const awarenessSchema = z.object({
 const presenceSchema = z.object({
   people: z.array(z.object({ id: z.uuidv4(), name: z.string() })),
 });
+const presenterSchema = presenterViewportSchema.extend({
+  connectionId: z.string(),
+  identity: z.object({ id: z.uuidv4(), name: z.string() }),
+});
+type BoardPresenter = z.infer<typeof presenterSchema> & { seenAt: number };
 export interface BoardPeer {
   connectionId: string;
   id: string;
@@ -35,6 +42,9 @@ export interface BoardPeer {
   seenAt: number;
 }
 export interface BoardConnectionState {
+  presenter: BoardPresenter | null;
+  /** Last authorized camera; retain it during a temporary signal loss to avoid jumping home. */
+  presenterViewport: PresenterViewport | null;
   status: 'connecting' | 'online' | 'offline' | 'denied';
   shapes: BoardShape[];
   pending: number;
@@ -66,9 +76,15 @@ export class BoardConnection {
   private presenceTimer?: ReturnType<typeof setInterval>;
   private epoch?: string;
   private lastAwareness = 0;
+  private lastViewport = 0;
+  private viewportTimer?: ReturnType<typeof setTimeout>;
+  private nextViewport?: PresenterViewport;
+  private pendingPresenter?: BoardPresenter;
   private signal = sessionSignal();
   private listeners = new Set<() => void>();
   private snapshot: BoardConnectionState = {
+    presenter: null,
+    presenterViewport: null,
     status: 'connecting',
     shapes: [],
     pending: 0,
@@ -103,6 +119,8 @@ export class BoardConnection {
       this.replaceDocument();
       this.epoch = undefined;
       this.snapshot = {
+        presenter: null,
+        presenterViewport: null,
         status: 'connecting',
         shapes: [],
         pending: 0,
@@ -117,7 +135,13 @@ export class BoardConnection {
     void this.connect();
     this.presenceTimer = setInterval(
       () =>
-        this.publish({ peers: this.snapshot.peers.filter((p) => Date.now() - p.seenAt < 6000) }),
+        this.publish({
+          peers: this.snapshot.peers.filter((p) => Date.now() - p.seenAt < 6000),
+          presenter:
+            this.snapshot.presenter && Date.now() - this.snapshot.presenter.seenAt < 6000
+              ? this.snapshot.presenter
+              : null,
+        }),
       2000,
     );
   }
@@ -129,6 +153,10 @@ export class BoardConnection {
     this.connectionAttempt++;
     clearTimeout(this.reconnectTimer);
     clearInterval(this.presenceTimer);
+    clearTimeout(this.viewportTimer);
+    this.viewportTimer = undefined;
+    this.nextViewport = undefined;
+    this.pendingPresenter = undefined;
     this.signal.removeEventListener('abort', this.abort);
     this.socket?.removeAllListeners();
     this.socket?.disconnect();
@@ -136,7 +164,15 @@ export class BoardConnection {
     this.doc.off('update', this.changed);
     this.undo.destroy();
     this.doc.destroy();
-    this.publish({ status: 'denied', shapes: [], state: null, peers: [], people: [] });
+    this.publish({
+      status: 'denied',
+      shapes: [],
+      state: null,
+      peers: [],
+      people: [],
+      presenter: null,
+      presenterViewport: null,
+    });
   }
   private changed = (bytes: Uint8Array, origin: unknown) => {
     if (origin !== REMOTE) {
@@ -164,7 +200,7 @@ export class BoardConnection {
       if (this.stopped || attempt !== this.connectionAttempt || this.snapshot.status === 'denied')
         return;
       this.sending = false;
-      this.publish({ status: 'offline', peers: [], people: [] });
+      this.publish({ status: 'offline', peers: [], people: [], presenter: null });
       if (this.retries < 3) {
         clearTimeout(this.reconnectTimer);
         this.reconnectTimer = setTimeout(() => {
@@ -187,6 +223,15 @@ export class BoardConnection {
       return;
     }
     this.socket = socket;
+    socket.on('board:viewport', (raw: unknown) => {
+      const parsed = presenterSchema.safeParse(raw);
+      if (!parsed.success) return;
+      const presenter = { ...parsed.data, seenAt: Date.now() };
+      // The server may fan out immediately after joining, before its ACK is processed.
+      if (this.epoch === undefined) this.pendingPresenter = presenter;
+      else if (presenter.epoch === this.epoch)
+        this.publish({ presenter, presenterViewport: presenter });
+    });
     socket.on('board:presence', (raw: unknown) => {
       const parsed = presenceSchema.safeParse(raw);
       if (parsed.success) this.publish({ people: parsed.data.people });
@@ -253,6 +298,8 @@ export class BoardConnection {
       this.pending = [];
       this.replaceDocument();
       this.publish({
+        presenter: null,
+        presenterViewport: null,
         notice: changed
           ? 'Bảng đã được khôi phục hoặc xóa. Các thao tác chưa lưu của mốc cũ đã được bỏ.'
           : 'Quyền vẽ đã thay đổi. Các thao tác chưa được xác nhận đã được bỏ.',
@@ -268,7 +315,15 @@ export class BoardConnection {
     this.epoch = state.board.epoch;
     try {
       Y.applyUpdate(this.doc, fromBase64(state.binary), REMOTE);
-      this.publish({ state, shapes: readShapes(this.doc) });
+      const presenter = this.pendingPresenter;
+      this.pendingPresenter = undefined;
+      this.publish({
+        state,
+        shapes: readShapes(this.doc),
+        ...(presenter?.epoch === this.epoch && Date.now() - presenter.seenAt < 6000
+          ? { presenter, presenterViewport: presenter }
+          : {}),
+      });
     } catch {
       this.deny('Chưa thể đọc nội dung bảng.');
     }
@@ -292,8 +347,18 @@ export class BoardConnection {
   }
   private deny(notice: string) {
     this.pending = [];
+    this.pendingPresenter = undefined;
     this.replaceDocument();
-    this.publish({ status: 'denied', notice, shapes: [], state: null, peers: [], people: [] });
+    this.publish({
+      status: 'denied',
+      notice,
+      shapes: [],
+      state: null,
+      peers: [],
+      people: [],
+      presenter: null,
+      presenterViewport: null,
+    });
     this.socket?.disconnect();
   }
   private async flush() {
@@ -363,6 +428,28 @@ export class BoardConnection {
     if (this.snapshot.status !== 'online' || Date.now() - this.lastAwareness < 120) return;
     this.lastAwareness = Date.now();
     void this.emit('board:awareness', { x, y }).catch(() => {});
+  }
+  viewport(viewport: PresenterViewport) {
+    if (this.snapshot.status !== 'online' || !this.snapshot.state?.capabilities.canControl) return;
+    this.nextViewport = viewport;
+    if (this.viewportTimer) return;
+    this.viewportTimer = setTimeout(
+      () => {
+        this.viewportTimer = undefined;
+        const next = this.nextViewport;
+        if (
+          !next ||
+          this.stopped ||
+          this.snapshot.status !== 'online' ||
+          !this.snapshot.state?.capabilities.canControl ||
+          next.epoch !== this.epoch
+        )
+          return;
+        this.lastViewport = Date.now();
+        void this.emit('board:viewport', next).catch(() => {});
+      },
+      Math.max(0, 150 - (Date.now() - this.lastViewport)),
+    );
   }
   clearNotice() {
     this.publish({ notice: '' });

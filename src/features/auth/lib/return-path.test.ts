@@ -2,6 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { safeReturnPath } from './return-path';
 
 describe('Post-login course return path', () => {
+  it('restores a session with its schedule scope and rejects invalid or duplicate scope', () => {
+    const id = '11111111-1111-4111-8111-111111111111';
+    const path = `/user/sessions/${id}?date=2026-11-18&enrollmentId=${id}&makeupPlacementId=${id}`;
+    expect(safeReturnPath(path + '&redirect=https://evil.test')).toBe(path);
+    for (const invalid of [
+      path + '&date=2026-11-19',
+      path.replace('2026-11-18', '2026-02-31'),
+      path.replace(`enrollmentId=${id}`, 'enrollmentId=bad'),
+    ])
+      expect(safeReturnPath(invalid)).toBe('/user/schedule');
+  });
   it('restores assignment, review and message destinations after login', () => {
     const id = '11111111-1111-4111-8111-111111111111';
     for (const path of [
