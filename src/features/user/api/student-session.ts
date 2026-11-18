@@ -39,6 +39,7 @@ export function useStudentSessionResources(event: ScheduleEvent) {
           signal,
         });
         return {
+          unit: null,
           status: context.session.status,
           meetingUrl: context.meetingUrl,
           canViewAssignments: false,
@@ -50,12 +51,12 @@ export function useStudentSessionResources(event: ScheduleEvent) {
         schema: studentClassSchema,
         signal,
       });
-      const lesson = context.units
-        .flatMap((unit) => unit.sessions)
-        .find((s) => s.id === event.sessionId);
+      const unit = context.units.find((unit) => unit.id === event.classUnitId);
+      const lesson = unit?.sessions.find((s) => s.id === event.sessionId);
       if (!lesson) throw new Error('Không tìm thấy buổi học trong lớp.');
       const cancelled = lesson.status === 'CANCELLED' || context.classStatus === 'CANCELLED';
       return {
+        unit,
         status: lesson.status,
         meetingUrl: studentMeetingUrl(context, lesson),
         canViewAssignments: !cancelled,

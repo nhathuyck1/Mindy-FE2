@@ -1,5 +1,16 @@
 import { z } from 'zod';
 
+/** World origin plus CSS pixel dimensions and zoom of the presenter's canvas. */
+export const presenterViewportSchema = z.object({
+  epoch: z.uuidv4(),
+  x: z.number().finite().min(-100000).max(100000),
+  y: z.number().finite().min(-100000).max(100000),
+  width: z.number().finite().min(1).max(16384),
+  height: z.number().finite().min(1).max(16384),
+  scale: z.number().finite().min(0.1).max(4),
+});
+export type PresenterViewport = z.infer<typeof presenterViewportSchema>;
+
 export const boardUuid = z.uuidv4();
 export const boardVersion = z.string().regex(/^\d{1,18}$/);
 export const boardMode = z.enum(['PRESENTATION', 'COLLABORATIVE']);

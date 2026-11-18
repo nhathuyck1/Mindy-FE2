@@ -8,6 +8,28 @@ export function safeReturnPath(value: string | null | undefined): string {
   try {
     const url = new URL(value, 'https://mindy.invalid');
     if (url.origin !== 'https://mindy.invalid') return '/';
+    if (/^\/user\/sessions\/[^/]+$/.test(url.pathname)) {
+      const id = url.pathname.split('/')[3];
+      const date = url.searchParams.get('date');
+      const enrollmentId = url.searchParams.get('enrollmentId');
+      const makeupPlacementId = url.searchParams.get('makeupPlacementId');
+      if (
+        !date ||
+        !enrollmentId ||
+        !z.uuid().safeParse(id).success ||
+        !z.iso.date().safeParse(date).success ||
+        !z.uuid().safeParse(enrollmentId).success ||
+        url.searchParams.getAll('date').length !== 1 ||
+        url.searchParams.getAll('enrollmentId').length !== 1 ||
+        (makeupPlacementId !== null &&
+          (!z.uuid().safeParse(makeupPlacementId).success ||
+            url.searchParams.getAll('makeupPlacementId').length !== 1))
+      )
+        return '/user/schedule';
+      const params = new URLSearchParams({ date, enrollmentId });
+      if (makeupPlacementId) params.set('makeupPlacementId', makeupPlacementId);
+      return `${url.pathname}?${params}`;
+    }
     if (url.pathname === '/user/assignments') {
       const classId = url.searchParams.get('classId');
       return (
