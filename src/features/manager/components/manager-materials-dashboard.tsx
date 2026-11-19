@@ -7,6 +7,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import type { Course } from '@/features/courses/schemas/course-contracts';
 import { useManagerMaterialCounts } from '../api/manager-material-counts';
 import { ManagerCourseList } from './manager-course-list';
+import { MaterialCount, MaterialsDistributionLoading } from './manager-materials-loading';
 
 const colors = [
   'var(--color-mint)',
@@ -34,6 +35,7 @@ export function ManagerMaterialsDashboard(props: {
   const rows = props.courses.map((course, index) => ({
     ...course,
     count: counts[index]?.isError ? undefined : counts[index]?.data,
+    pending: counts[index]?.isPending ?? false,
     fill: colors[index % colors.length],
   }));
   const distribution = rows.filter((row) => (row.count ?? 0) > 0);
@@ -41,9 +43,19 @@ export function ManagerMaterialsDashboard(props: {
     rows.map((row) => [row.id, { label: row.title, color: row.fill }]),
   );
   const stats = [
-    { label: 'Tổng tài liệu', value: ready ? total : null, icon: Files },
-    { label: 'Tổng khóa học', value: props.courses.length, icon: BookOpen },
-    { label: 'Khóa học có tài liệu', value: ready ? withMaterials : null, icon: FolderOpen },
+    {
+      label: 'Tổng tài liệu',
+      value: ready ? total : null,
+      icon: Files,
+      pending: pending && !error,
+    },
+    { label: 'Tổng khóa học', value: props.courses.length, icon: BookOpen, pending: false },
+    {
+      label: 'Khóa học có tài liệu',
+      value: ready ? withMaterials : null,
+      icon: FolderOpen,
+      pending: pending && !error,
+    },
   ];
 
   return (
@@ -59,8 +71,12 @@ export function ManagerMaterialsDashboard(props: {
             </span>
             <div className="min-w-0">
               <p className="text-sm text-muted">{stat.label}</p>
-              <p className="mt-1 text-3xl font-bold tabular-nums">
-                {stat.value?.toLocaleString('vi-VN') ?? '—'}
+              <p className="mt-1 min-h-9 text-3xl font-bold tabular-nums">
+                <MaterialCount
+                  value={stat.value}
+                  pending={stat.pending}
+                  label={`Đang tải ${stat.label.toLocaleLowerCase('vi-VN')}`}
+                />
               </p>
             </div>
           </div>
@@ -96,9 +112,7 @@ export function ManagerMaterialsDashboard(props: {
             Chưa tải được đầy đủ số lượng tài liệu. Hãy làm mới thống kê để thử lại.
           </p>
         ) : pending ? (
-          <p role="status" className="py-12 text-center text-sm text-muted">
-            Đang tải thống kê tài liệu…
-          </p>
+          <MaterialsDistributionLoading />
         ) : total === 0 ? (
           <p role="status" className="py-12 text-center text-sm text-muted">
             Chưa có tài liệu để hiển thị tỷ lệ.
@@ -208,6 +222,7 @@ export function ManagerMaterialsDashboard(props: {
       <ManagerCourseList
         courses={props.courses}
         counts={Object.fromEntries(rows.map((row) => [row.id, row.count]))}
+        pendingCounts={Object.fromEntries(rows.map((row) => [row.id, row.pending]))}
         onSelect={props.onSelect}
       />
     </div>

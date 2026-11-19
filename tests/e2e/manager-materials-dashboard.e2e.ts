@@ -208,3 +208,173 @@ test('material dashboard retries course details without turning failures into em
   await chart.getByRole('button', { name: 'Làm mới thống kê' }).click();
   await expect(stats.getByText('100', { exact: true })).toBeVisible();
 });
+
+test('material dashboard reserves space while the catalog loads', async ({ page }, info) => {
+  await mockDashboard(page);
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/api/v1/manager/courses?**', async (route) => {
+    await gate;
+    await route.fallback();
+  });
+  await page.setViewportSize(
+    info.project.name === 'mobile' ? { width: 320, height: 850 } : { width: 1440, height: 1000 },
+  );
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/manager/materials');
+  try {
+    const loading = page.getByRole('status', { name: 'Đang tải danh sách khóa học', exact: true });
+    await expect(loading).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Quản lý tài liệu', exact: true }),
+    ).toBeVisible();
+    await expect(loading.getByText('Tổng tài liệu', { exact: true })).toBeVisible();
+    await expect(loading.getByText('0', { exact: true })).toHaveCount(0);
+    expect(
+      await loading
+        .locator('[data-slot="skeleton"]')
+        .evaluateAll((nodes) =>
+          nodes.every((node) => getComputedStyle(node).animationName === 'none'),
+        ),
+    ).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    await page.screenshot({
+      path: info.outputPath('materials-catalog-loading.png'),
+      fullPage: true,
+    });
+  } finally {
+    release();
+  }
+  await expect(
+    page
+      .getByRole('region', { name: 'Thống kê tài liệu', exact: true })
+      .getByText('100', { exact: true }),
+  ).toBeVisible();
+});
+
+test('material dashboard waits for complete counts and preserves values during refresh', async ({
+  page,
+}, info) => {
+  await mockDashboard(page);
+  let release!: () => void;
+  let gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/api/v1/manager/course-units/*/materials?**', async (route) => {
+    if (route.request().url().includes(unitIds[1])) await gate;
+    await route.fallback();
+  });
+  await page.setViewportSize(
+    info.project.name === 'mobile' ? { width: 320, height: 850 } : { width: 1440, height: 1000 },
+  );
+  await page.goto('/manager/materials');
+  const stats = page.getByRole('region', { name: 'Thống kê tài liệu', exact: true });
+  const totalCard = stats.getByText('Tổng tài liệu', { exact: true }).locator('..').locator('..');
+  const courses = page.getByRole('region', { name: 'Danh sách khóa học', exact: true });
+  const firstCourse = courses.getByRole('button', { name: new RegExp(titles[0]) });
+  let before;
+  try {
+    await expect(
+      stats.getByRole('status', { name: 'Đang tải tổng tài liệu', exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('status', { name: 'Đang tải thống kê tài liệu', exact: true }),
+    ).toBeVisible();
+    await expect(courses.getByRole('button', { name: new RegExp(titles[1]) })).toContainText(
+      '25 tài liệu',
+    );
+    await expect(firstCourse.getByRole('status').filter({ visible: true })).toHaveCount(1);
+    await expect(firstCourse).not.toContainText('50 tài liệu');
+    await expect(stats.getByText('0', { exact: true })).toHaveCount(0);
+    before = await totalCard.boundingBox();
+    await page.screenshot({
+      path: info.outputPath('materials-counts-loading.png'),
+      fullPage: true,
+    });
+  } finally {
+    release();
+  }
+  await expect(stats.getByText('100', { exact: true })).toBeVisible();
+  await expect(firstCourse).toContainText('75 tài liệu');
+  const after = await totalCard.boundingBox();
+  expect(after?.height).toBe(before?.height);
+  expect(after?.y).toBe(before?.y);
+  gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const refresh = page.getByRole('button', { name: 'Làm mới thống kê', exact: true });
+  await refresh.click();
+  try {
+    await expect(refresh).toBeDisabled();
+    await expect(stats.getByText('100', { exact: true })).toBeVisible();
+    await expect(stats.getByRole('status')).toHaveCount(0);
+    await expect(firstCourse).toContainText('75 tài liệu');
+  } finally {
+    release();
+  }
+  await expect(refresh).toBeEnabled();
+});
+
+test('material inventory distinguishes loading totals from an empty inventory', async ({
+  page,
+}, info) => {
+  await mockDashboard(page);
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/api/v1/manager/materials?**', async (route) => {
+    await gate;
+    const params = new URL(route.request().url()).searchParams;
+    await route.fulfill({
+      json: { items: [], page: 1, pageSize: Number(params.get('pageSize')), total: 0 },
+    });
+  });
+  await page.setViewportSize(
+    info.project.name === 'mobile' ? { width: 320, height: 850 } : { width: 1440, height: 1000 },
+  );
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/manager/materials?view=inventory');
+  try {
+    await expect(
+      page.getByRole('status', { name: 'Đang tải kho tài liệu…', exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Đang chờ duyệt/ }).getByRole('status'),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Đã được duyệt/ }).getByRole('status'),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: /Bản nháp/ }).getByRole('status')).toBeVisible();
+    await expect(
+      page.getByText('Chưa có tài liệu trong danh sách này', { exact: true }),
+    ).toHaveCount(0);
+    expect(
+      await page
+        .locator('[data-slot="skeleton"]')
+        .evaluateAll((nodes) =>
+          nodes.every((node) => getComputedStyle(node).animationName === 'none'),
+        ),
+    ).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    await page.screenshot({
+      path: info.outputPath('materials-inventory-loading.png'),
+      fullPage: true,
+    });
+  } finally {
+    release();
+  }
+  await expect(
+    page.getByText('Chưa có tài liệu trong danh sách này', { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: /Đang chờ duyệt/ })).toContainText('0');
+  await expect(
+    page.getByRole('status', { name: 'Đang tải kho tài liệu…', exact: true }),
+  ).toHaveCount(0);
+});

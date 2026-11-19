@@ -12,6 +12,8 @@ import {
   FolderOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TableSkeleton } from '@/components/ui/loading-skeletons';
+import { MaterialCount } from './manager-materials-loading';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { useCourseCatalog } from '@/features/courses/api/course-queries';
 import { courseDetailSchema } from '@/features/courses/schemas/course-contracts';
@@ -175,8 +177,12 @@ export function ManagerMaterialsInventory(props: {
             </span>
             <span>
               <span className="block text-sm text-muted">{item.label}</span>
-              <span className="mt-1 block text-3xl font-bold">
-                {selectingUnit ? '—' : (item.query.data?.total ?? '—')}
+              <span className="mt-1 block min-h-9 text-3xl font-bold tabular-nums">
+                <MaterialCount
+                  value={selectingUnit ? undefined : item.query.data?.total}
+                  pending={!selectingUnit && item.query.isPending}
+                  label={`Đang tải số tài liệu ${item.label.toLocaleLowerCase('vi-VN')}`}
+                />
               </span>
               <span className="mt-2 block text-xs text-muted">
                 {selectingUnit
@@ -330,6 +336,14 @@ export function ManagerMaterialsInventory(props: {
         </div>
         <ManagerState
           pending={!selectingUnit && materials.isPending}
+          loading={
+            <TableSkeleton
+              rows={5}
+              columns={5}
+              label="Đang tải kho tài liệu…"
+              className="motion-reduce:[&_[data-slot=skeleton]]:animate-none"
+            />
+          }
           error={selectingUnit ? null : materials.error}
           retry={materials.refetch}
         >

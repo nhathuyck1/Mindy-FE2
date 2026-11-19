@@ -1,5 +1,11 @@
 # Tiến độ
 
+## 20/11/2026 — Loading cho quản lý tài liệu Manager
+
+- Giữ nhãn thống kê hiện ngay, dùng skeleton ở vị trí số đang tải thay cho dấu gạch. Có skeleton cho danh sách khóa học lúc đầu, biểu đồ phân bố, số tài liệu từng khóa và bảng kho tài liệu. Khóa nào tải xong hiện số riêng; tổng chỉ hiện khi đã đủ dữ liệu, không dùng số 0 cho trạng thái chưa tải.
+- Giữ chiều cao thẻ thống kê khi số liệu xuất hiện; làm mới vẫn giữ số cũ. Có nhãn tải cho trình đọc màn hình và tắt hiệu ứng pulse khi người dùng chọn giảm chuyển động. Giữ trạng thái lỗi/thử lại hiện có.
+- Kiểm chứng: 382 unit tests và 86 E2E tài liệu/Manager trên desktop/mobile PASS bằng API fixtures. Đã kiểm API chậm, tải từng phần, refresh, lỗi/retry, kho trống, reduced motion và không tràn ngang ở 320px; đã xem ảnh loading và tải xong tại `test-results/materials-loading`. Production build/TypeScript và ESLint PASS; Prettier các file sửa PASS. Prettier toàn repo còn 349 file có định dạng cũ; build có cảnh báo bảo mật Next.js hiện hữu và thành công sau khi chạy lại.
+
 ## 20/11/2026 — Tổng quan Manager ưu tiên doanh thu
 
 - Đưa thu tiền/biểu đồ lên đầu theo lựa chọn của người dùng. Gộp tiền với số đơn tương ứng, đưa thống kê tài liệu xuống dưới, giữ thao tác lọc/thử lại và các hàng chờ. Thu tiền là hành động chính trên header.
