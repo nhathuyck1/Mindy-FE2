@@ -1,5 +1,12 @@
 # Quy tắc giao diện Mindy
 
+## Bảng tài nguyên Admin mở tại chỗ — 20/11/2026
+
+- Người dùng/Khóa học/Lớp học dùng header trắng 48px, hàng 60px, email/mã riêng; NameAvatar cho người dùng và icon cho khóa/lớp. Giữ Inter/palette Mindy. Quy tắc này thay header soft trong ghi chú cũ của ba bảng.
+- Checkbox và disclosure độc lập; bàn phím mở đúng một hàng với aria-expanded/aria-controls. Mint nhạt cho chọn, outline mint 1px bao hàng mở/chi tiết. Select-all chọn một phần hiện dấu trừ bằng Checkbox dùng chung.
+- Chỉ ba bảng này dùng status compact bo nhẹ không pulse và action trung tính; coarse pointer có vùng bấm 44px. User có khóa/mở khóa, không xóa.
+- Chi tiết dùng list fields, xuống dòng dài và xếp 1/2/4 cột. Bảng cuộn trong panel, chi tiết theo viewport; kiểm 320/768/1024/1440px. Trang/filter/search đổi thì đóng disclosure, ẩn cột cập nhật colspan/skeleton. Dialog sửa/xếp lịch/xác nhận và API giữ nguyên. Token: DESIGN.md và .impeccable/design.json; scope: docs/admin-table-design.md.
+
 ## Tổng quan Manager ưu tiên thu tiền — 20/11/2026
 
 - Theo lựa chọn của người dùng, tổng quan thu tiền nằm trước thống kê tài liệu và các hàng chờ. Giữ Inter, token trắng/mint/forest/coral và các lối nghiệp vụ hiện có; tiêu đề và thanh thao tác gọn, Thu tiền là hành động chính.

@@ -1,5 +1,18 @@
 # Tiến độ
 
+## 20/11/2026 — Giới hạn ngày tạo đơn xin nghỉ Mentor
+
+- Hai ô ngày nghỉ mặc định là hôm nay +2 ngày lịch theo múi giờ Việt Nam, đồng bộ rule báo trước của BE. Chặn mọi ngày sớm hơn mốc này; ngày kết thúc còn phải từ ngày bắt đầu trở đi và tự nâng lên khi ngày bắt đầu vượt qua nó.
+- Giới hạn cập nhật theo đồng hồ mỗi phút/focus và kiểm lại lúc kiểm tra lịch/gửi đơn để chặn form mở qua nửa đêm. Sau preview, dùng thêm asOf/timeZone của BE. Giữ nguyên giới hạn và quy tắc riêng của lịch dạy bù.
+- Kiểm chứng: ESLint, Prettier các file sửa, TypeScript qua production build và 385 unit tests PASS. 36 E2E Mentor trên desktop/mobile PASS qua các lượt chạy, gồm ngày mặc định, ngày quá khứ/hôm nay/ngày mai, khoảng đảo, qua nửa đêm và hồi quy tạo/rút đơn và chọn lịch bù; dùng API fixtures. Đã xem ảnh desktop/320px tại test-results/mentor-leave-calendar-*.png. Build PASS sau khi chạy lại do cảnh báo bảo mật Next.js hiện hữu.
+
+## 20/11/2026 — Bảng tài nguyên Admin và chi tiết inline
+
+- Shared AdminDataTable cho Người dùng/Khóa học/Lớp học theo ảnh người dùng xác nhận; giữ Mindy/Inter. Header trắng, hàng 60px, email/mã riêng, avatar/icon; checkbox tách disclosure, một hàng mở, outline mint 1px. Status compact không pulse/action trung tính chỉ trong ba bảng.
+- AdminRecordDetails dùng list fields; giữ dialog sửa/xếp lịch/xác nhận và khóa/mở khóa user. Shared Checkbox sửa dấu trừ mixed selection. Disclosure reset theo trang/filter/search, colspan/skeleton đúng khi ẩn cột; bảng cuộn trong panel, details responsive. API không đổi.
+- Kiểm chứng cuối: 385 unit tests PASS; một lượt đủ 46 Admin E2E PASS bằng API fixtures. Production build/TypeScript PASS sau retry do cảnh báo bảo mật Next.js hiện hữu; ESLint toàn repo PASS và targeted checks sau fix cuối PASS; Prettier các target thay đổi PASS. Không kiểm mutation backend thật.
+- Review detector chạy một lần, kết quả []; finish review: Ship sau sửa mixed indicator và xem đủ 12 ảnh cuối ở 1440/320/768/1024px: .impeccable/review/{users,courses,classes}-{desktop,mobile,768,1024}.png. Không tạo raster asset để ship. DESIGN.md, .impeccable/design.json và docs UI/architecture/template đã đồng bộ token/phạm vi Admin.
+
 ## 20/11/2026 — Loading cho quản lý tài liệu Manager
 
 - Giữ nhãn thống kê hiện ngay, dùng skeleton ở vị trí số đang tải thay cho dấu gạch. Có skeleton cho danh sách khóa học lúc đầu, biểu đồ phân bố, số tài liệu từng khóa và bảng kho tài liệu. Khóa nào tải xong hiện số riêng; tổng chỉ hiện khi đã đủ dữ liệu, không dùng số 0 cho trạng thái chưa tải.

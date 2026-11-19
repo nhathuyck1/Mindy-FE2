@@ -15,7 +15,7 @@ import {
   type LeavePreview,
   type LeaveSessionMapping,
 } from '../schemas/leave-contracts';
-import { makeupMinDate, leavePeriods } from '../lib/leave-display';
+import { leaveMinDate, makeupMinDate, leavePeriods } from '../lib/leave-display';
 import { hasOverlappingMakeupSlots, makeupSlotsOverlap } from '../lib/leave-makeup';
 import { mentorDate } from './mentor-shared';
 import { SessionMakeupSlot } from './mentor-leave-makeup-slot';
@@ -30,13 +30,21 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
       window.removeEventListener('focus', update);
     };
   }, []);
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [fromDate, setFromDate] = useState(() => leaveMinDate(now));
+  const [toDate, setToDate] = useState(() => leaveMinDate(now));
   const [period, setPeriod] = useState('FULL_DAY');
   const [reason, setReason] = useState('');
   const [preview, setPreview] = useState<LeavePreview | null>(null);
   const [sessions, setSessions] = useState<Record<string, LeaveSessionMapping>>({});
   const [error, setError] = useState('');
+  const minLeaveDate = (currentTime: number) =>
+    leaveMinDate(
+      Math.max(currentTime, preview ? Date.parse(preview.asOf) : currentTime),
+      preview?.timeZone,
+    );
+  const minDate = minLeaveDate(now);
+  const validNotice = (currentTime: number) =>
+    fromDate >= minLeaveDate(currentTime) && toDate >= fromDate;
   const read = useMentorCommand(leavePreviewSchema);
   const create = useMentorCommand(leaveRequestSchema);
   const busy = read.isPending || create.isPending;
@@ -94,6 +102,13 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
         className="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-3"
         onSubmit={async (event) => {
           event.preventDefault();
+          if (!validNotice(Date.now())) {
+            setNow(Date.now());
+            setError(
+              'Chọn ngày nghỉ từ hai ngày lịch sau hôm nay; ngày kết thúc không được trước ngày bắt đầu.',
+            );
+            return;
+          }
           const input = leavePreviewInputSchema.safeParse({ fromDate, toDate, period });
           if (!input.success) {
             setError('Chọn khoảng ngày hợp lệ, tối đa 93 ngày.');
@@ -117,11 +132,13 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
           <Input
             className="h-12"
             type="date"
+            min={minDate}
             required
             value={fromDate}
             disabled={busy}
             onChange={(e) => {
               setFromDate(e.target.value);
+              if (e.target.value > toDate) setToDate(e.target.value);
               resetPreview();
             }}
           />
@@ -131,6 +148,7 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
           <Input
             className="h-12"
             type="date"
+            min={fromDate > minDate ? fromDate : minDate}
             required
             value={toDate}
             disabled={busy}
@@ -240,6 +258,13 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
                 className="space-y-4"
                 onSubmit={async (event) => {
                   event.preventDefault();
+                  if (!validNotice(Date.now())) {
+                    setNow(Date.now());
+                    setError(
+                      'Khoảng nghỉ không còn đủ hai ngày lịch báo trước. Hãy chọn lại ngày và kiểm tra lịch dạy.',
+                    );
+                    return;
+                  }
                   const input = createLeaveInputSchema.safeParse({
                     fromDate,
                     toDate,
@@ -295,7 +320,11 @@ export function LeaveCreate(props: { onClose: () => void; onCreated: (id: string
                   <Button
                     type="submit"
                     disabled={
-                      busy || !mappingsComplete || !preview.noticeEligible || !reason.trim()
+                      busy ||
+                      !validNotice(now) ||
+                      !mappingsComplete ||
+                      !preview.noticeEligible ||
+                      !reason.trim()
                     }
                   >
                     <Send aria-hidden="true" className="size-4" />

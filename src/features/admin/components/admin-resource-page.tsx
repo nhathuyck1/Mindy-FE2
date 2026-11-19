@@ -289,7 +289,7 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
         ) : query.isPending || query.isError ? (
           <AdminQueryState
             loading={query.isPending}
-            columns={7 - hidden.size}
+            columns={9 - hidden.size}
             error={query.error}
             onRetry={() => query.refetch()}
           />
@@ -311,6 +311,7 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
           </div>
         ) : (
           <AdminDataTable
+            key={`${props.resource}:${page}:${status}:${filter}:${userSearch}`}
             resource={props.resource}
             rows={rows}
             page={page}

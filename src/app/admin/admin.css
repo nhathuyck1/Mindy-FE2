@@ -112,6 +112,80 @@
   .admin-data-table input[type='checkbox'] {
     @apply size-3.5 cursor-pointer;
   }
+  .admin-table-scroll {
+    @apply px-3 pb-3;
+    scrollbar-color: var(--color-line) var(--color-canvas);
+    scrollbar-width: thin;
+  }
+  .admin-table-scroll > [data-slot='table-container'] {
+    overflow: visible;
+  }
+  .admin-resource-table {
+    @apply min-w-260;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .admin-resource-table thead {
+    @apply border-0 bg-canvas text-xs text-foreground;
+  }
+  .admin-resource-table thead tr {
+    @apply border-0 hover:bg-transparent;
+  }
+  .admin-resource-table thead th {
+    @apply h-12 px-3 font-medium;
+  }
+  .admin-resource-table tbody tr {
+    @apply border-0 hover:bg-soft/60;
+  }
+  .admin-resource-table tbody td,
+  .admin-resource-table tbody th {
+    @apply h-15 px-3 py-2 text-sm font-normal;
+  }
+  .admin-resource-table tbody tr[data-selected='true'] {
+    @apply bg-soft/80;
+  }
+  .admin-resource-table tbody[data-expanded='true'] {
+    outline: 1px solid var(--color-mint);
+    outline-offset: -1px;
+  }
+  .admin-resource-table tbody[data-expanded='true'] > tr:first-child {
+    @apply bg-soft/80;
+  }
+  .admin-resource-table tr > .admin-expand-cell {
+    @apply w-9 min-w-9 p-0 text-center;
+  }
+  .admin-resource-table tr > .admin-selection-cell {
+    @apply w-10 min-w-10 p-0;
+  }
+  .admin-expand-button {
+    @apply inline-flex size-9 cursor-pointer items-center justify-center rounded-md text-muted hover:bg-mint/10 hover:text-forest aria-expanded:text-forest;
+  }
+  .admin-table-action {
+    @apply size-9 rounded-md border-transparent bg-soft/60 p-0 text-muted shadow-none hover:border-transparent hover:bg-mint/10 hover:text-forest data-[active=true]:bg-soft data-[active=true]:text-forest;
+  }
+  .admin-resource-table .admin-details-row,
+  .admin-resource-table .admin-details-row:hover {
+    @apply bg-canvas;
+  }
+  .admin-resource-table .admin-details-row > td {
+    @apply h-auto px-4 pt-4 pb-6;
+  }
+  .admin-inline-details {
+    @apply sticky left-4;
+    width: min(100%, calc(100vw - 6rem));
+  }
+  @media (min-width: 1024px) {
+    .admin-inline-details {
+      @apply pl-20;
+      width: min(100%, calc(100vw - 24rem));
+    }
+  }
+  @media (pointer: coarse) {
+    .admin-expand-button,
+    .admin-table-action {
+      @apply size-11;
+    }
+  }
   .admin-row-action {
     @apply inline-flex min-h-9 cursor-pointer items-center justify-center gap-2 rounded-lg border border-line px-3 text-sm font-semibold whitespace-nowrap text-mint hover:bg-soft;
   }

@@ -21,7 +21,7 @@ const newId = '99999999-9999-4999-8999-999999999999';
 const unitId = '88888888-8888-4888-8888-888888888888';
 const sessionId = '77777777-7777-4777-8777-777777777777';
 
-test('Table icon actions open centered blurred modals without duplicate action buttons', async ({
+test('Table details expand inline while edit actions retain centered accessible modals', async ({
   page,
   isMobile,
 }, testInfo) => {
@@ -36,12 +36,25 @@ test('Table icon actions open centered blurred modals without duplicate action b
     name: `Thao tác ${adminClasses[1].name}`,
     exact: true,
   });
-  const view = actions.getByRole('button', { name: /^Xem thông tin:/ });
+  const view = page.getByRole('button', {
+    name: `Xem thông tin: ${adminClasses[1].name}`,
+    exact: true,
+  });
   await view.click();
+  const details = page.getByRole('region', {
+    name: `Thông tin lớp học: ${adminClasses[1].name}`,
+    exact: true,
+  });
+  await expect(details).toBeVisible();
   const dialog = page.getByRole('dialog');
+  await expect(dialog).toHaveCount(0);
+  await view.click();
+  await expect(details).toHaveCount(0);
+  const edit = actions.getByRole('button', { name: /^Chỉnh sửa lớp học:/ });
+  await edit.click();
   await expect(dialog).toHaveCount(1);
   await expect(dialog).toHaveAttribute('aria-modal', 'true');
-  await expect(dialog).toContainText(adminClasses[1].name);
+  await expect(dialog.getByLabel(/^Tên lớp/)).toHaveValue(adminClasses[1].name);
   await expect(page.locator('[data-slot="dialog-overlay"]')).toHaveCSS('backdrop-filter', /blur/);
   const box = await dialog.boundingBox();
   const viewport = page.viewportSize()!;
@@ -50,7 +63,8 @@ test('Table icon actions open centered blurred modals without duplicate action b
   await expect(dialog.getByRole('group', { name: 'Chuyển mục' })).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
-  await actions.getByRole('button', { name: /^Chỉnh sửa lớp học:/ }).click();
+  await expect(edit).toBeFocused();
+  await edit.click();
   await expect(dialog.getByLabel(/^Tên lớp/)).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
@@ -60,15 +74,16 @@ test('Table icon actions open centered blurred modals without duplicate action b
   );
   await view.focus();
   await page.keyboard.press('Enter');
-  await expect(dialog).toContainText('Thông tin lớp học');
-  await expect(dialog).toHaveCount(1);
+  await expect(details).toBeVisible();
+  await expect(dialog).toHaveCount(0);
   await page.screenshot({
-    path: testInfo.outputPath('row-action-modal.png'),
+    path: testInfo.outputPath('row-action-inline.png'),
     animations: 'disabled',
   });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(api.writes).toHaveLength(0);
-  await page.keyboard.press('Escape');
+  await page.keyboard.press('Space');
+  await expect(details).toHaveCount(0);
   await expect(dialog).toHaveCount(0);
   await expect(view).toBeFocused();
 });
