@@ -1,5 +1,16 @@
 # Tiến độ
 
+## 19/11/2026 — Tải và dán ảnh trực tiếp lên bảng
+
+- Thêm nút Tải ảnh lên bảng trên header. PNG/JPEG được chọn hoặc dán tự xuất hiện khi tải và kiểm tra xong, không cần bấm Thêm ảnh vào bảng. Giữ retry đúng upload, hoàn tác/làm lại, quyền đọc/ghi và bảo vệ epoch khi bảng reset. Nhập PDF chuyển vào menu và giữ chọn trang.
+- Production build/TypeScript, lint/Prettier file sửa PASS; 22 E2E bảng vẽ desktop/mobile PASS với API/socket/storage mock, gồm tải và dán ảnh, không chèn trùng, hoàn tác/làm lại, retry, chỉ xem, PDF, reset, viewport và người tham gia. Đã xem giao diện desktop và 320px. Build có cảnh báo bảo mật Next.js hiện hữu, thành công sau khi chạy lại; chưa nghiệm thu upload storage thật.
+
+## 19/11/2026 — Chỉnh giao diện chi tiết buổi học Student theo Mentor
+
+- Bổ sung: bỏ bảng vẽ nhúng dưới tài liệu. Chỉ tải/mở bảng toàn màn hình khi học viên bấm Mở bảng vẽ; giữ trang bảng vẽ và quyền hiện có. Build/TypeScript, lint/Prettier và 24 E2E Student desktop/mobile PASS; xác nhận trang buổi học không tải context bảng trước khi bấm nút.
+- Header gradient mint/soft bo tròn, trạng thái và lịch/phòng/múi giờ theo mẫu Mentor; nội dung nền trắng với header soft, công cụ nền forest và điểm danh cá nhân nền peach. Từ xl có cột phải 19rem; màn nhỏ đưa công cụ/điểm danh sau thông tin, trước tài nguyên, hai cột từ sm và một cột trên mobile hẹp. Giữ metadata/điểm danh, API, quyền và nội bộ bảng vẽ.
+- Giữ Về lịch học trong tải/lỗi/trống, bao gồm lỗi refetch khi cache đã có dữ liệu. Kiểm chứng: production build/TypeScript, lint và Prettier các file sửa PASS; 26 E2E Playwright desktop/mobile PASS với API mock. Kiểm tra không tràn ngang ở 320, 390, 1024, 1440 và 1496px; ảnh đối chiếu Student/Mentor và responsive lưu tại `.impeccable/review`.
+
 ## 18/11/2026 — Chi tiết buổi học Student và theo viewport giảng viên
 
 - Bổ sung FE theo yêu cầu: giữ viewport đến sớm trước ACK join và áp dụng sau khi xác nhận epoch; student tự bám pan/zoom/resize trên bảng đầy đủ và bảng nhúng. Giữ camera cuối khi presenter im lặng/offline, xóa khi đổi epoch/thu hồi quyền. Thêm ghi chú/hình/code và thao tác kéo thả dùng cùng camera đang hiển thị để không đặt nội dung ngoài FOV. Không đổi contract hoặc source BE trong lượt bổ sung. Đã kiểm build/type-check, lint, Prettier, 377 unit tests và 34 E2E desktop/mobile liên quan đều pass.

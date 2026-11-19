@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { BookOpen } from 'lucide-react';
 import { useUnitMaterials } from '@/features/learning/api/learning-queries';
 import { LearningMaterialList } from '@/features/learning/components/learning-material-list';
 import { LearningState } from '@/features/learning/components/learning-state';
@@ -19,10 +20,13 @@ export function StudentSessionMaterials(props: {
   return (
     <section
       aria-label="Chương của buổi học"
-      className="min-w-0 overflow-hidden rounded-2xl border border-line"
+      className="min-w-0 overflow-hidden rounded-2xl border border-line bg-canvas"
     >
-      <h2 className="border-b border-line p-4 text-lg font-extrabold sm:p-5">
-        Chương {props.unit.position}: {props.unit.title}
+      <h2 className="flex items-start gap-2.5 border-b border-line bg-soft/35 px-5 py-4 text-lg font-extrabold">
+        <BookOpen aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-mint" />
+        <span className="min-w-0 [overflow-wrap:anywhere]">
+          Chương {props.unit.position}: {props.unit.title}
+        </span>
       </h2>
       {locked ? (
         <LearningState>Chương chưa được mở. Vui lòng chờ mentor mở nội dung.</LearningState>

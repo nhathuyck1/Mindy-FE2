@@ -11,6 +11,7 @@ import {
   Square,
   Type as TextIcon,
   Download,
+  FileUp,
   Eraser,
   Hand,
   HelpCircle,
@@ -163,7 +164,10 @@ export function WhiteboardWorkspace(props: {
   const [pdf, setPdf] = useState<File | null>(null),
     [pages, setPages] = useState('1'),
     [message, setMessage] = useState(''),
-    fileInput = useRef<HTMLInputElement>(null);
+    fileInput = useRef<HTMLInputElement>(null),
+    pdfInput = useRef<HTMLInputElement>(null);
+  const uploadEpoch = useRef<string | null>(null);
+  const placedImages = useRef<ReadyBoardImage[] | null>(null);
   const sendCodeToChat = useSendCodeToChat();
   const media = useBoardMedia(connection.boardId),
     session = useSession();
@@ -292,10 +296,18 @@ export function WhiteboardWorkspace(props: {
     setShapeMenu(false);
     if (type === 'text') edit(id);
   }
-  function placeImages(images: ReadyBoardImage[]) {
-    if (!editable) return;
+  const { ready, clearReady } = media;
+  useEffect(() => {
+    if (!ready.length || placedImages.current === ready) return;
+    if (uploadEpoch.current !== board.epoch) {
+      placedImages.current = ready;
+      clearReady('Bảng đã thay đổi. Hãy tải ảnh lại vào bảng hiện tại.');
+      return;
+    }
+    if (!editable || !cap.canUpload || !active) return;
+    placedImages.current = ready;
     const p = worldPoint(canvasView, size.width / 2, size.height / 2);
-    for (const [i, a] of images.entries()) {
+    for (const [i, a] of ready.entries()) {
       const scale = Math.min(1, 480 / a.width, 360 / a.height);
       addShape(connection.doc, {
         id: crypto.randomUUID(),
@@ -308,14 +320,31 @@ export function WhiteboardWorkspace(props: {
         color: '#ffffff',
       });
     }
-    media.clearReady();
-  }
+    clearReady('Đã thêm ảnh vào bảng.');
+  }, [
+    ready,
+    clearReady,
+    board.epoch,
+    editable,
+    cap.canUpload,
+    active,
+    canvasView,
+    size,
+    connection,
+  ]);
   function chooseFile(file: File) {
+    if (!editable || !cap.canUpload || !active || media.busy) return;
     setMessage('');
+    setTool('select');
     if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
+      if (!cap.canImportPdf) return;
+      uploadEpoch.current = board.epoch;
       setPdf(file);
       setPages('1');
-    } else void media.uploadFile(file);
+    } else if (['image/png', 'image/jpeg'].includes(file.type)) {
+      uploadEpoch.current = board.epoch;
+      void media.uploadFile(file);
+    } else setMessage('Chọn ảnh PNG hoặc JPEG, tối đa 10 MiB.');
   }
   const latestUpload = useRef(chooseFile);
   useEffect(() => {
@@ -375,12 +404,12 @@ export function WhiteboardWorkspace(props: {
   const onReady = props.onReady;
   // Offer the bridge only once the socket is online and the board state (with permissions) has
   // arrived; before that a send would be refused as if the user could only view.
-  const ready = state.status === 'online' && state.state !== null;
+  const boardReady = state.status === 'online' && state.state !== null;
   useEffect(() => {
-    if (!onReady || !ready) return;
+    if (!onReady || !boardReady) return;
     onReady({ addCode: (...args) => latestAddCode.current(...args) });
     return () => onReady(null);
-  }, [onReady, ready]);
+  }, [onReady, boardReady]);
   const returnPath = props.initial.context.mentor
     ? `/mentor/sessions/${board.sessionId}`
     : `/user/materials/${props.initial.context.classId}`;
@@ -509,6 +538,21 @@ export function WhiteboardWorkspace(props: {
             </option>
           </select>
         )}
+        {cap.canUpload && (
+          <Button
+            variant="outline"
+            aria-label="Tải ảnh lên bảng"
+            title="Tải ảnh lên bảng"
+            disabled={!editable || media.busy}
+            onClick={() => {
+              setMessage('');
+              fileInput.current?.click();
+            }}
+          >
+            <ImagePlus aria-hidden="true" className="size-4" />
+            <span className="hidden sm:inline">Tải ảnh lên bảng</span>
+          </Button>
+        )}
         <button
           className="whiteboard-icon"
           aria-label="Thêm thao tác"
@@ -609,17 +653,6 @@ export function WhiteboardWorkspace(props: {
           >
             <StickyNote size={21} />
           </button>
-          {cap.canUpload && (
-            <button
-              className="whiteboard-icon"
-              title="Tải ảnh hoặc PDF"
-              aria-label="Tải ảnh hoặc PDF"
-              disabled={!editable || media.busy}
-              onClick={() => fileInput.current?.click()}
-            >
-              <ImagePlus size={21} />
-            </button>
-          )}
           <span className="whiteboard-tool-divider" />
           <button
             className="whiteboard-icon"
@@ -714,6 +747,18 @@ export function WhiteboardWorkspace(props: {
         )}
         {menu && (
           <section className="whiteboard-menu" aria-label="Thao tác bảng">
+            {cap.canUpload && cap.canImportPdf && (
+              <button
+                disabled={!editable || media.busy}
+                onClick={() => {
+                  pdfInput.current?.click();
+                  setMenu(false);
+                }}
+              >
+                <FileUp size={18} />
+                Nhập PDF
+              </button>
+            )}
             {cap.canSnapshot && (
               <button
                 disabled={!canCommand || command.isPending}
@@ -903,6 +948,7 @@ export function WhiteboardWorkspace(props: {
                 media.message ||
                 'Mất kết nối. Bảng tạm khóa thao tác mới.'}
             </p>
+            {state.notice && media.message && <p>{media.message}</p>}
             {state.status === 'offline' && (
               <Button size="sm" onClick={() => void connection.reconnect()}>
                 Kết nối lại
@@ -921,11 +967,6 @@ export function WhiteboardWorkspace(props: {
             {media.busy && (
               <Button size="sm" variant="outline" onClick={media.cancel}>
                 Dừng chờ
-              </Button>
-            )}
-            {!!media.ready.length && (
-              <Button size="sm" disabled={!editable} onClick={() => placeImages(media.ready)}>
-                Thêm ảnh vào bảng
               </Button>
             )}
           </div>
@@ -968,14 +1009,28 @@ export function WhiteboardWorkspace(props: {
         ref={fileInput}
         className="sr-only"
         type="file"
-        accept={cap.canImportPdf ? 'image/png,image/jpeg,application/pdf' : 'image/png,image/jpeg'}
-        aria-label="Chọn tệp cho bảng"
+        accept="image/png,image/jpeg"
+        aria-label="Chọn ảnh cho bảng"
         onChange={(e) => {
           const file = e.target.files?.[0];
           e.target.value = '';
           if (file) chooseFile(file);
         }}
       />
+      {cap.canUpload && cap.canImportPdf && (
+        <input
+          ref={pdfInput}
+          className="sr-only"
+          type="file"
+          accept="application/pdf"
+          aria-label="Chọn PDF cho bảng"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (file) chooseFile(file);
+          }}
+        />
+      )}
       {history && (
         <Modal
           title="Lịch sử mốc lưu"
@@ -1139,6 +1194,7 @@ export function WhiteboardWorkspace(props: {
             className="space-y-5 p-5"
             onSubmit={(e) => {
               e.preventDefault();
+              if (!editable || !cap.canUpload || !cap.canImportPdf || media.busy) return;
               const chosen = pages.split(',').map((p) => Number(p.trim()));
               if (
                 chosen.length < 1 ||
@@ -1149,6 +1205,12 @@ export function WhiteboardWorkspace(props: {
                 setMessage('Chọn tối đa 10 trang khác nhau từ 1 đến 100.');
                 return;
               }
+              if (uploadEpoch.current !== board.epoch) {
+                setMessage('Bảng đã thay đổi. Hãy chọn lại tệp PDF.');
+                setPdf(null);
+                return;
+              }
+              setMessage('');
               void media.uploadFile(pdf, chosen);
               setPdf(null);
             }}
