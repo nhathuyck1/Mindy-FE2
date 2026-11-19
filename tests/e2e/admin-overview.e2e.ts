@@ -77,7 +77,7 @@ for (const audience of ['admin', 'manager', 'mentor'] as const) {
     await expect(dashboard).toBeVisible();
     if (audience === 'manager') {
       const materials = page.getByRole('region', { name: 'Thống kê tài liệu', exact: true });
-      await expect(materials.getByRole('link')).toHaveCount(3);
+      await expect(materials.getByRole('link')).toHaveCount(4);
       await expect(
         materials.getByRole('link', { name: 'Chờ duyệt: 1', exact: true }),
       ).toHaveAttribute('href', '/manager/materials?view=inventory&reviewStatus=PENDING_REVIEW');

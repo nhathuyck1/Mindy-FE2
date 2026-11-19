@@ -1,5 +1,12 @@
 # Quy tắc giao diện Mindy
 
+## Tổng quan Manager ưu tiên thu tiền — 20/11/2026
+
+- Theo lựa chọn của người dùng, tổng quan thu tiền nằm trước thống kê tài liệu và các hàng chờ. Giữ Inter, token trắng/mint/forest/coral và các lối nghiệp vụ hiện có; tiêu đề và thanh thao tác gọn, Thu tiền là hành động chính.
+- Thực thu và chờ thu chia hai vùng trong một dải số liệu; mỗi khoản đi cùng số đơn tương ứng. Mobile hẹp xếp dọc, số tiền dùng BigInt và được xuống dòng khi quá dài.
+- Xu hướng theo ngày và phương thức là hai biểu đồ chính, cùng chiều cao trên desktop rộng. Biểu đồ khóa/lớp có chiều cao theo số mục để giảm vùng trống. Bảng số liệu đầy đủ vẫn nằm trong disclosure. CASH hiển thị Tiền mặt; màu phương thức giữ cố định khi thứ tự số tiền đổi. Tâm donut hiện tổng số đơn của các phương thức.
+- Cảnh báo lớp/đối soát dùng cùng một vùng chia cột; tên lớp dẫn vào lịch đúng lớp. Số tiền và lý do đối soát được ưu tiên, mã đơn nằm trong disclosure. Không sinh số liệu, tỷ lệ tăng trưởng hoặc lát donut giả khi dữ liệu trống.
+
 ## Đơn xin nghỉ — 19/11/2026
 
 - Manager giữ palette và component Mindy, dùng danh sách theo hàng có cột ở desktop, xếp dọc trên màn hẹp. Mentor/trạng thái và khoảng nghỉ dẫn mắt; lý do là bản xem trước tối đa hai dòng, văn bản đầy đủ nằm ở chi tiết. Nội dung dài dùng min-width: 0 và overflow-wrap: anywhere, không làm rộng hàng.

@@ -8,6 +8,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Label,
   Pie,
   PieChart,
   XAxis,
@@ -34,17 +35,20 @@ export const revenueLabel = (amount: string | number) =>
 const compact = (value: number) =>
   new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
 const panel = 'min-w-0 rounded-2xl border border-line bg-canvas p-4 sm:p-6';
+const revenuePanel = 'flex min-w-0 flex-col rounded-xl border border-line bg-canvas p-5 sm:p-6';
+const paymentNames: Record<string, string> = { CASH: 'Tiền mặt', PAYOS: 'PayOS' };
+const paymentColors: Record<string, string> = { CASH: colors[0], PAYOS: colors[1] };
 
 export function RevenueTrend(props: { rows: ManagerDashboard['trend'] }) {
   const id = `revenue-${useId().replaceAll(':', '')}`;
   return (
-    <section className={panel} aria-label="Xu hướng thực thu">
+    <section className={revenuePanel} aria-label="Xu hướng thực thu">
       <h3 className="text-lg font-extrabold">Xu hướng thực thu</h3>
       <p className="mt-1 text-sm text-muted">Doanh thu đã thanh toán theo ngày</p>
       {props.rows.length ? (
         <ChartContainer
           config={{ value: { label: 'Thực thu', color: colors[0] } }}
-          className="mt-5 h-72 w-full aspect-auto"
+          className="mt-5 h-64 w-full aspect-auto"
           aria-label="Biểu đồ thực thu theo ngày"
         >
           <AreaChart
@@ -84,8 +88,10 @@ export function RevenueTrend(props: { rows: ManagerDashboard['trend'] }) {
       ) : (
         <p className="py-12 text-sm text-muted">Chưa có khoản thu trong kỳ.</p>
       )}
-      <details className="mt-4 border-t border-line pt-4 text-sm">
-        <summary className="cursor-pointer font-bold text-mint">Thực thu theo ngày</summary>
+      <details className="mt-auto border-t border-line pt-3 text-sm">
+        <summary className="min-h-8 cursor-pointer content-center font-medium text-forest">
+          Thực thu theo ngày
+        </summary>
         <div className="mt-3 max-h-64 overflow-auto">
           <table className="w-full text-left tabular-nums">
             <thead>
@@ -116,17 +122,20 @@ export function RevenueBreakdown(props: {
   rows: ManagerDashboard['courses'];
   donut?: boolean;
 }) {
-  const rows = [...props.rows].sort((a, b) =>
-    BigInt(a.amount) > BigInt(b.amount) ? -1 : BigInt(a.amount) < BigInt(b.amount) ? 1 : 0,
-  );
+  const rows = props.rows
+    .map((row) => ({ ...row, name: props.donut ? (paymentNames[row.id] ?? row.name) : row.name }))
+    .sort((a, b) =>
+      BigInt(a.amount) > BigInt(b.amount) ? -1 : BigInt(a.amount) < BigInt(b.amount) ? 1 : 0,
+    );
   const data = (props.donut ? rows : rows.slice(0, 10)).map((row, i) => ({
     ...row,
     value: Number(row.amount),
-    fill: colors[i % colors.length],
+    fill: props.donut ? (paymentColors[row.id] ?? colors[i % colors.length]) : colors[0],
   }));
+  const totalOrders = rows.reduce((sum, row) => sum + row.orders, 0);
   const hasRevenue = data.some((row) => row.value > 0);
   return (
-    <section className={panel} aria-label={props.title}>
+    <section className={revenuePanel} aria-label={props.title}>
       <h3 className="text-lg font-extrabold">{props.title}</h3>
       <p className="mt-1 text-sm text-muted">
         {props.donut
@@ -137,7 +146,7 @@ export function RevenueBreakdown(props: {
         <ChartContainer
           config={{ value: { label: 'Thực thu', color: colors[0] } }}
           className="mt-5 w-full aspect-auto"
-          style={{ height: props.donut ? 260 : Math.max(240, data.length * 46) }}
+          style={{ height: props.donut ? 200 : Math.max(120, data.length * 44 + 40) }}
           aria-label={`Biểu đồ ${props.title.toLocaleLowerCase('vi-VN')}`}
         >
           {props.donut ? (
@@ -154,13 +163,35 @@ export function RevenueBreakdown(props: {
                 data={data.filter((row) => row.value > 0)}
                 dataKey="value"
                 nameKey="name"
-                innerRadius="60%"
-                outerRadius="88%"
+                innerRadius="70%"
+                outerRadius="94%"
                 paddingAngle={3}
                 stroke="var(--color-canvas)"
                 strokeWidth={3}
                 isAnimationActive={false}
-              />
+              >
+                <Label
+                  position="center"
+                  content={({ x, y }) => {
+                    if (x === undefined || y === undefined) return null;
+                    return (
+                      <text x={x} y={y} textAnchor="middle" dominantBaseline="middle">
+                        <tspan
+                          x={x}
+                          dy="-0.25em"
+                          fill="var(--color-foreground)"
+                          className="text-2xl font-semibold"
+                        >
+                          {totalOrders.toLocaleString('vi-VN')}
+                        </tspan>
+                        <tspan x={x} dy="1.8em" fill="var(--color-muted)" className="text-xs">
+                          đơn đã thu
+                        </tspan>
+                      </text>
+                    );
+                  }}
+                />
+              </Pie>
             </PieChart>
           ) : (
             <BarChart data={data} layout="vertical" accessibilityLayer margin={{ right: 12 }}>
@@ -194,19 +225,23 @@ export function RevenueBreakdown(props: {
         <p className="py-12 text-sm text-muted">Chưa có khoản thu trong kỳ.</p>
       )}
       {props.donut && (
-        <ul className="mt-3 space-y-3">
+        <ul className="mt-3 mb-4 space-y-3">
           {data.map((row) => (
             <li key={row.id} className="flex flex-wrap items-center gap-2 text-sm">
               <span className="size-2.5 rounded-full" style={{ backgroundColor: row.fill }} />
-              <span className="min-w-0 flex-1 break-words">{row.name}</span>
-              <span className="font-bold tabular-nums">{revenueLabel(row.amount)}</span>
+              <span className="min-w-0 flex-1 wrap-anywhere">{row.name}</span>
+              <span className="font-semibold tabular-nums wrap-anywhere">
+                {revenueLabel(row.amount)}
+              </span>
             </li>
           ))}
         </ul>
       )}
       {!!rows.length && (
-        <details className="mt-4 border-t border-line pt-4 text-sm">
-          <summary className="cursor-pointer font-bold text-mint">Xem số liệu chi tiết</summary>
+        <details className="mt-auto border-t border-line pt-3 text-sm">
+          <summary className="min-h-8 cursor-pointer content-center font-medium text-forest">
+            Xem số liệu chi tiết
+          </summary>
           <div className="mt-3 max-h-64 overflow-auto">
             <table className="w-full text-left">
               <thead>

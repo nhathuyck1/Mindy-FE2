@@ -43,7 +43,7 @@ export function ManagerOverviewPage() {
   ];
 
   return (
-    <div className="space-y-7">
+    <div className="min-w-0 space-y-7">
       <header className="admin-page-heading">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Tổng quan Manager</h1>
@@ -55,12 +55,6 @@ export function ManagerOverviewPage() {
               Lịch và khai giảng
             </Link>
           </Button>
-          <Button asChild variant="outline">
-            <Link href="/manager/materials?view=inventory&reviewStatus=PENDING_REVIEW">
-              <FileText aria-hidden="true" className="size-4" />
-              Quản lý tài liệu
-            </Link>
-          </Button>
           <Button asChild>
             <Link href="/manager/collections">
               <Wallet aria-hidden="true" className="size-4" />
@@ -70,9 +64,23 @@ export function ManagerOverviewPage() {
         </div>
       </header>
 
-      <section aria-label="Thống kê tài liệu" className="space-y-3">
-        <h2 className="text-lg font-bold">Tài liệu</h2>
-        <div className="grid divide-y divide-line border-y border-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+      <AnalyticsDashboard audience="manager" embedded />
+
+      <section
+        aria-label="Thống kê tài liệu"
+        className="overflow-hidden rounded-xl border border-line bg-canvas"
+      >
+        <header className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+          <h2 className="text-lg font-bold">Tài liệu</h2>
+          <Link
+            href="/manager/materials?view=inventory&reviewStatus=PENDING_REVIEW"
+            className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-forest hover:underline underline-offset-4"
+          >
+            <FileText aria-hidden className="size-4" />
+            Quản lý tài liệu
+          </Link>
+        </header>
+        <div className="grid divide-y divide-line border-t border-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {counts.map((item) => (
             <div key={item.status} className="min-w-0">
               {item.query.isError ? (
@@ -91,7 +99,7 @@ export function ManagerOverviewPage() {
                   aria-label={
                     item.query.data ? `${item.title}: ${item.query.data.total}` : item.title
                   }
-                  className="group flex min-h-20 items-center gap-3 px-4 py-4 transition-colors hover:bg-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-mint"
+                  className="group flex min-h-20 items-center gap-3 px-5 py-4 transition-colors hover:bg-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-mint"
                 >
                   <item.icon aria-hidden="true" className={`size-5 shrink-0 ${item.tone}`} />
                   <span className="flex-1 text-sm font-semibold">{item.title}</span>
@@ -115,8 +123,6 @@ export function ManagerOverviewPage() {
           ))}
         </div>
       </section>
-
-      <AnalyticsDashboard audience="manager" embedded />
 
       <ManagerPendingMaterials
         onRefresh={() => {

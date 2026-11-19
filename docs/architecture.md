@@ -1,5 +1,10 @@
 # Kiến trúc Mindy FE2
 
+## Presentation tổng quan Manager — 20/11/2026
+
+- ManagerOverviewPage đặt AnalyticsDashboard trước thống kê tài liệu; các query tổng số và hàng chờ tài liệu/đơn nghỉ giữ nguyên. Không thay contract hoặc quyền backend.
+- ManagerRevenueOverview nhận DTO từ RoleDashboard và chỉ dựng summary, chart, cảnh báo cùng liên kết nghiệp vụ. RoleDashboard tiếp tục sở hữu query/filter/refetch theo vai trò và khoảng thời gian; nhánh giảng dạy Mentor giữ nội dung hiện hữu. RevenueTrend/RevenueBreakdown chỉ phục vụ Manager, dùng màu phương thức cố định và bảng đầy đủ; tiền hiển thị bằng BigInt, Number chỉ dùng cho hình học biểu đồ.
+
 ## Phân công dạy thay theo buổi — 19/11/2026
 
 - `features/operations` sở hữu ClassTeachingAssignments, SessionMentorForm, schemas và TanStack queries cho đọc lịch lớp phân trang, mentor trống lịch và gán/gỡ dạy thay. Manager dùng trong trang lịch hiện hữu; Admin tải khi mở disclosure ở Xếp lịch lớp. Thứ tự chọn lớp → buổi → mentor, không có route/sidebar mới.
