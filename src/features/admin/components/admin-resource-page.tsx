@@ -66,9 +66,9 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
       setSelected(new Set());
     }, 250);
     return () => window.clearTimeout(timer);
-    // Filter navigation is handled by the current render's URL snapshot.
+    // Reschedule pending search when navigation changes the URL filter snapshot.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, userSearch, composing, props.resource, page]);
+  }, [search, userSearch, composing, props.resource, page, params]);
 
   const searchTooShort = props.resource === 'users' && search.trim().length === 1;
 

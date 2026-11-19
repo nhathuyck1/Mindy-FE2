@@ -247,6 +247,28 @@ test('Reusable admin table supports filters, pagination, CSV, columns and access
   await expect(page.getByText('Không có kết quả phù hợp', { exact: true })).toBeVisible();
 });
 
+test('Debounced user search preserves a newly selected status filter', async ({ page }) => {
+  await mockAdminApi(page);
+  await page.goto('/admin/users?status=ACTIVE');
+  await expect(page.getByRole('button', { name: 'Hoạt động', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  const searched = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return url.pathname === '/api/v1/users' && url.searchParams.get('q') === 'nguyen an';
+  });
+  await page.getByRole('textbox', { name: 'Tìm người dùng', exact: true }).fill('nguyen an');
+  await page.getByRole('button', { name: 'Tất cả', exact: true }).click();
+  await searched;
+  await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(3);
+  await expect(page.getByRole('button', { name: 'Tất cả', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  expect(new URL(page.url()).searchParams.get('status')).toBeNull();
+});
+
 test('Overview and resource pages use real contract totals and stay within the viewport', async ({
   page,
 }, testInfo) => {
