@@ -77,7 +77,7 @@ export function CodeQuickStart(props: {
         </div>
       </div>
       {tab === 'templates' && (
-        <ul className="animate-in fade-in-0 slide-in-from-top-1 grid gap-2 border-t border-mint/20 p-3 duration-200 sm:grid-cols-2">
+        <ul className="animate-in fade-in-0 slide-in-from-top-1 grid max-h-[28rem] gap-2 overflow-y-auto border-t border-mint/20 p-3 duration-200 sm:grid-cols-2">
           {codeTemplates.map((t) => (
             <li key={t.key}>
               <button

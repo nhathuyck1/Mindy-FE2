@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
+import { ApiError } from '@/lib/api/client';
 import { loginSchema } from '@/lib/api/contracts';
 import { loginDestination, type LoginAudience } from '../lib/login-destination';
 import { safeReturnPath } from '../lib/return-path';
@@ -50,8 +51,10 @@ export function useAudienceLogin(audience: LoginAudience) {
     pending: login.isPending || logout.isPending,
     error:
       validationError ||
-      (login.isError
-        ? 'Đăng nhập chưa thành công. Vui lòng kiểm tra email, mật khẩu và trạng thái xác thực tài khoản.'
-        : ''),
+      (login.error instanceof ApiError && login.error.status === 429
+        ? 'Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau khoảng 15 phút.'
+        : login.isError
+          ? 'Đăng nhập chưa thành công. Vui lòng kiểm tra email, mật khẩu và trạng thái xác thực tài khoản.'
+          : ''),
   };
 }

@@ -126,6 +126,7 @@ test('Registers an email account without treating accepted registration as a log
   await page.getByLabel('Họ và tên', { exact: true }).fill('Học viên mới');
   await page.getByLabel('Email', { exact: true }).fill('new@example.test');
   await page.getByLabel('Mật khẩu', { exact: true }).fill('sample-password');
+  await page.getByLabel('Nhập lại mật khẩu', { exact: true }).fill('sample-password');
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('liên kết xác thực');
   expect(submitted).toBe(true);

@@ -1046,3 +1046,15 @@ User yêu cầu pause để restart máy/bật Docker. FE production build cuố
 - Admin `/admin/settings` bật/tắt rule kiểm tra ngày/giờ, bắt buộc lý do; mặc định bật. Demo ngoài lịch vẫn giữ điều kiện khai giảng (tối thiểu 3 học viên đã thanh toán ACTIVE), quyền và kiểm tra xung đột. Buổi demo ghi dữ liệu thật; UI nhắc bật lại sau demo.
 - BE bổ sung system_rules/system_rule_audits, API Admin có version check và audit transaction. FE dùng Query theo user, strict Zod/proxy, không retry mutation; lỗi/409 tải lại trạng thái trước khi thử lại. Menu và return path đã thêm.
 - Đã kiểm tra build/type/lint và Playwright bật/tắt trên desktop, mobile 320px bằng fixture. Contract từ source local, chưa kiểm Swagger live/deploy; cần chạy migration 1794182400000-system-rules trước khi dùng backend mới.
+
+## 19/11/2026 — Deploy toàn bộ bản local mới nhất
+
+- Đã deploy FE2 cùng backend theo yêu cầu trực tiếp của người dùng, release `web-20261119T141416Z`, hoàn tất 21:28 giờ Việt Nam. Web <https://quanh123.id.vn> đang chạy image mới, healthy; giữ nguyên origin/API upstream, network alias, port và cấu hình runtime của server.
+- Lint/format/types/build và 376 unit test đạt. E2E đạt 553 kịch bản qua lượt đầy đủ và recheck 22 ca, có 5 skip theo viewport và một flaky đạt ở retry. Cập nhật hai fixture cũ: điền Nhập lại mật khẩu khi đăng ký, cố định ngày trình duyệt trước ngày khai giảng của dữ liệu lớp. Không thay đổi code giao diện/nghiệp vụ trong lượt deploy.
+- Kiểm tra production: homepage, login, register, admin login, courses và API category đạt; private API trả 401. Backend/compiler/DB/MinIO healthy, bốn ngôn ngữ compiler chạy thật đúng kết quả. Giữ container/image cũ và bản sao lưu DB/config để rollback. [Biên bản triển khai](../../DEPLOYMENT_2026-11-19.md).
+
+## 19/11/2026 — Đồng bộ code đã deploy lên Git remote
+
+- Theo yêu cầu người dùng, commit/push toàn bộ thay đổi hiện tại lên remote tại nhánh `feat/phase7-python-csharp`, gồm validation form, xử lý phiên đăng nhập, template bài CODE và hai fixture E2E đã sửa. Compiler có repo private riêng `Quanhpm/mindy-compiler-runner` trên nhánh `main`.
+- Code ứng dụng trùng checksum bản đã build/test và đang chạy trên server; giữ bằng chứng 376 unit và 553 E2E distinct đạt qua lượt chính/recheck, 5 skip theo viewport, một flaky đạt ở retry. Lượt đồng bộ chỉ bổ sung tài liệu và metadata Git, không đổi API hoặc giao diện và không chạy lại toàn bộ các gate đã đạt.
+- Server đối chiếu source/commit mới với image FE đã nghiệm thu; giữ nguyên cấu hình runtime, dữ liệu và rollback. Nhánh tích hợp khác không được gộp trong lượt đồng bộ source hiện tại.

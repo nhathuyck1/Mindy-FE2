@@ -14,6 +14,12 @@ const code = z
   .max(50)
   .regex(/^[A-Za-z0-9][A-Za-z0-9_-]*$/);
 const description = z.string().max(10_000);
+// Mirrors the BE phone rule: 7-15 digits, optional leading +, single space/dot/hyphen separators.
+export const phoneSchema = z
+  .string()
+  .min(7)
+  .max(32)
+  .regex(/^\+?(?:\d[ .-]?){6,14}\d$/, 'Số điện thoại cần 7–15 chữ số.');
 export const adminHttpUrlSchema = z
   .url()
   .max(2048)
@@ -29,7 +35,7 @@ export const createAdminUserSchema = z
   .object({
     displayName: z.string().trim().min(1).max(150),
     email: z.email().max(320),
-    phone: z.string().min(7).max(32).optional(),
+    phone: phoneSchema.optional(),
     password: z.string().min(6).max(128),
     role: userSchema.shape.role,
   })
@@ -54,7 +60,7 @@ export const createAdminCourseSchema = z
     title,
     description: description.optional(),
     imgUrl: adminHttpUrlSchema.nullable().optional(),
-    priceAmount: z.number().int().min(0).max(1_000_000_000_000),
+    priceAmount: z.number().int().min(1, 'Học phí phải lớn hơn 0.').max(1_000_000_000_000),
   })
   .strict();
 export const updateAdminCourseSchema = createAdminCourseSchema

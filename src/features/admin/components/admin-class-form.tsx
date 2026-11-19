@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { vietnamDate } from '@/lib/weekly-timetable';
 import { useAdminCreateOptions, useAdminWrite } from '../api/admin-edit-queries';
 import {
   createAdminClassSchema,
@@ -28,6 +29,8 @@ function ClassScheduleFields(props: { initial?: AdminClassDetail }) {
         label="Ngày khai giảng"
         type="date"
         defaultValue={props.initial?.startDate}
+        // New classes cannot start in the past; an existing past date stays editable.
+        min={props.initial ? undefined : vietnamDate()}
         required
       />
       <AdminField

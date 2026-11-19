@@ -161,9 +161,9 @@ export function AdminCourseForm(props: {
           name="priceAmount"
           label="Học phí (VND)"
           type="number"
-          defaultValue={props.initial?.priceAmount ?? 0}
+          defaultValue={props.initial?.priceAmount}
           required
-          min={0}
+          min={1}
           max={1_000_000_000_000}
           step={1}
           hint="Học phí mới chỉ áp dụng cho các lượt thanh toán sau này."

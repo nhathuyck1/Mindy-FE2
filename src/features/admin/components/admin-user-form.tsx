@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import type { AdminRow } from '../lib/admin-resources';
 import type { User } from '@/lib/api/contracts';
+import { useSession } from '@/features/auth/api/auth-queries';
 import { useAdminWrite } from '../api/admin-edit-queries';
 import { createAdminUserSchema } from '../schemas/admin-write-contracts';
 import { roleLabels } from '../lib/admin-resources';
@@ -16,6 +17,14 @@ import {
   adminFormError,
   optionalText,
 } from './admin-form-parts';
+
+const MENTOR_SUSPEND_WARNING =
+  ' Giảng viên bị khóa sẽ không thể bắt đầu các buổi đã xếp: hãy phân công giảng viên khác cho lớp và buổi sắp tới trước.';
+
+function statusConfirmText(status: string, account: string, isMentor: boolean): string {
+  const base = `Xác nhận ${status === 'ACTIVE' ? 'cho phép' : 'tạm khóa'} truy cập của tài khoản ${account}?`;
+  return status === 'SUSPENDED' && isMentor ? base + MENTOR_SUSPEND_WARNING : base;
+}
 
 export function AdminCreateUserForm(props: { onCreated: (id: string) => void }) {
   const mutation = useAdminWrite();
@@ -73,6 +82,8 @@ export function AdminCreateUserForm(props: { onCreated: (id: string) => void }) 
 
 export function AdminUserForm(props: { user: User }) {
   const mutation = useAdminWrite();
+  // The BE rejects an admin changing their own status; hide the action instead of failing.
+  const isSelf = useSession().data?.id === props.user.id;
   return (
     <div className="space-y-5">
       <div className="rounded-xl border border-line p-4">
@@ -91,14 +102,18 @@ export function AdminUserForm(props: { user: User }) {
       </p>
       <div className="flex flex-wrap gap-3">
         {(['ACTIVE', 'SUSPENDED'] as const)
-          .filter((status) => status !== props.user.status)
+          .filter((status) => !isSelf && status !== props.user.status)
           .map((status) => (
             <AdminConfirmAction
               key={status}
               label={status === 'ACTIVE' ? 'Mở tài khoản' : 'Khóa tài khoản'}
               destructive={status === 'SUSPENDED'}
               pending={mutation.isPending}
-              description={`Xác nhận ${status === 'ACTIVE' ? 'cho phép' : 'tạm khóa'} truy cập của tài khoản ${props.user.email}?`}
+              description={statusConfirmText(
+                status,
+                props.user.email,
+                props.user.role === 'MENTOR',
+              )}
               onConfirm={async () => {
                 await mutation.mutateAsync({
                   path: `admin/users/${props.user.id}/status`,
@@ -116,12 +131,18 @@ export function AdminUserForm(props: { user: User }) {
 
 export function AdminUserStatusAction(props: { row: AdminRow }) {
   const mutation = useAdminWrite();
+  const isSelf = useSession().data?.id === props.row.id;
   const status = props.row.status === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED';
   const label = status === 'ACTIVE' ? 'Mở tài khoản' : 'Khóa tài khoản';
+  if (isSelf) return null;
   return (
     <AdminConfirmAction
       label={label}
-      description={`Xác nhận ${status === 'ACTIVE' ? 'cho phép' : 'tạm khóa'} truy cập của tài khoản ${props.row.subtitle}?`}
+      description={statusConfirmText(
+        status,
+        props.row.subtitle,
+        props.row.secondary === roleLabels.MENTOR,
+      )}
       destructive={status === 'SUSPENDED'}
       pending={mutation.isPending}
       trigger={{

@@ -33,6 +33,10 @@ export function RegisterForm() {
           onSubmit={async (event) => {
             event.preventDefault();
             const fields = new FormData(event.currentTarget);
+            if (fields.get('password') !== fields.get('confirmPassword')) {
+              setValidationError('Mật khẩu nhập lại không khớp.');
+              return;
+            }
             const input = registerSchema.safeParse({
               displayName: String(fields.get('displayName') ?? '').trim(),
               email: String(fields.get('email') ?? '').trim(),
@@ -70,6 +74,14 @@ export function RegisterForm() {
             {
               name: 'password',
               label: 'Mật khẩu',
+              type: 'password',
+              autoComplete: 'new-password',
+              maxLength: 128,
+              minLength: 6,
+            },
+            {
+              name: 'confirmPassword',
+              label: 'Nhập lại mật khẩu',
               type: 'password',
               autoComplete: 'new-password',
               maxLength: 128,

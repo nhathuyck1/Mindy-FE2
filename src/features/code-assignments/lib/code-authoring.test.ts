@@ -187,6 +187,7 @@ describe('mentor authoring helpers', () => {
   });
 
   it('ships templates whose inputs match their signatures', () => {
+    expect(new Set(codeTemplates.map((t) => t.key)).size).toBe(codeTemplates.length);
     for (const t of codeTemplates) {
       expect(signatureProblems(t.signature), t.key).toEqual([]);
       expect(t.inputs.length, t.key).toBeGreaterThanOrEqual(3);
