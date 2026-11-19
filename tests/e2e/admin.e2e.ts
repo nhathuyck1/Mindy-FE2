@@ -256,7 +256,7 @@ test('Debounced user search preserves a newly selected status filter', async ({ 
   );
   const searched = page.waitForResponse((response) => {
     const url = new URL(response.url());
-    return url.pathname === '/api/v1/users' && url.searchParams.get('q') === 'nguyen an';
+    return url.pathname === '/api/v1/admin/users' && url.searchParams.get('q') === 'nguyen an';
   });
   await page.getByRole('textbox', { name: 'Tìm người dùng', exact: true }).fill('nguyen an');
   await page.getByRole('button', { name: 'Tất cả', exact: true }).click();
