@@ -14,6 +14,8 @@
 /coverage
 /test-results/
 /playwright-report/
+/.impeccable/review/
+/.impeccable/config.local.json
 
 # next.js
 /.next/

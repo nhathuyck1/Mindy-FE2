@@ -2,12 +2,11 @@
 
 import { useId, useState } from 'react';
 import Link from 'next/link';
-import { CalendarDays, Eye, Pencil, Users, ShieldCheck } from 'lucide-react';
+import { CalendarDays, Pencil, Users, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { useAdminDetail } from '../api/admin-edit-queries';
 import { adminResources, type AdminResource, type AdminRow } from '../lib/admin-resources';
-import { AdminRecordDetails } from './admin-record-details';
 import { AdminQueryState } from './admin-query-state';
 import { AdminCreateUserForm, AdminUserForm, AdminUserStatusAction } from './admin-user-form';
 import { AdminCourseForm } from './admin-course-form';
@@ -91,24 +90,15 @@ export function AdminEditorButton(props: { resource: AdminResource }) {
 }
 
 export function AdminRowActions(props: { resource: AdminResource; row: AdminRow }) {
-  const [action, setAction] = useState<'view' | 'edit' | 'schedule' | null>(null);
+  const [action, setAction] = useState<'edit' | 'schedule' | null>(null);
   const [returnFocus, setReturnFocus] = useState<HTMLButtonElement | null>(null);
   const popupId = useId();
   const label = adminResources[props.resource].singular;
   const actions = [
     {
-      value: 'view' as const,
-      label: 'Xem thông tin',
-      icon: Eye,
-      color:
-        'border-mint/30 bg-soft text-mint hover:bg-mint/15 data-[active=true]:bg-mint data-[active=true]:text-canvas',
-    },
-    {
       value: 'edit' as const,
       label: props.resource === 'users' ? 'Đổi trạng thái tài khoản' : `Chỉnh sửa ${label}`,
       icon: props.resource === 'users' ? ShieldCheck : Pencil,
-      color:
-        'border-status-yellow/30 bg-status-yellow/8 text-status-yellow hover:bg-status-yellow/15 data-[active=true]:bg-status-yellow data-[active=true]:text-canvas',
     },
     ...(props.resource === 'classes'
       ? [
@@ -116,8 +106,6 @@ export function AdminRowActions(props: { resource: AdminResource; row: AdminRow 
             value: 'schedule' as const,
             label: 'Xếp lịch',
             icon: CalendarDays,
-            color:
-              'border-mint/30 bg-soft text-mint hover:bg-mint/15 data-[active=true]:bg-mint data-[active=true]:text-canvas',
           },
         ]
       : []),
@@ -129,7 +117,7 @@ export function AdminRowActions(props: { resource: AdminResource; row: AdminRow 
       <div
         role="group"
         aria-label={`Thao tác ${props.row.name}`}
-        className="inline-flex items-center gap-2"
+        className="inline-flex items-center gap-1.5"
       >
         {actions.map((item) =>
           props.resource === 'users' && item.value === 'edit' ? (
@@ -140,7 +128,7 @@ export function AdminRowActions(props: { resource: AdminResource; row: AdminRow 
               type="button"
               variant="outline"
               size="icon"
-              className={`size-11 rounded-lg ${item.color}`}
+              className="admin-table-action"
               title={item.label}
               aria-label={`${item.label}: ${props.row.name}`}
               aria-haspopup="dialog"
@@ -157,12 +145,7 @@ export function AdminRowActions(props: { resource: AdminResource; row: AdminRow 
           ),
         )}
         {props.resource === 'classes' && (
-          <Button
-            asChild
-            variant="outline"
-            size="icon"
-            className="size-11 rounded-lg border-status-green/30 bg-status-green/8 text-status-green hover:bg-status-green/15"
-          >
+          <Button asChild variant="outline" size="icon" className="admin-table-action">
             <Link
               href={`/admin/classes/${props.row.id}/students`}
               title={studentsLabel}
@@ -179,25 +162,15 @@ export function AdminRowActions(props: { resource: AdminResource; row: AdminRow 
           title={
             action === 'schedule'
               ? 'Lịch học của lớp'
-              : action === 'view'
-                ? `Thông tin ${label}`
-                : props.resource === 'users'
-                  ? 'Trạng thái tài khoản'
-                  : `Quản lý ${label}`
+              : props.resource === 'users'
+                ? 'Trạng thái tài khoản'
+                : `Quản lý ${label}`
           }
           onClose={close}
           returnFocus={returnFocus}
           contentClassName="w-[calc(100vw-2rem)] max-w-3xl sm:max-w-3xl"
         >
           <div>
-            {action === 'view' && (
-              <AdminRecordDetails
-                embedded
-                resource={props.resource}
-                row={props.row}
-                onClose={close}
-              />
-            )}
             {(action === 'edit' || action === 'schedule') && (
               <AdminEditorDialog
                 embedded

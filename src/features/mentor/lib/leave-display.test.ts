@@ -1,5 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { makeupMinDate } from './leave-display';
+import { leaveMinDate, makeupMinDate } from './leave-display';
+
+describe('leave notice calendar lower bound', () => {
+  it('requires two calendar days in Vietnam rather than 48 elapsed hours', () => {
+    expect(leaveMinDate(Date.parse('2026-11-20T16:59:59Z'))).toBe('2026-11-22');
+    expect(leaveMinDate(Date.parse('2026-11-20T17:00:00Z'))).toBe('2026-11-23');
+  });
+
+  it('handles month, leap-day and year boundaries', () => {
+    expect(leaveMinDate(Date.parse('2028-02-28T03:00:00Z'))).toBe('2028-03-01');
+    expect(leaveMinDate(Date.parse('2026-12-31T03:00:00Z'))).toBe('2027-01-02');
+  });
+
+  it('respects the timezone returned by the backend', () => {
+    expect(leaveMinDate(Date.parse('2026-11-20T17:00:00Z'), 'UTC')).toBe('2026-11-22');
+  });
+});
 
 describe('makeup calendar lower bound', () => {
   it('blocks every day before and within the entire full-day leave range', () => {

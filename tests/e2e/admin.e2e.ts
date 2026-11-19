@@ -237,11 +237,15 @@ test('Reusable admin table supports filters, pagination, CSV, columns and access
   await page.getByText('Cột hiển thị', { exact: true }).click();
   const detailsButton = page.getByRole('button', { name: 'Xem thông tin: Nguyễn An', exact: true });
   await detailsButton.click();
-  const dialog = page.getByRole('dialog', { name: 'Thông tin người dùng' });
-  await expect(dialog).toBeVisible();
-  await expect(dialog).toContainText('member1@example.test');
-  await page.keyboard.press('Escape');
-  await expect(dialog).not.toBeVisible();
+  const details = page.getByRole('region', {
+    name: 'Thông tin người dùng: Nguyễn An',
+    exact: true,
+  });
+  await expect(details).toBeVisible();
+  await expect(details).toContainText('member1@example.test');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await detailsButton.press('Space');
+  await expect(details).not.toBeVisible();
   await expect(detailsButton).toBeFocused();
   await page.getByRole('textbox', { name: 'Tìm người dùng', exact: true }).fill('khong co ket qua');
   await expect(page.getByText('Không có kết quả phù hợp', { exact: true })).toBeVisible();
@@ -279,17 +283,15 @@ test('Overview and resource pages use real contract totals and stay within the v
     if (route !== '/admin/workflow' && route !== '/admin') {
       if (route !== '/admin') {
         const actions = page.getByRole('table').locator('tbody tr').first().locator('td').last();
-        await expect(actions.getByRole('button')).toHaveCount(route === '/admin/classes' ? 3 : 2);
+        await expect(actions.getByRole('button')).toHaveCount(route === '/admin/classes' ? 2 : 1);
         if (route === '/admin/classes')
           await expect(actions.getByRole('button', { name: /^Xếp lịch:/ })).toBeVisible();
         await expect(actions.getByRole('link')).toHaveCount(route === '/admin/classes' ? 1 : 0);
-        await expect(actions.getByRole('button').first()).toHaveAccessibleName(/^Xem thông tin:/);
+        await expect(actions.getByRole('button').first()).toHaveAccessibleName(/^Chỉnh sửa/);
       }
-      const dot = page.getByRole('table').locator('[data-slot="badge"] .animate-pulse').first();
-      await expect(dot).toHaveCSS('animation-name', 'pulse');
-      await page.emulateMedia({ reducedMotion: 'reduce' });
-      await expect(dot).toHaveCSS('animation-name', 'none');
-      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await expect(
+        page.getByRole('table').locator('[data-slot="badge"] .animate-pulse'),
+      ).toHaveCount(0);
     }
     await page.evaluate(() => document.fonts.ready);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(

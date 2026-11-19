@@ -1,5 +1,12 @@
 # Kiến trúc Mindy FE2
 
+## Shared Admin resource table — 20/11/2026
+
+- AdminResourcePage giữ URL/query filters, page, selection, columns và toolbar. AdminDataTable giữ expandedId riêng (tối đa một dòng), remount theo resource/page/status/filter/userSearch. Checkbox không kích hoạt disclosure.
+- AdminRecordDetails chỉ render AdminRow.fields và metric/date, tránh lặp; không gọi endpoint mới khi mở. AdminRowActions giữ dialog sửa/xếp lịch/xác nhận và link học viên. User chỉ khóa/mở khóa, không DELETE. Không thay proxy/contract/quyền/mutation.
+- Mỗi record có tbody gồm hàng chính và chi tiết, outline trên tbody. Colspan = 5 + số optional columns hiện; skeleton = 9 - hidden.size. Cuộn ngang thuộc admin-table-scroll; details sticky, giới hạn theo viewport, grid 1/2/4 cột. Shared Checkbox dùng MinusIcon khi indeterminate.
+- DESIGN.md trích token nguồn, phân biệt Nunito/global và Inter/Admin; sidecar schemaVersion 2 chỉ bổ sung metadata/snippet/motion/breakpoints.
+
 ## Presentation tổng quan Manager — 20/11/2026
 
 - ManagerOverviewPage đặt AnalyticsDashboard trước thống kê tài liệu; các query tổng số và hàng chờ tài liệu/đơn nghỉ giữ nguyên. Không thay contract hoặc quyền backend.

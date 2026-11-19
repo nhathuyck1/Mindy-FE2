@@ -1,3 +1,5 @@
+import { shiftDate } from '@/lib/weekly-timetable';
+
 export const leavePeriods: Record<string, string> = {
   MORNING: 'Buổi sáng',
   AFTERNOON: 'Buổi chiều',
@@ -18,6 +20,10 @@ export function localDate(value: string, timeZone: string) {
     month: '2-digit',
     day: '2-digit',
   }).format(new Date(value));
+}
+
+export function leaveMinDate(now = Date.now(), timeZone = 'Asia/Ho_Chi_Minh') {
+  return shiftDate(localDate(new Date(now).toISOString(), timeZone), 2);
 }
 
 export function makeupMinDate(

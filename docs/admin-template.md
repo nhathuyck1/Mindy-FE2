@@ -1,5 +1,11 @@
 # Template quản trị Mindy FE2
 
+## Cập nhật bảng tài nguyên — 20/11/2026
+
+- Hiện hành cho /admin/users, /admin/courses, /admin/classes: AdminDataTable có header trắng, hàng 60px, email/mã riêng, NameAvatar/icon theo tài nguyên. Checkbox chọn tách chevron, một hàng mở, outline mint 1px và dấu trừ select-all khi chọn một phần.
+- AdminRecordDetails thay dialog xem nhanh trong ba danh sách, dùng list fields. Dialog sửa/xếp lịch/xác nhận giữ nguyên; user có khóa/mở khóa, không xóa. Status compact không pulse/action trung tính chỉ ở ba bảng này. Cuộn bảng trong panel, details theo viewport, kiểm 320/768/1024/1440px; đổi trang/filter/search remount disclosure, ẩn cột cập nhật colspan/skeleton. API/CSV/phân trang/quyền giữ nguyên.
+- Sidebar hiện hành 248px, thu gọn 76px; summary dashboard đã gộp dải ngày 19/11/2026. Các mô tả 15/10/2026 bên dưới là lịch sử và được cập nhật này thay thế ở những điểm tương ứng. Token: DESIGN.md; contract: docs/admin-table-design.md và .impeccable/surfaces/src-features-admin-components-admin-data-table-tsx.md.
+
 Cập nhật 15/10/2026. Người dùng mở rộng sang Admin trên FE2; Mindy-FE và Mindy-BE chỉ đọc tham khảo, không sửa.
 
 ## Thiết kế và routes

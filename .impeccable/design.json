@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-19T23:48:28.740Z",
+  "title": "Design System: Mindy",
+  "extensions": {
+    "colorMeta": {
+      "mint": {
+        "role": "primary",
+        "displayName": "Mindy mint"
+      },
+      "forest": {
+        "role": "primary",
+        "displayName": "Mindy forest"
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "White canvas"
+      }
+    },
+    "typographyMeta": {
+      "body": {
+        "displayName": "Brand body",
+        "purpose": "Global Nunito family."
+      },
+      "admin-body": {
+        "displayName": "Admin body",
+        "purpose": "Inter scoped to Admin and its portals."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shared-input-small",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Existing shared Input shadow; resource row actions explicitly remove shadows."
+      }
+    ],
+    "motion": [
+      {
+        "name": "workspace-columns",
+        "value": "260ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Existing shell grid-template-columns transition."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Admin primary button",
+      "kind": "button",
+      "refersTo": "admin-button-primary",
+      "description": "Forest primary Admin action.",
+      "html": "<button class=\"ds-primary\">Tạo mới</button>",
+      "css": ".ds-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:8px;font:600 14px Inter,Arial,sans-serif;cursor:pointer;border:1px solid var(--color-forest);background:var(--color-forest);color:var(--color-canvas)}.ds-primary:hover{background:color-mix(in srgb,var(--color-forest) 90%,transparent)}.ds-primary:focus-visible{outline:2px solid var(--color-mint);outline-offset:3px}"
+    },
+    {
+      "name": "Admin secondary button",
+      "kind": "button",
+      "refersTo": "admin-button-secondary",
+      "description": "Neutral toolbar action.",
+      "html": "<button class=\"ds-secondary\">Xuất CSV</button>",
+      "css": ".ds-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:8px;font:600 14px Inter,Arial,sans-serif;cursor:pointer;border:1px solid var(--color-line);background:var(--color-canvas);color:var(--color-ink-soft)}.ds-secondary:hover{border-color:var(--color-mint);background:var(--color-soft)}.ds-secondary:focus-visible{outline:2px solid var(--color-mint);outline-offset:3px}"
+    },
+    {
+      "name": "Shared text input",
+      "kind": "input",
+      "description": "Shared Input primitive used by Admin; callers can override sizing.",
+      "html": "<input class=\"ds-input\" aria-label=\"Tìm kiếm\" placeholder=\"Tìm kiếm\" />",
+      "css": ".ds-input{height:36px;width:100%;min-width:0;border:1px solid var(--color-line);border-radius:6px;background:transparent;padding:4px 12px;color:var(--color-ink-soft);font:400 16px Inter,Arial,sans-serif;box-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05)}.ds-input:focus-visible{outline:none;border-color:var(--color-mint);box-shadow:0 0 0 3px color-mix(in srgb,var(--color-mint) 50%,transparent)}@media(min-width:768px){.ds-input{font-size:14px}}"
+    },
+    {
+      "name": "Admin active navigation",
+      "kind": "nav",
+      "description": "Existing active sidebar link.",
+      "html": "<a class=\"ds-nav\" href=\"#\" aria-current=\"page\">Người dùng</a>",
+      "css": ".ds-nav{position:relative;display:flex;align-items:center;min-height:44px;gap:12px;border-radius:8px;padding:0 12px;background:var(--color-soft);color:var(--color-forest);font:500 14px Inter,Arial,sans-serif;text-decoration:none}.ds-nav:before{content:\"\";position:absolute;left:-12px;width:2px;height:20px;border-radius:9999px;background:var(--color-mint)}.ds-nav:hover{background:var(--color-soft);color:var(--color-forest)}.ds-nav:focus-visible{outline:2px solid var(--color-mint);outline-offset:3px}"
+    },
+    {
+      "name": "Compact resource status",
+      "kind": "chip",
+      "refersTo": "admin-resource-status",
+      "description": "Resource-table status only; no pulse dot.",
+      "html": "<span class=\"ds-status\">Hoạt động</span>",
+      "css": ".ds-status{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border:1px solid transparent;border-radius:6px;padding:4px 10px;background:color-mix(in srgb,var(--color-status-green) 8%,transparent);color:var(--color-status-green);font:500 12px Inter,Arial,sans-serif}"
+    },
+    {
+      "name": "Admin resource panel",
+      "kind": "card",
+      "description": "Existing bordered table panel.",
+      "html": "<section class=\"ds-panel\" aria-label=\"Danh sách\">Danh sách</section>",
+      "css": ".ds-panel{overflow:hidden;border:1px solid var(--color-line);border-radius:12px;background:var(--color-canvas);color:var(--color-ink-soft);font-family:Inter,Arial,sans-serif}"
+    }
+  ],
+  "narrative": {
+    "overview": "Extracted on 20 November 2026 from the existing implementation. The shared brand remains Nunito and the Mindy palette. Admin deliberately uses Inter and black/gray copy; its resource-table treatment follows the user-confirmed reference in Operate mode. No new identity is introduced.",
+    "keyCharacteristics": [
+      "Mindy mint/forest accents on white surfaces.",
+      "Scoped Admin typography and restrained table actions.",
+      "Separate selection and inline disclosure with contained scrolling."
+    ],
+    "rules": [],
+    "dos": [
+      "Do keep Nunito global and Inter scoped to Admin.",
+      "Do preserve Mindy tokens and visible status text.",
+      "Do separate selection/disclosure and contain table scrolling."
+    ],
+    "donts": [
+      "Don't generalize the resource headers/status treatment to every table.",
+      "Don't invent detail data, user deletion or decorative raster assets."
+    ]
+  }
+}
