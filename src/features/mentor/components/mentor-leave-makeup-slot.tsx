@@ -73,9 +73,6 @@ export function SessionMakeupSlot(props: {
               <span className="font-normal text-muted">· {duration} phút</span>
             </p>
           </div>
-          <p className="text-xs leading-5 text-muted">
-            Chọn lịch bù riêng cho buổi này, giữ thời lượng {duration} phút.
-          </p>
         </div>
         <div className="min-w-0 space-y-4 p-4 sm:p-5">
           <form

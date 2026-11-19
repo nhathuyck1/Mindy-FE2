@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, useState } from 'react';
-import { BookOpen, GraduationCap, Layers, RefreshCw, Users } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { ApiError } from '@/lib/api/client';
@@ -27,23 +27,20 @@ function AdminAnalyticsDashboard(props: { audience: 'admin'; embedded?: boolean 
   const Heading = props.embedded ? 'h2' : 'h1';
   const statistics = data
     ? [
-        { label: 'Khóa học', value: data.summary.courses, icon: BookOpen, note: 'Tổng hiện tại' },
+        { label: 'Khóa học', value: data.summary.courses, note: 'Tổng hiện tại' },
         {
           label: 'Lớp học',
           value: data.summary.classes,
-          icon: Layers,
           note: `${data.summary.openClasses} tuyển sinh · ${data.summary.activeClasses} đang học`,
         },
         {
           label: 'Lượt đăng ký',
           value: data.summary.registrations,
-          icon: GraduationCap,
           note: `Trong ${days} ngày đã chọn`,
         },
         {
           label: 'Học viên riêng biệt',
           value: data.summary.students,
-          icon: Users,
           note: 'Mỗi học viên chỉ tính một lần trong kỳ',
         },
       ]
@@ -53,17 +50,9 @@ function AdminAnalyticsDashboard(props: { audience: 'admin'; embedded?: boolean 
     <section aria-label="Dashboard đào tạo" className="space-y-5">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="eyebrow mb-2 text-mint">
-            Mindy / {mentor ? 'Mentor' : props.audience === 'admin' ? 'Admin' : 'Manager'}
-          </p>
-          <Heading className="text-3xl font-extrabold tracking-tight">
+          <Heading className="text-2xl font-semibold tracking-tight sm:text-[28px]">
             {mentor ? 'Tổng quan giảng dạy' : 'Tổng quan đào tạo'}
           </Heading>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            {mentor
-              ? 'Số liệu các lớp bạn phụ trách chính.'
-              : 'So sánh sức hút khóa học và số học viên của các mentor.'}
-          </p>
         </div>
         <div className="flex flex-wrap items-end gap-3">
           <div>
@@ -110,14 +99,16 @@ function AdminAnalyticsDashboard(props: { audience: 'admin'; embedded?: boolean 
       ) : (
         data && (
           <>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="admin-table-panel grid sm:grid-cols-2 xl:grid-cols-4">
               {statistics.map((item) => (
-                <article key={item.label} className="admin-table-panel min-w-0 p-5">
+                <article
+                  key={item.label}
+                  className="min-w-0 border-b border-line p-5 last:border-b-0 sm:odd:border-r sm:nth-last-[-n+2]:border-b-0 xl:border-r xl:border-b-0 xl:last:border-r-0"
+                >
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-sm font-bold text-muted">{item.label}</h3>
-                    <item.icon className="size-5 shrink-0 text-mint" aria-hidden="true" />
                   </div>
-                  <p className="mt-4 text-4xl font-extrabold tabular-nums">
+                  <p className="mt-2 text-3xl font-semibold tabular-nums">
                     {item.value.toLocaleString('vi-VN')}
                   </p>
                   <p className="mt-2 text-xs leading-5 text-muted">{item.note}</p>

@@ -41,7 +41,7 @@ export function MentorLeavePage() {
         />
       ) : (
         <>
-          <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+          <div className="mb-5 flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-line bg-canvas p-4 sm:p-5">
             <label className="w-full space-y-2 text-sm font-semibold sm:w-60">
               Trạng thái đơn
               <NativeSelect
@@ -102,7 +102,7 @@ export function MentorLeavePage() {
                   {query.data?.items.map((item) => (
                     <li
                       key={item.id}
-                      className="grid gap-4 p-5 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center"
+                      className="grid min-w-0 gap-4 p-5 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center"
                     >
                       <LeaveDateIcon />
                       <div className="min-w-0">
@@ -118,7 +118,9 @@ export function MentorLeavePage() {
                         <p className="mt-2 text-sm text-muted">
                           {leavePeriods[item.period]} · {item.itemCount} buổi bị ảnh hưởng
                         </p>
-                        <p className="mt-2 line-clamp-1 text-sm">{item.reason}</p>
+                        <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted wrap-anywhere">
+                          {item.reason}
+                        </p>
                       </div>
                       <Button
                         variant="ghost"

@@ -312,19 +312,25 @@ export function ManagerLeaveDetailPage(props: { requestId: string }) {
                     {visibleSourceItems.map((session) => (
                       <li
                         key={session.sourceSessionId}
-                        className="grid gap-4 p-5 sm:grid-cols-[1fr_auto_1fr] sm:items-center"
+                        className="grid gap-4 p-5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center"
                       >
                         <div className="min-w-0 space-y-2">
                           <p className="text-xs font-bold tracking-wide text-muted uppercase">
                             Buổi gốc
                           </p>
                           <ManagerLeaveClassName id={session.classId} />
+                          <Button
+                            asChild
+                            variant="outline"
+                            className="max-w-full whitespace-normal"
+                          >
+                            <Link href={`/manager/schedule?classId=${session.classId}`}>
+                              Mở lịch lớp / dạy thay
+                            </Link>
+                          </Button>
                           <p className="text-sm leading-6">
                             {managerLeaveDate(session.sourceStartsAt)} –{' '}
                             {managerLeaveDate(session.sourceEndsAt)}
-                          </p>
-                          <p className="break-all text-xs text-muted">
-                            Mã buổi: {session.sourceSessionId}
                           </p>
                         </div>
                         <ArrowDown aria-hidden="true" className="size-5 text-mint sm:-rotate-90" />

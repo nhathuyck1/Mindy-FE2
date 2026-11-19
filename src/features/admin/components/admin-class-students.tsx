@@ -130,10 +130,9 @@ export function AdminClassStudentsPage(props: { classId: string }) {
             <Icon name="chevron" className="size-3 rotate-180" />
             Quay lại lớp học
           </Link>
-          <p className="eyebrow mb-2 text-muted">Học viên theo lớp</p>
           {classInfo ? (
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <h1 className="min-w-0 text-[34px] leading-tight font-extrabold tracking-tight break-words sm:text-[38px]">
+              <h1 className="min-w-0 text-2xl leading-tight font-extrabold tracking-tight break-words sm:text-[28px]">
                 {classInfo.name}
               </h1>
               <AdminStatus status={classInfo.status} />
@@ -141,7 +140,7 @@ export function AdminClassStudentsPage(props: { classId: string }) {
           ) : classQuery.isPending ? (
             <Skeleton aria-label="Đang tải lớp học" className="h-11 w-72 max-w-full" />
           ) : (
-            <h1 className="text-[34px] leading-tight font-extrabold tracking-tight sm:text-[38px]">
+            <h1 className="text-2xl leading-tight font-extrabold tracking-tight sm:text-[28px]">
               Danh sách học viên
             </h1>
           )}

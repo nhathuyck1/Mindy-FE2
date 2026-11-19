@@ -1,4 +1,13 @@
 import { z } from 'zod';
+import {
+  mentorPaginationSchema,
+  teachingSessionSchema,
+} from '@/features/mentor/schemas/mentor-contracts';
+import {
+  teachingClassDetailSchema,
+  sessionMentorCandidatesSchema,
+  assignSessionMentorInputSchema,
+} from '@/features/operations/schemas/teaching-assignment-contracts';
 import * as dto from '@/features/operations/schemas/operation-contracts';
 import {
   assignClassMentorInputSchema,
@@ -12,6 +21,40 @@ function rule(response: z.ZodType, body?: z.ZodType, idempotent = false) {
 }
 export function resolveOperationRule(method: string, path: string) {
   const p = path.split('/');
+  if (
+    p[0] === 'management' &&
+    p[1] === 'class-sessions' &&
+    p.length === 4 &&
+    z.uuidv4().safeParse(p[2]).success
+  ) {
+    if (method === 'GET' && p[3] === 'available-mentors')
+      return {
+        ...rule(sessionMentorCandidatesSchema.refine((data) => data.sessionId === p[2])),
+        query: mentorCandidatesQuerySchema,
+      };
+    if (method === 'PATCH' && p[3] === 'mentor')
+      return rule(
+        teachingSessionSchema.refine((data) => data.sessionId === p[2]),
+        assignSessionMentorInputSchema,
+        true,
+      );
+  }
+  if (
+    method === 'GET' &&
+    p[0] === 'management' &&
+    p[1] === 'classes' &&
+    p.length === 3 &&
+    z.uuidv4().safeParse(p[2]).success
+  )
+    return {
+      ...rule(
+        teachingClassDetailSchema.refine(
+          (data) =>
+            data.class.id === p[2] && data.sessions.items.every((item) => item.classId === p[2]),
+        ),
+      ),
+      query: mentorPaginationSchema,
+    };
   if (
     p.length === 4 &&
     p[0] === 'management' &&

@@ -1,5 +1,16 @@
 # Quy tắc giao diện Mindy
 
+## Đơn xin nghỉ — 19/11/2026
+
+- Manager giữ palette và component Mindy, dùng danh sách theo hàng có cột ở desktop, xếp dọc trên màn hẹp. Mentor/trạng thái và khoảng nghỉ dẫn mắt; lý do là bản xem trước tối đa hai dòng, văn bản đầy đủ nằm ở chi tiết. Nội dung dài dùng min-width: 0 và overflow-wrap: anywhere, không làm rộng hàng.
+- Bộ lọc gồm trạng thái và tìm mentor trong một vùng. Search/nút xóa chung viền, gợi ý dùng Popover portal neo theo chiều rộng ô tìm, hỗ trợ bàn phím và không bị overflow của panel cắt.
+- Không hiện dòng UUID mã buổi cạnh lịch gốc/dạy bù; mã vẫn dùng trong API/state.
+
+## Admin gọn và cấu hình demo — 19/11/2026
+
+- Admin giữ Inter và palette Mindy, thang chữ 16px, tiêu đề 24/28px. Nền workspace pha mint 3%, sidebar và vùng dữ liệu trắng; chỉ trạng thái chọn/thao tác chính dùng màu nhấn. Nút chính forest để chữ trắng dễ đọc. Bảng dùng hàng phân cách ngang, đầu bảng soft; không lặp tên danh sách và mô tả chung phía trên bộ lọc.
+- Demo có công tắc 44px với role switch, aria-checked và nhãn rõ. Thay đổi là bản nháp có thông báo Chưa lưu; chỉ mở form lý do khi khác trạng thái máy chủ. Lưu xác nhận thay đổi, Hủy quay về trạng thái đã lưu. Điều kiện tối thiểu học viên và việc ghi nhận buổi học thật vẫn truy cập qua Điều kiện và lưu ý; cảnh báo phạm vi hiện trước khi bật demo.
+
 ## Thêm ảnh lên bảng vẽ — 19/11/2026
 
 - Header bảng vẽ có nút Tải ảnh lên bảng, hiện chữ trên desktop và biểu tượng ảnh kèm nhãn truy cập trên mobile. Chọn ảnh hoặc dán PNG/JPEG tự tải, kiểm tra và thêm vào vùng đang xem; bỏ nút Thêm ảnh vào bảng. Giữ giới hạn 10 MiB, thông báo tiến trình/thử lại và quyền tải ảnh hiện có. Nhập PDF nằm trong Thêm thao tác, vẫn chọn trang trước khi xử lý.

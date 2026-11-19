@@ -3,10 +3,18 @@
 import { useId, useRef, useState } from 'react';
 import { Check, ChevronDown, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { useClassMentorCandidates } from '../api/admin-mentor-queries';
+import type { UseQueryResult } from '@tanstack/react-query';
+
+type MentorCandidates = {
+  items: { id: string; displayName: string; isCurrent: boolean }[];
+  page: number;
+  pageSize: number;
+  total: number;
+};
 
 export function AdminMentorPicker(props: {
-  query: ReturnType<typeof useClassMentorCandidates>;
+  query: Pick<UseQueryResult<MentorCandidates>, 'data' | 'isFetching' | 'isError' | 'refetch'>;
+  label?: string;
   search: string;
   selected: string;
   disabled: boolean;
@@ -43,7 +51,7 @@ export function AdminMentorPicker(props: {
       }}
     >
       <label htmlFor={id} className="text-sm font-bold">
-        Giảng viên mới
+        {props.label ?? 'Giảng viên mới'}
       </label>
       <div className="relative mt-2">
         <Search

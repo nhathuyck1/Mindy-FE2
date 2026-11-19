@@ -1,5 +1,11 @@
 # API catalog, lớp học và tài khoản
 
+## Phân công dạy thay theo buổi — 19/11/2026
+
+- Đã đối chiếu source BE và Swagger live. `GET management/classes/:classId?page&pageSize` trả class và sessions phân trang; kiểm classId của từng buổi. `GET management/class-sessions/:sessionId/available-mentors?page&pageSize&search` trả sessionVersion, checkedFrom/checkedTo và mentor ACTIVE phù hợp lịch dạy/khoảng nghỉ được duyệt. Danh sách không bảo đảm mentor đã nhận lời.
+- `PATCH management/class-sessions/:sessionId/mentor` gửi `{mentorId:UUIDv4|null,reason,expectedVersion}` với Idempotency-Key UUIDv4. null gỡ override và giao lại primary hiện tại. Response TeachingSessionDto phải đúng session/lớp, version tăng và effectiveMentor/assignmentType khớp ý định. Áp dụng SCHEDULED/IN_PROGRESS theo quyền Admin/Manager; completed/cancelled chỉ xem. BE kiểm lại lịch khi ghi.
+- Form giữ yêu cầu bất biến để retry lỗi chưa rõ kết quả; lỗi version/lịch yêu cầu tải lại cả buổi lẫn candidates và xác nhận mới. Same-origin proxy giữ strict input/query, Origin và access_token, không lưu token hoặc ghi tự động. Không thay nghiệp vụ duyệt nghỉ/dạy bù.
+
 ## Viewport socket và chi tiết Student — 18/11/2026
 
 - Contract source local mới ở BE codex/whiteboard-viewport; chưa xác nhận deploy. Socket /ws/whiteboards nhận board:viewport sau board:join với ACK: {epoch,x,y,width,height,scale}. x/y là góc trên trái theo tọa độ world (±100000), width/height là CSS pixel (1–16384), scale 0.1–4; mọi số phải hữu hạn, không nhận field lạ.

@@ -125,11 +125,9 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
     <>
       <div className="admin-page-heading">
         <div>
-          <p className="eyebrow mb-2 text-muted">Quản lý đào tạo</p>
-          <h1 className="text-[34px] leading-tight font-extrabold tracking-tight sm:text-[38px]">
+          <h1 className="text-2xl leading-tight font-extrabold tracking-tight sm:text-[28px]">
             {config.title}
           </h1>
-          <p className="mt-2 text-base leading-6 text-muted">{config.description}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <AdminEditorButton resource={props.resource} />
@@ -139,7 +137,7 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
             type="button"
             onClick={exportCsv}
             disabled={query.isError || query.isPending || searchTooShort || !exportRows.length}
-            className="admin-button admin-button-primary"
+            className="admin-button"
             title="Xuất các dòng đã chọn hoặc kết quả hiển thị trên trang hiện tại"
           >
             <Icon name="download" className="size-4" />
@@ -149,23 +147,7 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
       </div>
 
       <section className="admin-table-panel" aria-label={`Danh sách ${config.singular}`}>
-        <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-6 pb-5 sm:px-6">
-          <h2 className="text-lg font-extrabold">Danh sách {config.singular}</h2>
-          <Button
-            variant="unstyled"
-            size="unstyled"
-            type="button"
-            onClick={() => query.refetch()}
-            disabled={query.isFetching}
-            className="inline-flex min-h-9 cursor-pointer items-center gap-2 text-sm font-bold text-muted disabled:opacity-50"
-          >
-            <Icon
-              name="refresh"
-              className={`size-4 ${query.isFetching ? 'motion-safe:animate-spin' : ''}`}
-            />
-            Làm mới
-          </Button>
-        </div>
+        <h2 className="sr-only">Danh sách {config.singular}</h2>
 
         <div
           className="flex max-w-full gap-1 overflow-x-auto border-b border-line px-5 sm:px-6"
@@ -183,7 +165,7 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
               onClick={() => {
                 changeFilters({ [config.statusKey]: tab, page: 1 });
               }}
-              className={`relative min-h-12 shrink-0 cursor-pointer rounded-none border-b-2 pr-6 pl-3 text-sm font-extrabold transition-colors ${status === tab ? 'border-mint text-mint' : 'border-transparent text-muted hover:bg-soft'}`}
+              className={`relative min-h-12 shrink-0 cursor-pointer rounded-none border-b-2 px-3 text-sm font-semibold transition-colors ${status === tab ? 'border-mint text-mint' : 'border-transparent text-muted hover:bg-soft'}`}
             >
               {tab ? statusLabels[tab] : 'Tất cả'}
               {status === tab &&
@@ -193,7 +175,7 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
                     className="absolute top-1 right-0.5 h-4 w-6 rounded-full"
                   />
                 ) : (
-                  <span className="absolute top-1 right-0.5 min-w-4 rounded-full border border-pastel-red/40 bg-canvas px-1 text-[10px] leading-3.5 font-extrabold text-pastel-red tabular-nums">
+                  <span className="ml-2 rounded-md bg-soft px-1.5 py-0.5 text-xs font-medium text-forest tabular-nums">
                     {query.data?.total.toLocaleString('vi-VN') ?? '—'}
                   </span>
                 ))}
@@ -244,7 +226,21 @@ export function AdminResourcePage(props: { resource: AdminResource }) {
               ))}
             </NativeSelect>
           )}
-          <div className="ml-auto">
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <Button
+              variant="unstyled"
+              size="unstyled"
+              type="button"
+              onClick={() => query.refetch()}
+              disabled={query.isFetching}
+              className="admin-button"
+            >
+              <Icon
+                name="refresh"
+                className={`size-4 ${query.isFetching ? 'motion-safe:animate-spin' : ''}`}
+              />
+              <span className="sr-only sm:not-sr-only">Làm mới</span>
+            </Button>
             <Popover>
               <PopoverTrigger asChild>
                 <Button

@@ -66,6 +66,8 @@ export function useChangeClassMentor(classId: string) {
           'schedule-config',
           'class-mentor-candidates',
           'chat',
+          'teaching-class',
+          'session-mentor-candidates',
         ].map((key) => client.invalidateQueries({ queryKey: [key] })),
       ),
   });

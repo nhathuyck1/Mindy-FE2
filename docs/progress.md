@@ -1,5 +1,26 @@
 # Tiến độ
 
+## 19/11/2026 — Phân công mentor dạy thay theo buổi
+
+- Theo lựa chọn UX: chọn lớp → chọn buổi học → tìm/chọn giảng viên dạy thay → lý do → xác nhận. Dùng trang Lịch và khai giảng hiện hữu của Manager và disclosure trong Xếp lịch lớp của Admin. Có trạng thái lớp đang học, phân trang buổi, lịch/người phụ trách hiện tại, gán/đổi và gỡ để trở về mentor chính. Buổi hoàn thành/hủy không cho chọn.
+- Chi tiết đơn nghỉ có liên kết mở đúng lịch lớp. Giữ nguyên luồng duyệt nghỉ tạo buổi dạy bù; dạy thay giữ lịch gốc và không tự duyệt đơn nghỉ.
+- Đối chiếu source BE và Swagger live `/docs-json`: GET management/classes/:id, GET management/class-sessions/:id/available-mentors và PATCH .../mentor. Proxy kiểm UUID/query/body/Zod, Origin, access cookie và receipt; UI kiểm đúng buổi/lớp/mentor/version, không tự retry mutation. Kết quả chưa rõ giữ cùng body/key và khóa sửa; xung đột yêu cầu tải lại/chọn lại. Cache lớp/lịch/mentor/học viên được invalidation sau thành công.
+- Kiểm chứng: 382 unit tests và 48 E2E liên quan desktop/mobile PASS bằng API fixtures; đã xem render desktop và 320px, tìm bằng bàn phím, focus sau xác nhận, lý do bắt buộc, gỡ dạy thay, lỗi/trống danh sách, phân trang, buổi đang học, xung đột và retry cùng yêu cầu. Sau rà soát cuối, chạy lại 14 E2E dạy thay; bổ sung kiểm reconnect/refetch lỗi vẫn giữ yêu cầu chưa rõ kết quả. Ảnh ở `test-results/substitute-final-ui`. Production build/TypeScript, ESLint và Prettier phần thay đổi PASS. Build có cảnh báo bảo mật Next.js hiện hữu và cần chạy lại; chưa nâng phiên bản trong phạm vi này. Không thay phân công thật, không sửa BE hoặc commit/push.
+
+## 19/11/2026 — Bố cục đơn xin nghỉ và tìm mentor
+
+- Trang đơn xin nghỉ Manager dùng hàng responsive: mentor/trạng thái, khoảng nghỉ/lý do, thời gian xử lý và thao tác. Màn hẹp xếp dọc, không cần vuốt ngang. Lý do giới hạn hai dòng trong danh sách; chi tiết giữ đầy đủ văn bản và xuống dòng chuỗi dài. Danh sách/chi tiết Mentor cũng xử lý lý do dài.
+- Tìm mentor có nút xóa trong cùng ô và gợi ý qua Popover portal, tránh bị khung bộ lọc cắt. Có debounce, điều hướng mũi tên/Enter/Escape, loading/lỗi/trống, chống chọn kết quả tìm kiếm cũ và giữ trạng thái lọc/phân trang trên URL.
+- Bỏ dòng UUID mã buổi trong lịch gốc của chi tiết đơn Manager; form Mentor không hiện mã buổi. Giữ các ID trong contract và mutation hiện có.
+- Kiểm chứng: production build/TypeScript, ESLint/Prettier các file sửa PASS; 18 E2E Manager và 10 E2E xin nghỉ Mentor desktop/mobile PASS bằng API fixtures. Kiểm lý do dài/chuỗi không dấu cách, đọc đầy đủ chi tiết, gợi ý không bị che, chọn bằng bàn phím, xóa lọc và không tràn 320/768/1024/1440px. Đã xem ảnh render desktop/mobile; ảnh lưu ở test-results/leave-review. Build có cảnh báo bảo mật Next.js hiện hữu và thành công sau khi chạy lại; không thay backend hoặc quyền duyệt.
+
+## 19/11/2026 — Thu gọn Admin và công tắc demo
+
+- Admin dùng thang chữ 16px, sidebar/topbar gọn hơn, nền mint rất nhạt và bảng chỉ giữ đường phân cách ngang. Bỏ nhãn trang và footer lặp; danh sách gộp Làm mới vào thanh công cụ, Xuất CSV dùng nút phụ. Dashboard gộp chỉ số thành một dải.
+- Cấu hình demo dùng công tắc có nhãn, hiện form lý do và Lưu/Hủy khi có thay đổi. Chỉ lưu mới gọi PATCH; giữ expectedVersion, audit reason, thông báo xung đột và quyền Admin. Điều kiện và lưu ý nằm trong disclosure.
+- Xóa câu hướng dẫn lịch bù lặp thời lượng trong SessionMakeupSlot; giữ thời lượng cạnh giờ buổi học.
+- Kiểm chứng: lint, Prettier các file sửa và production build/TypeScript PASS. Bộ riêng 36 E2E Admin + 2 E2E lịch bù desktop/mobile PASS; kiểm tra lại toolbar/bố cục 4 E2E PASS. Đã xem 320/768/1024/1440px, không tràn ngang. Dùng mock API; Next.js hiện hữu có cảnh báo bảo mật, build thành công sau khi chạy lại.
+
 ## 19/11/2026 — Tải và dán ảnh trực tiếp lên bảng
 
 - Thêm nút Tải ảnh lên bảng trên header. PNG/JPEG được chọn hoặc dán tự xuất hiện khi tải và kiểm tra xong, không cần bấm Thêm ảnh vào bảng. Giữ retry đúng upload, hoàn tác/làm lại, quyền đọc/ghi và bảo vệ epoch khi bảng reset. Nhập PDF chuyển vào menu và giữ chọn trang.

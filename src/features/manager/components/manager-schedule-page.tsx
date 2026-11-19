@@ -1,7 +1,7 @@
 import { CalendarDays } from 'lucide-react';
 import { ManagerWeeklySchedule } from '@/features/operations/components/weekly-schedule-panel';
 
-export function ManagerSchedulePage() {
+export function ManagerSchedulePage(props: { initialClassId?: string }) {
   return (
     <div className="space-y-6">
       <header className="admin-page-heading">
@@ -11,11 +11,11 @@ export function ManagerSchedulePage() {
             Lịch và khai giảng
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            Chọn lớp, thiết lập lịch học hằng tuần và xem trước trước khi lưu lịch khai giảng.
+            Chọn lớp để phân công dạy thay hoặc thiết lập lịch học hằng tuần.
           </p>
         </div>
       </header>
-      <ManagerWeeklySchedule />
+      <ManagerWeeklySchedule initialClassId={props.initialClassId} />
     </div>
   );
 }

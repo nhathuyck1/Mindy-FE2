@@ -47,8 +47,8 @@ export function ManagerLeaveMentorName(props: { id: string }) {
     managerMentorSchema.refine((mentor) => mentor.id === props.id),
   );
   return (
-    <span className="inline-flex min-w-0 flex-col items-start">
-      <span className="break-words font-semibold">{query.data?.displayName || props.id}</span>
+    <span className="inline-flex min-w-0 max-w-full flex-col items-start">
+      <span className="font-semibold wrap-anywhere">{query.data?.displayName || props.id}</span>
       {query.isPending ? (
         <span className="text-xs text-muted">Đang tải tên mentor…</span>
       ) : query.isError ? (
@@ -74,7 +74,7 @@ export function ManagerLeaveClassName(props: { id: string }) {
   return (
     <span className="inline-flex min-w-0 flex-wrap items-center gap-2">
       {query.data ? (
-        <span className="break-words font-semibold">
+        <span className="font-semibold wrap-anywhere">
           {query.data.name} <span className="text-muted">({query.data.code})</span>
         </span>
       ) : (
