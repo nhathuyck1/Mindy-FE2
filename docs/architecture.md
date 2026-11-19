@@ -1,5 +1,21 @@
 # Kiến trúc Mindy FE2
 
+## Phân công dạy thay theo buổi — 19/11/2026
+
+- `features/operations` sở hữu ClassTeachingAssignments, SessionMentorForm, schemas và TanStack queries cho đọc lịch lớp phân trang, mentor trống lịch và gán/gỡ dạy thay. Manager dùng trong trang lịch hiện hữu; Admin tải khi mở disclosure ở Xếp lịch lớp. Thứ tự chọn lớp → buổi → mentor, không có route/sidebar mới.
+- Trang Manager nhận classId UUIDv4 từ searchParams bất đồng bộ; liên kết trong chi tiết đơn nghỉ chọn đúng lớp. Việc duyệt đơn vẫn tạo dạy bù theo flow hiện hữu, không bị trộn với gán dạy thay.
+- Intent chỉ trong memory, giữ body/key khi kết quả chưa rõ. Form tồn tại khi refetch lịch bị lỗi hoặc buổi đổi trạng thái để vẫn kiểm tra lại cùng yêu cầu; request mới bị khóa khi dữ liệu chưa phù hợp. Thành công invalidate các query lịch/phân công và phạm vi giảng dạy liên quan. Backend tiếp tục sở hữu quyền, kiểm trùng lịch và audit.
+
+## Bộ lọc đơn xin nghỉ Manager — 19/11/2026
+
+- ManagerLeaveMentorFilter sở hữu chuỗi tìm kiếm/debounce và trạng thái mở/active của combobox, dùng useManagerQuery cho gợi ý và tên mentor đã chọn. Parent giữ mentorId/status/page trên URL và query đơn; component không sao chép danh sách đơn hoặc quyền duyệt.
+- Gợi ý dùng Popover portal chung, giữ focus input và xử lý mũi tên/Enter/Escape. Kết quả cũ không được chọn khi chuỗi tìm đang debounce/refetch. Bố cục danh sách responsive chỉ thay presentation, giữ API, receipt và mutations duyệt/rút đơn hiện hữu.
+
+## Presentation Admin và draft cấu hình demo — 19/11/2026
+
+- admin.css chỉ scope workspace/typography Admin; analytics dashboard Admin gộp summary vào một dải, không đổi dữ liệu và query. AdminShell giảm header/footer lặp. AdminResourcePage giữ URL filter, phân trang, CSV và bảng hiện có, đưa refresh vào toolbar.
+- AdminSystemRulesPage tách draftDemo khỏi rule máy chủ. Switch không gọi mutation; chỉ submit lý do mới PATCH giá trị đảo của demo với expectedVersion. Thành công cập nhật query cache, đóng form và invalidate như trước; lỗi/xung đột giữ thông báo và đọc lại rule. Không thay API hoặc quyền BE.
+
 ## Ảnh trên bảng vẽ — 19/11/2026
 
 - WhiteboardWorkspace có nút Tải ảnh lên bảng riêng trên header; PNG/JPEG và clipboard dùng cùng useBoardMedia. Asset sẵn sàng được thêm một lần vào camera đang hiển thị, không cần bước xác nhận thêm ảnh. Chỉ đặt khi bảng đang hoạt động, có quyền tải/vẽ và đúng epoch bắt đầu upload; chờ nếu tạm thời không thể ghi, bỏ kết quả nếu bảng đã reset.

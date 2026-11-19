@@ -192,8 +192,7 @@ export function AdminTrackingPage() {
     <div className="space-y-6">
       <header className="admin-page-heading">
         <div>
-          <p className="eyebrow text-muted">Mindy / Quản trị</p>
-          <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Lịch sử hoạt động</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Lịch sử hoạt động</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
             Tra cứu lịch sử thay đổi do người dùng và hệ thống ghi nhận.
           </p>

@@ -30,8 +30,7 @@ export function AdminWorkflow() {
     <>
       <div className="admin-page-heading">
         <div>
-          <p className="eyebrow mb-2 text-muted">Hướng dẫn quản trị</p>
-          <h1 className="text-[34px] font-extrabold tracking-tight sm:text-[38px]">
+          <h1 className="text-2xl font-extrabold tracking-tight sm:text-[28px]">
             Quy trình vận hành
           </h1>
           <p className="mt-2 text-base leading-6 text-muted">

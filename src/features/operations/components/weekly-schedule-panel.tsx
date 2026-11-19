@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { apiRequest } from '@/lib/api/client';
+import { ClassTeachingAssignments } from './class-teaching-assignments';
 import {
   scheduleClassesSchema,
   scheduleConfigurationSchema,
@@ -22,18 +23,19 @@ const time = (s: string) =>
     timeStyle: 'short',
     timeZone: 'Asia/Ho_Chi_Minh',
   }).format(new Date(s));
-export function ManagerWeeklySchedule() {
+export function ManagerWeeklySchedule(props: { initialClassId?: string } = {}) {
   const session = useSession();
-  const [status, setStatus] = useState('OPEN');
+  const [assigning, setAssigning] = useState(false);
+  const [status, setStatus] = useState(props.initialClassId ? '' : 'OPEN');
   const [page, setPage] = useState(1),
-    [id, setId] = useState('');
+    [id, setId] = useState(props.initialClassId ?? '');
   const query = useQuery({
     queryKey: ['schedule-classes', session.data?.id, page, status],
     enabled: session.data?.role === 'MANAGER',
     retry: false,
     queryFn: ({ signal }) =>
       apiRequest({
-        path: `management/classes?page=${page}&pageSize=20&status=${status}`,
+        path: `management/classes?page=${page}&pageSize=20${status ? `&status=${status}` : ''}`,
         schema: scheduleClassesSchema,
         signal,
       }),
@@ -57,9 +59,9 @@ export function ManagerWeeklySchedule() {
             1
           </span>
           <div>
-            <h2 className="text-lg font-extrabold">Chọn lớp cần xếp lịch</h2>
+            <h2 className="text-lg font-extrabold">Chọn lớp học</h2>
             <p className="mt-1 text-sm text-muted">
-              Thiết lập lịch mới hoặc dời khai giảng cho lớp bản nháp, đang mở đăng ký.
+              Xếp lịch học và phân công giảng viên dạy thay theo từng buổi.
             </p>
           </div>
         </div>
@@ -68,6 +70,7 @@ export function ManagerWeeklySchedule() {
             Trạng thái lớp
             <NativeSelect
               wrapperClassName="w-full"
+              disabled={assigning}
               value={status}
               onChange={(e) => {
                 setStatus(e.target.value);
@@ -75,18 +78,30 @@ export function ManagerWeeklySchedule() {
                 setId('');
               }}
             >
+              <NativeSelectOption value="">Tất cả trạng thái</NativeSelectOption>
               <NativeSelectOption value="OPEN">Đang mở đăng ký</NativeSelectOption>
               <NativeSelectOption value="DRAFT">Bản nháp</NativeSelectOption>
+              <NativeSelectOption value="IN_PROGRESS">Đang học</NativeSelectOption>
             </NativeSelect>
           </label>
           <label className="block min-w-0 space-y-2 text-sm font-semibold">
-            {status === 'DRAFT' ? 'Lớp bản nháp' : 'Lớp đang mở đăng ký'}
+            {status === 'DRAFT'
+              ? 'Lớp bản nháp'
+              : status === 'OPEN'
+                ? 'Lớp đang mở đăng ký'
+                : 'Lớp học'}
             <NativeSelect
               wrapperClassName="w-full"
+              disabled={assigning}
               value={id}
               onChange={(e) => setId(e.target.value)}
             >
               <NativeSelectOption value="">Chọn lớp</NativeSelectOption>
+              {id && !query.data?.items.some((c) => c.id === id) && (
+                <NativeSelectOption value={id}>
+                  {config.data?.class.name ?? 'Lớp đã chọn'}
+                </NativeSelectOption>
+              )}
               {query.data?.items.map((c) => (
                 <NativeSelectOption key={c.id} value={c.id}>
                   {c.name}
@@ -115,12 +130,16 @@ export function ManagerWeeklySchedule() {
               {Math.max(1, Math.ceil((query.data?.total ?? 0) / 20))}
             </span>
             <div className="flex gap-2">
-              <Button variant="outline" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+              <Button
+                variant="outline"
+                disabled={assigning || page === 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
                 Trước
               </Button>
               <Button
                 variant="outline"
-                disabled={!query.data || page * 20 >= query.data.total}
+                disabled={assigning || !query.data || page * 20 >= query.data.total}
                 onClick={() => setPage((p) => p + 1)}
               >
                 Sau
@@ -138,6 +157,7 @@ export function ManagerWeeklySchedule() {
           </p>
         </div>
       )}
+      {id && <ClassTeachingAssignments key={id} classId={id} onEditingChange={setAssigning} />}
       {id &&
         (config.isPending ? (
           <p>Đang tải lịch…</p>

@@ -40,7 +40,7 @@ function AdminNavigation(props: { collapsed?: boolean; onNavigate?: () => void }
         ]
       : navigation;
   return (
-    <nav aria-label="Điều hướng quản trị" className="flex flex-1 flex-col gap-1 px-3 py-7">
+    <nav aria-label="Điều hướng quản trị" className="flex flex-1 flex-col gap-1 px-3 py-5">
       {items.map((item) => (
         <Link
           key={item.href}
@@ -52,7 +52,11 @@ function AdminNavigation(props: { collapsed?: boolean; onNavigate?: () => void }
           className={`admin-nav-link ${isNavActive(pathname, item.href) ? 'admin-nav-active' : ''} ${props.collapsed ? 'justify-center px-0' : ''}`}
         >
           <Icon name={item.icon} className="size-[19px] shrink-0" />
-          {!props.collapsed && <span>{item.label}</span>}
+          {!props.collapsed && (
+            <span>
+              {item.href === '/admin/payments/reconciliation' ? 'Đối soát thanh toán' : item.label}
+            </span>
+          )}
         </Link>
       ))}
       <div className="mx-3 my-5 border-t border-line" />
@@ -106,7 +110,7 @@ export function AdminShell(props: { children: React.ReactNode }) {
         </a>
         <aside className="admin-sidebar">
           <div
-            className={`flex h-23 items-center border-b border-line ${collapsed ? 'justify-center' : 'justify-between px-5'}`}
+            className={`flex h-20 items-center border-b border-line ${collapsed ? 'justify-center' : 'justify-between px-5'}`}
           >
             {!collapsed && <Brand />}
             <Button
@@ -138,7 +142,7 @@ export function AdminShell(props: { children: React.ReactNode }) {
                 <Icon name="menu" className="size-5" />
               </Button>
               <p className="flex items-center gap-3 text-base">
-                <span className="hidden text-muted sm:inline">Không gian quản trị</span>
+                <span className="hidden text-muted sm:inline">Quản trị</span>
                 <span className="hidden text-line sm:inline">/</span>
                 <span className="font-extrabold">{title}</span>
               </p>
@@ -148,10 +152,6 @@ export function AdminShell(props: { children: React.ReactNode }) {
           <main id="admin-main" tabIndex={-1} className="admin-main">
             {props.children}
           </main>
-          <footer className="flex flex-wrap items-center justify-between gap-2 px-5 py-5 text-[15px] text-muted sm:px-8">
-            <span>Mindy Coding · Không gian quản trị</span>
-            <span>Đào tạo hôm nay, mở lối ngày mai.</span>
-          </footer>
         </div>
       </div>
       {mobileOpen && (

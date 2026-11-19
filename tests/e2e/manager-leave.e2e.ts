@@ -58,11 +58,13 @@ export async function mockManagerLeave(
     expired?: boolean;
     versionConflictFirstResponse?: boolean;
     holdAction?: boolean;
+    reason?: string;
   } = {},
 ) {
   // Keep the browser clock aligned with the fixture's asOf and approval deadline.
   await page.clock.setFixedTime(new Date(asOf));
   const requests = Array.from({ length: 23 }, (_, index) => makeRequest(index));
+  if (options.reason) requests[0].reason = options.reason;
   let uncertainResponseSent = false;
   let versionConflictSent = false;
   let releaseAction = () => {};
@@ -302,6 +304,83 @@ test('Manager leave queue filters mentors and pages without losing its URL state
   await expect(page).toHaveURL('/manager/leave-requests?status=ALL');
 });
 
+test('Leave list contains long reasons and mentor search supports keyboard selection and clearing', async ({
+  page,
+}, info) => {
+  const reason =
+    'Tôi cần nghỉ để giải quyết việc gia đình. '.repeat(12) + 'NộiDungLiềnKhôngDấuCách'.repeat(20);
+  await mockManagerLeave(page, { reason });
+  await page.goto('/manager/leave-requests');
+  const list = page.getByRole('region', { name: 'Danh sách đơn xin nghỉ', exact: true });
+  const preview = list.getByText(reason, { exact: true });
+  await expect(preview).toBeVisible();
+  const dimensions = await preview.evaluate((element) => ({
+    height: element.getBoundingClientRect().height,
+    lineHeight: Number.parseFloat(getComputedStyle(element).lineHeight),
+    width: element.getBoundingClientRect().width,
+    parentWidth: element.parentElement!.getBoundingClientRect().width,
+  }));
+  expect(dimensions.height).toBeLessThanOrEqual(dimensions.lineHeight * 2 + 1);
+  expect(dimensions.width).toBeLessThanOrEqual(dimensions.parentWidth);
+  await expect(page.getByText('Vuốt ngang để xem đầy đủ', { exact: false })).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await page.screenshot({ path: info.outputPath('leave-list-long-reason.png') });
+  const originalViewport = page.viewportSize()!;
+  for (const width of [320, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+  }
+  await page.setViewportSize(originalViewport);
+
+  const input = page.getByRole('combobox', { name: 'Tìm mentor' });
+  await input.fill('Trần');
+  const option = page.getByRole('option', { name: /Trần Mentor/ });
+  await expect(option).toBeVisible();
+  const bounds = await option.boundingBox();
+  expect(bounds).not.toBeNull();
+  if (bounds) {
+    expect(
+      await page.evaluate(
+        ({ x, y }) => {
+          const element = document.elementFromPoint(x, y);
+          return Boolean(element?.closest('[role="option"]'));
+        },
+        { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 },
+      ),
+    ).toBe(true);
+  }
+  await page.screenshot({ path: info.outputPath('leave-mentor-search.png') });
+  await input.press('Escape');
+  await expect(option).toHaveCount(0);
+  await input.press('ArrowDown');
+  await input.press('Enter');
+  await expect(page).toHaveURL(`/manager/leave-requests?mentorId=${ids.mentor}`);
+  await expect(input).toHaveValue('Trần Mentor');
+  await page.getByRole('button', { name: 'Xóa bộ lọc mentor' }).click();
+  await expect(page).toHaveURL('/manager/leave-requests');
+  await expect(input).toHaveValue('');
+  await expect(input).toBeFocused();
+  await input.fill('không có mentor này');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Không tìm thấy mentor khớp.' }),
+  ).toBeVisible();
+  await input.press('Escape');
+  await page.getByLabel('Lọc theo trạng thái đơn').selectOption('ALL');
+  await expect(page).toHaveURL('/manager/leave-requests?status=ALL');
+  await list.getByRole('link', { name: 'Xem và xử lý' }).first().click();
+  await expect(page.getByText(reason, { exact: true })).toBeVisible();
+  await expect(page.getByText('Mã buổi:', { exact: false })).toHaveCount(0);
+  await page.screenshot({ path: info.outputPath('leave-detail-long-reason.png'), fullPage: true });
+  await page.setViewportSize({ width: 320, height: 760 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+});
+
 test('Manager confirms full-day conflicts and retries an uncertain approval with the same idempotency key', async ({
   page,
 }) => {
@@ -418,6 +497,16 @@ test('Expired requests are not actionable', async ({ page }) => {
   await expect(page.getByText('Đơn đã quá hạn xử lý. Hãy tải lại')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Duyệt đơn' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Từ chối đơn' })).toHaveCount(0);
+});
+
+test('Leave detail links to the class timetable for substitute teaching', async ({ page }) => {
+  const { calls } = await mockManagerLeave(page);
+  await page.goto(`/manager/leave-requests/${ids.request}`);
+  await expect(page.getByRole('link', { name: 'Mở lịch lớp / dạy thay' })).toHaveAttribute(
+    'href',
+    `/manager/schedule?classId=${ids.class}`,
+  );
+  expect(calls.filter((call) => call.method === 'POST' || call.method === 'PATCH')).toHaveLength(0);
 });
 
 test('Escape restores focus and detail has no horizontal overflow at 320px', async ({ page }) => {

@@ -30,8 +30,7 @@ export function AdminReconciliationPage() {
     <div className="space-y-6">
       <header className="admin-page-heading">
         <div>
-          <p className="eyebrow text-muted">Mindy / Quản trị</p>
-          <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Cần đối soát thanh toán</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Cần đối soát thanh toán</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
             Danh sách giao dịch cần kiểm tra từ dữ liệu thanh toán.
           </p>

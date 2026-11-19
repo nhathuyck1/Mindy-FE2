@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { WeeklySchedulePanel } from '@/features/operations/components/weekly-schedule-panel';
+import { ClassTeachingAssignments } from '@/features/operations/components/class-teaching-assignments';
 import { useAdminWrite } from '../api/admin-edit-queries';
 import {
   scheduleAdminSessionSchema,
@@ -34,10 +35,26 @@ export function AdminClassSessions(props: { classroom: AdminClassDetail; editabl
   const mutation = useAdminWrite();
   const [error, setError] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
+  const [assigning, setAssigning] = useState(false);
   const units = [...props.classroom.units].sort((a, b) => a.position - b.position);
   return (
     <section className="space-y-5">
       <h3 className="text-lg font-extrabold">Học phần & lịch buổi</h3>
+      <details
+        className="border-y border-line py-4"
+        onToggle={(event) => {
+          if (event.currentTarget.open) setAssigning(true);
+        }}
+      >
+        <summary className="min-h-11 cursor-pointer content-center text-sm font-bold text-forest focus-visible:outline-2 focus-visible:outline-mint">
+          Gán / đổi mentor dạy thay theo buổi
+        </summary>
+        {assigning && (
+          <div className="mt-3">
+            <ClassTeachingAssignments classId={props.classroom.id} />
+          </div>
+        )}
+      </details>
       {props.editable && (
         <WeeklySchedulePanel
           standalone

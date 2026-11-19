@@ -39,7 +39,7 @@ export function LeaveDetail(props: { id: string; onClose: () => void }) {
               </div>
               <div className="rounded-xl bg-soft/60 p-4">
                 <p className="mb-2 text-xs font-bold text-muted">Lý do xin nghỉ</p>
-                <p className="text-sm leading-6 whitespace-pre-wrap break-words">{item.reason}</p>
+                <p className="text-sm leading-6 whitespace-pre-wrap wrap-anywhere">{item.reason}</p>
               </div>
               <p className="text-sm text-muted">
                 Gửi {mentorDate(item.submittedAt)} · Hết hạn {mentorDate(item.expiresAt)}
@@ -53,14 +53,14 @@ export function LeaveDetail(props: { id: string; onClose: () => void }) {
                 {item.items.map((session) => (
                   <li
                     key={session.sourceSessionId}
-                    className="grid gap-3 rounded-xl border border-line p-4 sm:grid-cols-[1fr_auto_1fr] sm:items-center"
+                    className="grid gap-3 rounded-xl border border-line p-4 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center"
                   >
-                    <p className="text-sm leading-6 text-muted">
+                    <p className="min-w-0 text-sm leading-6 text-muted">
                       Buổi gốc: {mentorDate(session.sourceStartsAt)} –{' '}
                       {mentorDate(session.sourceEndsAt)}
                     </p>
                     <ArrowDown aria-hidden="true" className="size-4 text-mint sm:-rotate-90" />
-                    <p className="rounded-lg bg-mint/5 p-3 text-sm leading-6 font-semibold text-forest">
+                    <p className="min-w-0 rounded-lg bg-mint/5 p-3 text-sm leading-6 font-semibold text-forest">
                       Dạy bù: {mentorDate(session.startsAt)} – {mentorDate(session.endsAt)}
                     </p>
                     {session.replacementSessionId && (
@@ -79,7 +79,7 @@ export function LeaveDetail(props: { id: string; onClose: () => void }) {
                 </p>
               )}
               {item.review && (
-                <p className="flex items-start gap-3 rounded-xl bg-soft p-4 text-sm leading-6 whitespace-pre-wrap">
+                <p className="flex min-w-0 items-start gap-3 rounded-xl bg-soft p-4 text-sm leading-6 whitespace-pre-wrap wrap-anywhere">
                   <MessageSquareText
                     aria-hidden="true"
                     className="mt-1 size-4 shrink-0 text-mint"

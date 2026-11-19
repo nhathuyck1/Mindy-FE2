@@ -2,10 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { CalendarOff, X } from 'lucide-react';
+import { useEffect } from 'react';
+import { ArrowUpRight, CalendarOff, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { useManagerQuery } from '../api/manager-queries';
 import {
@@ -13,9 +12,9 @@ import {
   managerLeavePageSchema,
   managerLeaveStatusSchema,
   managerMentorSchema,
-  managerPeoplePageSchema,
 } from '../schemas/manager-leave-contracts';
 import { ManagerState } from './manager-shared';
+import { ManagerLeaveMentorFilter } from './manager-leave-mentor-filter';
 import {
   LeaveStatusBadge,
   ManagerLeaveMentorName,
@@ -31,8 +30,6 @@ export function ManagerLeaveRequestsPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [mentorSearch, setMentorSearch] = useState('');
-  const [mentorQuery, setMentorQuery] = useState('');
   const requestedStatus = searchParams.get('status');
   const selectedStatus =
     requestedStatus === 'ALL'
@@ -48,21 +45,6 @@ export function ManagerLeaveRequestsPage() {
       ? mentorIdValue
       : undefined;
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => setMentorQuery(mentorSearch.trim()), 250);
-    return () => window.clearTimeout(timer);
-  }, [mentorSearch]);
-
-  const mentorSuggestions = useManagerQuery(
-    `manager/mentors?page=1&pageSize=20&q=${encodeURIComponent(mentorQuery)}`,
-    managerPeoplePageSchema,
-    mentorQuery.length >= 2 && !mentorId,
-  );
-  const selectedMentor = useManagerQuery(
-    `manager/mentors/${mentorId ?? ''}`,
-    managerMentorSchema.refine((mentor) => mentor.id === mentorId),
-    Boolean(mentorId),
-  );
   const status = selectedStatus === 'ALL' ? undefined : selectedStatus;
   const parsedQuery = managerLeaveListQuerySchema.parse({
     page,
@@ -107,15 +89,12 @@ export function ManagerLeaveRequestsPage() {
     router.replace(search ? `${pathname}?${search}` : pathname);
   }, [leaves.data, page, pathname, router, searchParams]);
 
-  const mentorInputValue = mentorSearch || selectedMentor.data?.displayName || '';
-  const showSuggestions = !mentorId && mentorQuery.length >= 2;
-
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <header className="admin-page-heading">
         <div>
           <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight">
-            <CalendarOff aria-hidden="true" className="size-7 text-mint" />
+            <CalendarOff aria-hidden="true" className="size-7 shrink-0 text-mint" />
             Đơn xin nghỉ mentor
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
@@ -124,9 +103,15 @@ export function ManagerLeaveRequestsPage() {
         </div>
       </header>
 
-      <section className="admin-table-panel space-y-4 p-5 sm:p-6" aria-label="Bộ lọc đơn xin nghỉ">
-        <div className="grid gap-4 md:grid-cols-2">
-          <label className="block space-y-2 text-sm font-semibold" htmlFor="leave-status-filter">
+      <section
+        className="rounded-2xl border border-line bg-canvas p-4 sm:p-5"
+        aria-label="Bộ lọc đơn xin nghỉ"
+      >
+        <div className="grid items-start gap-4 md:grid-cols-[minmax(12rem,0.7fr)_minmax(0,1.3fr)]">
+          <label
+            className="block min-w-0 space-y-2 text-sm font-semibold"
+            htmlFor="leave-status-filter"
+          >
             Trạng thái
             <NativeSelect
               id="leave-status-filter"
@@ -145,87 +130,10 @@ export function ManagerLeaveRequestsPage() {
               ))}
             </NativeSelect>
           </label>
-          <div className="relative space-y-2 text-sm font-semibold">
-            <label htmlFor="leave-mentor-filter">Tìm mentor</label>
-            <div className="flex gap-2">
-              <Input
-                id="leave-mentor-filter"
-                value={mentorInputValue}
-                onChange={(event) => {
-                  setMentorSearch(event.target.value);
-                  if (mentorId) changeLocation({ mentorId: null });
-                }}
-                autoComplete="off"
-                placeholder="Nhập tên hoặc email mentor"
-                aria-describedby="leave-mentor-help"
-                className="min-h-12"
-              />
-              {(mentorSearch || mentorId) && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  aria-label="Xóa bộ lọc mentor"
-                  onClick={() => {
-                    setMentorSearch('');
-                    setMentorQuery('');
-                    changeLocation({ mentorId: null });
-                  }}
-                >
-                  <X aria-hidden="true" className="size-4" />
-                </Button>
-              )}
-            </div>
-            <p id="leave-mentor-help" className="font-normal text-muted">
-              Nhập ít nhất 2 ký tự rồi chọn mentor trong gợi ý.
-            </p>
-            {showSuggestions && (
-              <div className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-line bg-canvas p-2 shadow-lg">
-                {mentorSuggestions.isPending ? (
-                  <p role="status" className="p-3 text-sm text-muted">
-                    Đang tìm mentor…
-                  </p>
-                ) : mentorSuggestions.isError ? (
-                  <div
-                    className="flex flex-wrap items-center justify-between gap-2 p-2 text-sm"
-                    role="alert"
-                  >
-                    <span>Chưa tải được gợi ý mentor.</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => void mentorSuggestions.refetch()}
-                    >
-                      Thử lại
-                    </Button>
-                  </div>
-                ) : mentorSuggestions.data?.items.length ? (
-                  <ul role="listbox" aria-label="Gợi ý mentor">
-                    {mentorSuggestions.data.items.map((mentor) => (
-                      <li key={mentor.id}>
-                        <button
-                          type="button"
-                          role="option"
-                          aria-selected={false}
-                          onClick={() => {
-                            setMentorSearch(mentor.displayName);
-                            changeLocation({ mentorId: mentor.id });
-                          }}
-                          className="flex min-h-12 w-full flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-soft focus-visible:outline-2 focus-visible:outline-mint"
-                        >
-                          <span className="font-semibold">{mentor.displayName}</span>
-                          <span className="text-xs text-muted">{mentor.email}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p role="status" className="p-3 text-sm text-muted">
-                    Không tìm thấy mentor khớp.
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+          <ManagerLeaveMentorFilter
+            mentorId={mentorId}
+            onSelect={(id) => changeLocation({ mentorId: id })}
+          />
         </div>
       </section>
 
@@ -244,6 +152,7 @@ export function ManagerLeaveRequestsPage() {
             disabled={leaves.isFetching}
             onClick={() => void leaves.refetch()}
           >
+            <RefreshCw aria-hidden="true" className="size-4" />
             Tải lại danh sách
           </Button>
         </header>
@@ -256,64 +165,62 @@ export function ManagerLeaveRequestsPage() {
               Không có đơn phù hợp với bộ lọc.
             </p>
           ) : (
-            <div>
-              <p className="border-t border-line px-5 py-3 text-xs text-muted lg:hidden">
-                Vuốt ngang để xem đầy đủ thông tin và thao tác xử lý.
-              </p>
-              <div className="overflow-x-auto">
-                <table className="admin-data-table min-w-220">
-                  <caption className="sr-only">Danh sách đơn xin nghỉ mentor</caption>
-                  <thead>
-                    <tr>
-                      <th scope="col">Mentor</th>
-                      <th scope="col">Nội dung xin nghỉ</th>
-                      <th scope="col">Thời gian xử lý</th>
-                      <th scope="col">Trạng thái</th>
-                      <th scope="col">Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {leaves.data?.items.map((leave) => (
-                      <tr key={leave.id}>
-                        <td className="min-w-44 align-top">
-                          <ManagerLeaveMentorName id={leave.mentorId} />
-                        </td>
-                        <td className="min-w-64 align-top">
-                          <span className="block font-semibold">
-                            {managerLeaveDate(leave.fromDate)}
-                            {leave.fromDate !== leave.toDate && (
-                              <> – {managerLeaveDate(leave.toDate)}</>
-                            )}
-                          </span>
-                          <span className="mt-1 block text-xs text-muted">
-                            {leavePeriodLabels[leave.period]} · {leave.itemCount} buổi ảnh hưởng
-                          </span>
-                          <p className="mt-2 max-w-80 whitespace-pre-wrap break-words text-muted">
-                            {leave.reason}
-                          </p>
-                        </td>
-                        <td className="min-w-48 align-top">
-                          <span className="block text-xs text-muted">Hạn duyệt</span>
-                          <span className="mt-1 block font-semibold">
-                            {managerLeaveDate(leave.expiresAt)}
-                          </span>
-                          <span className="mt-2 block text-xs text-muted">
-                            Gửi lúc {managerLeaveDate(leave.submittedAt)}
-                          </span>
-                        </td>
-                        <td className="align-top">
-                          <LeaveStatusBadge status={leave.status} />
-                        </td>
-                        <td className="align-top">
-                          <Button asChild variant="outline">
-                            <Link href={`/manager/leave-requests/${leave.id}`}>Xem và xử lý</Link>
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="border-t border-line">
+              <div
+                aria-hidden="true"
+                className="hidden gap-5 border-b border-line bg-soft/60 px-5 py-3 text-xs font-semibold text-muted xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,1.7fr)_minmax(0,1fr)_8rem] sm:px-6"
+              >
+                <span>Mentor</span>
+                <span>Khoảng nghỉ & lý do</span>
+                <span>Thời gian xử lý</span>
+                <span className="text-right">Thao tác</span>
               </div>
+              <ul className="divide-y divide-line">
+                {leaves.data?.items.map((leave) => (
+                  <li
+                    key={leave.id}
+                    className="grid min-w-0 gap-4 px-5 py-5 transition-colors hover:bg-soft/30 sm:px-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.7fr)_minmax(0,1fr)_8rem] xl:items-start xl:gap-5"
+                  >
+                    <div className="flex min-w-0 flex-wrap items-start justify-between gap-3 xl:block xl:space-y-3">
+                      <ManagerLeaveMentorName id={leave.mentorId} />
+                      <LeaveStatusBadge status={leave.status} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold leading-6">
+                        {managerLeaveDate(leave.fromDate)}
+                        {leave.fromDate !== leave.toDate && (
+                          <> – {managerLeaveDate(leave.toDate)}</>
+                        )}
+                      </p>
+                      <p className="mt-1 text-sm text-muted">
+                        {leavePeriodLabels[leave.period]} · {leave.itemCount} buổi ảnh hưởng
+                      </p>
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted wrap-anywhere">
+                        {leave.reason}
+                      </p>
+                    </div>
+                    <div className="min-w-0 space-y-1 text-sm">
+                      <p className="text-xs text-muted">Hạn duyệt</p>
+                      <p className="font-semibold tabular-nums">
+                        {managerLeaveDate(leave.expiresAt)}
+                      </p>
+                      <p className="text-xs leading-5 text-muted">
+                        Gửi lúc {managerLeaveDate(leave.submittedAt)}
+                      </p>
+                    </div>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="w-full xl:w-auto xl:justify-self-end"
+                    >
+                      <Link href={'/manager/leave-requests/' + leave.id}>
+                        Xem và xử lý
+                        <ArrowUpRight aria-hidden="true" className="size-4" />
+                      </Link>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
           {leaves.data && leaves.data.total > 0 && (
