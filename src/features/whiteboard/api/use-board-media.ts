@@ -47,6 +47,7 @@ export interface ReadyBoardImage {
 }
 export function useBoardMedia(boardId: string) {
   const lifetime = useRef<AbortController | null>(null),
+    inFlight = useRef(false),
     upload = useRef<UploadAttempt | null>(null),
     exportJob = useRef<ExportAttempt | null>(null);
   const [busy, setBusy] = useState(false),
@@ -64,7 +65,7 @@ export function useBoardMedia(boardId: string) {
   const getSignal = () =>
     AbortSignal.any([sessionSignal(), lifetime.current?.signal ?? AbortSignal.abort()]);
   async function uploadFile(file?: File, pages?: number[]) {
-    if (busy) return;
+    if (inFlight.current) return;
     if (file) {
       if (file.size > 10485760) {
         setMessage('Tệp tối đa 10 MiB.');
@@ -76,6 +77,7 @@ export function useBoardMedia(boardId: string) {
     const attempt = upload.current;
     if (!attempt) return;
     const signal = getSignal();
+    inFlight.current = true;
     setBusy(true);
     setRetry(null);
     setMessage('Đang tải và kiểm tra tệp…');
@@ -161,7 +163,10 @@ export function useBoardMedia(boardId: string) {
         setRetry('upload');
       }
     } finally {
-      if (!signal.aborted) setBusy(false);
+      if (!signal.aborted) {
+        inFlight.current = false;
+        setBusy(false);
+      }
     }
   }
   async function exportFile(
@@ -171,7 +176,7 @@ export function useBoardMedia(boardId: string) {
     view?: BoardView,
     size?: { width: number; height: number },
   ) {
-    if (busy) return;
+    if (inFlight.current) return;
     if (board) {
       exportJob.current = {
         key: crypto.randomUUID(),
@@ -196,6 +201,7 @@ export function useBoardMedia(boardId: string) {
     const attempt = exportJob.current;
     if (!attempt) return;
     const signal = getSignal();
+    inFlight.current = true;
     setBusy(true);
     setRetry(null);
     setMessage('Đang chuẩn bị file xuất…');
@@ -255,7 +261,10 @@ export function useBoardMedia(boardId: string) {
         setRetry('export');
       }
     } finally {
-      if (!signal.aborted) setBusy(false);
+      if (!signal.aborted) {
+        inFlight.current = false;
+        setBusy(false);
+      }
     }
   }
   return {
@@ -265,10 +274,14 @@ export function useBoardMedia(boardId: string) {
     retry,
     uploadFile,
     exportFile,
-    clearReady: () => setReady([]),
+    clearReady: (notice?: string) => {
+      setReady([]);
+      if (notice) setMessage(notice);
+    },
     cancel: () => {
       lifetime.current?.abort();
       lifetime.current = new AbortController();
+      inFlight.current = false;
       setBusy(false);
       setMessage('Đã dừng chờ. Tác vụ trên hệ thống có thể vẫn tiếp tục.');
       setRetry(upload.current ? 'upload' : exportJob.current ? 'export' : null);

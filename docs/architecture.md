@@ -1,5 +1,16 @@
 # Kiến trúc Mindy FE2
 
+## Ảnh trên bảng vẽ — 19/11/2026
+
+- WhiteboardWorkspace có nút Tải ảnh lên bảng riêng trên header; PNG/JPEG và clipboard dùng cùng useBoardMedia. Asset sẵn sàng được thêm một lần vào camera đang hiển thị, không cần bước xác nhận thêm ảnh. Chỉ đặt khi bảng đang hoạt động, có quyền tải/vẽ và đúng epoch bắt đầu upload; chờ nếu tạm thời không thể ghi, bỏ kết quả nếu bảng đã reset.
+- useBoardMedia giữ receipt/retry, kiểm tra tệp và signed upload hiện hữu, khóa tác vụ đồng bộ để tránh hai lần dán chạy đồng thời. Nhập PDF chuyển vào menu và giữ bước chọn trang; kết quả cũng tự đặt vào bảng. Không đổi API hoặc quyền backend.
+
+## Presentation chi tiết buổi học Student — 19/11/2026
+
+- `StudentSessionPage` giữ query lịch và các nhánh tải/lỗi/trống; `StudentSessionBackLink` dùng chung trong header và các nhánh này, luôn dẫn về `/user/schedule`, kể cả refetch lỗi có dữ liệu cũ. `student-session-ui.tsx` tách header, metadata và điểm danh cá nhân; `StudentSessionResources` compose nội dung chính với cột công cụ/điểm danh responsive, `StudentSessionMaterials` giữ danh sách tài liệu chung/chính buổi hiện hữu.
+- Chỉ đổi presentation theo mẫu Mentor, dùng lại NameAvatar/Badge/LinkLoadingIcon và token Mindy. Giá trị metadata/điểm danh, query/API, điều kiện quyền và nội bộ bảng vẽ không đổi.
+- Theo yêu cầu bổ sung, StudentSessionResources không mount SessionBoardPanel hoặc tải context bảng vẽ. Nút Mở bảng vẽ dẫn tới `/whiteboards/:sessionId`, dùng trang WhiteboardPage toàn màn hình hiện có.
+
 ## Chi tiết buổi học và presenter FOV — 18/11/2026
 
 - Route /user/sessions/[sessionId] validate UUID/ngày và compose StudentSessionPage. Ngày + enrollmentId + makeupPlacementId tùy chọn chỉ chọn đúng event từ useMySchedule đã phân quyền; không lấy quyền từ query string. Không tìm thấy thì quay về lịch để lấy lịch mới. LearningUnitContent có lối chi tiết dùng cùng helper studentSessionHref.

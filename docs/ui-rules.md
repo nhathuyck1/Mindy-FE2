@@ -1,8 +1,17 @@
 # Quy tắc giao diện Mindy
 
+## Thêm ảnh lên bảng vẽ — 19/11/2026
+
+- Header bảng vẽ có nút Tải ảnh lên bảng, hiện chữ trên desktop và biểu tượng ảnh kèm nhãn truy cập trên mobile. Chọn ảnh hoặc dán PNG/JPEG tự tải, kiểm tra và thêm vào vùng đang xem; bỏ nút Thêm ảnh vào bảng. Giữ giới hạn 10 MiB, thông báo tiến trình/thử lại và quyền tải ảnh hiện có. Nhập PDF nằm trong Thêm thao tác, vẫn chọn trang trước khi xử lý.
+
+## Đồng bộ chi tiết buổi học Student với Mentor — 19/11/2026
+
+- Kế thừa header bo tròn với gradient mint/soft của Mentor, có trạng thái buổi, giờ học, phòng và múi giờ Việt Nam. Thông tin, chương/tài liệu và bài tập dùng nền trắng, tiêu đề nền soft cùng đường phân cách nhẹ; công cụ nền forest, điểm danh cá nhân nền peach. Dùng lại NameAvatar, Badge và LinkLoadingIcon. Bỏ bảng vẽ nhúng dưới tài liệu; nút Mở bảng vẽ dẫn đến trang bảng vẽ toàn màn hình `/whiteboards/:sessionId`.
+- Từ xl, nội dung chính bên trái và cột công cụ/điểm danh rộng 19rem bên phải. Dưới xl, thứ tự là thông tin → công cụ/điểm danh → tài nguyên; công cụ/điểm danh chia hai cột từ sm, mobile hẹp xếp một cột. Metadata một cột trên mobile và hai cột từ sm. Lối Về lịch học luôn có ở trạng thái tải/lỗi/trống, kể cả refetch lỗi khi đã có dữ liệu cũ.
+
 ## Trang chi tiết buổi học Student — 18/11/2026
 
-- Thay dialog của lịch bằng trang chi tiết có lối Về lịch học. Thông tin/điểm danh, đúng một chương chứa tài liệu chung và buổi đã chọn, bảng vẽ nhúng cùng bài tập được xếp theo chiều dọc; metadata chia 2/3 cột khi đủ rộng. Giữ palette Mindy và các trạng thái lỗi/thử lại, chưa có bảng, buổi hủy/chờ tiền mặt/học bù.
+- Thay dialog của lịch bằng trang chi tiết có lối Về lịch học, gồm thông tin/điểm danh, đúng một chương chứa tài liệu chung và buổi đã chọn, bảng vẽ nhúng cùng bài tập. Bố cục hiện tại theo cập nhật 19/11/2026 ở trên. Giữ palette Mindy và các trạng thái lỗi/thử lại, chưa có bảng, buổi hủy/chờ tiền mặt/học bù.
 - Nút Theo giảng viên nằm phía trên cụm zoom để không ép thanh công cụ trên màn hẹp. Nhãn Chờ giảng viên/Đang theo/Theo giảng viên và aria-pressed thể hiện trạng thái. Zoom/kéo bảng chuyển sang tự xem; bật lại khớp FOV mới nhất, căn giữa và chứa đủ vùng nhìn trên mobile. Khi mất tín hiệu tạm thời, đổi sang Chờ giảng viên và giữ nguyên vùng nhìn cuối để bảng không nhảy về gốc.
 
 ## Khóa học và học liệu Student — 10/11/2026

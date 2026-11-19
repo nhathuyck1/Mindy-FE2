@@ -88,6 +88,7 @@ async function fixture(
     ],
   };
   const state = {
+    scheduleError: false,
     denied: false,
     assignmentError: false,
     empty: false,
@@ -120,7 +121,8 @@ async function fixture(
     const url = new URL(route.request().url());
     const path = url.pathname.replace('/api/v1/', '');
     calls.push(path);
-    if (path === 'me/schedule')
+    if (path === 'me/schedule') {
+      if (state.scheduleError) return route.fulfill({ status: 503, json: { code: 'UNAVAILABLE' } });
       return route.fulfill({
         json: {
           items: [event],
@@ -133,6 +135,7 @@ async function fixture(
           to: url.searchParams.get('to'),
         },
       });
+    }
     if (path === `me/classes/${ids.class}/units/${ids.question}/materials`)
       return route.fulfill({
         json: {
@@ -255,6 +258,7 @@ test('student schedule opens meeting, whiteboard and all three assignment types 
   page,
 }, info) => {
   if (info.project.name === 'mobile') await page.setViewportSize({ width: 320, height: 780 });
+  else await page.setViewportSize({ width: 1440, height: 1000 });
   const { calls } = await fixture(page);
   const dialog = page.locator('main');
   await expect(page).toHaveURL(new RegExp(`/user/sessions/${ids.session}`));
@@ -263,7 +267,8 @@ test('student schedule opens meeting, whiteboard and all three assignment types 
   await expect(page.getByText('Buổi học chưa bắt đầu', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: /Tài liệu đúng buổi/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /Tài liệu buổi khác/ })).toHaveCount(0);
-  await expect(page.getByRole('region', { name: 'Bảng vẽ buổi học', exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Bảng vẽ buổi học', exact: true })).toHaveCount(0);
+  expect(calls.some((path) => path.endsWith('/whiteboard'))).toBe(false);
   await expect(dialog.getByRole('link', { name: 'Vào phòng học' })).toHaveAttribute(
     'href',
     'https://meet.example.test/session',
@@ -280,6 +285,16 @@ test('student schedule opens meeting, whiteboard and all three assignment types 
     await expect(dialog.getByRole('link').filter({ hasText: `Bài ${type}` })).toBeVisible();
   expect(await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
   await page.screenshot({ path: info.outputPath('student-session.png'), fullPage: true });
+  for (const width of info.project.name === 'mobile' ? [390] : [1496, 1024]) {
+    await page.setViewportSize({ width, height: 1000 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    await page.screenshot({
+      path: info.outputPath(`student-session-${width}.png`),
+      fullPage: true,
+    });
+  }
   await dialog.getByRole('button', { name: 'Sau', exact: true }).click();
   await expect(dialog.getByText('Bài trang sau', { exact: true })).toBeVisible();
   expect(calls.some((path) => path.startsWith('mentor/'))).toBe(false);
@@ -287,6 +302,29 @@ test('student schedule opens meeting, whiteboard and all three assignment types 
   await expect(page.getByRole('heading', { name: 'Thông tin buổi học' })).toBeVisible();
   await page.getByRole('link', { name: 'Về lịch học' }).click();
   await expect(page).toHaveURL('/user/schedule');
+});
+
+test('student keeps back navigation when a schedule refetch fails with cached data', async ({
+  page,
+}, info) => {
+  const { state } = await fixture(page);
+  await expect(page.getByRole('heading', { name: 'Thông tin buổi học' })).toBeVisible();
+  state.scheduleError = true;
+  await page.clock.setFixedTime(new Date(new Date(now).getTime() + 61_000));
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event('offline'));
+    window.dispatchEvent(new Event('online'));
+  });
+  await expect(page.getByRole('main').getByRole('alert')).toContainText('Chưa thể tải dữ liệu');
+  await expect(page.getByRole('link', { name: 'Về lịch học' })).toBeVisible();
+  await page.screenshot({
+    path: info.outputPath('student-session-refetch-error.png'),
+    fullPage: true,
+  });
+  state.scheduleError = false;
+  await page.getByRole('button', { name: 'Thử lại', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Thông tin buổi học' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Về lịch học' })).toHaveCount(1);
 });
 
 test('student follows a session assignment into its existing quiz page', async ({ page }) => {
