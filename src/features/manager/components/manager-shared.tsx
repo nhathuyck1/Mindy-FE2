@@ -20,15 +20,18 @@ export function ReviewBadge(props: { status: keyof typeof reviewLabels }) {
 }
 export function ManagerState(props: {
   pending: boolean;
+  loading?: React.ReactNode;
   error: unknown;
   retry: () => unknown;
   children: React.ReactNode;
 }) {
   if (props.pending)
     return (
-      <p role="status" className="p-8 text-muted">
-        Đang tải dữ liệu…
-      </p>
+      props.loading ?? (
+        <p role="status" className="p-8 text-muted">
+          Đang tải dữ liệu…
+        </p>
+      )
     );
   if (props.error)
     return (

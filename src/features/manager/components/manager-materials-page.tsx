@@ -10,6 +10,7 @@ import { managerCourseDetailSchema } from '../schemas/manager-contracts';
 import { useManagerQuery } from '../api/manager-queries';
 import { ManagerCourseWorkspace } from './manager-course-workspace';
 import { ManagerMaterialsDashboard } from './manager-materials-dashboard';
+import { ManagerMaterialsLoading } from './manager-materials-loading';
 import { ManagerMaterialEditor } from './manager-material-editor';
 import { ManagerMaterialsInventory } from './manager-materials-inventory';
 import { ManagerState } from './manager-shared';
@@ -132,7 +133,12 @@ export function ManagerMaterialsPage() {
           )}
         </ManagerState>
       ) : (
-        <ManagerState pending={courses.isPending} error={courses.error} retry={courses.refetch}>
+        <ManagerState
+          pending={courses.isPending}
+          loading={<ManagerMaterialsLoading />}
+          error={courses.error}
+          retry={courses.refetch}
+        >
           {courses.data && (
             <ManagerMaterialsDashboard courses={courses.data} onSelect={setCourseId} />
           )}
