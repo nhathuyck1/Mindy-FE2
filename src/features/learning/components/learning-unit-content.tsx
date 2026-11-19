@@ -10,6 +10,7 @@ import type { LearningClass, LearningUnit } from '../schemas/learning-contracts'
 import { LearningState } from './learning-state';
 import { LearningMaterialList } from './learning-material-list';
 import { studentMeetingUrl } from '../lib/student-meeting';
+import { studentSessionHref } from '@/features/user/lib/student-session-link';
 
 function sessionDate(value: string) {
   return new Intl.DateTimeFormat('vi-VN', {
@@ -86,6 +87,16 @@ export function LearningUnitContent(props: {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold text-mint">
+            <Link
+              href={studentSessionHref({
+                sessionId: session.id,
+                startsAt: session.startsAt,
+                enrollmentId: props.context.enrollmentId,
+              })}
+              className="inline-flex min-h-11 items-center gap-1 rounded focus-visible:outline-2 focus-visible:outline-mint"
+            >
+              Chi tiết buổi học <ArrowUpRight aria-hidden="true" className="size-3.5" />
+            </Link>
             {session.status !== 'CANCELLED' && (
               <>
                 <Link

@@ -1,5 +1,12 @@
 # API catalog, lớp học và tài khoản
 
+## Viewport socket và chi tiết Student — 18/11/2026
+
+- Contract source local mới ở BE codex/whiteboard-viewport; chưa xác nhận deploy. Socket /ws/whiteboards nhận board:viewport sau board:join với ACK: {epoch,x,y,width,height,scale}. x/y là góc trên trái theo tọa độ world (±100000), width/height là CSS pixel (1–16384), scale 0.1–4; mọi số phải hữu hạn, không nhận field lạ.
+- BE kiểm quyền canControl và epoch trước khi relay; thông điệp server thêm connectionId và identity:{id,name}. Mọi recipient được xác thực và kiểm lại quyền board. ACK thành công {ok:true,data:{accepted:true}} là relay tạm thời, không phải lưu nội dung. Lỗi 422 BOARD_INVALID_INPUT, 403 BOARD_READ_ONLY, 409 BOARD_EPOCH_CHANGED cùng các lỗi auth/access hiện hữu; giữ giới hạn 30 commands/giây/socket.
+- FE gửi throttle 150 ms và heartbeat 2 giây khi bảng giảng viên đang hiển thị; late join nhận FOV ở heartbeat kế tiếp. Client bỏ epoch sai; viewport đến trước ACK join được giữ trong RAM và chỉ áp dụng khi epoch đồng bộ khớp. Hết hạn presenter 6 giây hoặc offline thì dừng báo đang theo nhưng giữ camera cuối; revoked/reset xóa cả camera đã giữ. Không lưu FOV trong Yjs/DB. Con trỏ tiếp tục dùng board:awareness {x,y}.
+- Trang Student tái sử dụng GET me/schedule, me/classes/:id, class-sessions/:id/context cho học bù, materials theo class/unit, assignments theo class/session và session whiteboard. Không đổi REST/proxy hay mở rộng scope học bù.
+
 ## Đổi giảng viên phụ trách — 06/11/2026
 
 - Admin sửa lớp gọi `GET /management/classes/:classId/available-mentors` với page/pageSize/search. Danh sách có assignmentVersion, affectedSessionCount, isCurrent; BE kiểm lịch dạy và nghỉ đã duyệt. Đã đối chiếu controller/service BE và Swagger live.

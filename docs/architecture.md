@@ -1,5 +1,11 @@
 # Kiến trúc Mindy FE2
 
+## Chi tiết buổi học và presenter FOV — 18/11/2026
+
+- Route /user/sessions/[sessionId] validate UUID/ngày và compose StudentSessionPage. Ngày + enrollmentId + makeupPlacementId tùy chọn chỉ chọn đúng event từ useMySchedule đã phân quyền; không lấy quyền từ query string. Không tìm thấy thì quay về lịch để lấy lịch mới. LearningUnitContent có lối chi tiết dùng cùng helper studentSessionHref.
+- StudentSessionResources đọc lớp/context học bù như trước, tìm chương bằng classUnitId và sessionId. StudentSessionMaterials dùng useUnitMaterials/LearningMaterialList chung, lọc đúng tài liệu chung hoặc session hiện tại; không render bộ chọn chương hay nội dung buổi khác. CASH_PREVIEW/buổi hủy không mount board, tài liệu, assignment riêng tư; học bù giữ scope hiện có, không đọc nguyên lớp đích.
+- BoardConnection nhận board:viewport theo Zod và epoch, giữ presenter tách khỏi Yjs/document/presence. WhiteboardWorkspace gửi world origin + CSS dimensions + scale khi canControl; Student fit cùng FOV vào kích thước canvas, giữ con trỏ world hiện có. Tự di chuyển dừng theo; heartbeat cho late join và expiry. BoardConnection đệm viewport đến trước ACK join, kiểm epoch rồi mới áp dụng; presenterViewport giữ camera cuối khi mất tín hiệu tạm thời, tách khỏi trạng thái presenter đang hoạt động và xóa khi đổi epoch/deny/stop. Mọi thao tác đặt nội dung/bridge dùng canvasView thực tế. Không thêm migration, endpoint REST, token lưu trữ hoặc quyền ghi Student.
+
 ## Thẻ lớp và học liệu Student — 10/11/2026
 
 - `ClassOverviewCard` dùng chung giữa Mentor và Student. `StudentClassCard` ánh xạ dữ liệu đăng ký và quyền vào các thao tác Student. Hai danh sách Student giữ nguồn dữ liệu, bộ lọc và phân trang hiện có.

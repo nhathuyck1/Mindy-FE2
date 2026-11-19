@@ -1,5 +1,14 @@
 # Tiến độ
 
+## 18/11/2026 — Chi tiết buổi học Student và theo viewport giảng viên
+
+- Bổ sung FE theo yêu cầu: giữ viewport đến sớm trước ACK join và áp dụng sau khi xác nhận epoch; student tự bám pan/zoom/resize trên bảng đầy đủ và bảng nhúng. Giữ camera cuối khi presenter im lặng/offline, xóa khi đổi epoch/thu hồi quyền. Thêm ghi chú/hình/code và thao tác kéo thả dùng cùng camera đang hiển thị để không đặt nội dung ngoài FOV. Không đổi contract hoặc source BE trong lượt bổ sung. Đã kiểm build/type-check, lint, Prettier, 377 unit tests và 34 E2E desktop/mobile liên quan đều pass.
+
+- FE làm trên codex/student-session-details từ origin/main d93a1dd; BE làm trên codex/whiteboard-viewport từ origin/dev a3001ad.
+- Lịch học và nội dung chương dẫn đến /user/sessions/:sessionId?date=...&enrollmentId=...&makeupPlacementId=... (makeupPlacementId tùy chọn). Trang đọc lại lịch có phân quyền, chỉ hiện chương của buổi được chọn, tài liệu chung/chính buổi, điểm danh, bảng vẽ nhúng và QUIZ/ZIP/CODE theo sessionId. Reload/URL trực tiếp dùng API, không dựa vào state dialog hoặc Web Storage.
+- Student mặc định theo FOV giảng viên, có nút bật/tắt; kéo/phóng/vừa nội dung chuyển sang tự xem. FOV giữ đủ vùng trên mobile và dùng cùng hệ tọa độ con trỏ. Giảng viên gửi thay đổi tối đa mỗi 150 ms, refresh 2 giây cho người vào sau; mất kết nối/thu hồi/đổi epoch xóa presenter, presenter im lặng hết hạn sau 6 giây.
+- Local: build/type-check/lint FE pass, 377 unit tests; 44 E2E desktop/mobile pass cho chi tiết, retry, học bù, thanh toán, bảng vẽ, người tham gia và hai chiều viewport. BE socket tests 4/4 pass, type-check/build pass; toàn bộ suite có 375 tests pass, 559 skipped và 6 suite fail do thiếu TEST_DATABASE_URL/MinIO. Chưa deploy hoặc nghiệm thu tài khoản thật.
+
 ## 10/11/2026 — Đồng bộ lớp và học liệu Student với Mentor
 
 - Dùng chung thẻ lớp responsive, tách Tài liệu chung khỏi nội dung theo buổi và đưa lối Bài tập lên thanh tab của lớp. Giữ điều kiện xem trước tiền mặt, quyền xem tài liệu và nút chi tiết đăng ký.
