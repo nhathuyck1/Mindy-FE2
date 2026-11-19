@@ -1066,4 +1066,12 @@ User yêu cầu pause để restart máy/bật Docker. FE production build cuố
 
 - Theo yêu cầu người dùng, commit/push toàn bộ thay đổi hiện tại lên remote tại nhánh `feat/phase7-python-csharp`, gồm validation form, xử lý phiên đăng nhập, template bài CODE và hai fixture E2E đã sửa. Compiler có repo private riêng `Quanhpm/mindy-compiler-runner` trên nhánh `main`.
 - Code ứng dụng trùng checksum bản đã build/test và đang chạy trên server; giữ bằng chứng 376 unit và 553 E2E distinct đạt qua lượt chính/recheck, 5 skip theo viewport, một flaky đạt ở retry. Lượt đồng bộ chỉ bổ sung tài liệu và metadata Git, không đổi API hoặc giao diện và không chạy lại toàn bộ các gate đã đạt.
-- Server đối chiếu source/commit mới với image FE đã nghiệm thu; giữ nguyên cấu hình runtime, dữ liệu và rollback. Nhánh tích hợp khác không được gộp trong lượt đồng bộ source hiện tại.
+- Server đối chiếu source/commit mới với image FE đã nghiệm thu; giữ nguyên cấu hình runtime, dữ liệu và rollback. Sau lần push đầu, tiếp tục gộp các cập nhật nhánh tích hợp như ghi nhận bên dưới.
+
+### Chốt bản kết hợp mới nhất — sync-20261119T145234Z
+
+- Gộp `origin/main` tại `a2c1c3d` vào nhánh Phase 7, giữ Python/C#, validation và template hiện có; bổ sung trang chi tiết buổi học Student và theo góc nhìn Mentor trên bảng vẽ. Backend cùng lượt đã gộp `origin/dev` tại `829cad6`.
+- Nâng Next.js và eslint-config-next lên 16.4.6. Bản cũ 16.4.1 nằm trong dải ảnh hưởng của [GHSA-mfr8-8qww-v76h](https://github.com/vercel/next.js/security/advisories/GHSA-mfr8-8qww-v76h) và [GHSA-vc7v-qv4w-wrv8](https://github.com/vercel/next.js/security/advisories/GHSA-vc7v-qv4w-wrv8); cả hai advisory ghi bản vá từ 16.4.5. Package và lockfile được cập nhật cùng nhau.
+- Sửa lỗi debounce tìm người dùng dùng URL filter cũ khi vừa đổi trạng thái: reschedule timer theo snapshot search params mới. Có E2E regression cho desktop/mobile. Không thay đổi contract API hoặc lưu bản sao server state trong client store.
+- Lint/format/types/build và 379 unit đạt. Full E2E cộng recheck sau sửa có 565 kịch bản distinct đạt, 5 skip theo viewport; lần cuối chạy toàn bộ hai suite Admin được 32/32 đạt. Không coi lượt full trước sửa race là xanh.
+- Đưa Dockerfile và .dockerignore production vào Git, giữ port container 3001, non-root runtime, healthcheck và cấu hình origin hiện hành. Loại `.env`, dependency/build outputs và tài liệu khỏi Docker build context. Image mới được build trước khi cutover; source/commit trên server được đối chiếu với Git remote.
