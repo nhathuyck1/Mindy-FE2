@@ -1,5 +1,11 @@
 # Tiến độ
 
+## 20/11/2026 — Tổng quan Manager ưu tiên doanh thu
+
+- Đưa thu tiền/biểu đồ lên đầu theo lựa chọn của người dùng. Gộp tiền với số đơn tương ứng, đưa thống kê tài liệu xuống dưới, giữ thao tác lọc/thử lại và các hàng chờ. Thu tiền là hành động chính trên header.
+- Căn biểu đồ chính cùng hàng trên desktop rộng, thu chiều cao biểu đồ khóa/lớp theo số mục. Donut có số đơn ở tâm, tên Tiền mặt/PayOS và màu phương thức cố định. Cảnh báo vận hành gọn thành hai cột, có link lịch lớp/thu tiền; mã đơn đối soát nằm trong disclosure.
+- Kiểm chứng: 382 unit tests PASS; 108 E2E hồi quy Manager/đơn nghỉ/lịch hôm nay PASS và bộ cuối 18 E2E dashboard ba vai trò/Manager PASS. Kiểm empty/error/retry, filter 30/90/365, liên kết, định dạng tiền chính xác với chuỗi lớn và không tràn ngang 320/768/1024/1440px. Đã xem ảnh render đầy đủ ở bốn kích thước, lưu tại `test-results/manager-overview-final`. Production build/TypeScript, ESLint/Prettier file sửa PASS; build có cảnh báo bảo mật Next.js hiện hữu, thành công sau khi chạy lại. Dùng API fixtures, không thay BE hoặc ghi dữ liệu nghiệp vụ thật.
+
 ## 19/11/2026 — Phân công mentor dạy thay theo buổi
 
 - Theo lựa chọn UX: chọn lớp → chọn buổi học → tìm/chọn giảng viên dạy thay → lý do → xác nhận. Dùng trang Lịch và khai giảng hiện hữu của Manager và disclosure trong Xếp lịch lớp của Admin. Có trạng thái lớp đang học, phân trang buổi, lịch/người phụ trách hiện tại, gán/đổi và gỡ để trở về mentor chính. Buổi hoàn thành/hủy không cho chọn.
