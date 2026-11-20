@@ -12,9 +12,16 @@ import { RelatedCourses } from './related-courses';
 import { CourseOverview } from './course-overview';
 import { CourseRegistrationCard } from './course-registration-card';
 
-export function CourseDetailContent(props: { courseId: string; initialClassId?: string }) {
+export function CourseDetailContent(props: {
+  courseId: string;
+  initialClassId?: string;
+  initialTrialOnly?: boolean;
+}) {
   const query = useCourseDetail(props.courseId);
-  const [pickerOpen, setPickerOpen] = useState(Boolean(props.initialClassId));
+  const [pickerOpen, setPickerOpen] = useState(
+    Boolean(props.initialClassId) || Boolean(props.initialTrialOnly),
+  );
+  const [trialOnly, setTrialOnly] = useState(Boolean(props.initialTrialOnly));
   if (query.isPending)
     return (
       <div className="course-detail-container py-10">
@@ -134,14 +141,31 @@ export function CourseDetailContent(props: { courseId: string; initialClassId?: 
               </a>
             ))}
           </nav>
-          <CourseOverview course={course} onChooseClass={() => setPickerOpen(true)} />
+          <CourseOverview
+            course={course}
+            onChooseClass={() => {
+              setTrialOnly(false);
+              setPickerOpen(true);
+            }}
+          />
           <RelatedCourses courseId={course.id} categoryId={course.category.id} />
         </div>
-        <CourseRegistrationCard course={course} onChooseClass={() => setPickerOpen(true)} />
+        <CourseRegistrationCard
+          course={course}
+          onChooseClass={() => {
+            setTrialOnly(false);
+            setPickerOpen(true);
+          }}
+          onTrialClass={() => {
+            setTrialOnly(true);
+            setPickerOpen(true);
+          }}
+        />
       </div>
       {pickerOpen && (
         <ClassPicker
           course={course}
+          trialOnly={trialOnly}
           initialClassId={props.initialClassId}
           onClose={() => setPickerOpen(false)}
         />

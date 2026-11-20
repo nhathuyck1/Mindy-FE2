@@ -11,7 +11,11 @@ const sessionLabels = {
   CANCELLED: 'Đã hủy',
 } as const;
 
-export function ClassTimetable(props: { classId: string; courseId: string }) {
+export function ClassTimetable(props: {
+  classId: string;
+  courseId: string;
+  courseIsTrial?: boolean;
+}) {
   const detail = useClassDetail(props.classId, props.courseId);
   if (detail.isPending) return <QueryState loading title="Đang tải lịch học…" />;
   if (detail.isError)
@@ -51,7 +55,7 @@ export function ClassTimetable(props: { classId: string; courseId: string }) {
             : 'Lớp đã hết chỗ'}
         </p>
       </div>
-      <ClassRegistration detail={data} />
+      <ClassRegistration detail={data} courseIsTrial={props.courseIsTrial} />
       <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
         <h4 className="text-sm font-extrabold">Lịch chi tiết · {sessions.length} buổi</h4>
         <p className="text-[11px] text-muted">Giờ Việt Nam (UTC+7)</p>

@@ -1,5 +1,11 @@
 # Quy tắc giao diện Mindy
 
+## Lời mời học thử và lối tắt lịch lớp — 20/11/2026
+
+- Thanh điều hướng có “Bạn muốn học thử?” màu mint, cùng ngôn ngữ Nunito/forest của public site; mobile đặt trong trình đơn hiện hữu. Mở `/trial` với lời giới thiệu ngắn và danh sách thật, không hiện control lọc học thử/sidebar bộ lọc.
+- Khóa học có lớp thử dẫn tới picker chỉ hiển thị lớp thử. Dùng nhãn nhỏ “Học thử”, thêm “0đ” duy nhất khi học phí BE bằng 0. Không quảng cáo mọi lớp thử là miễn phí hoặc đã cấp quyền sau thêm giỏ.
+- Trạng thái lớp Admin có nút lịch 44px với icon CalendarDays, mở lịch ngay trong dialog hiện hữu; màu và form/xác nhận còn lại giữ nguyên.
+
 ## Bảng tài nguyên Admin mở tại chỗ — 20/11/2026
 
 - Người dùng/Khóa học/Lớp học dùng header trắng 48px, hàng 60px, email/mã riêng; NameAvatar cho người dùng và icon cho khóa/lớp. Giữ Inter/palette Mindy. Quy tắc này thay header soft trong ghi chú cũ của ba bảng.

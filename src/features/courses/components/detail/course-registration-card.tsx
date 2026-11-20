@@ -7,20 +7,32 @@ import { LoginRequiredDialog } from '../enrollment/login-required-dialog';
 import { Icon } from '@/components/ui/icon';
 import type { CourseDetail } from '../../schemas/course-contracts';
 import { formatPrice } from '../../lib/course-format';
+import { isTrialNamed } from '../../lib/trial';
+import { TrialBadge } from '../shared/trial-badge';
 
-export function CourseRegistrationCard(props: { course: CourseDetail; onChooseClass: () => void }) {
+export function CourseRegistrationCard(props: {
+  course: CourseDetail;
+  onChooseClass: () => void;
+  onTrialClass: () => void;
+}) {
   const session = useSession();
   const registrationButton = useRef<HTMLButtonElement>(null);
   const [checking, setChecking] = useState(false);
   const [loginRequired, setLoginRequired] = useState(false);
   const course = props.course;
   const units = course.units;
+  const trial = isTrialNamed(course.title, course.code);
   return (
     <aside
       className="order-first space-y-4 lg:sticky lg:top-28 lg:order-none"
       aria-label="Đăng ký khóa học"
     >
       <div className="rounded-2xl border border-line bg-canvas p-6 shadow-sm shadow-forest/5 xl:p-7">
+        {trial && (
+          <div className="mb-3">
+            <TrialBadge priceAmount={course.priceAmount} />
+          </div>
+        )}
         <p className="text-sm font-semibold text-muted">Học phí khóa học</p>
         <p className="mt-1 text-4xl font-extrabold text-mint">{formatPrice(course.priceAmount)}</p>
         <p className="mt-2 text-sm leading-relaxed font-semibold text-muted">
@@ -48,8 +60,17 @@ export function CourseRegistrationCard(props: { course: CourseDetail; onChooseCl
           }}
           className="mt-5 flex min-h-13 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-coral px-4 text-base font-extrabold text-canvas transition-colors hover:bg-headsup disabled:cursor-wait disabled:opacity-60"
         >
-          Đăng ký học ngay <Icon name="arrow" className="size-4" />
+          {trial ? 'Đăng ký học thử' : 'Đăng ký học ngay'} <Icon name="arrow" className="size-4" />
         </button>
+        {!trial && (
+          <button
+            type="button"
+            onClick={props.onTrialClass}
+            className="mt-3 min-h-11 w-full cursor-pointer rounded-lg border border-mint px-4 py-2 text-sm font-bold text-mint hover:bg-soft"
+          >
+            Bạn muốn học thử? Xem lịch lớp
+          </button>
+        )}
         <a
           href="#giao-trinh"
           className="mt-3 flex min-h-13 items-center justify-center gap-2 rounded-lg border border-forest bg-forest px-4 text-base font-extrabold text-canvas transition-colors hover:border-mint hover:bg-mint"

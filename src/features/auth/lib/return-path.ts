@@ -103,6 +103,7 @@ export function safeReturnPath(value: string | null | undefined): string {
         : `/manager/materials?view=inventory${reviewStatus ? `&reviewStatus=${reviewStatus}` : ''}`;
     }
     if (url.pathname === '/courses') return '/courses';
+    if (url.pathname === '/trial') return '/trial';
     if (url.pathname === '/cart') return '/cart';
     if (url.pathname === '/payment/result') {
       const code = providerOrderCodeSchema.safeParse(url.searchParams.get('orderCode'));

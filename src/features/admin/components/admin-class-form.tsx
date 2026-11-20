@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { CalendarDays } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useAdminCreateOptions, useAdminWrite } from '../api/admin-edit-queries';
 import {
@@ -156,7 +158,7 @@ export function AdminCreateClassForm(props: { onCreated: (id: string) => void })
   );
 }
 
-export function AdminClassForm(props: { initial: AdminClassDetail }) {
+export function AdminClassForm(props: { initial: AdminClassDetail; onOpenSchedule: () => void }) {
   const mutation = useAdminWrite();
   const [error, setError] = useState('');
   const editable = !['COMPLETED', 'CANCELLED'].includes(props.initial.status);
@@ -247,6 +249,15 @@ export function AdminClassForm(props: { initial: AdminClassDetail }) {
       {actions.length > 0 && (
         <section className="space-y-3 border-t border-line pt-5">
           <h3 className="font-extrabold">Trạng thái lớp</h3>
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11"
+            onClick={props.onOpenSchedule}
+            disabled={mutation.isPending}
+          >
+            <CalendarDays aria-hidden="true" className="size-4" /> Mở lịch học của lớp
+          </Button>
           <p className="text-sm leading-7 text-muted">
             Mở tuyển sinh cần lịch buổi hợp lệ. Hoàn thành lớp cần xử lý xong các buổi học còn dang
             dở.

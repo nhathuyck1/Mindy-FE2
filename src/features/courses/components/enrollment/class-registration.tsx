@@ -8,8 +8,10 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import type { ClassDetail } from '../../schemas/course-contracts';
+import { isTrialNamed } from '../../lib/trial';
 
-export function ClassRegistration(props: { detail: ClassDetail }) {
+export function ClassRegistration(props: { detail: ClassDetail; courseIsTrial?: boolean }) {
+  const trial = props.courseIsTrial || isTrialNamed(props.detail.name, props.detail.code);
   const session = useSession();
   const addItem = useAddCartItem();
   const router = useRouter();
@@ -66,7 +68,9 @@ export function ClassRegistration(props: { detail: ClassDetail }) {
                   ? 'Lớp đã hết chỗ'
                   : session.isError
                     ? 'Kiểm tra lại phiên đăng nhập'
-                    : 'Đăng ký lớp này'}
+                    : trial
+                      ? 'Đăng ký học thử'
+                      : 'Đăng ký lớp này'}
           </Button>
           {session.data && session.data.role !== 'STUDENT' && (
             <p className="mt-2 text-xs text-muted">Đăng ký lớp dành cho tài khoản học viên.</p>

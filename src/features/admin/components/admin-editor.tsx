@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
 import { CalendarDays, Pencil, Users, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,14 +20,24 @@ function AdminEditorDialog(props: {
   returnFocus?: HTMLElement | null;
   embedded?: boolean;
   schedule?: boolean;
+  onOpenSchedule?: () => void;
 }) {
   const [id, setId] = useState(props.id);
+  const [localSchedule, setLocalSchedule] = useState(false);
+  const schedule = props.schedule || localSchedule;
+  const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (schedule) {
+      panel.current?.focus({ preventScroll: true });
+      panel.current?.closest('[role="dialog"]')?.scrollTo({ top: 0 });
+    }
+  }, [schedule]);
   const query = useAdminDetail(props.resource, id);
   const label = adminResources[props.resource].singular;
   return (
     <Modal
       title={
-        props.schedule
+        schedule
           ? 'Lịch học của lớp'
           : id && props.resource === 'users'
             ? 'Trạng thái tài khoản'
@@ -38,7 +48,7 @@ function AdminEditorDialog(props: {
       returnFocus={props.returnFocus}
       embedded={props.embedded}
     >
-      <div className="p-5 sm:p-6">
+      <div ref={panel} tabIndex={-1} className="p-5 outline-none sm:p-6">
         {id ? (
           query.isPending || query.isError ? (
             <AdminQueryState
@@ -51,13 +61,16 @@ function AdminEditorDialog(props: {
             <AdminUserForm user={query.data.value} />
           ) : query.data.resource === 'courses' ? (
             <AdminCourseForm initial={query.data.value} onCreated={setId} />
-          ) : props.schedule ? (
+          ) : schedule ? (
             <AdminClassSessions
               classroom={query.data.value}
               editable={!['COMPLETED', 'CANCELLED'].includes(query.data.value.status)}
             />
           ) : (
-            <AdminClassForm initial={query.data.value} />
+            <AdminClassForm
+              initial={query.data.value}
+              onOpenSchedule={props.onOpenSchedule ?? (() => setLocalSchedule(true))}
+            />
           )
         ) : props.resource === 'users' ? (
           <AdminCreateUserForm onCreated={setId} />
@@ -175,6 +188,7 @@ export function AdminRowActions(props: { resource: AdminResource; row: AdminRow 
               <AdminEditorDialog
                 embedded
                 schedule={action === 'schedule'}
+                onOpenSchedule={() => setAction('schedule')}
                 resource={props.resource}
                 id={props.row.id}
                 onClose={close}
