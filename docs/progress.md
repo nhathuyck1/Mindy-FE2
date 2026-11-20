@@ -1,5 +1,11 @@
 # Tiến độ
 
+## 20/11/2026 — Hoàn tất đăng ký khóa học 0đ
+
+- FE từ main 39056d1: giỏ 0đ cho xác nhận đăng ký, ẩn chọn PAYOS/CASH; chỉ chuyển Khóa học của tôi khi BE trả PAID. Đơn miễn phí PENDING có màn hình kiểm tra riêng và không tạo PayOS/QR, kể cả truy cập checkout trực tiếp. Đơn miễn phí được ghi nhãn đúng trong danh sách đơn; làm mới quyền học/lịch sau checkout.
+- BE đi kèm từ dev 6d9a497 tự xác nhận đơn có tổng 0 từ giá server và kích hoạt enrollment/progress trong cùng transaction; không tạo payment/provider call. Luồng có phí và grouping hiện hữu giữ nguyên. Cần triển khai cả BE và FE; chưa deploy hoặc ghi dữ liệu production.
+- Kiểm chứng: 394 unit tests FE PASS; build FE/BE PASS, type-check và ESLint các file sửa PASS; PostgreSQL test riêng chạy 71 ca commerce/payment/miễn phí PASS (8 ca mới). Playwright desktop/mobile: 50 ca checkout PASS, trong đó 2 ca được chạy lại sau khi sửa locator theo subtitle thật. Subagent review phát hiện lối phục hồi khi mất response đơn miễn phí PAID; đã sửa copy và thêm link Khóa học của tôi/Đơn hàng của tôi, kiểm ESLint sau thay đổi này. Không mở rộng suite ngoài phạm vi yêu cầu.
+
 ## 20/11/2026 — Lời mời học thử và mở nhanh lịch lớp
 
 - FE-only theo yêu cầu: thêm “Bạn muốn học thử?” trên điều hướng desktop/mobile tới `/trial`. Trang giữ lời giới thiệu, tìm kiếm và danh sách, không hiện sidebar/checkbox/sắp xếp học thử. Tìm theo từ `thử` hoặc token `TRIAL` trong tên/mã course/class, đọc đủ phân trang với concurrency 4. Lớp thử dưới khóa tên bình thường và ở trang sau vẫn được tìm; loading/error/retry/empty tách biệt.

@@ -49,7 +49,7 @@ export function PendingOrders() {
                 {order.paymentType === 'PAYOS' ? (
                   <Button asChild variant="outline" className="min-h-11">
                     <Link href={`/checkout/${order.id}`}>
-                      Tiếp tục thanh toán
+                      {order.totalAmount === 0 ? 'Kiểm tra đăng ký' : 'Tiếp tục thanh toán'}
                       <ArrowRight aria-hidden="true" />
                     </Link>
                   </Button>

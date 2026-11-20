@@ -109,7 +109,11 @@ export function UserOrdersPage() {
                       </td>
                       <td className="px-5 py-3 whitespace-nowrap">{formatDate(order.createdAt)}</td>
                       <td className="px-5 py-3 whitespace-nowrap">
-                        {order.paymentType === 'PAYOS' ? 'payOS' : 'Tiền mặt'}
+                        {order.totalAmount === 0
+                          ? 'Miễn phí'
+                          : order.paymentType === 'PAYOS'
+                            ? 'payOS'
+                            : 'Tiền mặt'}
                       </td>
                       <td className="px-5 py-3">{order.details.length}</td>
                       <td className="px-5 py-3 font-bold whitespace-nowrap">
@@ -124,7 +128,11 @@ export function UserOrdersPage() {
                               : 'bg-peach text-black')
                           }
                         >
-                          {labels[order.status]}
+                          {order.totalAmount === 0 && order.status === 'PAID'
+                            ? 'Đã đăng ký miễn phí'
+                            : order.totalAmount === 0 && order.status === 'PENDING'
+                              ? 'Chờ xác nhận đăng ký'
+                              : labels[order.status]}
                         </span>
                       </td>
                       <td className="px-5 py-3 whitespace-nowrap">
@@ -157,11 +165,22 @@ export function UserOrdersPage() {
           <dl className="grid gap-5 text-sm sm:grid-cols-2">
             {[
               ['Mã đơn hàng', selected.orderCode],
-              ['Trạng thái', labels[selected.status]],
+              [
+                'Trạng thái',
+                selected.totalAmount === 0 && selected.status === 'PAID'
+                  ? 'Đã đăng ký miễn phí'
+                  : selected.totalAmount === 0 && selected.status === 'PENDING'
+                    ? 'Chờ xác nhận đăng ký'
+                    : labels[selected.status],
+              ],
               ['Ngày tạo', formatDate(selected.createdAt)],
               [
                 'Hình thức thanh toán',
-                selected.paymentType === 'PAYOS' ? 'Chuyển khoản payOS' : 'Tiền mặt',
+                selected.totalAmount === 0
+                  ? 'Miễn phí'
+                  : selected.paymentType === 'PAYOS'
+                    ? 'Chuyển khoản payOS'
+                    : 'Tiền mặt',
               ],
               ['Hạn thanh toán', formatDate(selected.expiresAt)],
               [
@@ -196,7 +215,11 @@ export function UserOrdersPage() {
             <CancelOrderButton order={selected} onCancelled={setSelected} />
             {selected.paymentType === 'PAYOS' && (
               <Button asChild>
-                <Link href={'/checkout/' + selected.id}>Xem trạng thái thanh toán</Link>
+                <Link href={'/checkout/' + selected.id}>
+                  {selected.totalAmount === 0
+                    ? 'Xem trạng thái đăng ký'
+                    : 'Xem trạng thái thanh toán'}
+                </Link>
               </Button>
             )}
           </div>
