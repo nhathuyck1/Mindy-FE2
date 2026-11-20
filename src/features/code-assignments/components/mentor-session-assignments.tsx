@@ -10,6 +10,7 @@ import { Modal } from '@/components/ui/modal';
 import { codeError, useCodeCommand, useCodeQuery } from '../api/code-queries';
 import { assignmentPageSchema, assignmentSchema } from '../schemas/code-contracts';
 import { CodeBadge, CodeMessage, CodeSection } from './code-ui';
+import { minimumLocalInput } from '@/features/mentor/lib/schedule-time';
 
 /** "Bài tập code" block on the mentor session page: list + create a CODE draft. */
 export function MentorSessionAssignments(props: { sessionId: string; readonly?: boolean }) {
@@ -23,6 +24,7 @@ export function MentorSessionAssignments(props: { sessionId: string; readonly?: 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: '', maxScore: '10', maxAttempts: '10', dueAt: '' });
   const [error, setError] = useState('');
+  const [now, setNow] = useState(Date.now);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -142,6 +144,8 @@ export function MentorSessionAssignments(props: { sessionId: string; readonly?: 
                 <Input
                   required
                   type="datetime-local"
+                  min={minimumLocalInput(now)}
+                  onFocus={() => setNow(Date.now())}
                   value={form.dueAt}
                   onChange={(e) => setForm({ ...form, dueAt: e.target.value })}
                 />

@@ -12,6 +12,7 @@ import { ApiError } from '@/lib/api/client';
 import { useAssignmentCommand } from '../api/assignment-queries';
 import * as dto from '../schemas/assignment-contracts';
 import { ErrorNotice, fieldClass, panelClass } from './assignment-ui';
+import { keepSavedMinimum, minimumScheduleInput } from '@/features/mentor/lib/schedule-time';
 
 export function toDateInput(value: string | null) {
   return value ? new Date(Date.parse(value) + 7 * 3600000).toISOString().slice(0, 16) : '';
@@ -21,6 +22,7 @@ function iso(value: FormDataEntryValue | null) {
 }
 function MetadataFields(props: { item?: dto.Assignment; type: string; disabled: boolean }) {
   const a = props.item;
+  const [now, setNow] = useState(Date.now);
   return (
     <fieldset disabled={props.disabled} className="grid min-w-0 gap-5">
       <label className={fieldClass}>
@@ -38,6 +40,8 @@ function MetadataFields(props: { item?: dto.Assignment; type: string; disabled: 
             type="datetime-local"
             name="dueAt"
             required={props.type === 'ZIP'}
+            min={keepSavedMinimum(toDateInput(a?.dueAt ?? null), minimumScheduleInput(now))}
+            onFocus={() => setNow(Date.now())}
             defaultValue={toDateInput(a?.dueAt ?? null)}
           />
         </label>

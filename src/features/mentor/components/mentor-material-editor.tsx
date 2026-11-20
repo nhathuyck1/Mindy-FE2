@@ -19,7 +19,7 @@ import {
 import { MentorFileUpload } from './mentor-file-upload';
 import { MentorUploadFileCard } from './mentor-upload-file-card';
 import { MentorPagination, MentorQueryState } from './mentor-shared';
-import { minimumScheduleInput } from '../lib/schedule-time';
+import { keepSavedMinimum, minimumScheduleInput } from '../lib/schedule-time';
 
 export function MentorMaterialEditor(props: {
   unit: ContentUnit;
@@ -56,6 +56,9 @@ export function MentorMaterialEditor(props: {
   const [sessionId, setSessionId] = useState(material?.sessionId ?? '');
   const [minimumTime, setMinimumTime] = useState(() => minimumScheduleInput(Date.now()));
   const refreshMinimumTime = () => setMinimumTime(minimumScheduleInput(Date.now()));
+  const savedAvailableAt = material?.availableAt
+    ? new Date(Date.parse(material.availableAt) + 7 * 3600000).toISOString().slice(0, 16)
+    : '';
   const sessions = useMentorQuery(
     `mentor/classes/${props.unit.classId}/units/${props.unit.id}/sessions?page=${sessionPage}&pageSize=20`,
     unitSessionsSchema,
@@ -204,17 +207,11 @@ export function MentorMaterialEditor(props: {
               <Input
                 type="datetime-local"
                 name="availableAt"
-                min={material ? undefined : minimumTime}
-                onFocus={material ? undefined : refreshMinimumTime}
-                onClick={material ? undefined : refreshMinimumTime}
+                min={keepSavedMinimum(savedAvailableAt, minimumTime)}
+                onFocus={refreshMinimumTime}
+                onClick={refreshMinimumTime}
                 className="mt-2"
-                defaultValue={
-                  material?.availableAt
-                    ? new Date(Date.parse(material.availableAt) + 7 * 3600000)
-                        .toISOString()
-                        .slice(0, 16)
-                    : ''
-                }
+                defaultValue={savedAvailableAt}
               />
             </label>
           </div>

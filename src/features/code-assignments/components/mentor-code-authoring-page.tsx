@@ -56,6 +56,7 @@ import { CodeTestsStep } from './code-tests-step';
 import { type CodeThemeId, useCodeTheme } from './code-theme';
 import { CodeMessage } from './code-ui';
 import { ResizableSplit } from './resizable-split';
+import { minimumLocalInput } from '@/features/mentor/lib/schedule-time';
 
 /** The studio has three screens; the old "function" step now lives inside "problem". */
 type StudioStep = 'problem' | 'tests' | 'publish';
@@ -498,6 +499,7 @@ function AfterPublishPanel(props: { data: MentorAuthoring }) {
     maxAttempts: String(a.maxAttempts),
     reason: '',
   });
+  const [now, setNow] = useState(Date.now);
   const [archiveReason, setArchiveReason] = useState('');
   async function post(action: string, body: Record<string, unknown>, ok: string) {
     try {
@@ -539,6 +541,8 @@ function AfterPublishPanel(props: { data: MentorAuthoring }) {
                 <Field label="Hạn mới" hint="giờ trên máy bạn">
                   <input
                     type="datetime-local"
+                    min={minimumLocalInput(Math.max(now, Date.parse(a.dueAt ?? '') || 0))}
+                    onFocus={() => setNow(Date.now())}
                     value={extension.dueAt}
                     onChange={(e) => setExtension({ ...extension, dueAt: e.target.value })}
                     className={cn(fieldClass, 'h-9')}
@@ -567,19 +571,21 @@ function AfterPublishPanel(props: { data: MentorAuthoring }) {
                 variant="outline"
                 disabled={command.isPending || !extension.reason.trim()}
                 onClick={() =>
-                  void post(
-                    'code-extension',
-                    {
-                      ...(extension.dueAt
-                        ? { dueAt: new Date(extension.dueAt).toISOString() }
-                        : {}),
-                      ...(Number(extension.maxAttempts) !== a.maxAttempts
-                        ? { maxAttempts: Number(extension.maxAttempts) }
-                        : {}),
-                      reason: extension.reason,
-                    },
-                    'Đã cập nhật hạn nộp / số lượt.',
-                  )
+                  extension.dueAt && new Date(extension.dueAt).getTime() <= Date.now()
+                    ? toast.error('Hạn mới phải ở tương lai.')
+                    : void post(
+                        'code-extension',
+                        {
+                          ...(extension.dueAt
+                            ? { dueAt: new Date(extension.dueAt).toISOString() }
+                            : {}),
+                          ...(Number(extension.maxAttempts) !== a.maxAttempts
+                            ? { maxAttempts: Number(extension.maxAttempts) }
+                            : {}),
+                          reason: extension.reason,
+                        },
+                        'Đã cập nhật hạn nộp / số lượt.',
+                      )
                 }
               >
                 Lưu thay đổi

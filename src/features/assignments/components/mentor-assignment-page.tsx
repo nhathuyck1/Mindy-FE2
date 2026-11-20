@@ -24,6 +24,7 @@ import {
   panelClass,
 } from './assignment-ui';
 import { AssignmentMetadataEditor, toDateInput } from './assignment-metadata-form';
+import { minimumScheduleInput } from '@/features/mentor/lib/schedule-time';
 import { QuizQuestionEditor } from './quiz-question-editor';
 import { AssignmentUpload } from './assignment-upload';
 import { AssignmentHistory, AssignmentRoster } from './assignment-reports';
@@ -436,6 +437,9 @@ function ExtendForm(props: { item: dto.Assignment; onSaved: () => void }) {
   const command = useAssignmentCommand(dto.extensionSchema);
   const [error, setError] = useState<unknown>(null);
   const [blocked, setBlocked] = useState(false);
+  const [now, setNow] = useState(Date.now);
+  const savedDue = toDateInput(props.item.dueAt);
+  const earliestDue = minimumScheduleInput(now);
   return (
     <form
       className={`${panelClass} space-y-5`}
@@ -484,7 +488,14 @@ function ExtendForm(props: { item: dto.Assignment; onSaved: () => void }) {
       <fieldset disabled={command.isPending || blocked} className="grid gap-5 sm:grid-cols-2">
         <label className={fieldClass}>
           Hạn nộp mới
-          <Input type="datetime-local" name="dueAt" defaultValue={toDateInput(props.item.dueAt)} />
+          <Input
+            type="datetime-local"
+            name="dueAt"
+            min={savedDue > earliestDue ? savedDue : earliestDue}
+            onFocus={() => setNow(Date.now())}
+            // A past deadline starts empty so only future times can be picked.
+            defaultValue={savedDue > earliestDue ? savedDue : ''}
+          />
         </label>
         <label className={fieldClass}>
           Số lượt tối đa

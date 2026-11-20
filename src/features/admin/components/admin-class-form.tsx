@@ -21,6 +21,8 @@ import {
 import { AdminQueryState } from './admin-query-state';
 import { AdminStatus } from './admin-status';
 import { AdminClassMentor } from './admin-class-mentor';
+import { vietnamDate } from '@/lib/weekly-timetable';
+import { keepSavedMinimum } from '@/features/mentor/lib/schedule-time';
 
 function ClassScheduleFields(props: { initial?: AdminClassDetail }) {
   return (
@@ -30,6 +32,8 @@ function ClassScheduleFields(props: { initial?: AdminClassDetail }) {
         label="Ngày khai giảng"
         type="date"
         defaultValue={props.initial?.startDate}
+        // No past dates; an existing past date can still be saved unchanged.
+        min={keepSavedMinimum(props.initial?.startDate ?? '', vietnamDate())}
         required
       />
       <AdminField
@@ -37,6 +41,7 @@ function ClassScheduleFields(props: { initial?: AdminClassDetail }) {
         label="Ngày kết thúc"
         type="date"
         defaultValue={props.initial?.endDate}
+        min={keepSavedMinimum(props.initial?.endDate ?? '', vietnamDate())}
         required
       />
       <AdminField

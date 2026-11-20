@@ -18,6 +18,7 @@ import {
   type MaterialDetail,
 } from '../schemas/manager-contracts';
 import { ManagerFileUpload } from './manager-file-upload';
+import { keepSavedMinimum, minimumScheduleInput } from '@/features/mentor/lib/schedule-time';
 import { ManagerFileCard, type ManagerUploadedFile } from './manager-file-card';
 
 export function ManagerMaterialEditor(props: {
@@ -66,6 +67,10 @@ export function ManagerMaterialEditor(props: {
   const [attachmentPending, setAttachmentPending] = useState(false);
   const [error, setError] = useState('');
   const [conflict, setConflict] = useState(false);
+  const [now, setNow] = useState(Date.now);
+  const savedAvailableAt = material?.availableAt
+    ? new Date(Date.parse(material.availableAt) + 7 * 3600000).toISOString().slice(0, 16)
+    : '';
   const command = useManagerCommand(materialDetailSchema);
   const busy = primaryUploading || attachmentUploading || command.isPending;
   return (
@@ -267,13 +272,9 @@ export function ManagerMaterialEditor(props: {
                 <Input
                   name="availableAt"
                   type="datetime-local"
-                  defaultValue={
-                    material?.availableAt
-                      ? new Date(Date.parse(material.availableAt) + 7 * 3600000)
-                          .toISOString()
-                          .slice(0, 16)
-                      : ''
-                  }
+                  min={keepSavedMinimum(savedAvailableAt, minimumScheduleInput(now))}
+                  onFocus={() => setNow(Date.now())}
+                  defaultValue={savedAvailableAt}
                   className="mt-2"
                 />
               </label>

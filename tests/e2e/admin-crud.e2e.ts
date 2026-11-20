@@ -351,6 +351,7 @@ test('Creates and edits a class, schedules in Vietnam time and confirms lifecycl
   page,
   isMobile,
 }, testInfo) => {
+  await page.clock.setFixedTime(new Date('2026-10-19T00:00:00Z'));
   const api = await mockCrud(page);
   if (isMobile) await page.setViewportSize({ width: 320, height: 800 });
   await page.goto('/admin/classes');

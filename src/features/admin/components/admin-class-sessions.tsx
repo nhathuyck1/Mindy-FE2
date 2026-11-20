@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { WeeklySchedulePanel } from '@/features/operations/components/weekly-schedule-panel';
 import { ClassTeachingAssignments } from '@/features/operations/components/class-teaching-assignments';
+import { vietnamDate } from '@/lib/weekly-timetable';
 import { useAdminWrite } from '../api/admin-edit-queries';
 import {
   scheduleAdminSessionSchema,
@@ -193,7 +194,7 @@ export function AdminClassSessions(props: { classroom: AdminClassDetail; editabl
             label="Ngày học"
             type="date"
             required
-            min={props.classroom.startDate}
+            min={[props.classroom.startDate, vietnamDate()].sort().at(-1)}
             max={props.classroom.endDate}
           />
           <div className="grid gap-4 sm:grid-cols-2">

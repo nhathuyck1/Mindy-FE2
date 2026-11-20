@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { apiRequest } from '@/lib/api/client';
+import { vietnamDate } from '@/lib/weekly-timetable';
 import { ClassTeachingAssignments } from './class-teaching-assignments';
 import {
   scheduleClassesSchema,
@@ -239,6 +240,10 @@ export function WeeklySchedulePanel(props: {
       setError('Chọn ngày, slot tuần, tên buổi và lý do đầy đủ.');
       return;
     }
+    if (startDate < vietnamDate()) {
+      setError('Ngày bắt đầu không được ở quá khứ.');
+      return;
+    }
     setBusy(true);
     setError('');
     const intent = apply ? (pending ?? { body: body.data, key: crypto.randomUUID() }) : null;
@@ -301,6 +306,7 @@ export function WeeklySchedulePanel(props: {
               Ngày bắt đầu
               <Input
                 type="date"
+                min={vietnamDate()}
                 value={startDate}
                 onChange={(e) => {
                   setStartDate(e.target.value);
