@@ -8,17 +8,29 @@ import type { CourseDetail } from '../../schemas/course-contracts';
 import { Pagination } from '../shared/pagination';
 import { QueryState } from '../shared/query-state';
 import { ClassTimetable } from './class-timetable';
+import { isTrialNamed } from '../../lib/trial';
+import { TrialBadge } from '../shared/trial-badge';
 
 export function ClassPicker(props: {
   course: CourseDetail;
   initialClassId?: string;
   onClose: () => void;
+  trialOnly?: boolean;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [deliveryMode, setDeliveryMode] = useState('');
   const [page, setPage] = useState(1);
-  const [selectedId, setSelectedId] = useState<string | undefined>(props.initialClassId);
-  const classes = useOpenClasses(props.course.id, deliveryMode, page);
+  const [selectedId, setSelectedId] = useState<string | undefined>(
+    props.trialOnly ? undefined : props.initialClassId,
+  );
+  const courseIsTrial = isTrialNamed(props.course.title, props.course.code);
+  const classes = useOpenClasses(
+    props.course.id,
+    deliveryMode,
+    page,
+    props.trialOnly,
+    courseIsTrial,
+  );
   const items = classes.data?.items ?? [];
   const selected = selectedId;
 
@@ -62,7 +74,7 @@ export function ClassPicker(props: {
         <div>
           <p className="eyebrow mb-1 text-[10px] text-mint">Bắt đầu hành trình</p>
           <h2 id="class-picker-title" className="text-xl font-extrabold sm:text-2xl">
-            Chọn lớp phù hợp với bạn
+            {props.trialOnly ? 'Chọn lớp học thử phù hợp với bạn' : 'Chọn lớp phù hợp với bạn'}
           </h2>
           <p id="class-picker-description" className="mt-1 text-xs text-muted">
             {props.course.title} · Chọn một lớp để xem toàn bộ lịch học.
@@ -102,7 +114,7 @@ export function ClassPicker(props: {
             <QueryState title="Chưa thể tải danh sách lớp" retry={() => void classes.refetch()} />
           ) : items.length === 0 ? (
             <QueryState
-              title="Chưa có lớp đang mở"
+              title={props.trialOnly ? 'Chưa có lớp học thử đang mở' : 'Chưa có lớp đang mở'}
               description="Bạn có thể đổi hình thức học hoặc quay lại sau để xem lịch khai giảng mới."
             />
           ) : (
@@ -141,6 +153,11 @@ export function ClassPicker(props: {
                       </span>
                     </div>
                     <span className="mt-3 block text-sm font-extrabold">{item.name}</span>
+                    {(courseIsTrial || isTrialNamed(item.name, item.code)) && (
+                      <span className="mt-2 block">
+                        <TrialBadge priceAmount={props.course.priceAmount} />
+                      </span>
+                    )}
                     <span className="mt-1 block text-[10px] text-muted">{item.code}</span>
                     <span className="mt-3 flex items-center gap-2 text-xs">
                       <Icon name="calendar" className="size-4 shrink-0 text-mint" />
@@ -189,7 +206,12 @@ export function ClassPicker(props: {
             </button>
           )}
           {selected ? (
-            <ClassTimetable key={selected} classId={selected} courseId={props.course.id} />
+            <ClassTimetable
+              key={selected}
+              classId={selected}
+              courseId={props.course.id}
+              courseIsTrial={courseIsTrial}
+            />
           ) : (
             <div className="flex min-h-64 flex-col items-center justify-center text-center">
               <span className="mb-4 grid size-16 place-items-center rounded-2xl bg-soft text-mint">

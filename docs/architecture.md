@@ -1,5 +1,12 @@
 # Kiến trúc Mindy FE2
 
+## Lối học thử và mở nhanh lịch lớp — 20/11/2026
+
+- `/trial` dùng shell công khai và CourseCatalog với chế độ học thử. Điều hướng desktop/mobile có lời mời “Bạn muốn học thử?”. Không hiện sidebar hoặc checkbox lọc học thử trên trang này. Card dẫn tới `/courses/:courseId?trial=true` và mở thẳng danh sách lớp thử.
+- Nhận diện tạm thời ở FE từ từ `thử` trong tên hoặc token `TRIAL` trong mã/tên khóa/lớp; có hỗ trợ `hoc thu`. `useTrialCourseIds` đọc các trang lớp công khai với tối đa 4 khóa đồng thời, nên một lớp thử nằm ở trang sau hoặc dưới khóa có tên bình thường vẫn được tìm thấy. Không dùng description hoặc giá 0 để tự suy ra học thử. Đây là nhãn giao diện, không phải entitlement.
+- Học phí và request thêm giỏ giữ nguyên dữ liệu BE. Chỉ hiện nhãn `Học thử · 0đ` khi giá course thật bằng 0; không đổi payment, enrollment, quyền học hay tự kích hoạt miễn phí. Luồng đăng ký 0đ/vào học ngay cần BE hỗ trợ riêng nếu muốn triển khai sau.
+- Nút “Mở lịch học của lớp” trong Trạng thái lớp đổi nội dung dialog hiện hữu sang AdminClassSessions đúng classId, không mở chồng modal hay gửi mutation. Giữ focus về nút sửa khi đóng và đưa focus/scroll lên lịch khi chuyển.
+
 ## Shared Admin resource table — 20/11/2026
 
 - AdminResourcePage giữ URL/query filters, page, selection, columns và toolbar. AdminDataTable giữ expandedId riêng (tối đa một dòng), remount theo resource/page/status/filter/userSearch. Checkbox không kích hoạt disclosure.

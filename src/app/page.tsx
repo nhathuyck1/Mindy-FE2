@@ -1,6 +1,7 @@
 import { SiteFooter } from '@/components/layout/site-footer';
 import { SiteHeader } from '@/components/layout/site-header';
 import { HomeContent } from '@/features/home/components/home-content';
+import { FacebookLink } from '@/features/home/components/facebook-link';
 
 export default function HomePage() {
   return (
@@ -16,6 +17,7 @@ export default function HomePage() {
         <HomeContent />
       </main>
       <SiteFooter />
+      <FacebookLink />
     </>
   );
 }

@@ -110,6 +110,9 @@ Panels use the panel radius, controls use the control radius, and compact action
 
 ## Do's and Don'ts
 
+- **Trial discovery:** a mint invitation in public navigation opens `/trial`, using the existing catalog typography and cards without a filter sidebar. Trial labels come from supplied names/codes; a zero-price badge reflects the backend amount. No new palette, artwork or access promise is introduced.
+- **Class workflow:** the status section has a calendar shortcut into the same class scheduling dialog. Preserve single-dialog focus, return focus and the existing schedule form.
+
 - **Do** keep Nunito global and Inter scoped to Admin.
 - **Do** preserve Mindy tokens and visible status text.
 - **Do** separate selection/disclosure and contain table scrolling.

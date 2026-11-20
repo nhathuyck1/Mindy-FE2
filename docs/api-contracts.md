@@ -1,5 +1,11 @@
 # API catalog, lớp học và tài khoản
 
+## Hiển thị học thử, không thay BE — 20/11/2026
+
+- Không thêm API/field trial. FE gọi GET courses, GET courses/:id/classes theo toàn bộ phân trang và GET classes/:classId như contract hiện có; query `trial=true` chỉ thuộc route FE, không chuyển lên BE. Có loading/error/retry/empty khi tra lớp thử.
+- “Đăng ký học thử” vẫn gửi POST me/cart/items `{classId}` và hiển thị thành công thêm giỏ. Không gửi giá 0 từ client, không gọi payment/checkout tự động và không báo enrollment ACTIVE. Việc đăng ký miễn phí rồi vào học ngay chưa được BE này cung cấp.
+- Lối tắt Trạng thái lớp → Lịch học chỉ dùng GET detail/schedule hiện hữu. Các lệnh mở/bắt đầu/hủy/hoàn thành lớp và xác nhận vẫn giữ nguyên.
+
 ## Phân công dạy thay theo buổi — 19/11/2026
 
 - Đã đối chiếu source BE và Swagger live. `GET management/classes/:classId?page&pageSize` trả class và sessions phân trang; kiểm classId của từng buổi. `GET management/class-sessions/:sessionId/available-mentors?page&pageSize&search` trả sessionVersion, checkedFrom/checkedTo và mentor ACTIVE phù hợp lịch dạy/khoảng nghỉ được duyệt. Danh sách không bảo đảm mentor đã nhận lời.

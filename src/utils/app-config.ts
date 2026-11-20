@@ -7,5 +7,6 @@ export const appConfig = {
     { href: '/courses', label: 'Khám phá khóa học' },
     { href: '/#thuc-hanh', label: 'Góc thực hành' },
     { href: '/#hanh-trinh', label: 'Cách bắt đầu' },
+    { href: '/trial', label: 'Bạn muốn học thử?' },
   ],
 } as const;

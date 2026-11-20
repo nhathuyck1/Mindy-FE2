@@ -68,6 +68,7 @@ test('Table details expand inline while edit actions retain centered accessible 
   await expect(dialog.getByLabel(/^Tên lớp/)).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
+  await expect(edit).toBeFocused();
   await expect(actions.getByRole('link', { name: /^Danh sách học viên:/ })).toHaveAttribute(
     'href',
     `/admin/classes/${adminClasses[1].id}/students`,
@@ -211,6 +212,37 @@ async function mockCrud(page: Page) {
     },
   };
 }
+
+test('Class status opens the same class schedule without saving or changing status', async ({
+  page,
+  isMobile,
+}, testInfo) => {
+  const api = await mockCrud(page);
+  if (isMobile) await page.setViewportSize({ width: 320, height: 850 });
+  await page.goto('/admin/classes');
+  const edit = page.getByRole('button', {
+    name: `Chỉnh sửa lớp học: ${adminClasses[1].name}`,
+    exact: true,
+  });
+  await edit.click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('heading', { name: 'Trạng thái lớp' })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Mở lịch học của lớp', exact: true }).click();
+  await expect(dialog).toHaveCount(1);
+  await expect(
+    dialog.getByRole('heading', { name: 'Lịch học của lớp', exact: true }),
+  ).toBeVisible();
+  await expect(dialog.getByRole('checkbox', { name: 'Thứ 2, slot 1', exact: true })).toBeVisible();
+  await expect(dialog.getByText(adminClasses[1].name, { exact: true })).toBeVisible();
+  expect(api.writes).toHaveLength(0);
+  await page.screenshot({
+    path: testInfo.outputPath('class-status-to-schedule.png'),
+    animations: 'disabled',
+  });
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(edit).toBeFocused();
+});
 
 test('Creates a user, validates password, confirms status changes and restores menu focus', async ({
   page,

@@ -7,16 +7,17 @@ export const metadata: Metadata = { title: 'Chi tiết khóa học — Mindy Cod
 
 export default async function CourseDetailPage(props: {
   params: Promise<{ courseId: string }>;
-  searchParams: Promise<{ classId?: string | string[] }>;
+  searchParams: Promise<{ classId?: string | string[]; trial?: string | string[] }>;
 }) {
   const { courseId } = await props.params;
   if (!z.uuid().safeParse(courseId).success) notFound();
-  const { classId } = await props.searchParams;
+  const { classId, trial } = await props.searchParams;
   const initialClassId = z.uuid().safeParse(classId);
   return (
     <CourseDetailContent
-      key={`${courseId}-${initialClassId.success ? initialClassId.data : ''}`}
+      key={`${courseId}-${initialClassId.success ? initialClassId.data : ''}-${trial === 'true'}`}
       courseId={courseId}
+      initialTrialOnly={trial === 'true'}
       initialClassId={initialClassId.success ? initialClassId.data : undefined}
     />
   );

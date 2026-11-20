@@ -3,12 +3,15 @@ import { Icon } from '@/components/ui/icon';
 import type { Course } from '../../schemas/course-contracts';
 import { formatPrice } from '../../lib/course-format';
 import { CourseImage } from './course-image';
+import { isTrialNamed } from '../../lib/trial';
+import { TrialBadge } from './trial-badge';
 
 export function CourseCard(props: {
   course: Course;
   list?: boolean;
   headingLevel?: 2 | 3;
   comfortable?: boolean;
+  trialClassAvailable?: boolean;
 }) {
   const course = props.course;
   const Heading = props.headingLevel === 3 ? 'h3' : 'h2';
@@ -24,11 +27,16 @@ export function CourseCard(props: {
           title={course.title}
           sizes="(max-width: 639px) 90vw, (max-width: 1023px) 44vw, 310px"
         />
-        <span
-          className={`absolute top-3 left-3 rounded-md bg-canvas/95 px-2.5 py-1 font-extrabold text-forest ${props.comfortable ? 'text-xs' : 'text-[10px]'}`}
-        >
-          {course.code}
-        </span>
+        <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
+          <span
+            className={`min-w-0 truncate rounded-md bg-canvas/95 px-2.5 py-1 font-extrabold text-forest ${props.comfortable ? 'text-xs' : 'text-[10px]'}`}
+          >
+            {course.code}
+          </span>
+          {isTrialNamed(course.title, course.code) && (
+            <TrialBadge priceAmount={course.priceAmount} />
+          )}
+        </div>
       </div>
       <div className="flex min-w-0 flex-1 flex-col p-5">
         <p
@@ -40,7 +48,7 @@ export function CourseCard(props: {
           className={`leading-snug font-extrabold group-hover:text-mint ${props.comfortable ? 'min-h-[50px] text-base' : 'min-h-11 text-base'}`}
         >
           <Link
-            href={`/courses/${course.id}`}
+            href={`/courses/${course.id}${props.trialClassAvailable ? '?trial=true' : ''}`}
             className="line-clamp-2 after:absolute after:inset-0"
           >
             {course.title}
@@ -51,6 +59,11 @@ export function CourseCard(props: {
         >
           {course.description ?? 'Khám phá nội dung và các lớp học của khóa học.'}
         </p>
+        {props.trialClassAvailable && !isTrialNamed(course.title, course.code) && (
+          <p className="mb-3 text-xs font-bold text-mint">
+            Có lớp học thử · Xem lịch trong khóa học
+          </p>
+        )}
         <div className="mt-auto flex items-end justify-between gap-3 border-t border-line pt-4">
           <div>
             <p
