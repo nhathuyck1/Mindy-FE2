@@ -75,6 +75,8 @@ export function useCheckout() {
         queryClient.invalidateQueries({ queryKey: ['cart'] }),
         queryClient.invalidateQueries({ queryKey: ['orders'] }),
         queryClient.invalidateQueries({ queryKey: ['catalog'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-classes'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-schedule'] }),
       ]),
   });
 }

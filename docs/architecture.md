@@ -1,10 +1,16 @@
 # Kiến trúc Mindy FE2
 
+## Đăng ký khóa học 0đ — 20/11/2026
+
+- Giỏ có lớp và tổng tiền 0 hiện “Xác nhận đăng ký”, ẩn chọn hình thức thanh toán. POST checkout vẫn dùng contract PAYOS/CASH hiện có; PAYOS trên đơn 0đ chỉ là metadata tương thích, không tạo payment link. Giá và việc kích hoạt enrollment do backend quyết định.
+- Chỉ khi mọi đơn trả về PAID, FE thông báo thành công và chuyển `/user/courses`. Đơn 0đ PENDING dùng màn hình kiểm tra đăng ký, không tự mở quyền hoặc tạo QR. Nếu BE tính lại thành tổng dương, đi tiếp luồng thanh toán với số tiền thật.
+- CASH có thể trả đồng thời đơn miễn phí PAID và đơn có phí PENDING; thông báo chỉ đếm đơn còn cần thu. Checkout và xác nhận PAID làm mới my-classes/my-schedule. isPayable yêu cầu totalAmount > 0, bao gồm khi mở trực tiếp URL checkout.
+
 ## Lối học thử và mở nhanh lịch lớp — 20/11/2026
 
 - `/trial` dùng shell công khai và CourseCatalog với chế độ học thử. Điều hướng desktop/mobile có lời mời “Bạn muốn học thử?”. Không hiện sidebar hoặc checkbox lọc học thử trên trang này. Card dẫn tới `/courses/:courseId?trial=true` và mở thẳng danh sách lớp thử.
 - Nhận diện tạm thời ở FE từ từ `thử` trong tên hoặc token `TRIAL` trong mã/tên khóa/lớp; có hỗ trợ `hoc thu`. `useTrialCourseIds` đọc các trang lớp công khai với tối đa 4 khóa đồng thời, nên một lớp thử nằm ở trang sau hoặc dưới khóa có tên bình thường vẫn được tìm thấy. Không dùng description hoặc giá 0 để tự suy ra học thử. Đây là nhãn giao diện, không phải entitlement.
-- Học phí và request thêm giỏ giữ nguyên dữ liệu BE. Chỉ hiện nhãn `Học thử · 0đ` khi giá course thật bằng 0; không đổi payment, enrollment, quyền học hay tự kích hoạt miễn phí. Luồng đăng ký 0đ/vào học ngay cần BE hỗ trợ riêng nếu muốn triển khai sau.
+- Học phí và request thêm giỏ giữ nguyên dữ liệu BE. Chỉ hiện nhãn `Học thử · 0đ` khi giá course thật bằng 0. Sau thêm giỏ, đăng ký 0đ dùng luồng xác nhận miễn phí phía trên; nhãn học thử tự nó không cấp quyền học.
 - Nút “Mở lịch học của lớp” trong Trạng thái lớp đổi nội dung dialog hiện hữu sang AdminClassSessions đúng classId, không mở chồng modal hay gửi mutation. Giữ focus về nút sửa khi đóng và đưa focus/scroll lên lịch khi chuyển.
 
 ## Shared Admin resource table — 20/11/2026

@@ -68,11 +68,14 @@ function PaymentContent(props: { orderId: string }) {
       paidInvalidated.current = true;
       void queryClient.invalidateQueries({ queryKey: ['orders'] });
       void queryClient.invalidateQueries({ queryKey: ['catalog'] });
+      void queryClient.invalidateQueries({ queryKey: ['my-classes'] });
+      void queryClient.invalidateQueries({ queryKey: ['my-schedule'] });
     }
   }, [order.data?.status, queryClient]);
   if (order.isPending) return <CommerceLoading />;
   if (order.isError) return <CommerceError error={order.error} retry={() => void order.check()} />;
   const data = order.data;
+  const free = data.totalAmount === 0;
   const payable = now !== null && isPayable(data, now);
   const ready = payable && data.payment?.status === 'PENDING';
   const seconds =
@@ -88,9 +91,12 @@ function PaymentContent(props: { orderId: string }) {
         </Link>
       </Button>
       <div className="mb-8">
-        <p className="eyebrow mb-3 text-mint">Thanh toán học phí</p>
         <h1 className="section-title">Hoàn tất đăng ký của bạn</h1>
-        <p className="mt-3 text-muted">Một bước nữa để bắt đầu hành trình học tập cùng Mindy.</p>
+        <p className="mt-3 text-muted">
+          {free
+            ? 'Theo dõi kết quả đăng ký lớp miễn phí của bạn.'
+            : 'Một bước nữa để bắt đầu hành trình học tập cùng Mindy.'}
+        </p>
       </div>
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <Card className="min-w-0 border-line shadow-none">
@@ -98,6 +104,8 @@ function PaymentContent(props: { orderId: string }) {
             <div className="mx-auto mb-2 flex size-14 items-center justify-center rounded-full bg-soft text-mint">
               {data.status === 'PAID' ? (
                 <Check className="size-7" aria-hidden="true" />
+              ) : free ? (
+                <Clock3 className="size-7" aria-hidden="true" />
               ) : (
                 <QrCode className="size-7" aria-hidden="true" />
               )}
@@ -107,10 +115,14 @@ function PaymentContent(props: { orderId: string }) {
             </CardTitle>
             <CardDescription>
               {data.status === 'PAID'
-                ? 'Mindy đã ghi nhận thanh toán của bạn.'
-                : ready
-                  ? 'Mở ứng dụng ngân hàng để quét mã QR bên dưới.'
-                  : 'Kết quả được cập nhật từ hệ thống thanh toán.'}
+                ? free
+                  ? 'Mindy đã xác nhận đăng ký lớp miễn phí của bạn.'
+                  : 'Mindy đã ghi nhận thanh toán của bạn.'
+                : free
+                  ? 'Bạn không cần thanh toán. Quyền vào lớp chỉ được mở sau khi hệ thống xác nhận đăng ký.'
+                  : ready
+                    ? 'Mở ứng dụng ngân hàng để quét mã QR bên dưới.'
+                    : 'Kết quả được cập nhật từ hệ thống thanh toán.'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -119,7 +131,9 @@ function PaymentContent(props: { orderId: string }) {
                 <p className="text-3xl font-extrabold text-mint">{formatPrice(data.totalAmount)}</p>
                 <p className="mt-3 break-all font-bold">{data.orderCode}</p>
                 <Button asChild className="mt-6 min-h-12">
-                  <Link href="/courses">Tiếp tục khám phá</Link>
+                  <Link href={free ? '/user/courses' : '/courses'}>
+                    {free ? 'Khóa học của tôi' : 'Tiếp tục khám phá'}
+                  </Link>
                 </Button>
               </div>
             ) : data.payment?.status === 'REQUIRES_REVIEW' ? (
@@ -137,8 +151,17 @@ function PaymentContent(props: { orderId: string }) {
                   {data.status === 'CANCELLED' ? 'Đơn đã hủy' : 'Không còn thời gian thanh toán'}
                 </AlertTitle>
                 <AlertDescription>
-                  Không chuyển tiền theo mã QR cũ. Bạn có thể quay lại khóa học để chọn lớp và tạo
-                  đơn mới.
+                  {free
+                    ? 'Bạn có thể quay lại khóa học để chọn lớp và đăng ký lại.'
+                    : 'Không chuyển tiền theo mã QR cũ. Bạn có thể quay lại khóa học để chọn lớp và tạo đơn mới.'}
+                </AlertDescription>
+              </Alert>
+            ) : free ? (
+              <Alert>
+                <AlertTitle>Chưa hoàn tất đăng ký miễn phí</AlertTitle>
+                <AlertDescription>
+                  Đơn chưa được hệ thống xác nhận nên bạn chưa có quyền vào lớp. Hãy kiểm tra lại
+                  trạng thái; nếu đơn vẫn chờ, vui lòng liên hệ trung tâm để được hỗ trợ.
                 </AlertDescription>
               </Alert>
             ) : data.paymentType === 'CASH' ? (
@@ -236,10 +259,14 @@ function PaymentContent(props: { orderId: string }) {
                 onClick={() => void order.check()}
               >
                 <RefreshCw className="size-4" aria-hidden="true" />
-                {order.isFetching ? 'Đang kiểm tra…' : 'Kiểm tra thanh toán'}
+                {order.isFetching
+                  ? 'Đang kiểm tra…'
+                  : free
+                    ? 'Kiểm tra đăng ký'
+                    : 'Kiểm tra thanh toán'}
               </Button>
             )}
-            {data.status !== 'PAID' && (
+            {data.status !== 'PAID' && !free && (
               <p className="flex justify-center gap-2 text-center text-sm leading-relaxed text-muted">
                 <ShieldCheck className="mt-0.5 size-4 shrink-0 text-mint" aria-hidden="true" />
                 Chỉ chuyển đúng số tiền của đơn hàng. Kết quả sẽ tự cập nhật khi được xác nhận.
@@ -265,9 +292,13 @@ function OrderSummary(props: { order: OrderPayment }) {
       <CardContent className="space-y-5">
         <Badge variant="secondary">
           {order.status === 'PAID'
-            ? 'Đã thanh toán'
+            ? order.totalAmount === 0
+              ? 'Đã đăng ký miễn phí'
+              : 'Đã thanh toán'
             : order.status === 'PENDING'
-              ? 'Đang chờ thanh toán'
+              ? order.totalAmount === 0
+                ? 'Chờ xác nhận đăng ký'
+                : 'Đang chờ thanh toán'
               : order.status === 'EXPIRED'
                 ? 'Hết hạn'
                 : 'Đã hủy'}

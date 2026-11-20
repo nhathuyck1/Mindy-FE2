@@ -30,6 +30,16 @@ const payment = paymentSchema.parse({
 });
 
 describe('Payment availability and confirmation', () => {
+  it('Never prepares a PayOS link for zero-total orders or infers enrollment from price alone', () => {
+    const free = { ...order, totalAmount: 0 };
+    expect(isPayable(free, now)).toBe(false);
+    expect(needsPaymentLink(free, now)).toBe(false);
+    expect(
+      needsPaymentLink({ ...free, payment: { ...payment, amount: 0, status: 'CREATING' } }, now),
+    ).toBe(false);
+    expect(paymentHeading(free, now)).toBe('Đăng ký miễn phí chưa được xác nhận');
+    expect(paymentHeading({ ...free, status: 'PAID' }, now)).toBe('Đăng ký miễn phí thành công');
+  });
   it('Prepares missing/CREATING links; reuses ready links and URL-only recovery', () => {
     expect(needsPaymentLink(order, now)).toBe(true);
     expect(

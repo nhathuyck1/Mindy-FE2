@@ -32,6 +32,7 @@ function CartContent() {
   const router = useRouter();
   const checkoutLock = useRef(false);
   const [paymentType, setPaymentType] = useState<Order['paymentType']>('PAYOS');
+  const free = cart.data?.totalAmount === 0;
   const unavailable = cart.data?.items.some((item) => !item.isPurchasable);
   const busy = checkout.isPending || remove.isPending;
   const pay = async () => {
@@ -39,14 +40,36 @@ function CartContent() {
       return;
     checkoutLock.current = true;
     try {
-      const result = await checkout.mutateAsync(paymentType);
-      if (paymentType === 'CASH') {
+      const result = await checkout.mutateAsync(free ? 'PAYOS' : paymentType);
+      if (result.orders.every((order) => order.status === 'PAID')) {
         toast.success(
-          `Đã tạo ${result.orders.length} đơn tiền mặt. Thanh toán tại trung tâm trước hạn ghi trên đơn.`,
+          result.orders.every((order) => order.totalAmount === 0)
+            ? 'Đăng ký miễn phí thành công. Bạn có thể xem lớp trong khóa học của tôi.'
+            : 'Đăng ký thành công. Bạn có thể xem lớp trong khóa học của tôi.',
+        );
+        router.push('/user/courses');
+        return;
+      }
+      const unconfirmedFree = result.orders.find(
+        (order) => order.totalAmount === 0 && order.status === 'PENDING',
+      );
+      if (unconfirmedFree) {
+        toast.error('Đăng ký miễn phí chưa được xác nhận. Vui lòng kiểm tra trạng thái đơn.');
+        router.push(`/checkout/${unconfirmedFree.id}`);
+        return;
+      }
+      const pending = result.orders.filter((order) => order.status === 'PENDING');
+      if (pending.length && pending.every((order) => order.paymentType === 'CASH')) {
+        toast.success(
+          `Còn ${pending.length} đơn tiền mặt cần thanh toán tại trung tâm trước hạn ghi trên đơn.`,
         );
         router.push('/user/orders');
+      } else if (pending.length) {
+        if (free) toast.info('Học phí đã thay đổi. Vui lòng kiểm tra đơn trước khi thanh toán.');
+        router.push(`/checkout/${pending[0].id}`);
       } else {
-        router.push(`/checkout/${result.orders[0].id}`);
+        toast.error('Đơn chưa hoàn tất đăng ký. Vui lòng kiểm tra trạng thái đơn.');
+        router.push('/user/orders');
       }
     } catch {
       // Read refreshed cart/pending orders before the user decides whether to submit again.
@@ -81,8 +104,15 @@ function CartContent() {
         <div className="mb-6 space-y-3">
           <CommerceError error={checkout.error} />
           <p className="text-sm text-black">
-            Kiểm tra mục đơn đang chờ bên dưới trước khi thanh toán lại. Nếu đơn đã tạo, hãy tiếp
-            tục trên đơn đó.
+            Kiểm tra{' '}
+            <Link href="/user/courses" className="underline">
+              Khóa học của tôi
+            </Link>{' '}
+            và{' '}
+            <Link href="/user/orders" className="underline">
+              Đơn hàng của tôi
+            </Link>{' '}
+            trước khi thử lại. Yêu cầu có thể đã được xử lý dù chưa nhận được kết quả.
           </p>
         </div>
       )}
@@ -183,7 +213,9 @@ function CartContent() {
           </section>
           <Card className="border-line shadow-none lg:sticky lg:top-28">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Tổng thanh toán</CardTitle>
+              <CardTitle className="text-lg font-semibold">
+                {free ? 'Xác nhận đăng ký miễn phí' : 'Tổng thanh toán'}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="flex justify-between gap-4 text-sm font-normal">
@@ -191,34 +223,36 @@ function CartContent() {
                 <span className="font-bold">{formatPrice(cart.data.totalAmount)}</span>
               </div>
               <Separator />
-              <fieldset disabled={busy} className="space-y-3">
-                <legend className="mb-3 text-sm font-bold">Hình thức thanh toán</legend>
-                {[
-                  {
-                    value: 'PAYOS',
-                    label: 'Chuyển khoản QR',
-                  },
-                  {
-                    value: 'CASH',
-                    label: 'Tiền mặt',
-                  },
-                ].map((option) => (
-                  <label
-                    key={option.value}
-                    className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border p-3 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-mint ${paymentType === option.value ? 'border-mint bg-soft' : 'border-line bg-canvas'} ${busy ? 'cursor-wait opacity-60' : ''}`}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentType"
-                      value={option.value}
-                      checked={paymentType === option.value}
-                      onChange={() => setPaymentType(option.value === 'CASH' ? 'CASH' : 'PAYOS')}
-                      className="size-4 shrink-0 accent-mint"
-                    />
-                    <span className="min-w-0 text-sm font-bold">{option.label}</span>
-                  </label>
-                ))}
-              </fieldset>
+              {!free && (
+                <fieldset disabled={busy} className="space-y-3">
+                  <legend className="mb-3 text-sm font-bold">Hình thức thanh toán</legend>
+                  {[
+                    {
+                      value: 'PAYOS',
+                      label: 'Chuyển khoản QR',
+                    },
+                    {
+                      value: 'CASH',
+                      label: 'Tiền mặt',
+                    },
+                  ].map((option) => (
+                    <label
+                      key={option.value}
+                      className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border p-3 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-mint ${paymentType === option.value ? 'border-mint bg-soft' : 'border-line bg-canvas'} ${busy ? 'cursor-wait opacity-60' : ''}`}
+                    >
+                      <input
+                        type="radio"
+                        name="paymentType"
+                        value={option.value}
+                        checked={paymentType === option.value}
+                        onChange={() => setPaymentType(option.value === 'CASH' ? 'CASH' : 'PAYOS')}
+                        className="size-4 shrink-0 accent-mint"
+                      />
+                      <span className="min-w-0 text-sm font-bold">{option.label}</span>
+                    </label>
+                  ))}
+                </fieldset>
+              )}
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <span className="font-bold">Tổng cộng</span>
                 <strong className="text-xl font-semibold text-black sm:text-2xl">
@@ -227,15 +261,22 @@ function CartContent() {
               </div>
               <Button
                 className="min-h-13 w-full rounded-xl text-base font-extrabold"
-                disabled={busy || cart.isFetching || unavailable || cart.data.totalAmount <= 0}
+                disabled={busy || cart.isFetching || unavailable}
                 onClick={() => void pay()}
               >
-                {checkout.isPending ? 'Đang tạo đơn…' : 'Thanh toán'}
+                {checkout.isPending
+                  ? free
+                    ? 'Đang xác nhận…'
+                    : 'Đang tạo đơn…'
+                  : free
+                    ? 'Xác nhận đăng ký'
+                    : 'Thanh toán'}
                 <ArrowRight aria-hidden="true" />
               </Button>
-              {cart.data.totalAmount <= 0 && (
+              {free && (
                 <p className="text-sm text-black">
-                  Thanh toán QR yêu cầu tổng tiền lớn hơn 0. Vui lòng kiểm tra lại lớp đã chọn.
+                  Các lớp trong giỏ được đăng ký miễn phí. Bạn không cần chuyển khoản hoặc trả tiền
+                  mặt.
                 </p>
               )}
             </CardContent>

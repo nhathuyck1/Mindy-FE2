@@ -1,9 +1,16 @@
 # API catalog, lớp học và tài khoản
 
+## Checkout miễn phí — 20/11/2026
+
+- Đối chiếu FE main 39056d1 và BE dev 6d9a497; thay đổi BE đi kèm phải được triển khai để có xác nhận miễn phí. Không thêm enum/endpoint hay nhận giá do client gửi: POST `/me/cart/checkout` giữ `{paymentType:"PAYOS"|"CASH"}`.
+- BE tính tổng theo giá hiện tại trong transaction; đơn totalAmount=0 trả PAID, paidAt và kích hoạt enrollment/progress ngay, không payment transaction, QR, PayOS hoặc email xác nhận thanh toán. totalAmount>0 vẫn PENDING. PAYOS giữ một đơn toàn giỏ; CASH giữ nhóm theo mentor, vì vậy có thể trả cả PAID 0đ và PENDING có phí. Lớp 0đ trong một đơn tổng dương vẫn theo trạng thái của đơn chung.
+- FE giỏ 0đ gửi PAYOS cho contract tương thích, ẩn phương thức thanh toán, chỉ báo đăng ký thành công khi BE trả mọi đơn PAID. Đơn 0đ còn PENDING được kiểm tra lại trạng thái và không gọi `/payments/payos`; giá tăng thành tổng dương chuyển sang luồng có phí. Không suy enrollment từ badge hoặc giá client.
+- Mutation không tự retry khi mất response; invalidate cart/orders/catalog/my-classes/my-schedule để đọc kết quả đã ghi. User có thể kiểm tra đơn và Khóa học của tôi. Không tạo payment record hoặc giả lập PAID ở FE.
+
 ## Hiển thị học thử, không thay BE — 20/11/2026
 
 - Không thêm API/field trial. FE gọi GET courses, GET courses/:id/classes theo toàn bộ phân trang và GET classes/:classId như contract hiện có; query `trial=true` chỉ thuộc route FE, không chuyển lên BE. Có loading/error/retry/empty khi tra lớp thử.
-- “Đăng ký học thử” vẫn gửi POST me/cart/items `{classId}` và hiển thị thành công thêm giỏ. Không gửi giá 0 từ client, không gọi payment/checkout tự động và không báo enrollment ACTIVE. Việc đăng ký miễn phí rồi vào học ngay chưa được BE này cung cấp.
+- “Đăng ký học thử” vẫn gửi POST me/cart/items `{classId}` và hiển thị thành công thêm giỏ. Không gửi giá 0 từ client, không gọi payment/checkout tự động và không báo enrollment ACTIVE ngay sau thêm giỏ. Sau đó người dùng xác nhận giỏ theo luồng miễn phí ở trên.
 - Lối tắt Trạng thái lớp → Lịch học chỉ dùng GET detail/schedule hiện hữu. Các lệnh mở/bắt đầu/hủy/hoàn thành lớp và xác nhận vẫn giữ nguyên.
 
 ## Phân công dạy thay theo buổi — 19/11/2026
