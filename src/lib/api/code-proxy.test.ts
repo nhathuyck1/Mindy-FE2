@@ -8,6 +8,11 @@ vi.mock('@/lib/env.server', () => ({
 }));
 import { proxyApi } from './proxy.server';
 import { assignment } from '../../../tests/fixtures/assignment-data';
+import {
+  enabledCodeLanguages,
+  fourLanguageAuthoring,
+  fourLanguageStarters,
+} from '../../../tests/fixtures/code-language-data';
 
 const id = '11111111-1111-4111-8111-111111111111';
 const key = '22222222-2222-4222-8222-222222222222';
@@ -57,6 +62,75 @@ describe('CODE assignment proxy rules', () => {
     vi.unstubAllGlobals();
     fetchMock.mockReset();
   });
+
+  it('accepts the deployed four-language authoring response instead of returning INVALID_RESPONSE', async () => {
+    const path = `mentor/assignments/${id}/code`;
+    fetchMock.mockResolvedValue(Response.json(fourLanguageAuthoring));
+    const response = await proxyApi(request(path), path);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      availableLanguages: fourLanguageAuthoring.availableLanguages,
+      languages: fourLanguageAuthoring.languages,
+      references: fourLanguageAuthoring.references,
+    });
+  });
+
+  it('preserves all four starters and accepts saving all supported languages', async () => {
+    const preview = 'mentor/code-signatures/preview';
+    fetchMock.mockResolvedValueOnce(Response.json(fourLanguageStarters));
+    const response = await proxyApi(
+      request(preview, 'POST', {
+        signature: {
+          functionName: 'solve',
+          params: [{ name: 'nums', type: 'int[]' }],
+          returnType: 'int',
+        },
+      }),
+      preview,
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(fourLanguageStarters);
+    const path = `mentor/assignments/${id}/code-languages`;
+    fetchMock.mockResolvedValueOnce(Response.json(fourLanguageAuthoring));
+    const saved = await proxyApi(
+      request(path, 'PUT', {
+        expectedRevision: 1,
+        languages: enabledCodeLanguages.map((language) => ({ languageKey: language.key })),
+      }),
+      path,
+    );
+    expect(saved.status).toBe(200);
+    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body)).languages).toHaveLength(4);
+  });
+
+  it.each(['python3', 'csharp'])(
+    'allows %s reference writes and student runs',
+    async (languageKey) => {
+      const reference = `mentor/assignments/${id}/code-reference/${languageKey}`;
+      fetchMock.mockResolvedValueOnce(Response.json(fourLanguageAuthoring));
+      expect(
+        (
+          await proxyApi(
+            request(reference, 'PUT', { expectedRevision: 1, sourceCode: 'solution' }),
+            reference,
+          )
+        ).status,
+      ).toBe(200);
+      const run = `me/assignments/${id}/code-runs`;
+      fetchMock.mockResolvedValueOnce(
+        Response.json({
+          compileStatus: 'OK',
+          compileOutput: '',
+          runtimeVersion: 'runtime',
+          tests: [],
+        }),
+      );
+      expect(
+        (await proxyApi(request(run, 'POST', { languageKey, sourceCode: 'solution' }), run)).status,
+      ).toBe(200);
+      expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body)).languageKey).toBe(languageKey);
+    },
+  );
 
   it.each(['QUIZ', 'ZIP', 'CODE'] as const)(
     'preserves shared creation for %s with the full assignment projection',
@@ -114,7 +188,7 @@ describe('CODE assignment proxy rules', () => {
     for (const [method, path] of [
       ['GET', `mentor/assignments/${id}/code-secret`],
       ['PUT', `mentor/assignments/${id}/code-tests/31`],
-      ['PUT', `mentor/assignments/${id}/code-reference/python3`],
+      ['PUT', `mentor/assignments/${id}/code-reference/ruby`],
       ['GET', 'me/assignments/not-a-uuid/code'],
       ['DELETE', `me/code-submissions/${id}`],
       ['POST', `me/assignments/${id}/code-drafts/javascript`],

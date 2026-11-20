@@ -1,12 +1,33 @@
 import { describe, expect, it } from 'vitest';
 import { matchBracket, tokenize, tokenLines } from './code-highlight';
+import type { CodeLanguageKey } from '../schemas/code-contracts';
 
-const kinds = (source: string, language: 'javascript' | 'java21' = 'javascript') =>
+const kinds = (source: string, language: CodeLanguageKey = 'javascript') =>
   tokenize(source, language)
     .filter((t) => t.text.trim())
     .map((t) => `${t.kind}:${t.text.trim()}`);
 
 describe('tokenize', () => {
+  it('supports Python comments, multiline strings and literals without losing source offsets', () => {
+    const source =
+      'def solve(nums):\n    """Ignore ( brackets )\n    here"""\n    # return False (\n    return None\n';
+    const tokens = tokenize(source, 'python3');
+    expect(tokens.map((token) => token.text).join('')).toBe(source);
+    expect(kinds(source, 'python3')).toContain('keyword:def');
+    expect(kinds(source, 'python3')).toContain('literal:None');
+    expect(tokens.filter((token) => token.kind === 'bracket')).toHaveLength(2);
+    expect(kinds('return a // 2', 'python3')).not.toContain('comment:// 2');
+  });
+  it('supports C# primitive types and verbatim strings', () => {
+    const source = 'public string solve(int n) { return @"a""b"; }';
+    expect(
+      tokenize(source, 'csharp')
+        .map((token) => token.text)
+        .join(''),
+    ).toBe(source);
+    expect(kinds(source, 'csharp')).toContain('type:string');
+    expect(kinds(source, 'csharp')).toContain('string:@"a""b"');
+  });
   it('keeps every character so the coloured layer lines up with the textarea', () => {
     const source = '/** @param {number} a */\nfunction sum(a, b) {\n  return `x${a}` + "y";\n}\n';
     expect(

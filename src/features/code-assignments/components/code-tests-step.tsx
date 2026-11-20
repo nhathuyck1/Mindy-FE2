@@ -1,4 +1,5 @@
 'use client';
+import { codeLanguageLabel as languageName, codeIndent } from '../lib/code-language';
 
 import { useState } from 'react';
 import {
@@ -68,7 +69,6 @@ const stateDot: Record<RowState, string> = {
 
 let rowSeq = 0;
 const newKey = () => `row-${++rowSeq}`;
-const languageName = (k: CodeLanguageKey) => (k === 'java21' ? 'Java' : 'JavaScript');
 const GENERATING = 'Đang chạy lời giải mẫu…';
 
 function rowsFrom(data: MentorAuthoring): Row[] {
@@ -553,7 +553,7 @@ function TestsWorkbench(props: Parameters<typeof CodeTestsStep>[0] & { signature
           label={`Lời giải mẫu ${languageName(primary)}`}
           value={sources[primary] ?? ''}
           language={primary}
-          indent={primary === 'java21' ? '    ' : '  '}
+          indent={codeIndent(primary)}
           readOnly={props.disabled}
           onCursor={(line, column) => setCursor({ line, column })}
           onChange={(value) => {

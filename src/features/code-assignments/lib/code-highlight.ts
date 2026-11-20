@@ -1,6 +1,6 @@
 import type { CodeLanguageKey } from '../schemas/code-contracts';
 
-/** Lightweight syntax highlighting for the code editor (JavaScript and Java). */
+/** Lightweight syntax highlighting for the four supported code languages. */
 
 export type TokenKind =
   | 'keyword'
@@ -24,6 +24,9 @@ const words = (text: string) => new Set(text.split(' '));
 const control = words(
   'if else for while do return break continue switch case default try catch finally throw yield await',
 );
+const pythonControl = words(
+  'if elif else for while return break continue try except finally raise yield await pass match case',
+);
 const keywords: Record<CodeLanguageKey, Set<string>> = {
   javascript: words(
     'const let var function class extends new delete typeof instanceof in of async static get set import export from as void with debugger',
@@ -31,26 +34,47 @@ const keywords: Record<CodeLanguageKey, Set<string>> = {
   java21: words(
     'public private protected static final abstract class interface enum record extends implements new instanceof import package var void throws synchronized volatile transient native strictfp sealed permits non-sealed assert',
   ),
+  python3: words(
+    'def class import from as lambda with async global nonlocal del assert and or not in is',
+  ),
+  csharp: words(
+    'public private protected internal static readonly const abstract sealed partial class interface enum struct record namespace using new override virtual async var void out ref in is as get set init required event delegate lock checked unchecked unsafe fixed stackalloc foreach params operator',
+  ),
 };
 const literals: Record<CodeLanguageKey, Set<string>> = {
   javascript: words('true false null undefined this super NaN Infinity arguments'),
   java21: words('true false null this super'),
+  python3: words('True False None self'),
+  csharp: words('true false null this base'),
 };
 const javaTypes = words('int long double float boolean char byte short');
-
-const pattern = new RegExp(
-  [
-    String.raw`(?<comment>\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$))`,
-    String.raw`(?<string>"(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?|\x60(?:\\[\s\S]|[^\x60\\])*\x60?)`,
-    String.raw`(?<number>(?:0[xX][\da-fA-F_]+|0[bB][01_]+|\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?)[lLfFdDn]?(?![\w$]))`,
-    String.raw`(?<annotation>@[A-Za-z_]\w*)`,
-    String.raw`(?<word>[A-Za-z_$][\w$]*)`,
-    String.raw`(?<space>\s+)`,
-    String.raw`(?<bracket>[()[\]{}])`,
-    String.raw`(?<other>[\s\S])`,
-  ].join('|'),
-  'g',
+const csharpTypes = words(
+  'int long double float bool char byte short string decimal object uint ulong ushort sbyte',
 );
+
+function tokenPattern(language: CodeLanguageKey) {
+  return new RegExp(
+    [
+      language === 'python3'
+        ? String.raw`(?<comment>\#[^\n]*)`
+        : String.raw`(?<comment>\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$))`,
+      `(?<string>${language === 'python3' ? String.raw`"""[\s\S]*?(?:"""|$)|'''[\s\S]*?(?:'''|$)|` : language === 'csharp' ? String.raw`@"(?:""|[^"])*(?:"|$)|` : ''}${String.raw`"(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?|\x60(?:\\[\s\S]|[^\x60\\])*\x60?`})`,
+      String.raw`(?<number>(?:0[xX][\da-fA-F_]+|0[bB][01_]+|\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?)[lLfFdDn]?(?![\w$]))`,
+      String.raw`(?<annotation>@[A-Za-z_]\w*)`,
+      String.raw`(?<word>[A-Za-z_$][\w$]*)`,
+      String.raw`(?<space>\s+)`,
+      String.raw`(?<bracket>[()[\]{}])`,
+      String.raw`(?<other>[\s\S])`,
+    ].join('|'),
+    'g',
+  );
+}
+const patterns: Record<CodeLanguageKey, RegExp> = {
+  javascript: tokenPattern('javascript'),
+  java21: tokenPattern('java21'),
+  python3: tokenPattern('python3'),
+  csharp: tokenPattern('csharp'),
+};
 
 function nextChar(source: string, from: number) {
   for (let i = from; i < source.length; i++) if (!/\s/.test(source[i])) return source[i];
@@ -69,7 +93,7 @@ export function tokenize(source: string, language: CodeLanguageKey): Token[] {
     if (last && last.kind === kind && (kind === 'plain' || kind === 'operator')) last.text += text;
     else tokens.push({ kind, text, from });
   };
-  for (const match of source.matchAll(pattern)) {
+  for (const match of source.matchAll(patterns[language])) {
     const text = match[0];
     const from = match.index;
     const g = match.groups ?? {};
@@ -87,15 +111,17 @@ export function tokenize(source: string, language: CodeLanguageKey): Token[] {
       }
     } else if (g.string !== undefined) push('string', text, from);
     else if (g.number !== undefined) push('number', text, from);
-    else if (g.annotation !== undefined) push(language === 'java21' ? 'type' : 'plain', text, from);
+    else if (g.annotation !== undefined)
+      push(language === 'java21' || language === 'python3' ? 'type' : 'plain', text, from);
     else if (g.word !== undefined) {
       const before = prevChar(tokens);
       const after = nextChar(source, from + text.length);
       let kind: TokenKind = 'plain';
-      if (control.has(text)) kind = 'control';
+      if ((language === 'python3' ? pythonControl : control).has(text)) kind = 'control';
       else if (keywords[language].has(text)) kind = 'keyword';
       else if (literals[language].has(text)) kind = 'literal';
       else if (language === 'java21' && javaTypes.has(text)) kind = 'type';
+      else if (language === 'csharp' && csharpTypes.has(text)) kind = 'type';
       else if (after === '(') kind = 'function';
       else if (before?.text.endsWith('.') && before.kind === 'operator') kind = 'property';
       else if (/^[A-Z]/.test(text)) kind = 'type';

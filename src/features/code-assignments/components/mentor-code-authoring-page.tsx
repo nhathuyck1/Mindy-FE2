@@ -1,4 +1,5 @@
 'use client';
+import { codeLanguageLabel } from '../lib/code-language';
 
 import Link from 'next/link';
 import { useState } from 'react';
@@ -308,9 +309,7 @@ function SettingsList(props: { data: MentorAuthoring }) {
     ['Điểm tối đa', a.maxScore],
     [
       'Ngôn ngữ',
-      props.data.languages
-        .map((l) => (l.languageKey === 'java21' ? 'Java' : 'JavaScript'))
-        .join(', ') || '—',
+      props.data.languages.map((l) => codeLanguageLabel(l.languageKey)).join(', ') || '—',
     ],
     [
       'Test',
