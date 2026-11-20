@@ -1,4 +1,5 @@
 'use client';
+import { codeLanguageLabel as languageName, codeIndent } from '../lib/code-language';
 
 import { useState } from 'react';
 import {
@@ -74,7 +75,6 @@ function labelOf(status: string | null, verdict: string | null) {
     ? (verdictLabels[verdict] ?? verdict)
     : (submissionStatusLabels[status] ?? status);
 }
-const languageName = (k: string) => (k === 'java21' ? 'Java' : 'JavaScript');
 const initials = (name: string) =>
   name
     .split(/\s+/)
@@ -532,7 +532,7 @@ export function SubmissionViewer(props: {
               label="Code học viên"
               value={s.sourceCode ?? ''}
               language={s.languageKey}
-              indent={s.languageKey === 'java21' ? '    ' : '  '}
+              indent={codeIndent(s.languageKey)}
             />
           </div>
         </section>

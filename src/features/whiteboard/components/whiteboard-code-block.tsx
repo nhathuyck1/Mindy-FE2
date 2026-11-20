@@ -1,6 +1,7 @@
 'use client';
 import { Group, Rect, Text } from 'react-konva';
 import { tokenLines } from '@/features/code-assignments/lib/code-highlight';
+import { codeLanguageLabel } from '@/features/code-assignments/lib/code-language';
 import { CODE_FONT, CODE_PALETTE, codeMetrics } from '../lib/code-board';
 import type { BoardShape } from '../schemas/whiteboard-contracts';
 
@@ -29,7 +30,7 @@ export function WhiteboardCodeBlock(props: {
         y={0}
         height={m.header}
         verticalAlign="middle"
-        text={shape.language === 'java21' ? 'Java' : 'JavaScript'}
+        text={codeLanguageLabel(shape.language)}
         fontFamily={CODE_FONT}
         fontSize={Math.round(shape.fontSize * 0.85)}
         fill={CODE_PALETTE.muted}

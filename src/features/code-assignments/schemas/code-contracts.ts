@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 const dateTime = z.iso.datetime({ offset: true });
 const decimal = z.string().regex(/^\d{1,6}\.\d{2}$/);
-export const codeLanguageKeys = ['javascript', 'java21'] as const;
+export const codeLanguageKeys = ['javascript', 'java21', 'python3', 'csharp'] as const;
 export const codeLanguageKeySchema = z.enum(codeLanguageKeys);
 export type CodeLanguageKey = z.infer<typeof codeLanguageKeySchema>;
 export const codeValueTypes = [
@@ -76,7 +76,12 @@ export const codeLanguageSchema = z.object({
   editorMode: z.string(),
 });
 export const codeLanguagesSchema = z.array(codeLanguageSchema);
-export const starterPreviewSchema = z.object({ javascript: z.string(), java21: z.string() });
+export const starterPreviewSchema = z.object({
+  javascript: z.string(),
+  java21: z.string(),
+  python3: z.string(),
+  csharp: z.string(),
+});
 
 export const mentorCodeTestSchema = z.object({
   id: z.uuid(),
@@ -186,7 +191,7 @@ export const languagesInputSchema = z
         z.object({ languageKey: codeLanguageKeySchema, starterCode: source.optional() }).strict(),
       )
       .min(1)
-      .max(2),
+      .max(codeLanguageKeys.length),
   })
   .strict();
 export const testInputSchema = z

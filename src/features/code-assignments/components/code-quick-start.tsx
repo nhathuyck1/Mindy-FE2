@@ -1,4 +1,5 @@
 'use client';
+import { codeLanguageLabel } from '../lib/code-language';
 
 import { useState } from 'react';
 import { ArrowRight, Copy, Search, Sparkles } from 'lucide-react';
@@ -195,7 +196,7 @@ function LibraryList(props: {
                 <span className="block truncate text-[13px] font-extrabold">{item.title}</span>
                 <span className="block truncate text-[11.5px] text-muted/70">
                   {item.classCode} · Buổi {item.sessionNumber} · {item.testCount} test ·{' '}
-                  {item.languages.map((l) => (l === 'java21' ? 'Java' : 'JavaScript')).join(', ')}
+                  {item.languages.map(codeLanguageLabel).join(', ')}
                 </span>
               </span>
               <span className="inline-flex items-center gap-1 text-[12px] font-bold text-mint">

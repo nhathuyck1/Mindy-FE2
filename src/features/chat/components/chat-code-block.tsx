@@ -4,6 +4,7 @@ import { Check, Copy } from 'lucide-react';
 import { tokenLines } from '@/features/code-assignments/lib/code-highlight';
 import { syntaxClass } from '@/features/code-assignments/components/code-editor';
 import type { ChatCodeLanguage } from '../lib/chat-code';
+import { codeLanguageLabel } from '@/features/code-assignments/lib/code-language';
 
 /** A fenced code block inside a chat message: dark, coloured like the editor, copyable. */
 export function ChatCodeBlock(props: {
@@ -15,9 +16,7 @@ export function ChatCodeBlock(props: {
   return (
     <figure className="my-1.5 overflow-hidden rounded-xl bg-ide text-ide-text ring-1 ring-ide-line">
       <figcaption className="flex h-8 items-center justify-between gap-2 border-b border-ide-line bg-ide-deep pr-1 pl-3 text-[11.5px] font-bold text-ide-muted">
-        <span>
-          {props.language === 'java21' ? 'Java' : props.language ? 'JavaScript' : props.label}
-        </span>
+        <span>{props.language ? codeLanguageLabel(props.language) : props.label}</span>
         <button
           type="button"
           aria-label={copied ? 'Đã chép code' : 'Chép code'}

@@ -2,13 +2,19 @@
  * Code in chat messages travels as plain TEXT with a markdown fence (```js … ```), so older
  * clients still show readable text and the backend needs no new message type.
  */
-export type ChatCodeLanguage = 'javascript' | 'java21';
+import type { CodeLanguageKey } from '@/features/code-assignments/schemas/code-contracts';
+export type ChatCodeLanguage = CodeLanguageKey;
 
 export type ChatSegment =
   | { kind: 'text'; text: string }
   | { kind: 'code'; code: string; language: ChatCodeLanguage | null; label: string };
 
-const fenceLabel: Record<ChatCodeLanguage, string> = { javascript: 'js', java21: 'java' };
+const fenceLabel: Record<ChatCodeLanguage, string> = {
+  javascript: 'js',
+  java21: 'java',
+  python3: 'python',
+  csharp: 'csharp',
+};
 const fromLabel: Record<string, ChatCodeLanguage> = {
   js: 'javascript',
   javascript: 'javascript',
@@ -16,6 +22,12 @@ const fromLabel: Record<string, ChatCodeLanguage> = {
   ts: 'javascript',
   typescript: 'javascript',
   java: 'java21',
+  python: 'python3',
+  python3: 'python3',
+  py: 'python3',
+  csharp: 'csharp',
+  cs: 'csharp',
+  'c#': 'csharp',
 };
 
 /** Same limit as a chat TEXT message. */
@@ -28,7 +40,7 @@ export function codeFence(code: string, language: ChatCodeLanguage): string {
 /** Splits a message body into text and fenced code blocks (an unclosed fence stays text). */
 export function parseChatBody(body: string): ChatSegment[] {
   const segments: ChatSegment[] = [];
-  const fence = /```([\w+-]*)[ \t]*\n([\s\S]*?)\n?```/g;
+  const fence = /```([\w+#-]*)[ \t]*\n([\s\S]*?)\n?```/g;
   let last = 0;
   for (const match of body.matchAll(fence)) {
     const before = body.slice(last, match.index).replace(/\n+$/, '');

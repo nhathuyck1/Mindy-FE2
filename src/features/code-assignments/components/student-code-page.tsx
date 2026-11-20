@@ -1,4 +1,5 @@
 'use client';
+import { codeIndent } from '../lib/code-language';
 
 import Link from 'next/link';
 import { useState } from 'react';
@@ -505,7 +506,7 @@ function EditorPane(props: {
   const [selection, setSelection] = useState('');
   const a = props.assignment;
   const current = a.languages.find((l) => l.key === props.language);
-  const indent = props.language === 'java21' ? '    ' : '  ';
+  const indent = codeIndent(props.language);
   return (
     <section
       aria-label="Bài làm"

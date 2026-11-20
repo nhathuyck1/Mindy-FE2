@@ -400,7 +400,13 @@ export async function proxyApi(request: Request, path: string) {
       );
     }
     const result = rule.response.safeParse(payload);
-    if (!result.success) return error(502, 'INVALID_RESPONSE', 'Dữ liệu hệ thống chưa phù hợp.');
+    if (!result.success) {
+      console.warn('Upstream response schema mismatch', {
+        path,
+        issues: result.error.issues.map((issue) => ({ path: issue.path, code: issue.code })),
+      });
+      return error(502, 'INVALID_RESPONSE', 'Dữ liệu hệ thống chưa phù hợp.');
+    }
     if (
       ['auth/login', 'auth/refresh', 'auth/email/verify'].includes(path) &&
       !sessionCookies.every((name) => cookies.some((cookie) => cookie.startsWith(`${name}=`)))

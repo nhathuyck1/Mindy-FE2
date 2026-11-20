@@ -18,12 +18,22 @@ describe('parseChatBody', () => {
   });
 
   it('shows unknown languages without colours and leaves an unclosed fence as text', () => {
-    expect(parseChatBody('```py\nprint(1)\n```')[0]).toMatchObject({ language: null, label: 'py' });
+    expect(parseChatBody('```ruby\nputs 1\n```')[0]).toMatchObject({
+      language: null,
+      label: 'ruby',
+    });
     expect(parseChatBody('```js\nchưa đóng')).toEqual([{ kind: 'text', text: '```js\nchưa đóng' }]);
   });
 });
 
 describe('codeFence', () => {
+  it.each(['python3', 'csharp'] as const)('preserves %s when sharing code to chat', (language) => {
+    expect(parseChatBody(codeFence('return 1', language))[0]).toMatchObject({
+      kind: 'code',
+      code: 'return 1',
+      language,
+    });
+  });
   it('round-trips through parseChatBody', () => {
     const body = codeFence('function sum(a, b) {\n  return a + b;\n}\n\n', 'javascript');
     expect(body).toBe('```js\nfunction sum(a, b) {\n  return a + b;\n}\n```');

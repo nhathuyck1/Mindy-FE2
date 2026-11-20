@@ -1,5 +1,11 @@
 # Tiến độ
 
+## 20/11/2026 — Đồng bộ bốn ngôn ngữ CODE và lỗi INVALID_RESPONSE
+
+- Đối chiếu Swagger live và source BE: CODE hỗ trợ JavaScript/Java/Python/C#. FE trước đó chỉ nhận hai key, tái hiện bằng test proxy trả 502 khi `availableLanguages` có Python/C#. Schema/preview/giới hạn chọn/proxy nay nhận bốn ngôn ngữ; vẫn chỉ cho chọn những ngôn ngữ BE cung cấp.
+- Đồng bộ nhãn, starter theo key, indent và highlighting Python/C# ở authoring/demo/review/student; code fences trong chat và schema/nhãn/drop code bảng vẽ theo cùng bốn ngôn ngữ đã có ở BE. Không đổi quyền, runner hoặc bật ngôn ngữ phía BE. Proxy lỗi schema thêm log server chỉ gồm đường dẫn và mã issue, không ghi payload/code/token.
+- Kiểm chứng: 393 unit tests, ESLint, TypeScript/production build PASS (build chạy lại do cảnh báo bảo mật Next.js hiện hữu). 44 E2E Code/Chat/Whiteboard desktop/mobile PASS qua các lượt chạy; ảnh authoring bốn ngôn ngữ tại test-results/code-four-languages-*.png. Proxy regression chuyển 502 → 200, giữ đủ bốn starter, nhận lưu bốn ngôn ngữ/reference và student run Python/C#. Dùng API fixtures; chưa kiểm request riêng của người dùng bằng phiên đăng nhập production.
+
 ## 20/11/2026 — Giới hạn ngày tạo đơn xin nghỉ Mentor
 
 - Hai ô ngày nghỉ mặc định là hôm nay +2 ngày lịch theo múi giờ Việt Nam, đồng bộ rule báo trước của BE. Chặn mọi ngày sớm hơn mốc này; ngày kết thúc còn phải từ ngày bắt đầu trở đi và tự nâng lên khi ngày bắt đầu vượt qua nó.

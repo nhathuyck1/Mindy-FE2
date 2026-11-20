@@ -572,7 +572,13 @@ export function WhiteboardWorkspace(props: {
         }}
         onDrop={(e) => {
           const language = e.dataTransfer.getData(CODE_DRAG_TYPE);
-          if (language !== 'javascript' && language !== 'java21') return;
+          if (
+            language !== 'javascript' &&
+            language !== 'java21' &&
+            language !== 'python3' &&
+            language !== 'csharp'
+          )
+            return;
           e.preventDefault();
           const result = addCode(e.dataTransfer.getData('text/plain'), language, {
             clientX: e.clientX,
